@@ -22,5 +22,6 @@ class ConstantDetectionMapper(mapper.CombineMapper):
 
 
 
+
 def is_constant(expr, with_respect_to=None):
     return expr.invoke_mapper(ConstantDetectionMapper(with_respect_to))

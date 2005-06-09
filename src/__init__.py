@@ -3,12 +3,14 @@ import evaluator
 import compiler
 import stringifier
 import constant_detector
+import substitutor
 
 parse = parser.parse
 evaluate = evaluator.evaluate
 compile = compiler.compile
 stringify = stringifier.stringify
 is_constant = constant_detector.is_constant
+substitute = substitutor.substitute
 
 if __name__ == "__main__":
     import math
@@ -18,3 +20,4 @@ if __name__ == "__main__":
 
     print evaluate(ex, {"alpha":5, "cos":math.cos, "x":-math.pi, "pi":math.pi})
     print is_constant(ex)
+    print substitute(ex, {"alpha": ex})

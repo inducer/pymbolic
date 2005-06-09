@@ -58,7 +58,14 @@ class Expression:
         return Negation(self, other)
 
     def __call__(self, other):
-        return Call(self, other)
+        processed = []
+        for par in other:
+            if isinstance(par, Expression):
+                processed.append(par)
+            else:
+                processed.append(Constant(par))
+
+        return Call(self, processed)
 
     def __str__(self):
         return self.invoke_mapper(stringifier.StringifyMapper())
@@ -88,6 +95,65 @@ class NAryExpression(Expression):
 class Constant(Expression):
     def __init__(self, value):
         self.Value = value
+
+    def __add__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(self.Value + other)
+        return Sum((self, other))
+
+    def __radd__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(other + self.Value)
+        return Sum((other, self))
+
+    def __sub__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(self.Value - other)
+        return Sum((self, -other))
+
+    def __rsub__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(other - self.Value)
+        return Sum((other, -self))
+
+    def __mul__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(self.Value * other)
+        return Product((self, other))
+
+    def __rmul__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(other * self.Value)
+        return Product((other, self))
+
+    def __div__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(self.Value / other)
+        return Quotient(self, other)
+
+    def __rdiv__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(other / self.Value)
+        return Quotient(other, self)
+
+    def __pow__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(self.Value ** other)
+        return Power(self, other)
+
+    def __rpow__(self, other):
+        if not isinstance(other, Expression):
+            return Constant(other ** self.Value)
+        return Power(other, self)
+
+    def __neg__(self, other):
+        return Constant(-self.Value)
+
+    def __call__(self, pars):
+        for par in pars:
+            if isinstance(par, Expression):
+                return Expression.__call__(self, pars)
+        return self.Value(*pars)
 
     def __hash__(self):
         return hash(self.Value)
