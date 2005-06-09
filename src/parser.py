@@ -97,23 +97,19 @@ def parse(expr_str):
 
         if next_tag is _plus and _PREC_PLUS >= min_precedence:
             pstate.advance()
-            return primitives.Sum((left_exp, parse_expression(pstate, _PREC_PLUS)))
+            return left_exp+parse_expression(pstate, _PREC_PLUS)
         elif next_tag is _minus and _PREC_PLUS >= min_precedence:
             pstate.advance()
-            return primitives.Sum((
-                left_exp, primitives.Negation(parse_expression(pstate, _PREC_PLUS))))
+            return left_exp-primitives.Negation(parse_expression(pstate, _PREC_PLUS))
         elif next_tag is _times and _PREC_TIMES >= min_precedence:
             pstate.advance()
-            return primitives.Product(
-                (left_exp, parse_expression(pstate, _PREC_TIMES)))
+            return left_exp*parse_expression(pstate, _PREC_TIMES)
         elif next_tag is _over and _PREC_TIMES >= min_precedence:
             pstate.advance()
-            return primitives.Quotient(
-                left_exp, parse_expression(pstate, _PREC_TIMES))
+            return left_exp/parse_expression(pstate, _PREC_TIMES)
         elif next_tag is _power and _PREC_POWER >= min_precedence:
             pstate.advance()
-            return primitives.Power(
-                left_exp, parse_expression(pstate, _PREC_TIMES))
+            return left_exp**parse_expression(pstate, _PREC_TIMES)
         else:
             return left_exp
 

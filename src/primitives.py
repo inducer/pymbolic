@@ -7,36 +7,50 @@ class Expression:
     def __add__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 0:
+            return self
         return Sum((self, other))
 
     def __radd__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 0:
+            return self
         return Sum((other, self))
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 0:
+            return self
         return Sum((self, -other))
 
     def __rsub__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 0:
+            return Negation(self)
         return Sum((other, -self))
 
     def __mul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 1:
+            return self
         return Product((self, other))
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 1:
+            return self
         return Product((other, self))
 
     def __div__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant) and other.Value == 1:
+            return self
         return Quotient(self, other)
 
     def __rdiv__(self, other):
@@ -47,6 +61,11 @@ class Expression:
     def __pow__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if isinstance(other, Constant):
+            if other.Value == 0:
+                return Constant(1)
+            elif other.Value == 1:
+                return self
         return Power(self, other)
 
     def __rpow__(self, other):
@@ -54,8 +73,8 @@ class Expression:
             other = Constant(other)
         return Power(other, self)
 
-    def __neg__(self, other):
-        return Negation(self, other)
+    def __neg__(self):
+        return Negation(self)
 
     def __call__(self, other):
         processed = []
@@ -87,6 +106,7 @@ class BinaryExpression(Expression):
 
 class NAryExpression(Expression):
     def __init__(self, children):
+        assert isinstance(children, tuple)
         self.Children = children
 
     def __hash__(self):
@@ -99,36 +119,50 @@ class Constant(Expression):
     def __add__(self, other):
         if not isinstance(other, Expression):
             return Constant(self.Value + other)
+        if self.Value == 0:
+            return other
         return Sum((self, other))
 
     def __radd__(self, other):
         if not isinstance(other, Expression):
             return Constant(other + self.Value)
+        if self.Value == 0:
+            return other
         return Sum((other, self))
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
             return Constant(self.Value - other)
+        if self.Value == 0:
+            return Negation(other)
         return Sum((self, -other))
 
     def __rsub__(self, other):
         if not isinstance(other, Expression):
             return Constant(other - self.Value)
+        if self.Value == 0:
+            return other
         return Sum((other, -self))
 
     def __mul__(self, other):
         if not isinstance(other, Expression):
             return Constant(self.Value * other)
+        if self.Value == 1:
+            return other
         return Product((self, other))
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
             return Constant(other * self.Value)
+        if self.Value == 1:
+            return other
         return Product((other, self))
 
     def __div__(self, other):
         if not isinstance(other, Expression):
             return Constant(self.Value / other)
+        if self.Value == 1:
+            return other
         return Quotient(self, other)
 
     def __rdiv__(self, other):
@@ -139,14 +173,22 @@ class Constant(Expression):
     def __pow__(self, other):
         if not isinstance(other, Expression):
             return Constant(self.Value ** other)
+        if self.Value == 0:
+            return self
+        if self.Value == 1:
+            return self
         return Power(self, other)
 
     def __rpow__(self, other):
         if not isinstance(other, Expression):
             return Constant(other ** self.Value)
+        if self.Value == 1:
+            return other
+        if self.Value == 0:
+            return Constant(1)
         return Power(other, self)
 
-    def __neg__(self, other):
+    def __neg__(self):
         return Constant(-self.Value)
 
     def __call__(self, pars):
@@ -250,3 +292,25 @@ class Polynomial(Expression):
 class List(NAryExpression):
     def invoke_mapper(self, mapper):
         return mapper.map_list(self)
+
+
+
+
+
+# intelligent makers ---------------------------------------------------------
+def make_sum(components):
+    if len(components) == 0:
+        return primitives.Constant(0)
+    elif len(components) == 1:
+        return components[0]
+    else:
+        return Sum(components)
+
+def make_product(components):
+    if len(components) == 0:
+        return primitives.Constant(1)
+    elif len(components) == 1:
+        return components[0]
+    else:
+        return Product(components)
+

@@ -8,7 +8,7 @@ import math
 
 
 def map_math_functions_by_name(i, func, pars):
-    if not isinstance(func, primitives.Constant):
+    if not isinstance(func, primitives.Variable):
         raise RuntimeError, "No derivative of non-constant function "+str(func)
     name = func.Name
 
@@ -22,12 +22,11 @@ def map_math_functions_by_name(i, func, pars):
         return primitives.Constant(1)/pars[0]
     elif name == "exp" and len(pars) == 1:
         return primitives.Constant("exp")(pars)
-    else
+    else:
         return primitives.Constant(name+"'")(pars)
 
-
-class DifferentiationMapper(mapper.IdentityMapper):
-    def __init__(self, variable, parameters=[], func_map):
+class DifferentiationMapper:
+    def __init__(self, variable, parameters, func_map):
         self.Variable = variable
         self.Parameters = parameters
         self.FunctionMap = func_map
@@ -43,36 +42,28 @@ class DifferentiationMapper(mapper.IdentityMapper):
         else:
             return primitives.Constant(0)
 
-    def Call(self, expr):
-        result = tuple(
+    def map_call(self, expr):
+        return primitives.make_sum(tuple(
             self.FunctionMap(i, expr.Function, expr.Parameters)
             * par.invoke_mapper(self)
             for i, par in enumerate(expr.Parameters)
-            if not self._isc(par))
+            if not self._isc(par)))
 
-        if len(result) == 0:
-            return primitives.Constant(0)
-        elif len(result) == 1:
-            return result[0]
-        else:
-            return primitives.Sum(result)
+    def map_sum(self, expr):
+        return primitives.make_sum(tuple(child.invoke_mapper(self)
+                                           for child in expr.Children
+                                           if not self._isc(child)))
+
+    def map_neg(self, expr):
+        return -expr.Child.invoke_mapper(self)
 
     def map_product(self, expr):
-        result = tuple(
-            Primitives.Product(
-            expr.Children[0:i] +
-            child.invoke_mapper(+
-            expr.Children[i+1:]
+        return primitives.make_sum(tuple(
+            primitives.make_product(expr.Children[0:i] +
+                                    (child.invoke_mapper(self),) +
+                                    expr.Children[i+1:])
             for i, child in enumerate(expr.Children)
-            if not self._isc(child))
-
-        if len(result) == 0:
-            return primitives.Constant(0)
-        elif len(result) == 1:
-            return result[0]
-        else:
-            return primitives.Sum(result)
-
+            if not self._isc(child)))
 
     def map_quotient(self, expr):
         f = expr.Child1
@@ -114,10 +105,10 @@ class DifferentiationMapper(mapper.IdentityMapper):
     def map_polynomial(self, expr):
         raise NotImplementedError
     
-    def _isc(subexp):
+    def _isc(self,subexp):
         return constant_detector.is_constant(subexp, [self.Variable])
 
-    def _eval(subexp):
+    def _eval(self,subexp):
         try:
             return primitives.Constant(evaluator.evaluate(subexp))
         except KeyError:
@@ -126,5 +117,10 @@ class DifferentiationMapper(mapper.IdentityMapper):
 
 
 
-def differentiate(expression, variable, func_mapper=map_math_functions_by_name):
-    return expression.invoke_mapper(DifferentiationMapper(variable))
+def differentiate(expression, 
+                  variable, 
+                  parameters=[],
+                  func_mapper=map_math_functions_by_name):
+    return expression.invoke_mapper(DifferentiationMapper(variable,
+                                                          parameters,
+                                                          func_mapper))
