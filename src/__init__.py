@@ -22,5 +22,7 @@ if __name__ == "__main__":
     #print evaluate(ex, {"alpha":5, "cos":math.cos, "x":-math.pi, "pi":math.pi})
     #print is_constant(ex)
     #print substitute(ex, {"alpha": ex})
-    print differentiate(ex, "x")
+    ex2 = parse("cos(x**2/x)")
+    print ex2
+    print differentiate(ex2, "x")
 

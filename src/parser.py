@@ -78,40 +78,47 @@ def parse(expr_str):
 
         left_exp = parse_terminal(pstate)
 
-        if pstate.is_at_end():
-            return left_exp
+        did_something = True
+        while did_something:
+            did_something = False
+            if pstate.is_at_end():
+                return left_exp
+            
+            next_tag = pstate.next_tag()
 
-        next_tag = pstate.next_tag()
-
-        if next_tag is _openpar and _PREC_CALL >= min_precedence:
-            pstate.advance()
-            pstate.expect_not_end()
-            if pstate.next_tag is _closepar:
+            if next_tag is _openpar and _PREC_CALL >= min_precedence:
                 pstate.advance()
-                return primitives.Call(left_exp, ())
-            else:
-                result = primitives.Call(left_exp, 
-                                         tuple(parse_expr_list(pstate)))
-                pstate.expect(_closepar)
-                return result
+                pstate.expect_not_end()
+                if pstate.next_tag is _closepar:
+                    pstate.advance()
+                    left_exp = primitives.Call(left_exp, ())
+                else:
+                    left_exp = primitives.Call(left_exp, 
+                                             tuple(parse_expr_list(pstate)))
+                    pstate.expect(_closepar)
+                did_something = True
+            elif next_tag is _plus and _PREC_PLUS >= min_precedence:
+                pstate.advance()
+                left_exp = parse_expression(pstate, _PREC_PLUS)
+                did_something = True
+            elif next_tag is _minus and _PREC_PLUS >= min_precedence:
+                pstate.advance()
+                left_exp -= primitives.Negation(parse_expression(pstate, _PREC_PLUS))
+                did_something = True
+            elif next_tag is _times and _PREC_TIMES >= min_precedence:
+                pstate.advance()
+                left_exp *= parse_expression(pstate, _PREC_TIMES)
+                did_something = True
+            elif next_tag is _over and _PREC_TIMES >= min_precedence:
+                pstate.advance()
+                left_exp /= parse_expression(pstate, _PREC_TIMES)
+                did_something = True
+            elif next_tag is _power and _PREC_POWER >= min_precedence:
+                pstate.advance()
+                left_exp **= parse_expression(pstate, _PREC_POWER)
+                did_something = True
 
-        if next_tag is _plus and _PREC_PLUS >= min_precedence:
-            pstate.advance()
-            return left_exp+parse_expression(pstate, _PREC_PLUS)
-        elif next_tag is _minus and _PREC_PLUS >= min_precedence:
-            pstate.advance()
-            return left_exp-primitives.Negation(parse_expression(pstate, _PREC_PLUS))
-        elif next_tag is _times and _PREC_TIMES >= min_precedence:
-            pstate.advance()
-            return left_exp*parse_expression(pstate, _PREC_TIMES)
-        elif next_tag is _over and _PREC_TIMES >= min_precedence:
-            pstate.advance()
-            return left_exp/parse_expression(pstate, _PREC_TIMES)
-        elif next_tag is _power and _PREC_POWER >= min_precedence:
-            pstate.advance()
-            return left_exp**parse_expression(pstate, _PREC_TIMES)
-        else:
-            return left_exp
+        return left_exp
 
         
     pstate = lex.LexIterator([(tag, s, idx) 

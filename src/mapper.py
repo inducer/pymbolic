@@ -28,22 +28,22 @@ class CombineMapper(ByArityMapper):
         return expr.Child.invoke_mapper(self)
 
     def map_binary(self, expr):
-        return self.combine(expr.Child1.invoke_mapper(self),
-                            expr.Child2.invoke_mapper(self))
+        return self.combine((expr.Child1.invoke_mapper(self),
+                             expr.Child2.invoke_mapper(self)))
 
     def map_n_ary(self, expr):
         return self.combine(child.invoke_mapper(self)
                             for child in expr.Children)
 
     def map_polynomial(self, expr):
-        return self.combine([expr.Base.invoke_mapper(self)] 
-                            + [child.invoke_mapper(self)
-                               for child in expr.Children])
+        return self.combine((expr.Base.invoke_mapper(self)) 
+                            + (child.invoke_mapper(self)
+                               for child in expr.Children))
 
     def map_call(self, expr):
-        return self.combine([expr.Function.invoke_mapper(self)] 
-                            + [child.invoke_mapper(self)
-                               for child in expr.Parameters])
+        return self.combine((expr.Function.invoke_mapper(self))
+                            + (child.invoke_mapper(self)
+                               for child in expr.Parameters))
 
 
 
