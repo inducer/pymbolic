@@ -1,18 +1,19 @@
 import parser
-import evaluator
 import compiler
-import stringifier
-import constant_detector
-import substitutor
-import differentiator
+
+import mapper.evaluator
+import mapper.stringifier
+import mapper.constant_detector
+import mapper.substitutor
+import mapper.differentiator
 
 parse = parser.parse
-evaluate = evaluator.evaluate
+evaluate = mapper.evaluator.evaluate
 compile = compiler.compile
-stringify = stringifier.stringify
-is_constant = constant_detector.is_constant
-substitute = substitutor.substitute
-differentiate = differentiator.differentiate
+stringify = mapper.stringifier.stringify
+is_constant = mapper.constant_detector.is_constant
+substitute = mapper.substitutor.substitute
+differentiate = mapper.differentiator.differentiate
 
 if __name__ == "__main__":
     import math

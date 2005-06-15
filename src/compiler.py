@@ -1,4 +1,4 @@
-import stringifier
+import mapper.stringifier
 
 
 
@@ -24,7 +24,7 @@ class CompiledExpression:
             used_variables.add(var)
             return var
 
-        pythonified = stringifier.stringify(self.Expression)
+        pythonified = mapper.stringifier.stringify(self.Expression)
 
         used_variables = list(used_variables)
         used_variables.sort()

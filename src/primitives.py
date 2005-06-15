@@ -1,5 +1,5 @@
 import tests
-import stringifier
+import mapper.stringifier
 
 
 
@@ -40,7 +40,7 @@ class Expression:
     def __mul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        if test.is_one(other):
+        if tests.is_one(other):
             return self
         if tests.is_zero(other):
             return Constant(0)
@@ -87,18 +87,18 @@ class Expression:
     def __neg__(self):
         return Negation(self)
 
-    def __call__(self, other):
+    def __call__(self, *pars):
         processed = []
-        for par in other:
+        for par in pars:
             if isinstance(par, Expression):
                 processed.append(par)
             else:
                 processed.append(Constant(par))
 
-        return Call(self, processed)
+        return Call(self, tuple(processed))
 
     def __str__(self):
-        return self.invoke_mapper(stringifier.StringifyMapper())
+        return self.invoke_mapper(mapper.stringifier.StringifyMapper())
 
 class UnaryExpression(Expression):
     def __init__(self, child):
@@ -309,66 +309,15 @@ class Power(BinaryExpression):
     def invoke_mapper(self, mapper):
         return mapper.map_power(self)
 
-class Polynomial(Expression):
-    def __init__(self, base, coeff):
-        self.Base = base
-
-        # list of (exponent, coefficient tuples)
-        # sorted in increasing order
-        # one entry per degree
-        self.Data = children 
-        
-        # Remember the Zen, Luke: Sparse is better than dense.
-
-    def __neg__(self):
-        return Polynomial(self.Base,
-                          [(exp, -coeff)
-                           for (exp, coeff) in self.Data])
-
-    def __add__(self, other):
-        if not isinstance(other, Polynomial) or other.Base != self.Base:
-            return Expression.__add__(self, other)
-
-        iself = 0
-        iother = 0
-
-        result = []
-        while iself < len(self.Data) and iother < len(other.Data):
-            exp_self = self.Data[iself][0]
-            exp_other = other.Data[iother][0]
-            if exp_self == exp_other:
-                coeff = self.Data[iself][1] + other.Data[iother][1]
-                if coeff != Constant(0):
-                    result.append((exp_self, coeff))
-                iself += 1
-                iother += 1
-            elif exp_self > exp_other:
-                result.append((exp_other, other.Data[iother][1]))
-                iother += 1
-            elif exp_self < exp_other:
-                result.append((exp_self, self.Data[iself][1]))
-                iself += 1
-
-        # we have exhausted at least one list, exhaust the other
-        while iself < len(self.Data):
-            exp_self = self.Data[iself][0]
-            result.append((exp_self, self.Data[iself][1]))
-            iself += 1
-                
-        while iother < len(other.Data):
-            exp_other = other.Data[iother][0]
-            result.append((exp_other, other.Data[iother][1]))
-            iother += 1
-
-        return Polynomial(self.Base, result)
-
-    def __mul__(self, other):
-        if not isinstance(other, Polynomial) or other.Base != self.Base:
-            return Expression.__mul__(self, other)
-        raise NotImplementedError
+class PolynomialExpression(Expression):
+    def __init__(self, base=None, data=None, polynomial=None):
+        if polynomial:
+            self.Polynomial = polynomial
+        else:
+            self.Polynomial = polynomial.Polynomial(base, data)
 
     def __hash__(self):
-        return hash(self.Base) ^ hash(self.Children)
+        return ~hash(self.Polynomial)
 
     def invoke_mapper(self, mapper):
         return mapper.map_polynomial(self)
