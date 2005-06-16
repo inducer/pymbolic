@@ -28,8 +28,8 @@ class EvaluationMapper:
             result *= child.invoke_mapper(self)
         return result
 
-    def map_quotient(self, expr):
-        return expr.Child1.invoke_mapper(self) / expr.Child2.invoke_mapper(self)
+    def map_rational(self, expr):
+        return expr.numerator.invoke_mapper(self) / expr.denominator.invoke_mapper(self)
 
     def map_power(self, expr):
         return expr.Child1.invoke_mapper(self) ** expr.Child2.invoke_mapper(self)
