@@ -6,7 +6,7 @@ def degree(x):
 
     
 def gcd_extended(x, y):
-    
+    pass
 
 
 

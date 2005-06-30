@@ -31,11 +31,11 @@ class Traits:
 
         "Degree" is used as in the definition of a Euclidean ring,
         see [Bosch], p. 42
-        """"
+        """
         raise NotImplementedError
 
     def gcd_extended(self, q, r): 
-        """Returns a tuple 
+        """Returns a tuple ..."""
 
     def gcd(self): raise NotImplementedError
     def lcm(self): raise NotImplementedError
