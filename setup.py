@@ -13,6 +13,6 @@ setup(name="pymbolic",
       author_email="inform@tiker.net",
       license = "BSD, like Python itself",
       url="http://news.tiker.net/software/pymbolic",
-      packages=["fempy"],
-      package_dir={"fempy": "src"}
+      packages=["pymbolic"],
+      package_dir={"pymbolic": "src"}
      )
