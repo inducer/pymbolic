@@ -1,4 +1,3 @@
-import tests
 import mapper.stringifier
 
 
@@ -8,14 +7,14 @@ class Expression(object):
     def __add__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        if tests.is_zero(other):
+        if not other:
             return self
         return Sum((self, other))
 
     def __radd__(self, other):
         assert not isinstance(other, Expression)
 
-        if other == 0:
+        if not other:
             return self
         else:
             other = Constant(other)
@@ -24,14 +23,14 @@ class Expression(object):
     def __sub__(self, other):
         if not isinstance(other, Expression):
                 other = Constant(other)
-        if tests.is_zero(other):
+        if not other:
             return self
         return Sum((self, -other))
 
     def __rsub__(self, other):
         assert not isinstance(other, Expression)
 
-        if other == 0:
+        if not other:
             return Negation(self)
         else:
             other = Constant(other)
@@ -40,18 +39,18 @@ class Expression(object):
     def __mul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        if tests.is_one(other):
+        if not (other - 1):
             return self
-        if tests.is_zero(other):
+        if not other:
             return Constant(0)
         return Product((self, other))
 
     def __rmul__(self, other):
         assert not isinstance(other, Expression)
 
-        if other == 1:
+        if not (other-1):
             return self
-        elif other == 0:
+        elif not other:
             return Constant(0)
         else:
             return Product((other, self))
@@ -59,7 +58,7 @@ class Expression(object):
     def __div__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        if isinstance(other, Constant) and other.Value == 1:
+        if not (other-1):
             return self
         return RationalExpression(self, other)
 
@@ -70,17 +69,17 @@ class Expression(object):
     def __pow__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        if tests.is_zero(other): # exponent zero
+        if not other: # exponent zero
             return Constant(1)
-        elif tests.is_one(other): # exponent one
+        elif not (other-1): # exponent one
             return self
         return Power(self, other)
 
     def __rpow__(self, other):
         assert not isinstance(other, Expression)
-        if tests.is_zero(other): # base zero
+        if not other: # base zero
             return Constant(0)
-        elif tests.is_one(other): # base one
+        elif not (other-1): # base one
             return Constant(1)
         return Power(other, self)
 
