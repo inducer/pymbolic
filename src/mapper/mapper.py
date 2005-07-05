@@ -37,14 +37,14 @@ class CombineMapper(ByArityMapper):
                             for child in expr.Children)
 
     def map_polynomial(self, expr):
-        return self.combine((expr.Base.invoke_mapper(self)) 
-                            + (child.invoke_mapper(self)
-                               for child in expr.Children))
+        return self.combine([expr.Base.invoke_mapper(self)] +
+                            [child.invoke_mapper(self)
+                             for child in expr.Children])
 
     def map_call(self, expr):
-        return self.combine((expr.Function.invoke_mapper(self))
-                            + (child.invoke_mapper(self)
-                               for child in expr.Parameters))
+        return self.combine([expr.Function.invoke_mapper(self)] + 
+                            [child.invoke_mapper(self)
+                             for child in expr.Parameters])
 
 
 

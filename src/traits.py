@@ -3,13 +3,22 @@ import algorithm
 
 
 
+class NoTraitsError(Exception):
+    pass
+
+class NoCommonTraitsError(Exception):
+    pass
+
+
+
+
 def traits(x):
     try:
         return x.traits()
     except AttributeError:
         if isinstance(x, (complex, float)): return FieldTraits
         if isinstance(x, int): return IntegerTraits
-        raise NotImplementedError
+        raise NoTraitsError
 
 
 
@@ -21,7 +30,8 @@ def common_traits(*args):
         elif isinstance(t_x, t_y.__class__):
             return t_x
         else:
-            raise RuntimeError, "No common traits type between '%s' and '%s'" % \
+            raise NoCommonTraitsError, \
+                  "No common traits type between '%s' and '%s'" % \
                   (t_x.__class__.__name__, t_y.__class__.__name__)
 
     return reduce(common_traits_two, (traits(arg) for arg in args))

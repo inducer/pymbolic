@@ -19,9 +19,9 @@ class StringifyMapper:
     def map_product(self, expr):
         return "(%s)" % "*".join(i.invoke_mapper(self) for i in expr.Children)
 
-    def map_quotient(self, expr):
-        return "(%s/%s)" % (expr.Child1.invoke_mapper(self), 
-                            expr.Child2.invoke_mapper(self))
+    def map_rational(self, expr):
+        return "(%s/%s)" % (expr.numerator.invoke_mapper(self), 
+                            expr.denominator.invoke_mapper(self))
 
     def map_power(self, expr):
         return "(%s**%s)" % (expr.Child1.invoke_mapper(self), 

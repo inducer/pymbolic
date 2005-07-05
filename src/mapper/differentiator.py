@@ -65,9 +65,9 @@ class DifferentiationMapper:
             for i, child in enumerate(expr.Children)
             if not self._isc(child)))
 
-    def map_quotient(self, expr):
-        f = expr.Child1
-        g = expr.Child2
+    def map_rational(self, expr):
+        f = expr.numerator
+        g = expr.denominator
         f_const = self._isc(f)
         g_const = self._isc(g)
 

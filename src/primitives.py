@@ -1,3 +1,4 @@
+import rational as rat
 import mapper.stringifier
 
 
@@ -60,11 +61,11 @@ class Expression(object):
             other = Constant(other)
         if not (other-1):
             return self
-        return RationalExpression(self, other)
+        return make_quotient(self, other)
 
     def __rdiv__(self, other):
         assert not isinstance(other, Expression)
-        return RationalExpression(Constant(other), self)
+        return make_quotient(Constant(other), self)
 
     def __pow__(self, other):
         if not isinstance(other, Expression):
@@ -285,7 +286,7 @@ class Sum(NAryExpression):
             return bool(self.Children[0])
         else:
             # FIXME: Right semantics?
-            return False
+            return True
 
     def invoke_mapper(self, mapper):
         return mapper.map_sum(self)
@@ -318,30 +319,49 @@ class Product(NAryExpression):
     def invoke_mapper(self, mapper):
         return mapper.map_product(self)
 
-class RationalExpression(Expression):
-    def __init__(self, numerator=None, denominator=1, rational=None):
-        if rational:
-            self.Rational = rational
-        else:
-            self.Rational = rat.Rational(numerator, denominator)
+class QuotientExpression(Expression):
+    def __init__(self, numerator, denominator=1):
+        self.Numerator = numerator
+        self.Denominator = denominator
 
     def _num(self):
-        return self.Rational.numerator
+        return self.Numerator
     numerator=property(_num)
 
     def _den(self):
-        return self.Rational.denominator
+        return self.Denominator
     denominator=property(_den)
 
     def __nonzero__(self):
-        return bool(self.Rational)
+        return bool(self.Numerator)
 
     def __hash__(self):
-        return hash(self.Rational)
+        return 0xa0a0aa ^ hash(self.Numerator) ^ hash(self.Denominator)
 
     def invoke_mapper(self, mapper):
         return mapper.map_rational(self)
 
+class RationalExpression(Expression):
+    def __init__(self, numerator, denominator=1):
+        self.Numerator = numerator
+        self.Denominator = denominator
+
+    def _num(self):
+        return self.Numerator
+    numerator=property(_num)
+
+    def _den(self):
+        return self.Denominator
+    denominator=property(_den)
+
+    def __nonzero__(self):
+        return bool(self.Numerator)
+
+    def __hash__(self):
+        return 0xa0a0aa ^ hash(self.Numerator) ^ hash(self.Denominator)
+
+    def invoke_mapper(self, mapper):
+        return mapper.map_rational(self)
 
 class Power(BinaryExpression):
     def invoke_mapper(self, mapper):
@@ -388,3 +408,15 @@ def make_product(components):
 def polynomial_from_expression(expression):
     pass
 
+def make_quotient(numerator, denominator):
+    try:
+        if isinstance(traits.traits(numerator, denominator), EuclideanRingTraits):
+            return RationalExpression(numerator, denominator)
+    except traits.NoCommonTraitsError:
+        pass
+    except traits.NoTraitsError:
+        pass
+
+    return QuotientExpression(numerator, denominator)
+
+# FIXME: add traits types to expressions
