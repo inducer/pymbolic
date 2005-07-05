@@ -1,5 +1,5 @@
 import primitives
-import lex
+import pytools.lex
 
 _imaginary = intern("imaginary")
 _float = intern("float")
@@ -18,23 +18,23 @@ _whitespace = intern("whitespace")
 _comma = intern("comma")
 
 _LEX_TABLE = [
-    (_imaginary, (_float, lex.RE("j"))),
+    (_imaginary, (_float, pytools.lex.RE("j"))),
     (_float, ("|", 
-               lex.RE(r"-?[0-9]*\.[0-9]+([eE][0-9]+)?"),
-               lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE][0-9]+"))),
-    (_int, lex.RE(r"-?[0-9]+")),
-    (_plus, lex.RE(r"\+")),
-    (_minus, lex.RE(r"-")),
-    (_power, lex.RE(r"\*\*")),
-    (_times, lex.RE(r"\*")),
-    (_over, lex.RE(r"/")),
-    (_openpar, lex.RE(r"\(")),
-    (_closepar, lex.RE(r"\)")),
-    (_openbracket, lex.RE(r"\[")),
-    (_closebracket, lex.RE(r"\]")),
-    (_identifier, lex.RE(r"[a-zA-Z_]+")),
-    (_whitespace, lex.RE("[ \n\t]*")),
-    (_comma, lex.RE(",")),
+               pytools.lex.RE(r"-?[0-9]*\.[0-9]+([eE][0-9]+)?"),
+               pytools.lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE][0-9]+"))),
+    (_int, pytools.lex.RE(r"-?[0-9]+")),
+    (_plus, pytools.lex.RE(r"\+")),
+    (_minus, pytools.lex.RE(r"-")),
+    (_power, pytools.lex.RE(r"\*\*")),
+    (_times, pytools.lex.RE(r"\*")),
+    (_over, pytools.lex.RE(r"/")),
+    (_openpar, pytools.lex.RE(r"\(")),
+    (_closepar, pytools.lex.RE(r"\)")),
+    (_openbracket, pytools.lex.RE(r"\[")),
+    (_closebracket, pytools.lex.RE(r"\]")),
+    (_identifier, pytools.lex.RE(r"[a-zA-Z_]+")),
+    (_whitespace, pytools.lex.RE("[ \n\t]*")),
+    (_comma, pytools.lex.RE(",")),
     ]
 
 _PREC_PLUS = 10
@@ -121,9 +121,10 @@ def parse(expr_str):
         return left_exp
 
         
-    pstate = lex.LexIterator([(tag, s, idx) 
-                              for (tag, s, idx) in lex.lex(_LEX_TABLE, expr_str)
-                              if tag is not _whitespace], expr_str)
+    pstate = pytools.lex.LexIterator(
+        [(tag, s, idx) 
+         for (tag, s, idx) in pytools.lex.lex(_LEX_TABLE, expr_str)
+         if tag is not _whitespace], expr_str)
 
     return parse_expression(pstate)
     

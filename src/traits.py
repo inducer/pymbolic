@@ -1,9 +1,14 @@
+import algorithm
+
+
+
+
 def traits(x):
     try:
         return x.traits()
     except AttributeError:
-        if isinstance(x, complex): return ComplexTraits
-        if isinstance(x, float, int): return RealTraits
+        if isinstance(x, (complex, float)): return FieldTraits
+        if isinstance(x, int): return IntegerTraits
         raise NotImplementedError
 
 
@@ -24,41 +29,46 @@ def common_traits(*args):
 
 
 
-class Traits:
-    def one(self): raise NotImplementedError
-    def zero(self): raise NotImplementedError
+class Traits(object):
+    pass
 
 
 
 
 class EuclideanRingTraits(Traits):
-    @staticmethod
-    def norm(x):
+    @classmethod
+    def norm(cls, x):
         """Returns the algebraic norm of the element x.
  
         "Norm" is used as in the definition of a Euclidean ring,
         see [Bosch], p. 42
-        """"
         """
         raise NotImplementedError
 
     @staticmethod
     def gcd_extended(q, r): 
-        """Returns a tuple """
-        raise NotImplementedError
+        """Return a tuple (p, a, b) such that p = aq + br, 
+        where p is the greatest common divisor.
+        """
+        return algorithm.extended_euclidean(q, r)
  
-    def gcd_extended(self, q, r): 
-        """Returns a tuple """
+    @staticmethod
+    def gcd(q, r): 
+        """Returns the greatest common divisor of q and r.
+        """
+        return algorithm.extended_euclidean(q, r)[0]
+
+    @classmethod
+    def lcm(cls, a, b):
+        """Returns the least common multiple of a and b.
+        """
+        return a * b / cls.gcd(a, b)
 
     @staticmethod
-    def gcd(self): 
+    def get_unit(x):
+        """Returns the unit in the prime factor decomposition of x.
+        """
         raise NotImplementedError
-
-    @staticmethod
-    def lcm(a, b): raise NotImplementedError
-
-    @staticmethod
-    def lcm_extended(a, b): raise NotImplementedError
 
 
 
@@ -66,3 +76,19 @@ class EuclideanRingTraits(Traits):
 class FieldTraits(Traits):
     pass
 
+
+
+
+class IntegerTraits(EuclideanRingTraits):
+    @staticmethod
+    def norm(x):
+        return abs(x)
+
+    @staticmethod
+    def get_unit(x):
+        if x < 0:
+            return -1
+        elif x > 0:
+            return 1
+        else:
+            raise RuntimeError, "0 does not have a prime factor decomposition"

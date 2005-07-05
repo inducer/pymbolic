@@ -334,11 +334,7 @@ class RationalExpression(Expression):
     denominator=property(_den)
 
     def __nonzero__(self):
-        return
-        for i in self.Children:
-            if not i:
-                return False
-        return True
+        return bool(self.Rational)
 
     def __hash__(self):
         return hash(self.Rational)

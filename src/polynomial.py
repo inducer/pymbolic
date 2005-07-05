@@ -1,6 +1,6 @@
 from __future__ import division
-import algorithm
-import traits
+import pymbolic.algorithm as algorithm
+import pymbolic.traits as traits
 
 
 
@@ -41,12 +41,6 @@ class Polynomial(object):
 
     def coefficients(self):
         return [coeff for (exp, coeff) in self.Data]
-
-    def degree(self):
-        try:
-            return self.Data[-1][0]
-        except IndexError:
-            return -1
 
     def traits(self):
         return PolynomialTraits()
@@ -132,14 +126,14 @@ class Polynomial(object):
             return Polynomial(self.Base, [(exp, quot) for (exp, (quot, rem)) in dm_list]),\
                    Polynomial(self.Base, [(exp, rem) for (exp, (quot, rem)) in dm_list])
 
-        if other.degree() == -1:
+        if other.degree == -1:
             raise DivisionByZeroError
 
         quotient = Polynomial(self.Base, ())
         remainder = self
         other_lead_coeff = other.Data[-1][1]
         other_lead_exp = other.Data[-1][0]
-        while remainder.degree() >= other.degree():
+        while remainder.degree >= other.degree:
             coeff_factor = remainder.Data[-1][1] / other_lead_coeff
             deg_diff = remainder.Data[-1][0] - other_lead_exp
 
@@ -150,7 +144,7 @@ class Polynomial(object):
 
     def __div__(self):
         q, r = self.__divmod__(self, other)
-        if r.degree() != -1:
+        if r.degree != -1:
             raise ValueError, "division yielded a remainder"
         return q
 
@@ -180,6 +174,21 @@ class Polynomial(object):
 
         return "(%s)" % " + ".join(stringify_expcoeff(i) for i in self.Data[::-1])
 
+    def _data(self):
+        return self.Data
+    data = property(_data)
+
+    def _base(self):
+        return self.Base
+    base = property(_base)
+
+    def _degree(self):
+        try:
+            return self.Data[-1][0]
+        except IndexError:
+            return -1
+    degree = property(_degree)
+
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self.Base), 
@@ -191,11 +200,31 @@ class Polynomial(object):
 
 
 
+def derivative(poly):
+    return Polynomial(
+        poly.base,
+        tuple((exp-1, exp*coeff)
+              for exp, coeff in poly.data
+              if not exp == 0))
+
+
+
+def leading_coefficient(poly):
+    return poly.data[-1][1]
+
+
+
+
 class PolynomialTraits(traits.EuclideanRingTraits):
     @staticmethod
     def norm(x):
-        return x.degree()
+        return x.degree
     
+    @staticmethod
+    def get_unit(x):
+        lc = leading_coefficient(x)
+        return traits.traits(lc).get_unit(lc)
+
 
 
    
@@ -208,7 +237,7 @@ if __name__ == "__main__":
     print ypoly
     u = xpoly*ypoly
     print u
-    print u**4
+    print u**18
     print
 
     print 3*xpoly**3 + 1
