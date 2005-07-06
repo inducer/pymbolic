@@ -48,6 +48,13 @@ class Polynomial(object):
     def __nonzero__(self):
         return len(self.Data) != 0
 
+    def __eq__(self, other):
+        return isinstance(other, Polynomial) \
+               and (self.Base == other.Base) \
+               and (self.Data == other.Data)
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __neg__(self):
         return Polynomial(self.Base,
                           [(exp, -coeff)

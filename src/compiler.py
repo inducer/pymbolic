@@ -1,4 +1,5 @@
-import mapper.stringifier
+import pymbolic.mapper.stringifier
+import pymbolic.mapper.dependency
 
 
 
@@ -15,14 +16,6 @@ class CompiledExpression:
     def __compile__(self):
         # FIXME
         used_variables = sets.Set()
-
-        def addVariable(var):
-            try:
-                var = self.VariableSubstitutions[var]
-            except:
-                pass
-            used_variables.add(var)
-            return var
 
         pythonified = mapper.stringifier.stringify(self.Expression)
 

@@ -13,6 +13,6 @@ setup(name="pymbolic",
       author_email="inform@tiker.net",
       license = "BSD, like Python itself",
       url="http://news.tiker.net/software/pymbolic",
-      packages=["pymbolic"],
-      package_dir={"pymbolic": "src"}
+      packages=["pymbolic", "pymbolic.mapper"],
+      package_dir={"pymbolic": "src", "pymbolic.mapper":"src/mapper"}
      )

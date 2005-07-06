@@ -25,6 +25,13 @@ class Rational(object):
     def __neg__(self):
         return Rational(-self.Numerator, self.Denominator)
 
+    def __eq__(self):
+        if not isinstance(other, Rational):
+            other = Rational(other)
+
+        return self.Numerator == other.Numerator and \
+               self.Denominator == other.Denominator
+
     def __add__(self, other):
         if not isinstance(other, Rational):
             other = Rational(other)

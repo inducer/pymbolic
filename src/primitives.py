@@ -1,10 +1,15 @@
+import traits
 import rational as rat
-import mapper.stringifier
+import pymbolic.mapper.stringifier
+import pymbolic.mapper.hash_generator
 
 
 
 
 class Expression(object):
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __add__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
@@ -97,142 +102,124 @@ class Expression(object):
 
         return Call(self, tuple(processed))
 
+    def __hash__(self):
+        try:
+            return self._HashValue
+        except AttributeError:
+            self._HashValue = self.invoke_mapper(pymbolic.mapper.hash_generator.HashMapper())
+            return self._HashValue
+
     def __str__(self):
-        return self.invoke_mapper(mapper.stringifier.StringifyMapper())
-
-class UnaryExpression(Expression):
-    def __init__(self, child):
-        self.Child = child
-
-    def __hash__(self):
-        return ~hash(self.Child)
-
-class BinaryExpression(Expression):
-    def __init__(self, child1, child2):
-        self.Child1 = child1
-        self.Child2 = child2
-
-    def __hash__(self):
-        return hash(self.Child1) ^ hash(self.Child2)
-
-class NAryExpression(Expression):
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self.Children = children
-
-    def __hash__(self):
-        return hash(self.Children)
+        return self.invoke_mapper(pymbolic.mapper.stringifier.StringifyMapper())
 
 class Constant(Expression):
     def __init__(self, value):
-        self.Value = value
+        self._Value = value
+
+    def _value(self):
+        return self._Value
+    value = property(_value)
 
     def __eq__(self, other):
-        return isinstance(other, Constant) and self.Value == other.Value
-
-    def __ne__(self, other):
-        return not isinstance(other, Constant) or self.Value != other.Value
+        return isinstance(other, Constant) and self._Value == other._Value
 
     def __add__(self, other):
         if not isinstance(other, Expression):
-            return Constant(self.Value + other)
+            return Constant(self._Value + other)
         if isinstance(other, Constant):
-            return Constant(self.Value + other.Value)
-        if self.Value == 0:
+            return Constant(self._Value + other._Value)
+        if self._Value == 0:
             return other
         return Expression.__add__(self, other)
 
     def __radd__(self, other):
         if not isinstance(other, Expression):
-            return Constant(other + self.Value)
-        if self.Value == 0:
+            return Constant(other + self._Value)
+        if self._Value == 0:
             return other
         return Expression.__radd__(self, other)
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
-            return Constant(self.Value - other)
+            return Constant(self._Value - other)
         if isinstance(other, Constant):
-            return Constant(self.Value - other.Value)
-        if self.Value == 0:
+            return Constant(self._Value - other._Value)
+        if self._Value == 0:
             return Negation(other)
         return Expression.__sub__(self, other)
 
     def __rsub__(self, other):
         if not isinstance(other, Expression):
-            return Constant(other - self.Value)
-        if self.Value == 0:
+            return Constant(other - self._Value)
+        if self._Value == 0:
             return other
         return Expression.__rsub__(self, other)
 
     def __mul__(self, other):
         if not isinstance(other, Expression):
-            return Constant(self.Value * other)
+            return Constant(self._Value * other)
         if isinstance(other, Constant):
-            return Constant(self.Value * other.Value)
-        if self.Value == 1:
+            return Constant(self._Value * other._Value)
+        if self._Value == 1:
             return other
-        if self.Value == 0:
+        if self._Value == 0:
             return self
         return Expression.__mul__(self, other)
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
-            return Constant(other * self.Value)
-        if self.Value == 1:
+            return Constant(other * self._Value)
+        if self._Value == 1:
             return other
-        if self.Value == 0:
+        if self._Value == 0:
             return self
         return Expression.__rmul__(self, other)
 
     def __div__(self, other):
         if not isinstance(other, Expression):
-            return Constant(self.Value / other)
+            return Constant(self._Value / other)
         if isinstance(other, Constant):
-            return Constant(self.Value / other.Value)
-        if self.Value == 0:
+            return Constant(self._Value / other._Value)
+        if self._Value == 0:
             return self
         return Expression.__div__(self, other)
 
     def __rdiv__(self, other):
         if not isinstance(other, Expression):
-            return Constant(other / self.Value)
-        if self.Value == 1:
+            return Constant(other / self._Value)
+        if self._Value == 1:
             return other
         return Expression.__rdiv__(self, other)
 
     def __pow__(self, other):
         if not isinstance(other, Expression):
-            return Constant(self.Value ** other)
+            return Constant(self._Value ** other)
         if isinstance(other, Constant):
-            return Constant(self.Value ** other.Value)
-        if self.Value == 1:
+            return Constant(self._Value ** other._Value)
+        if self._Value == 1:
             return self
         return Expression.__pow__(self, other)
 
     def __rpow__(self, other):
         if not isinstance(other, Expression):
-            return Constant(other ** self.Value)
-        if self.Value == 0:
+            return Constant(other ** self._Value)
+        if self._Value == 0:
             return Constant(1)
-        if self.Value == 1:
+        if self._Value == 1:
             return other
         return Expression.__rpow__(self, other)
 
     def __neg__(self):
-        return Constant(-self.Value)
+        return Constant(-self._Value)
 
     def __call__(self, *pars):
         for par in pars:
             if isinstance(par, Expression):
                 return Expression.__call__(self, *pars)
-        return self.Value(*pars)
+        return self._Value(*pars)
 
     def __nonzero__(self):
-        return bool(self.Value)
-
-    def __hash__(self):
-        return hash(self.Value)
+        return bool(self._Value)
 
     def invoke_mapper(self, mapper):
         return mapper.map_constant(self)
@@ -240,50 +227,110 @@ class Constant(Expression):
 
 class Variable(Expression):
     def __init__(self, name):
-        self.Name = name
+        self._Name = name
 
-    def __hash__(self):
-        return hash(self.Name)
+    def _name(self):
+        return self._Name
+    name = property(_name)
+
+    def __eq__(self, other):
+        return isinstance(other, Variable) and self._Name == other._Name
 
     def invoke_mapper(self, mapper):
         return mapper.map_variable(self)
 
 class Call(Expression):
-    def __init__(self, func, parameters):
-        self.Function = func
-        self.Parameters = parameters
+    def __init__(self, function, parameters):
+        self._Function = function
+        self._Parameters = parameters
+
+    def _function(self):
+        return self._Function
+    function = property(_function)
+
+    def _parameters(self):
+        return self._Parameters
+    parameters = property(_parameters)
+
+    def __eq__(self, other):
+        return isinstance(other, Call) \
+               and (self._Function == other._Function) \
+               and (self._Parameters == other._Parameters)
 
     def invoke_mapper(self, mapper):
         return mapper.map_call(self)
 
-    def __hash__(self):
-        return hash(self.Function) ^ hash(self.Parameters)
+class Subscript(Expression):
+    def __init__(self, aggregate, index):
+        self._Aggregate = aggregate
+        self._Index = index
 
-class Sum(NAryExpression):
+    def _aggregate(self):
+        return self._Aggregate
+    aggregate = property(_aggregate)
+
+    def _index(self):
+        return self._Index
+    index = property(_index)
+
+    def __eq__(self, other):
+        return isinstance(other, Subscript) \
+               and (self._Aggregate == other._Aggregate) \
+               and (self._Index == other._Index)
+
+    def invoke_mapper(self, mapper):
+        return mapper.map_subscript(self)
+
+class Negation(Expression):
+    def __init__(self, child):
+        self._Child = child
+
+    def _child(self):
+        return self._Child
+    child = property(_child)
+
+    def __eq__(self, other):
+        return isinstance(other, Negation) and (self.Child == other.Child)
+
+    def invoke_mapper(self, mapper):
+        return mapper.map_negation(self)
+
+class Sum(Expression):
+    def __init__(self, children):
+        assert isinstance(children, tuple)
+        self._Children = children
+
+    def _children(self):
+        return self._Children
+    children = property(_children)
+
+    def __eq__(self, other):
+        return isinstance(other, Sum) and (self._Children == other._Children)
+
     def __add__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
-            return Sum(self.Children + other.Children)
-        return Sum(self.Children + (other,))
+            return Sum(self._Children + other._Children)
+        return Sum(self._Children + (other,))
 
     def __radd__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
-            return Sum(other.Children + self.Children)
-        return Sum(other, + self.Children)
+            return Sum(other._Children + self._Children)
+        return Sum(other, + self._Children)
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        return Sum(self.Children + (-other,))
+        return Sum(self._Children + (-other,))
 
     def __nonzero__(self):
-        if len(self.Children) == 0:
+        if len(self._Children) == 0:
             return True
-        elif len(self.Children) == 1:
-            return bool(self.Children[0])
+        elif len(self._Children) == 1:
+            return bool(self._Children[0])
         else:
             # FIXME: Right semantics?
             return True
@@ -291,27 +338,34 @@ class Sum(NAryExpression):
     def invoke_mapper(self, mapper):
         return mapper.map_sum(self)
 
-class Negation(UnaryExpression):
-    def invoke_mapper(self, mapper):
-        return mapper.map_negation(self)
+class Product(Expression):
+    def __init__(self, children):
+        assert isinstance(children, tuple)
+        self._Children = children
 
-class Product(NAryExpression):
+    def _children(self):
+        return self._Children
+    children = property(_children)
+
+    def __eq__(self, other):
+        return isinstance(other, Product) and (self._Children == other._Children)
+
     def __mul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Product):
-            return Product(self.Children + other.Children)
-        return Product(self.Children + (other,))
+            return Product(self._Children + other._Children)
+        return Product(self._Children + (other,))
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Product):
-            return Product(other.Children + self.Children)
-        return Product(other, + self.Children)
+            return Product(other._Children + self._Children)
+        return Product(other, + self._Children)
 
     def __nonzero__(self):
-        for i in self.Children:
+        for i in self._Children:
             if not i:
                 return False
         return True
@@ -332,55 +386,87 @@ class QuotientExpression(Expression):
         return self.Denominator
     denominator=property(_den)
 
+    def __eq__(self, other):
+        return isinstance(other, Subscript) \
+               and (self.Numerator == other.Numerator) \
+               and (self.Denominator == other.Denominator)
+
     def __nonzero__(self):
         return bool(self.Numerator)
-
-    def __hash__(self):
-        return 0xa0a0aa ^ hash(self.Numerator) ^ hash(self.Denominator)
 
     def invoke_mapper(self, mapper):
         return mapper.map_rational(self)
 
 class RationalExpression(Expression):
-    def __init__(self, numerator, denominator=1):
-        self.Numerator = numerator
-        self.Denominator = denominator
+    def __init__(self, rational):
+        self.Rational = rational
 
     def _num(self):
-        return self.Numerator
+        return self.Rational.numerator
     numerator=property(_num)
 
     def _den(self):
-        return self.Denominator
+        return self.Rational.denominator
     denominator=property(_den)
 
     def __nonzero__(self):
-        return bool(self.Numerator)
-
-    def __hash__(self):
-        return 0xa0a0aa ^ hash(self.Numerator) ^ hash(self.Denominator)
+        return bool(self.Rational)
 
     def invoke_mapper(self, mapper):
         return mapper.map_rational(self)
 
-class Power(BinaryExpression):
+class Power(Expression):
+    def __init__(self, base, exponent):
+        self._Base = base
+        self._Exponent = exponent
+
+    def _base(self):
+        return self._Base
+    base = property(_base)
+
+    def _exponent(self):
+        return self._Exponent
+    exponent = property(_exponent)
+
+    def __eq__(self, other):
+        return isinstance(other, Power) \
+               and (self._Base == other._Base) \
+               and (self._Exponent == other._Exponent)
+
     def invoke_mapper(self, mapper):
         return mapper.map_power(self)
 
 class PolynomialExpression(Expression):
     def __init__(self, base=None, data=None, polynomial=None):
         if polynomial:
-            self.Polynomial = polynomial
+            self._Polynomial = polynomial
         else:
-            self.Polynomial = polynomial.Polynomial(base, data)
+            self._Polynomial = polynomial.Polynomial(base, data)
+            
+    def _polynomial(self):
+        return self._Polynomial
+    polynomial = property(_polynomial)
 
-    def __hash__(self):
-        return hash(self.Polynomial)
+    def __eq__(self, other):
+        return isinstance(other, PolynomialExpression) \
+               and (self._Polynomial == other._Polynomial)
 
     def invoke_mapper(self, mapper):
         return mapper.map_polynomial(self)
 
-class List(NAryExpression):
+class List(Expression):
+    def __init__(self, children):
+        assert isinstance(children, tuple)
+        self._Children = children
+
+    def _children(self):
+        return self.Children
+    children = property(_children)
+
+    def __eq__(self, other):
+        return isinstance(other, List) \
+               and (self.Children == other.Children)
+
     def invoke_mapper(self, mapper):
         return mapper.map_list(self)
 
@@ -410,7 +496,8 @@ def polynomial_from_expression(expression):
 
 def make_quotient(numerator, denominator):
     try:
-        if isinstance(traits.traits(numerator, denominator), EuclideanRingTraits):
+        if isinstance(traits.common_traits(numerator, denominator), 
+                      EuclideanRingTraits):
             return RationalExpression(numerator, denominator)
     except traits.NoCommonTraitsError:
         pass

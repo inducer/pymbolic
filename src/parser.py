@@ -1,4 +1,4 @@
-import primitives
+import pymbolic.primitives as primitives
 import pytools.lex
 
 _imaginary = intern("imaginary")
@@ -97,13 +97,19 @@ def parse(expr_str):
                                              tuple(parse_expr_list(pstate)))
                     pstate.expect(_closepar)
                 did_something = True
+            elif next_tag is _openbracket and _PREC_CALL >= min_precedence:
+                pstate.advance()
+                pstate.expect_not_end()
+                left_exp = primitives.Subscript(left_exp, parse_expression(pstate))
+                pstate.expect(_closebracket)
+                did_something = True
             elif next_tag is _plus and _PREC_PLUS >= min_precedence:
                 pstate.advance()
                 left_exp = parse_expression(pstate, _PREC_PLUS)
                 did_something = True
             elif next_tag is _minus and _PREC_PLUS >= min_precedence:
                 pstate.advance()
-                left_exp -= primitives.Negation(parse_expression(pstate, _PREC_PLUS))
+                left_exp -= parse_expression(pstate, _PREC_PLUS)
                 did_something = True
             elif next_tag is _times and _PREC_TIMES >= min_precedence:
                 pstate.advance()
