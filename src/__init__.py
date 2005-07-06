@@ -12,6 +12,7 @@ evaluate = mapper.evaluator.evaluate
 compile = compiler.compile
 stringify = mapper.stringifier.stringify
 is_constant = mapper.dependency.is_constant
+get_dependencies = mapper.dependency.get_dependencies
 substitute = mapper.substitutor.substitute
 differentiate = mapper.differentiator.differentiate
 
