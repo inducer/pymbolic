@@ -28,5 +28,8 @@ def get_dependencies(expr):
 
 
 def is_constant(expr, with_respect_to=None):
-    return sets.Set(with_respect_to) <= get_dependencies(expr)
+    if not with_respect_to:
+        return not bool(get_dependencies(expr))
+    else:
+        return not (sets.Set(with_respect_to) and get_dependencies(expr))
 

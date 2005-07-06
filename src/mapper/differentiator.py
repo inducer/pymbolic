@@ -37,9 +37,9 @@ class DifferentiationMapper:
         return primitives.Constant(0)
 
     def map_variable(self, expr):
-        if expr.name == self.Variable:
+        if expr == self.Variable:
             return primitives.Constant(1)
-        elif expr.name in self.parameters:
+        elif expr in self.parameters:
             return expr
         else:
             return primitives.Constant(0)

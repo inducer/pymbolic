@@ -236,6 +236,9 @@ class Variable(Expression):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, repr(self._Name))
+
     def invoke_mapper(self, mapper):
         return mapper.map_variable(self)
 
@@ -477,7 +480,7 @@ class List(Expression):
 # intelligent makers ---------------------------------------------------------
 def make_sum(components):
     if len(components) == 0:
-        return primitives.Constant(0)
+        return Constant(0)
     elif len(components) == 1:
         return components[0]
     else:

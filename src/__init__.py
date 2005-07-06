@@ -26,5 +26,5 @@ if __name__ == "__main__":
     print substitute(ex, {"alpha": ex})
     ex2 = parse("cos(x**2/x)")
     print ex2
-    print differentiate(ex2, "x")
+    print differentiate(ex2, parse("x"))
 
