@@ -16,8 +16,6 @@ class DependencyMapper(pymbolic.mapper.CombineMapper):
     def map_variable(self, expr):
         return sets.Set([expr])
 
-    map_subscript = map_variable
-
 
 
 

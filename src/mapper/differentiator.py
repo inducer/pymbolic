@@ -39,13 +39,13 @@ class DifferentiationMapper:
     def map_variable(self, expr):
         if expr == self.Variable:
             return primitives.Constant(1)
-        elif expr in self.parameters:
+        elif expr in self.Parameters:
             return expr
         else:
             return primitives.Constant(0)
 
     def map_call(self, expr):
-        return primitives.make_sum(tuple(
+        return pymbolic.sum(tuple(
             self.FunctionMap(i, expr.function, expr.parameters)
             * par.invoke_mapper(self)
             for i, par in enumerate(expr.parameters)
@@ -53,19 +53,19 @@ class DifferentiationMapper:
 
     map_subscript = map_variable
 
-    def map_neg(self, expr):
+    def map_negation(self, expr):
         return -expr.child.invoke_mapper(self)
 
     def map_sum(self, expr):
-        return primitives.make_sum(tuple(child.invoke_mapper(self)
-                                           for child in expr.Children
-                                           if not self._isc(child)))
+        return pymbolic.sum(*(child.invoke_mapper(self)
+                              for child in expr.children
+                              if not self._isc(child)))
 
     def map_product(self, expr):
-        return primitives.make_sum(tuple(
-            primitives.make_product(expr.children[0:i] +
-                                    (child.invoke_mapper(self),) +
-                                    expr.children[i+1:])
+        return pymbolic.sum(*(
+            pymbolic.product(*(expr.children[0:i] + 
+                             (child.invoke_mapper(self),) +
+                             expr.children[i+1:]))
             for i, child in enumerate(expr.children)
             if not self._isc(child)))
 

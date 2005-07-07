@@ -15,7 +15,7 @@ class Expression(object):
             other = Constant(other)
         if not other:
             return self
-        return Sum((self, other))
+        return Sum(self, other)
 
     def __radd__(self, other):
         assert not isinstance(other, Expression)
@@ -24,14 +24,14 @@ class Expression(object):
             return self
         else:
             other = Constant(other)
-        return Sum((other, self))
+        return Sum(other, self)
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
                 other = Constant(other)
         if not other:
             return self
-        return Sum((self, -other))
+        return Sum(self, -other)
 
     def __rsub__(self, other):
         assert not isinstance(other, Expression)
@@ -40,16 +40,18 @@ class Expression(object):
             return Negation(self)
         else:
             other = Constant(other)
-        return Sum((other, -self))
+        return Sum(other, -self)
 
     def __mul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         if not (other - 1):
             return self
-        if not other:
+        elif not (other+1):
+            return Negation(self)
+        elif not other:
             return Constant(0)
-        return Product((self, other))
+        return Product(self, other)
 
     def __rmul__(self, other):
         assert not isinstance(other, Expression)
@@ -58,8 +60,10 @@ class Expression(object):
             return self
         elif not other:
             return Constant(0)
+        elif not (other+1):
+            return Negation(self)
         else:
-            return Product((other, self))
+            return Product(Constant(other), self)
 
     def __div__(self, other):
         if not isinstance(other, Expression):
@@ -112,9 +116,16 @@ class Expression(object):
     def __str__(self):
         return self.invoke_mapper(pymbolic.mapper.stringifier.StringifyMapper())
 
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__,
+                           ", ".join(repr(i) for i in self.__getinitargs__()))
+
 class Constant(Expression):
     def __init__(self, value):
         self._Value = value
+
+    def __getinitargs__(self):
+        return self._Value,
 
     def _value(self):
         return self._Value
@@ -235,6 +246,9 @@ class Variable(Expression):
     def __init__(self, name):
         self._Name = name
 
+    def __getinitargs__(self):
+        return self._Name,
+
     def _name(self):
         return self._Name
     name = property(_name)
@@ -248,9 +262,6 @@ class Variable(Expression):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
-    def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, repr(self._Name))
-
     def invoke_mapper(self, mapper):
         return mapper.map_variable(self)
 
@@ -258,6 +269,9 @@ class Call(Expression):
     def __init__(self, function, parameters):
         self._Function = function
         self._Parameters = parameters
+
+    def __getinitargs__(self):
+        return self._Function, self._Parameters
 
     def _function(self):
         return self._Function
@@ -280,6 +294,9 @@ class Subscript(Expression):
         self._Aggregate = aggregate
         self._Index = index
 
+    def __getinitargs__(self):
+        return self._Aggregate, self._Index
+
     def _aggregate(self):
         return self._Aggregate
     aggregate = property(_aggregate)
@@ -301,6 +318,9 @@ class ElementLookup(Expression):
         self._Aggregate = aggregate
         self._Name = name
 
+    def __getinitargs__(self):
+        return self._Aggregate, self._Name
+
     def _aggregate(self):
         return self._Aggregate
     aggregate = property(_aggregate)
@@ -321,6 +341,9 @@ class Negation(Expression):
     def __init__(self, child):
         self._Child = child
 
+    def __getinitargs__(self):
+        return self._Child, 
+
     def _child(self):
         return self._Child
     child = property(_child)
@@ -332,9 +355,12 @@ class Negation(Expression):
         return mapper.map_negation(self)
 
 class Sum(Expression):
-    def __init__(self, children):
+    def __init__(self, *children):
         assert isinstance(children, tuple)
         self._Children = children
+
+    def __getinitargs__(self):
+        return self._Children
 
     def _children(self):
         return self._Children
@@ -347,20 +373,20 @@ class Sum(Expression):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
-            return Sum(self._Children + other._Children)
-        return Sum(self._Children + (other,))
+            return Sum(*(self._Children + other._Children))
+        return Sum(*(self._Children + (other,)))
 
     def __radd__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
-            return Sum(other._Children + self._Children)
-        return Sum(other, + self._Children)
+            return Sum(*(other._Children + self._Children))
+        return Sum(*(other, + self._Children))
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
-        return Sum(self._Children + (-other,))
+        return Sum(*(self._Children + (-other,)))
 
     def __nonzero__(self):
         if len(self._Children) == 0:
@@ -375,9 +401,12 @@ class Sum(Expression):
         return mapper.map_sum(self)
 
 class Product(Expression):
-    def __init__(self, children):
+    def __init__(self, *children):
         assert isinstance(children, tuple)
         self._Children = children
+
+    def __getinitargs__(self):
+        return self._Children
 
     def _children(self):
         return self._Children
@@ -390,15 +419,15 @@ class Product(Expression):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Product):
-            return Product(self._Children + other._Children)
+            return Product(*(self._Children + other._Children))
         return Product(self._Children + (other,))
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Product):
-            return Product(other._Children + self._Children)
-        return Product(other, + self._Children)
+            return Product(*(other._Children + self._Children))
+        return Product(*(other, + self._Children))
 
     def __nonzero__(self):
         for i in self._Children:
@@ -511,24 +540,57 @@ class List(Expression):
 
 
 # intelligent makers ---------------------------------------------------------
-def make_sum(components):
+def sum(*components):
+    components = tuple(c for c in components if c)
     if len(components) == 0:
         return Constant(0)
     elif len(components) == 1:
         return components[0]
     else:
-        return Sum(components)
+        return Sum(*components)
 
-def make_product(components):
+
+
+
+def linear_combination(coefficients, expressions):
+    print coefficients, expressions
+    return sum(*(coefficient * expression
+                 for coefficient, expression in zip(coefficients, expressions)
+                 if coefficient and expression))
+
+
+
+
+def product(*components):
+    for c in components:
+        if not c:
+            return Constant(0)
+
+    components = tuple(c for c in components if (c-1))
+
     if len(components) == 0:
-        return primitives.Constant(1)
+        return Constant(1)
     elif len(components) == 1:
         return components[0]
     else:
-        return Product(components)
+        return Product(*components)
+
+
+
+
+def subscript(expression, index):
+    if not isinstance(index, Expression):
+        index = Constant(index)
+    return Subscript(expression, index)
+
+
+
 
 def polynomial_from_expression(expression):
     pass
+
+
+
 
 def make_quotient(numerator, denominator):
     try:
@@ -542,4 +604,3 @@ def make_quotient(numerator, denominator):
 
     return QuotientExpression(numerator, denominator)
 
-# FIXME: add traits types to expressions

@@ -27,7 +27,6 @@ class CompiledExpression:
 
         expr_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
                                    str(self._Expression))
-        print expr_s
         self.__call__ = eval(expr_s, self._Context)
     
     def __getinitargs__(self):
