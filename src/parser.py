@@ -16,6 +16,7 @@ _closebracket = intern("closebracket")
 _identifier = intern("identifier")
 _whitespace = intern("whitespace")
 _comma = intern("comma")
+_dot = intern("dot")
 
 _LEX_TABLE = [
     (_imaginary, (_float, pytools.lex.RE("j"))),
@@ -35,6 +36,7 @@ _LEX_TABLE = [
     (_identifier, pytools.lex.RE(r"[a-zA-Z_]+")),
     (_whitespace, pytools.lex.RE("[ \n\t]*")),
     (_comma, pytools.lex.RE(",")),
+    (_dot, pytools.lex.RE(".")),
     ]
 
 _PREC_PLUS = 10
@@ -74,6 +76,7 @@ def parse(expr_str):
             pstate.advance()
             result = parse_expression(pstate)
             pstate.expect(_closepar)
+            pstate.advance()
             return result
 
         left_exp = parse_terminal(pstate)
@@ -96,16 +99,24 @@ def parse(expr_str):
                     left_exp = primitives.Call(left_exp, 
                                              tuple(parse_expr_list(pstate)))
                     pstate.expect(_closepar)
+                    pstate.advance()
                 did_something = True
             elif next_tag is _openbracket and _PREC_CALL >= min_precedence:
                 pstate.advance()
                 pstate.expect_not_end()
                 left_exp = primitives.Subscript(left_exp, parse_expression(pstate))
                 pstate.expect(_closebracket)
+                pstate.advance()
+                did_something = True
+            elif next_tag is _dot and _PREC_CALL >= min_precedence:
+                pstate.advance()
+                pstate.expect(_identifier)
+                left_exp = primitives.ElementLookup(left_exp, pstate.next_str())
+                pstate.advance()
                 did_something = True
             elif next_tag is _plus and _PREC_PLUS >= min_precedence:
                 pstate.advance()
-                left_exp = parse_expression(pstate, _PREC_PLUS)
+                left_exp += parse_expression(pstate, _PREC_PLUS)
                 did_something = True
             elif next_tag is _minus and _PREC_PLUS >= min_precedence:
                 pstate.advance()

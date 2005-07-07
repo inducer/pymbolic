@@ -8,8 +8,11 @@ class CombineMapper:
                              for child in expr.parameters])
 
     def map_subscript(self, expr):
-        return expr.__class__(expr.aggregate.invoke_mapper(self),
-                              expr.index.invoke_mapper(self))
+        return self.combine([expr.aggregate.invoke_mapper(self),
+                             expr.index.invoke_mapper(self)])
+
+    def map_lookup(self, expr):
+        return expr.aggregate.invoke_mapper(self)
 
     def map_negation(self, expr):
         return expr.child.invoke_mapper(self)
@@ -52,6 +55,10 @@ class IdentityMapper:
     def map_subscript(self, expr):
         return expr.__class__(expr.aggregate.invoke_mapper(self),
                               expr.index.invoke_mapper(self))
+
+    def map_lookup(self, expr):
+        return expr.__class__(expr.aggregate.invoke_mapper(self),
+                              expr.name)
 
     def map_negation(self, expr):
         return expr.__class__(expr.child.invoke_mapper(self))

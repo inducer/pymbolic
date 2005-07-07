@@ -15,6 +15,11 @@ class StringifyMapper:
                (expr.aggregate.invoke_mapper(self),
                 expr.index.invoke_mapper(self))
 
+    def map_lookup(self, expr):
+        return "%s.%s" % \
+               (expr.aggregate.invoke_mapper(self),
+                expr.name)
+
     def map_negation(self, expr):
         return "-%s" % expr.child.invoke_mapper(self)
 

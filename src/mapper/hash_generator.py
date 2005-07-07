@@ -13,6 +13,11 @@ class HashMapper:
                ^ hash(expr.aggregate) \
                ^ hash(expr.index)
 
+    def map_lookup(self, expr):
+        return 0x183 \
+               ^ hash(expr.aggregate) \
+               ^ hash(expr.name)
+
     def map_negation(self, expr):
         return ~ hash(expr.child)
 

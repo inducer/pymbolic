@@ -1,27 +1,34 @@
 import parser
 import compiler
 
-import mapper.evaluator
-import mapper.stringifier
-import mapper.dependency
-import mapper.substitutor
-import mapper.differentiator
+import pymbolic.mapper.evaluator
+import pymbolic.mapper.stringifier
+import pymbolic.mapper.dependency
+import pymbolic.mapper.substitutor
+import pymbolic.mapper.differentiator
+import pymbolic.primitives
 
-parse = parser.parse
-evaluate = mapper.evaluator.evaluate
-compile = compiler.compile
-stringify = mapper.stringifier.stringify
-is_constant = mapper.dependency.is_constant
-get_dependencies = mapper.dependency.get_dependencies
-substitute = mapper.substitutor.substitute
-differentiate = mapper.differentiator.differentiate
+var = pymbolic.primitives.Variable
+const = pymbolic.primitives.Constant
+
+parse = pymbolic.parser.parse
+evaluate = pymbolic.mapper.evaluator.evaluate
+compile = pymbolic.compiler.compile
+stringify = pymbolic.mapper.stringifier.stringify
+is_constant = pymbolic.mapper.dependency.is_constant
+get_dependencies = pymbolic.mapper.dependency.get_dependencies
+substitute = pymbolic.mapper.substitutor.substitute
+differentiate = pymbolic.mapper.differentiator.differentiate
 
 if __name__ == "__main__":
     import math
-    ex = parse("0 + 4.3e3j * alpha * cos(x+pi)") + 5
+    ex = parse("0 + 4.3e3j * alpha * math.cos(x+math.pi)") + 5
 
     print ex
-    print evaluate(ex, {"alpha":5, "cos":math.cos, "x":-math.pi, "pi":math.pi})
+    print evaluate(ex, {"alpha":5, "math":math, "x":-math.pi})
+    compiled = compile(substitute(ex, {var("alpha"): const(5)}))
+    print compiled(-math.pi)
+
     print hash(ex)
     print is_constant(ex)
     print substitute(ex, {"alpha": ex})

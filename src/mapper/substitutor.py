@@ -1,9 +1,9 @@
-import mapper
+import pymbolic.mapper
 
 
 
 
-class SubstitutionMapper(mapper.IdentityMapper):
+class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
     def __init__(self, variable_assignments):
         self.Assignments = variable_assignments
 
@@ -13,7 +13,17 @@ class SubstitutionMapper(mapper.IdentityMapper):
         except KeyError:
             return expr
 
-    map_subscript = map_variable
+    def map_subscript(self, expr):
+        try:
+            return self.Assignments[expr]
+        except KeyError:
+            return pymbolic.mapper.IdentityMapper.map_subscript(self, expr)
+
+    def map_lookup(self, expr):
+        try:
+            return self.Assignments[expr]
+        except KeyError:
+            return pymbolic.mapper.IdentityMapper.map_lookup(self, expr)
 
 
 

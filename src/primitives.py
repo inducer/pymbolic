@@ -120,6 +120,12 @@ class Constant(Expression):
         return self._Value
     value = property(_value)
 
+    def __lt__(self, other):
+        if isinstance(other, Variable):
+            return self._Value.__lt__(other._Value)
+        else:
+            return NotImplemented
+
     def __eq__(self, other):
         return isinstance(other, Constant) and self._Value == other._Value
 
@@ -233,6 +239,12 @@ class Variable(Expression):
         return self._Name
     name = property(_name)
 
+    def __lt__(self, other):
+        if isinstance(other, Variable):
+            return self._Name.__lt__(other._Name)
+        else:
+            return NotImplemented
+
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
@@ -283,6 +295,27 @@ class Subscript(Expression):
 
     def invoke_mapper(self, mapper):
         return mapper.map_subscript(self)
+
+class ElementLookup(Expression):
+    def __init__(self, aggregate, name):
+        self._Aggregate = aggregate
+        self._Name = name
+
+    def _aggregate(self):
+        return self._Aggregate
+    aggregate = property(_aggregate)
+
+    def _name(self):
+        return self._Name
+    name = property(_name)
+
+    def __eq__(self, other):
+        return isinstance(other, Subscript) \
+               and (self._Aggregate == other._Aggregate) \
+               and (self._Name == other._Name)
+
+    def invoke_mapper(self, mapper):
+        return mapper.map_lookup(self)
 
 class Negation(Expression):
     def __init__(self, child):
