@@ -74,12 +74,11 @@ def parse(expr_str):
             return primitives.Negation(parse_expression(pstate, _PREC_UNARY_MINUS))
         if pstate.is_next(_openpar):
             pstate.advance()
-            result = parse_expression(pstate)
+            left_exp = parse_expression(pstate)
             pstate.expect(_closepar)
             pstate.advance()
-            return result
-
-        left_exp = parse_terminal(pstate)
+        else:
+            left_exp = parse_terminal(pstate)
 
         did_something = True
         while did_something:

@@ -24,17 +24,49 @@ get_dependencies = pymbolic.mapper.dependency.get_dependencies
 substitute = pymbolic.mapper.substitutor.substitute
 differentiate = pymbolic.mapper.differentiator.differentiate
 
+
+
+
 def simplify(x):
+    # FIXME: Not yet implemented
     return x
 
-def grad(expr, variables):
+def grad(expression, variables):
     return [simplify(differentiate(expression, var)) for var in variables]
 
 def jacobian(expression_list, variables):
     return [grad(expr, variables) for expr in expression_list]
     
 def laplace(expression, variables):
-    return sum([differentiate(differentiate(expression,var),var) for var in variables])
+    return sum(*[differentiate(differentiate(expression,var),var) for var in variables])
+
+
+
+
+class VectorFunction:
+    def __init__(self, function_list, variables=[]):
+        self.FunctionList = [pymbolic.compile(expr, variables=variables) 
+                             for expr in function_list]
+
+    def __call__(self, x):
+        import pylinear.array as num
+        return num.array([ func(x) for func in self.FunctionList ])
+
+
+
+
+class MatrixFunction:
+    def __init__(self, function_list, variables=[]):
+        self. FunctionList = [[pymbolic.compile(expr, variables=variables)
+                               for expr in outer]
+                              for outer in function_list]
+
+    def __call__(self, x):
+        import pylinear.array as num
+        return num.array([[func(x) for func in flist ] for flist in self.FunctionList])
+
+
+
 
 if __name__ == "__main__":
     import math

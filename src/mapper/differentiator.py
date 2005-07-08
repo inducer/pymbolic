@@ -1,28 +1,33 @@
 import math
+import cmath
 
 import pymbolic
 import pymbolic.primitives as primitives
-
+import pymbolic.mapper.evaluator
 
 
 
 def map_math_functions_by_name(i, func, pars):
-    if not isinstance(func, primitives.Variable):
+    try:
+        f = pymbolic.evaluate(func, {"math": math, "cmath": cmath})
+    except pymbolic.mapper.evaluator.UnknownVariableError:
         raise RuntimeError, "No derivative of non-constant function "+str(func)
-    name = func.name
 
-    if name == "sin" and len(pars) == 1:
-        return primitives.Constant("cos")(*pars)
-    elif name == "cos" and len(pars) == 1:
-        return -primitives.Constant("sin")(*pars)
-    elif name == "tan" and len(pars) == 1:
-        return primitives.Constant("tan")(*pars)**2+1
-    elif name == "log" and len(pars) == 1:
+    def make_f(name):
+        return primitives.ElementLookup(primitives.Variable("math"), name)
+
+    if f is math.sin and len(pars) == 1:
+        return make_f("cos")(*pars)
+    elif f is math.cos and len(pars) == 1:
+        return -make_f("sin")(*pars)
+    elif f is math.tan and len(pars) == 1:
+        return make_f("tan")(*pars)**2+1
+    elif f is math.log and len(pars) == 1:
         return primitives.Constant(1)/pars[0]
-    elif name == "exp" and len(pars) == 1:
-        return primitives.Constant("exp")(*pars)
+    elif f is math.exp and len(pars) == 1:
+        return make_f("exp")(*pars)
     else:
-        return primitives.Constant(name+"'")(*pars)
+        raise RuntimeError, "unrecognized function, cannot differentiate"
 
 
 
@@ -45,7 +50,7 @@ class DifferentiationMapper:
             return primitives.Constant(0)
 
     def map_call(self, expr):
-        return pymbolic.sum(tuple(
+        return pymbolic.sum(*(
             self.FunctionMap(i, expr.function, expr.parameters)
             * par.invoke_mapper(self)
             for i, par in enumerate(expr.parameters)

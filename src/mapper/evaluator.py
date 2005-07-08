@@ -1,3 +1,9 @@
+class UnknownVariableError(Exception):
+    pass
+
+
+
+
 class EvaluationMapper:
     def __init__(self, context={}):
         self.Context = context
@@ -6,7 +12,10 @@ class EvaluationMapper:
         return expr.value
 
     def map_variable(self, expr):
-        return self.Context[expr.name]
+        try:
+            return self.Context[expr.name]
+        except KeyError:
+            raise UnknownVariableError, expr.name
 
     def map_call(self, expr):
         return expr.function.invoke_mapper(self)(

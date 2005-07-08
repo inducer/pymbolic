@@ -21,11 +21,11 @@ class CombineMapper:
         return self.combine(child.invoke_mapper(self)
                             for child in expr.children)
 
+    map_product = map_sum
+
     def map_rational(self, expr):
         return self.combine((expr.numerator.invoke_mapper(self),
                              expr.denominator.invoke_mapper(self)))
-
-    map_product = map_sum
 
     def map_power(self, expr):
         return self.combine((expr.base.invoke_mapper(self),
@@ -64,8 +64,8 @@ class IdentityMapper:
         return expr.__class__(expr.child.invoke_mapper(self))
 
     def map_sum(self, expr):
-        return expr.__class__(tuple(child.invoke_mapper(self)
-                                    for child in expr.children))
+        return expr.__class__(*[child.invoke_mapper(self)
+                                for child in expr.children])
     
     map_product = map_sum
     

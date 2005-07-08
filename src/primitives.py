@@ -117,8 +117,7 @@ class Expression(object):
         return self.invoke_mapper(pymbolic.mapper.stringifier.StringifyMapper())
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__,
-                           ", ".join(repr(i) for i in self.__getinitargs__()))
+        return "%s%s" % (self.__class__.__name__, repr(self.__getinitargs__()))
 
 class Constant(Expression):
     def __init__(self, value):
@@ -356,7 +355,6 @@ class Negation(Expression):
 
 class Sum(Expression):
     def __init__(self, *children):
-        assert isinstance(children, tuple)
         self._Children = children
 
     def __getinitargs__(self):
@@ -381,7 +379,7 @@ class Sum(Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
             return Sum(*(other._Children + self._Children))
-        return Sum(*(other, + self._Children))
+        return Sum(*((other,) + self._Children))
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
@@ -402,7 +400,6 @@ class Sum(Expression):
 
 class Product(Expression):
     def __init__(self, *children):
-        assert isinstance(children, tuple)
         self._Children = children
 
     def __getinitargs__(self):
@@ -420,14 +417,14 @@ class Product(Expression):
             other = Constant(other)
         elif isinstance(other, Product):
             return Product(*(self._Children + other._Children))
-        return Product(self._Children + (other,))
+        return Product(*(self._Children + (other,)))
 
     def __rmul__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
         elif isinstance(other, Product):
             return Product(*(other._Children + self._Children))
-        return Product(*(other, + self._Children))
+        return Product(*((other,) + self._Children))
 
     def __nonzero__(self):
         for i in self._Children:
@@ -438,26 +435,29 @@ class Product(Expression):
     def invoke_mapper(self, mapper):
         return mapper.map_product(self)
 
-class QuotientExpression(Expression):
+class Quotient(Expression):
     def __init__(self, numerator, denominator=1):
-        self.Numerator = numerator
-        self.Denominator = denominator
+        self._Numerator = numerator
+        self._Denominator = denominator
+
+    def __getinitargs__(self):
+        return self._Numerator, self._Denominator
 
     def _num(self):
-        return self.Numerator
+        return self._Numerator
     numerator=property(_num)
 
     def _den(self):
-        return self.Denominator
+        return self._Denominator
     denominator=property(_den)
 
     def __eq__(self, other):
         return isinstance(other, Subscript) \
-               and (self.Numerator == other.Numerator) \
-               and (self.Denominator == other.Denominator)
+               and (self._Numerator == other._Numerator) \
+               and (self._Denominator == other._Denominator)
 
     def __nonzero__(self):
-        return bool(self.Numerator)
+        return bool(self._Numerator)
 
     def invoke_mapper(self, mapper):
         return mapper.map_rational(self)
@@ -484,6 +484,9 @@ class Power(Expression):
     def __init__(self, base, exponent):
         self._Base = base
         self._Exponent = exponent
+
+    def __getinitargs__(self):
+        return self._Base, self._Exponent
 
     def _base(self):
         return self._Base
@@ -540,6 +543,14 @@ class List(Expression):
 
 
 # intelligent makers ---------------------------------------------------------
+def subscript(expression, index):
+    if not isinstance(index, Expression):
+        index = Constant(index)
+    return Subscript(expression, index)
+
+
+
+
 def sum(*components):
     components = tuple(c for c in components if c)
     if len(components) == 0:
@@ -553,10 +564,9 @@ def sum(*components):
 
 
 def linear_combination(coefficients, expressions):
-    print coefficients, expressions
-    return sum(*(coefficient * expression
+    return sum(*[coefficient * expression
                  for coefficient, expression in zip(coefficients, expressions)
-                 if coefficient and expression))
+                 if coefficient and expression])
 
 
 
@@ -578,14 +588,6 @@ def product(*components):
 
 
 
-def subscript(expression, index):
-    if not isinstance(index, Expression):
-        index = Constant(index)
-    return Subscript(expression, index)
-
-
-
-
 def polynomial_from_expression(expression):
     pass
 
@@ -602,5 +604,5 @@ def make_quotient(numerator, denominator):
     except traits.NoTraitsError:
         pass
 
-    return QuotientExpression(numerator, denominator)
+    return Quotient(numerator, denominator)
 
