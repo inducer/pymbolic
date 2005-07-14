@@ -77,11 +77,14 @@ if __name__ == "__main__":
     print evaluate(ex, {"alpha":5, "math":math, "x":-math.pi})
     compiled = compile(substitute(ex, {var("alpha"): const(5)}))
     print compiled(-math.pi)
+    import cPickle as pickle
+    pickle.dumps(compiled)
 
     print hash(ex)
     print is_constant(ex)
     print substitute(ex, {"alpha": ex})
-    ex2 = parse("cos(x**2/x)")
+    ex2 = parse("math.cos(x**2/x)")
     print ex2
     print differentiate(ex2, parse("x"))
+
 
