@@ -21,6 +21,8 @@ _dot = intern("dot")
 _LEX_TABLE = [
     (_imaginary, (_float, pytools.lex.RE("j"))),
     (_float, ("|", 
+               pytools.lex.RE(r"-?[0-9]+\.[0-9]*([eE][0-9]+)?"),
+               pytools.lex.RE(r"-?[0-9]+(\.[0-9]*)?[eE][0-9]+"),
                pytools.lex.RE(r"-?[0-9]*\.[0-9]+([eE][0-9]+)?"),
                pytools.lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE][0-9]+"))),
     (_int, pytools.lex.RE(r"-?[0-9]+")),
