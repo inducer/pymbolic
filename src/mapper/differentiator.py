@@ -33,9 +33,8 @@ def map_math_functions_by_name(i, func, pars):
 
 
 class DifferentiationMapper:
-    def __init__(self, variable, parameters, func_map):
+    def __init__(self, variable, func_map):
         self.Variable = variable
-        self.Parameters = parameters
         self.FunctionMap = func_map
 
     def map_constant(self, expr):
@@ -44,8 +43,6 @@ class DifferentiationMapper:
     def map_variable(self, expr):
         if expr == self.Variable:
             return primitives.Constant(1)
-        elif expr in self.Parameters:
-            return expr
         else:
             return primitives.Constant(0)
 
@@ -67,6 +64,7 @@ class DifferentiationMapper:
                               if not self._isc(child)))
 
     def map_product(self, expr):
+        print "YAY", expr, self._isc(expr), self.Variable
         return pymbolic.sum(*(
             pymbolic.product(*(expr.children[0:i] + 
                              (child.invoke_mapper(self),) +
@@ -128,8 +126,7 @@ class DifferentiationMapper:
 
 def differentiate(expression, 
                   variable, 
-                  parameters=[],
                   func_mapper=map_math_functions_by_name):
+    variable = primitives.make_variable(variable)
     return expression.invoke_mapper(DifferentiationMapper(variable,
-                                                          parameters,
                                                           func_mapper))

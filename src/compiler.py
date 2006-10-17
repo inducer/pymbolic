@@ -12,8 +12,10 @@ class CompiledExpression:
     """This class is necessary to make compiled expressions picklable."""
   
     def __init__(self, expression, variables = []):
+        import pymbolic.primitives as primi
+
         self._Expression = expression
-        self._Variables = variables[:]
+        self._Variables = [primi.make_variable(v) for v in variables]
         self.__compile__()
 
     def __compile__(self):

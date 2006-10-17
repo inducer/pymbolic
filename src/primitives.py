@@ -71,6 +71,7 @@ class Expression(object):
         if not (other-1):
             return self
         return make_quotient(self, other)
+    __truediv__ = __div__
 
     def __rdiv__(self, other):
         assert not isinstance(other, Expression)
@@ -114,7 +115,7 @@ class Expression(object):
             return self._HashValue
 
     def __str__(self):
-        return self.invoke_mapper(pymbolic.mapper.stringifier.StringifyMapper())
+        return pymbolic.stringify(self)
 
     def __repr__(self):
         return "%s%s" % (self.__class__.__name__, repr(self.__getinitargs__()))
@@ -131,7 +132,7 @@ class Constant(Expression):
     value = property(_value)
 
     def __lt__(self, other):
-        if isinstance(other, Variable):
+        if isinstance(other, Constant):
             return self._Value.__lt__(other._Value)
         else:
             return NotImplemented
@@ -237,8 +238,8 @@ class Constant(Expression):
     def __nonzero__(self):
         return bool(self._Value)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_constant(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_constant(self, *args, **kwargs)
 
 
 class Variable(Expression):
@@ -261,8 +262,8 @@ class Variable(Expression):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_variable(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_variable(self, *args, **kwargs)
 
 class Call(Expression):
     def __init__(self, function, parameters):
@@ -285,8 +286,8 @@ class Call(Expression):
                and (self._Function == other._Function) \
                and (self._Parameters == other._Parameters)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_call(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_call(self, *args, **kwargs)
 
 class Subscript(Expression):
     def __init__(self, aggregate, index):
@@ -309,8 +310,8 @@ class Subscript(Expression):
                and (self._Aggregate == other._Aggregate) \
                and (self._Index == other._Index)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_subscript(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_subscript(self, *args, **kwargs)
 
 class ElementLookup(Expression):
     def __init__(self, aggregate, name):
@@ -333,8 +334,8 @@ class ElementLookup(Expression):
                and (self._Aggregate == other._Aggregate) \
                and (self._Name == other._Name)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_lookup(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_lookup(self, *args, **kwargs)
 
 class Negation(Expression):
     def __init__(self, child):
@@ -350,8 +351,8 @@ class Negation(Expression):
     def __eq__(self, other):
         return isinstance(other, Negation) and (self.Child == other.Child)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_negation(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_negation(self, *args, **kwargs)
 
 class Sum(Expression):
     def __init__(self, *children):
@@ -372,6 +373,8 @@ class Sum(Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
             return Sum(*(self._Children + other._Children))
+        if not other:
+            return self
         return Sum(*(self._Children + (other,)))
 
     def __radd__(self, other):
@@ -379,11 +382,15 @@ class Sum(Expression):
             other = Constant(other)
         elif isinstance(other, Sum):
             return Sum(*(other._Children + self._Children))
+        if not other:
+            return self
         return Sum(*((other,) + self._Children))
 
     def __sub__(self, other):
         if not isinstance(other, Expression):
             other = Constant(other)
+        if not other:
+            return self
         return Sum(*(self._Children + (-other,)))
 
     def __nonzero__(self):
@@ -395,8 +402,8 @@ class Sum(Expression):
             # FIXME: Right semantics?
             return True
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_sum(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_sum(self, *args, **kwargs)
 
 class Product(Expression):
     def __init__(self, *children):
@@ -417,6 +424,10 @@ class Product(Expression):
             other = Constant(other)
         elif isinstance(other, Product):
             return Product(*(self._Children + other._Children))
+        if not other:
+            return Constant(0)
+        if not other-1:
+            return self
         return Product(*(self._Children + (other,)))
 
     def __rmul__(self, other):
@@ -424,6 +435,10 @@ class Product(Expression):
             other = Constant(other)
         elif isinstance(other, Product):
             return Product(*(other._Children + self._Children))
+        if not other:
+            return Constant(0)
+        if not other-1:
+            return self
         return Product(*((other,) + self._Children))
 
     def __nonzero__(self):
@@ -432,8 +447,8 @@ class Product(Expression):
                 return False
         return True
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_product(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_product(self, *args, **kwargs)
 
 class Quotient(Expression):
     def __init__(self, numerator, denominator=1):
@@ -459,8 +474,8 @@ class Quotient(Expression):
     def __nonzero__(self):
         return bool(self._Numerator)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_rational(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_rational(self, *args, **kwargs)
 
 class RationalExpression(Expression):
     def __init__(self, rational):
@@ -477,8 +492,8 @@ class RationalExpression(Expression):
     def __nonzero__(self):
         return bool(self.Rational)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_rational(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_rational(self, *args, **kwargs)
 
 class Power(Expression):
     def __init__(self, base, exponent):
@@ -501,8 +516,8 @@ class Power(Expression):
                and (self._Base == other._Base) \
                and (self._Exponent == other._Exponent)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_power(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_power(self, *args, **kwargs)
 
 class PolynomialExpression(Expression):
     def __init__(self, base=None, data=None, polynomial=None):
@@ -519,8 +534,8 @@ class PolynomialExpression(Expression):
         return isinstance(other, PolynomialExpression) \
                and (self._Polynomial == other._Polynomial)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_polynomial(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_polynomial(self, *args, **kwargs)
 
 class List(Expression):
     def __init__(self, children):
@@ -535,14 +550,23 @@ class List(Expression):
         return isinstance(other, List) \
                and (self.Children == other.Children)
 
-    def invoke_mapper(self, mapper):
-        return mapper.map_list(self)
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_list(self, *args, **kwargs)
 
 
 
 
 
 # intelligent makers ---------------------------------------------------------
+def make_variable(var_or_string):
+    if not isinstance(var_or_string, Variable):
+        return Variable(var_or_string)
+    else:
+        return var_or_string
+
+
+
+
 def subscript(expression, index):
     if not isinstance(index, Expression):
         index = Constant(index)

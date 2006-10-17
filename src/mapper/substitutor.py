@@ -29,4 +29,10 @@ class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
 
   
 def substitute(expression, variable_assignments = {}):
-    return expression.invoke_mapper(SubstitutionMapper(variable_assignments))
+    import pymbolic.primitives as primitives
+
+    new_var_ass = {}
+    for k, v in variable_assignments.iteritems():
+        new_var_ass[primitives.make_variable(k)] = v
+
+    return expression.invoke_mapper(SubstitutionMapper(new_var_ass))

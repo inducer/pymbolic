@@ -1,50 +1,97 @@
+PREC_CALL = 5
+PREC_POWER = 4
+PREC_UNARY = 3
+PREC_PRODUCT = 2
+PREC_SUM = 1
+PREC_NONE = 0
+
+
+
 class StringifyMapper:
-    def map_constant(self, expr):
+    def map_constant(self, expr, enclosing_prec):
         return str(expr.value)
 
-    def map_variable(self, expr):
+    def map_variable(self, expr, enclosing_prec):
         return expr.name
 
-    def map_call(self, expr):
-        return "%s(%s)" % \
-               (expr.function.invoke_mapper(self),
-                ", ".join(i.invoke_mapper(self) for i in expr.parameters))
+    def map_call(self, expr, enclosing_prec):
+        result = "%s(%s)" % \
+                (expr.function.invoke_mapper(self, PREC_CALL),
+                        ", ".join(i.invoke_mapper(self, PREC_NONE) 
+                            for i in expr.parameters))
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_subscript(self, expr):
-        return "%s[%s]" % \
-               (expr.aggregate.invoke_mapper(self),
-                expr.index.invoke_mapper(self))
+    def map_subscript(self, expr, enclosing_prec):
+        result = "%s[%s]" % \
+                (expr.aggregate.invoke_mapper(self, PREC_CALL),
+                        expr.index.invoke_mapper(self, PREC_CALL))
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_lookup(self, expr):
-        return "%s.%s" % \
-               (expr.aggregate.invoke_mapper(self),
-                expr.name)
+    def map_lookup(self, expr, enclosing_prec):
+        result = "%s.%s" % \
+               (expr.aggregate.invoke_mapper(self, PREC_CALL), 
+                       expr.name)
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_negation(self, expr):
-        return "-%s" % expr.child.invoke_mapper(self)
+    def map_negation(self, expr, enclosing_prec):
+        result = "-%s" % expr.child.invoke_mapper(self, PREC_UNARY)
+        if enclosing_prec > PREC_UNARY:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_sum(self, expr):
-        return "(%s)" % "+".join(i.invoke_mapper(self) for i in expr.children)
+    def map_sum(self, expr, enclosing_prec):
+        result = "+".join(i.invoke_mapper(self, PREC_SUM) for i in expr.children)
+        if enclosing_prec > PREC_SUM:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_product(self, expr):
-        return "(%s)" % "*".join(i.invoke_mapper(self) for i in expr.children)
+    def map_product(self, expr, enclosing_prec):
+        result = "*".join(i.invoke_mapper(self, PREC_PRODUCT) 
+                for i in expr.children)
+        if enclosing_prec > PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_rational(self, expr):
-        return "(%s/%s)" % (expr.numerator.invoke_mapper(self), 
-                            expr.denominator.invoke_mapper(self))
+    def map_rational(self, expr, enclosing_prec):
+        result = "%s/%s" % (
+                expr.numerator.invoke_mapper(self, PREC_PRODUCT), 
+                expr.denominator.invoke_mapper(self, PREC_PRODUCT)
+                )
+        if enclosing_prec > PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_power(self, expr):
-        return "(%s**%s)" % (expr.base.invoke_mapper(self), 
-                             expr.exponent.invoke_mapper(self))
+    def map_power(self, expr, enclosing_prec):
+        result = "%s**%s" % (
+                expr.base.invoke_mapper(self, PREC_POWER), 
+                expr.exponent.invoke_mapper(self, PREC_POWER)
+                )
+        if enclosing_prec > PREC_POWER:
+            return "(%s)" % result
+        else:
+            return result
 
-    def map_polynomial(self, expr):
+    def map_polynomial(self, expr, enclosing_prec):
         raise NotImplementedError
 
-    def map_list(self, expr):
+    def map_list(self, expr, enclosing_prec):
         return "[%s]" % ", ".join([i.invoke_mapper(self) for i in expr.children])
 
 
 
 
 def stringify(expression):
-    expression.invoke_mapper(StringifyMapper)
+    return expression.invoke_mapper(StringifyMapper(), PREC_NONE)
