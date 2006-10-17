@@ -64,7 +64,6 @@ class DifferentiationMapper:
                               if not self._isc(child)))
 
     def map_product(self, expr):
-        print "YAY", expr, self._isc(expr), self.Variable
         return pymbolic.sum(*(
             pymbolic.product(*(expr.children[0:i] + 
                              (child.invoke_mapper(self),) +
