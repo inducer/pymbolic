@@ -126,6 +126,7 @@ class DifferentiationMapper:
 def differentiate(expression, 
                   variable, 
                   func_mapper=map_math_functions_by_name):
-    variable = primitives.make_variable(variable)
+    if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
+        variable = primitives.make_variable(variable)
     return expression.invoke_mapper(DifferentiationMapper(variable,
                                                           func_mapper))
