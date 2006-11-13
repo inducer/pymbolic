@@ -1,6 +1,4 @@
 import sets
-import operator
-
 import pymbolic.mapper
 
 
@@ -8,6 +6,7 @@ import pymbolic.mapper
 
 class DependencyMapper(pymbolic.mapper.CombineMapper):
     def combine(self, values):
+        import operator
         return reduce(operator.or_, values)
 
     def map_constant(self, expr):
@@ -20,7 +19,7 @@ class DependencyMapper(pymbolic.mapper.CombineMapper):
 
 
 def get_dependencies(expr):
-    return expr.invoke_mapper(DependencyMapper())
+    return DependencyMapper()(expr)
 
 
 

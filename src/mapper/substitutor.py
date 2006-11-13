@@ -35,4 +35,4 @@ def substitute(expression, variable_assignments = {}):
     for k, v in variable_assignments.iteritems():
         new_var_ass[primitives.make_variable(k)] = v
 
-    return expression.invoke_mapper(SubstitutionMapper(new_var_ass))
+    return SubstitutionMapper(new_var_ass)(expression)

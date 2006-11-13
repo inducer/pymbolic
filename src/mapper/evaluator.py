@@ -1,10 +1,15 @@
+import pymbolic.mapper
+
+
+
+
 class UnknownVariableError(Exception):
     pass
 
 
 
 
-class EvaluationMapper:
+class EvaluationMapper(pymbolic.mapper.Mapper):
     def __init__(self, context={}):
         self.Context = context
 
@@ -18,46 +23,43 @@ class EvaluationMapper:
             raise UnknownVariableError, expr.name
 
     def map_call(self, expr):
-        return expr.function.invoke_mapper(self)(
-            *[par.invoke_mapper(self)
-              for par in expr.parameters])
+        return self(expr.function)(*[self(par) for par in expr.parameters])
 
     def map_subscript(self, expr):
-        return expr.aggregate.invoke_mapper(self)[expr.index.invoke_mapper(self)]
+        return self(expr.aggregate)[self(expr.index)]
 
     def map_lookup(self, expr):
-        return getattr(expr.aggregate.invoke_mapper(self), expr.name)
+        return getattr(self(expr.aggregate), expr.name)
 
     def map_negation(self, expr):
-        return -expr.child.invoke_mapper(self)
+        return -self(expr.child)
 
     def map_sum(self, expr):
-        return sum(child.invoke_mapper(self)
-                   for child in expr.children)
+        return sum(self(child) for child in expr.children)
 
     def map_product(self, expr):
         if len(expr.children) == 0:
-            return 1
-        result = expr.children[0].invoke_mapper(self)
+            return 1 # FIXME?
+        result = self(expr.children[0])
         for child in expr.children[1:]:
-            result *= child.invoke_mapper(self)
+            result *= self(child)
         return result
 
     def map_rational(self, expr):
-        return expr.numerator.invoke_mapper(self) / expr.denominator.invoke_mapper(self)
+        return self(expr.numerator) / self(expr.denominator)
 
     def map_power(self, expr):
-        return expr.base.invoke_mapper(self) ** expr.exponent.invoke_mapper(self)
+        return self(expr.base) ** self(expr.exponent)
 
     def map_polynomial(self, expr):
         raise NotImplementedError
 
     def map_list(self, expr):
-        return [child.invoke_mapper(self) for child in expr.Children]
+        return [self(child) for child in expr.Children]
 
 
 
 
 def evaluate(expression, context={}):
-    return expression.invoke_mapper(EvaluationMapper(context))
+    return EvaluationMapper(context)(expression)
     

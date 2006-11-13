@@ -90,18 +90,8 @@ class Rational(prm.Expression):
     def __float__(self):
         return float(self.Numerator) / flaot(self.Denominator)
 
-    def __hash__(self):
-        return 0xcafe ^ hash(self.Numerator) ^ hash(self.Denominator)
-
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_rational(self, *args, **kwargs)
-
-    def __str__(self):
-        if isinstance(self.Numerator, primitives.Expression):
-            return primitives.Expression.__str__(self)
-        else:
-            return "%s/%s" % (str(self.Numerator), str(self.Denominator))
-
 
 
 

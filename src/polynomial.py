@@ -211,9 +211,6 @@ class Polynomial(primitives.Expression):
                                repr(self.Base), 
                                repr(self.Data))
         
-    def __hash__(self):
-        return hash(self.Base) ^ hash(self.Children)
-
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_polynomial(self, *args, **kwargs)
 

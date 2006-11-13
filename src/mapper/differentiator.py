@@ -3,6 +3,7 @@ import cmath
 
 import pymbolic
 import pymbolic.primitives as primitives
+import pymbolic.mapper
 import pymbolic.mapper.evaluator
 
 
@@ -32,7 +33,7 @@ def map_math_functions_by_name(i, func, pars):
 
 
 
-class DifferentiationMapper:
+class DifferentiationMapper(pymbolic.mapper.Mapper):
     def __init__(self, variable, func_map):
         self.Variable = variable
         self.FunctionMap = func_map
@@ -49,24 +50,24 @@ class DifferentiationMapper:
     def map_call(self, expr):
         return pymbolic.sum(*(
             self.FunctionMap(i, expr.function, expr.parameters)
-            * par.invoke_mapper(self)
+            * self(par)
             for i, par in enumerate(expr.parameters)
             if not self._isc(par)))
 
     map_subscript = map_variable
 
     def map_negation(self, expr):
-        return -expr.child.invoke_mapper(self)
+        return -self(expr.child)
 
     def map_sum(self, expr):
-        return pymbolic.sum(*(child.invoke_mapper(self)
+        return pymbolic.sum(*(self(child)
                               for child in expr.children
                               if not self._isc(child)))
 
     def map_product(self, expr):
         return pymbolic.sum(*(
             pymbolic.product(*(expr.children[0:i] + 
-                             (child.invoke_mapper(self),) +
+                             (self(child),) +
                              expr.children[i+1:]))
             for i, child in enumerate(expr.children)
             if not self._isc(child)))
@@ -80,13 +81,11 @@ class DifferentiationMapper:
         if f_const and g_const:
             return primitives.Constant(0)
         elif f_const:
-            f = self._eval(f)
-            return -f*g.invoke_mapper(self)/g**2
+            return -f*self(g)/g**2
         elif g_const:
-            g = self._eval(g)
-            return f.invoke_mapper(self)/g
+            return self(f)/g
         else:
-            return (f.invoke_mapper(self)*g-g.invoke_mapper(self)*f)/g**2
+            return (self(f)*g-self(g)*f)/g**2
 
     def map_power(self, expr):
         f = expr.base
@@ -99,26 +98,18 @@ class DifferentiationMapper:
         if f_const and g_const:
             return primitives.Constant(0)
         elif f_const:
-            f = self._eval(f)
-            return log(f) * f**g * g.invoke_mapper(self)
+            return log(f) * f**g * self(g)
         elif g_const:
-            g = self._eval(g)
-            return g * f**(g-1) * f.invoke_mapper(self)
+            return g * f**(g-1) * self(f)
         else:
-            return log(f) * f**g * g.invoke_mapper(self) + \
-                   g * f**(g-1) * f.invoke_mapper(self)
+            return log(f) * f**g * self(g) + \
+                   g * f**(g-1) * self(f)
 
     def map_polynomial(self, expr):
         raise NotImplementedError
     
     def _isc(self,subexp):
         return pymbolic.is_constant(subexp, [self.Variable])
-
-    def _eval(self,subexp):
-        try:
-            return primitives.Constant(pymbolic.evaluate(subexp))
-        except KeyError:
-            return subexp
   
 
 
@@ -128,5 +119,4 @@ def differentiate(expression,
                   func_mapper=map_math_functions_by_name):
     if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
         variable = primitives.make_variable(variable)
-    return expression.invoke_mapper(DifferentiationMapper(variable,
-                                                          func_mapper))
+    return DifferentiationMapper(variable, func_mapper)(expression)
