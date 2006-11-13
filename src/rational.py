@@ -1,9 +1,10 @@
+import pymbolic.primitives as prm
 import pymbolic.traits as traits
 
 
 
 
-class Rational(object):
+class Rational(prm.Expression):
     def __init__(self, numerator, denominator=1):
         d_unit = traits.traits(denominator).get_unit(denominator)
         numerator /= d_unit
@@ -34,55 +35,42 @@ class Rational(object):
 
     def __add__(self, other):
         if not isinstance(other, Rational):
-            other = Rational(other)
+            newother = Rational(other)
 
-        t = traits.common_traits(self.Denominator, other.Denominator)
-        newden = t.lcm(self.Denominator, other.Denominator)
-        newnum = self.Numerator * newden/self.Denominator + \
-                 other.Numerator * newden/other.Denominator
-        gcd = t.gcd(newden, newnum)
-        return Rational(newnum/gcd, newden/gcd)
+        try:
+            t = traits.common_traits(self.Denominator, newother.Denominator)
+            newden = t.lcm(self.Denominator, newother.Denominator)
+            newnum = self.Numerator * newden/self.Denominator + \
+                     newother.Numerator * newden/newother.Denominator
+            gcd = t.gcd(newden, newnum)
+            return Rational(newnum/gcd, newden/gcd)
+        except traits.NoCommonTraitsError:
+            return prm.Expression.__add__(self, other)
 
-    def __radd__(self, other):
-        if not isinstance(other, Rational):
-            other = Rational(other)
-
-        t = traits.common_traits(self.Denominator, other.Denominator)
-        newden = t.lcm(self.Denominator, other.Denominator)
-        newnum = other.Numerator * newden/other.Denominator + \
-                 self.Numerator * newden/self.Denominator
-        gcd = t.gcd(newden, newnum)
-        return Rational(newnum/gcd, newden/gcd)
+    __radd__ = __add__
 
     def __sub__(self, other):
-        return self.__add__(other.__neg__())
+        return self.__add__(-other)
 
     def __rsub__(self, other):
-        return self.__neg__().__radd__(other)
+        return (-self).__radd__(other)
 
     def __mul__(self, other):
         if not isinstance(other, Rational):
             other = Rational(other)
 
-        t = traits.common_traits(self.Numerator, other.Numerator,
-                                 self.Denominator, other. Denominator)
-        gcd_1 = t.gcd(self.Numerator, other.Denominator)
-        gcd_2 = t.gcd(other.Numerator, self.Denominator)
+        try:
+            t = traits.common_traits(self.Numerator, other.Numerator,
+                                     self.Denominator, other. Denominator)
+            gcd_1 = t.gcd(self.Numerator, other.Denominator)
+            gcd_2 = t.gcd(other.Numerator, self.Denominator)
 
-        return Rational(self.Numerator/gcd_1 * other.Numerator/gcd_2,
-                        self.Denominator/gcd_2 * other.Denominator/gcd_1)
+            return Rational(self.Numerator/gcd_1 * other.Numerator/gcd_2,
+                            self.Denominator/gcd_2 * other.Denominator/gcd_1)
+        except traits.NoCommonTraitsError:
+            return prm.Expression.__mul__(self, other)
 
-    def __rmul__(self, other):
-        if not isinstance(other, Rational):
-            other = Rational(other)
-
-        t = traits.common_traits(self.Numerator, other.Numerator,
-                                 self.Denominator, other. Denominator)
-        gcd_1 = t.gcd(self.Numerator, other.Denominator)
-        gcd_2 = t.gcd(other.Numerator, self.Denominator)
-
-        return Rational(other.Numerator/gcd_2 * self.Numerator/gcd_1,
-                        other.Denominator/gcd_1 * self.Denominator/gcd_2)
+    __rmul__ = __mul__
 
     def __div__(self, other):
         if not isinstance(other, Rational):
@@ -99,18 +87,21 @@ class Rational(object):
     def __pow__(self, other):
         return Rational(self.Denominator**other, self.Numerator**other)
 
-    def __str__(self):
-        return "%s/%s" % (str(self.Numerator), str(self.Denominator))
-
-    def __repr__(self):
-        return "%s(%s, %s)" % (self.__class__.__name__,
-                               repr(self.Numerator), repr(self.Denominator))
-
     def __float__(self):
         return float(self.Numerator) / flaot(self.Denominator)
 
     def __hash__(self):
         return 0xcafe ^ hash(self.Numerator) ^ hash(self.Denominator)
+
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_rational(self, *args, **kwargs)
+
+    def __str__(self):
+        if isinstance(self.Numerator, primitives.Expression):
+            return primitives.Expression.__str__(self)
+        else:
+            return "%s/%s" % (str(self.Numerator), str(self.Denominator))
+
 
 
 

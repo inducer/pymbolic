@@ -64,7 +64,7 @@ class StringifyMapper:
         else:
             return result
 
-    def map_rational(self, expr, enclosing_prec):
+    def map_quotient(self, expr, enclosing_prec):
         result = "%s/%s" % (
                 expr.numerator.invoke_mapper(self, PREC_PRODUCT), 
                 expr.denominator.invoke_mapper(self, PREC_PRODUCT)
@@ -73,6 +73,7 @@ class StringifyMapper:
             return "(%s)" % result
         else:
             return result
+    map_rational = map_quotient
 
     def map_power(self, expr, enclosing_prec):
         result = "%s**%s" % (
@@ -89,9 +90,3 @@ class StringifyMapper:
 
     def map_list(self, expr, enclosing_prec):
         return "[%s]" % ", ".join([i.invoke_mapper(self) for i in expr.children])
-
-
-
-
-def stringify(expression):
-    return expression.invoke_mapper(StringifyMapper(), PREC_NONE)

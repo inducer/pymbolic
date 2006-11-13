@@ -1,4 +1,6 @@
 from __future__ import division
+import pymbolic
+import pymbolic.primitives as primitives
 import pymbolic.algorithm as algorithm
 import pymbolic.traits as traits
 
@@ -28,14 +30,18 @@ def _sort_uniq(data):
 
 
 
-class Polynomial(object):
-    def __init__(self, base, data = ((1,1),)):
+class Polynomial(primitives.Expression):
+    def __init__(self, base, data=None, unit=1):
         self.Base = base
+        self.Unit = unit
 
         # list of (exponent, coefficient tuples)
         # sorted in increasing order
         # one entry per degree
-        self.Data = data 
+        if data is None:
+            self.Data = ((1, unit),)
+        else:
+            self.Data = tuple(data)
         
         # Remember the Zen, Luke: Sparse is better than dense.
 
@@ -189,6 +195,10 @@ class Polynomial(object):
         return self.Base
     base = property(_base)
 
+    def _unit(self):
+        return self.Unit
+    unit = property(_unit)
+
     def _degree(self):
         try:
             return self.Data[-1][0]
@@ -204,15 +214,27 @@ class Polynomial(object):
     def __hash__(self):
         return hash(self.Base) ^ hash(self.Children)
 
+    def invoke_mapper(self, mapper, *args, **kwargs):
+        return mapper.map_polynomial(self, *args, **kwargs)
 
 
 
-def derivative(poly):
+
+def differentiate(poly):
     return Polynomial(
         poly.base,
         tuple((exp-1, exp*coeff)
               for exp, coeff in poly.data
               if not exp == 0))
+
+
+
+def integrate(poly):
+    return Polynomial(
+        poly.base,
+        tuple((exp+1, pymbolic.quotient(poly.unit, (exp+1))*coeff)
+              for exp, coeff in poly.data))
+
 
 
 
@@ -236,19 +258,26 @@ class PolynomialTraits(traits.EuclideanRingTraits):
 
    
 if __name__ == "__main__":
-    x = Polynomial("x")
-    y = Polynomial("y")
-    xpoly = x**2 + 1
+    
+    x = Polynomial(pymbolic.var("x"), unit=pymbolic.const(1))
+    y = Polynomial(pymbolic.var("y"), unit=pymbolic.const(1))
+    xpoly = x**2 + pymbolic.const(1)
     ypoly = -y**2*xpoly + xpoly
-    print xpoly
-    print ypoly
-    u = xpoly*ypoly
-    print u
-    print u**18
-    print
+    #print xpoly
+    #print ypoly
+    #u = xpoly*ypoly
+    #print u
+    #print u**3
+    #print
 
-    print 3*xpoly**3 + 1
-    print xpoly 
-    q,r = divmod(3*xpoly**3 + 1, xpoly)
-    print q, r
+    xp3 = xpoly**3
+    print xp3
+    print integrate(xp3)
+
+    #print 3*xpoly**3 + 1
+    #print xpoly 
+    #q,r = divmod(3*xpoly**3 + 1, xpoly)
+    #print q, r
+
+
 

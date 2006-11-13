@@ -13,12 +13,12 @@ const = pymbolic.primitives.Constant
 sum = pymbolic.primitives.sum
 subscript = pymbolic.primitives.subscript
 product = pymbolic.primitives.product
+quotient = pymbolic.primitives.quotient
 linear_combination = pymbolic.primitives.linear_combination
 
 parse = pymbolic.parser.parse
 evaluate = pymbolic.mapper.evaluator.evaluate
 compile = pymbolic.compiler.compile
-stringify = pymbolic.mapper.stringifier.stringify
 is_constant = pymbolic.mapper.dependency.is_constant
 get_dependencies = pymbolic.mapper.dependency.get_dependencies
 substitute = pymbolic.mapper.substitutor.substitute

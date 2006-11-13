@@ -1,5 +1,4 @@
 import traits
-import rational as rat
 import pymbolic.mapper.stringifier
 import pymbolic.mapper.hash_generator
 
@@ -11,8 +10,6 @@ class Expression(object):
         return not self.__eq__(other)
 
     def __add__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
         if not other:
             return self
         return Sum(self, other)
@@ -22,13 +19,10 @@ class Expression(object):
 
         if not other:
             return self
-        else:
-            other = Constant(other)
+
         return Sum(other, self)
 
     def __sub__(self, other):
-        if not isinstance(other, Expression):
-                other = Constant(other)
         if not other:
             return self
         return Sum(self, -other)
@@ -38,19 +32,16 @@ class Expression(object):
 
         if not other:
             return Negation(self)
-        else:
-            other = Constant(other)
+
         return Sum(other, -self)
 
     def __mul__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
         if not (other - 1):
             return self
         elif not (other+1):
             return Negation(self)
         elif not other:
-            return Constant(0)
+            return 0
         return Product(self, other)
 
     def __rmul__(self, other):
@@ -59,23 +50,21 @@ class Expression(object):
         if not (other-1):
             return self
         elif not other:
-            return Constant(0)
+            return 0
         elif not (other+1):
             return Negation(self)
         else:
-            return Product(Constant(other), self)
+            return Product(other, self)
 
     def __div__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
         if not (other-1):
             return self
-        return make_quotient(self, other)
+        return quotient(self, other)
     __truediv__ = __div__
 
     def __rdiv__(self, other):
         assert not isinstance(other, Expression)
-        return make_quotient(Constant(other), self)
+        return quotient(Constant(other), self)
 
     def __pow__(self, other):
         if not isinstance(other, Expression):
@@ -115,132 +104,11 @@ class Expression(object):
             return self._HashValue
 
     def __str__(self):
-        return pymbolic.stringify(self)
+        from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE
+        return self.invoke_mapper(StringifyMapper(), PREC_NONE)
 
     def __repr__(self):
         return "%s%s" % (self.__class__.__name__, repr(self.__getinitargs__()))
-
-class Constant(Expression):
-    def __init__(self, value):
-        self._Value = value
-
-    def __getinitargs__(self):
-        return self._Value,
-
-    def _value(self):
-        return self._Value
-    value = property(_value)
-
-    def __lt__(self, other):
-        if isinstance(other, Constant):
-            return self._Value.__lt__(other._Value)
-        else:
-            return NotImplemented
-
-    def __eq__(self, other):
-        return isinstance(other, Constant) and self._Value == other._Value
-
-    def __add__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(self._Value + other)
-        if isinstance(other, Constant):
-            return Constant(self._Value + other._Value)
-        if self._Value == 0:
-            return other
-        return Expression.__add__(self, other)
-
-    def __radd__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(other + self._Value)
-        if self._Value == 0:
-            return other
-        return Expression.__radd__(self, other)
-
-    def __sub__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(self._Value - other)
-        if isinstance(other, Constant):
-            return Constant(self._Value - other._Value)
-        if self._Value == 0:
-            return Negation(other)
-        return Expression.__sub__(self, other)
-
-    def __rsub__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(other - self._Value)
-        if self._Value == 0:
-            return other
-        return Expression.__rsub__(self, other)
-
-    def __mul__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(self._Value * other)
-        if isinstance(other, Constant):
-            return Constant(self._Value * other._Value)
-        if self._Value == 1:
-            return other
-        if self._Value == 0:
-            return self
-        return Expression.__mul__(self, other)
-
-    def __rmul__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(other * self._Value)
-        if self._Value == 1:
-            return other
-        if self._Value == 0:
-            return self
-        return Expression.__rmul__(self, other)
-
-    def __div__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(self._Value / other)
-        if isinstance(other, Constant):
-            return Constant(self._Value / other._Value)
-        if self._Value == 0:
-            return self
-        return Expression.__div__(self, other)
-
-    def __rdiv__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(other / self._Value)
-        if self._Value == 1:
-            return other
-        return Expression.__rdiv__(self, other)
-
-    def __pow__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(self._Value ** other)
-        if isinstance(other, Constant):
-            return Constant(self._Value ** other._Value)
-        if self._Value == 1:
-            return self
-        return Expression.__pow__(self, other)
-
-    def __rpow__(self, other):
-        if not isinstance(other, Expression):
-            return Constant(other ** self._Value)
-        if self._Value == 0:
-            return Constant(1)
-        if self._Value == 1:
-            return other
-        return Expression.__rpow__(self, other)
-
-    def __neg__(self):
-        return Constant(-self._Value)
-
-    def __call__(self, *pars):
-        for par in pars:
-            if isinstance(par, Expression):
-                return Expression.__call__(self, *pars)
-        return self._Value(*pars)
-
-    def __nonzero__(self):
-        return bool(self._Value)
-
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_constant(self, *args, **kwargs)
-
 
 class Variable(Expression):
     def __init__(self, name):
@@ -330,7 +198,7 @@ class ElementLookup(Expression):
     name = property(_name)
 
     def __eq__(self, other):
-        return isinstance(other, Subscript) \
+        return isinstance(other, ElementLookup) \
                and (self._Aggregate == other._Aggregate) \
                and (self._Name == other._Name)
 
@@ -467,7 +335,7 @@ class Quotient(Expression):
     denominator=property(_den)
 
     def __eq__(self, other):
-        return isinstance(other, Subscript) \
+        return isinstance(other, Quotient) \
                and (self._Numerator == other._Numerator) \
                and (self._Denominator == other._Denominator)
 
@@ -475,25 +343,7 @@ class Quotient(Expression):
         return bool(self._Numerator)
 
     def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_rational(self, *args, **kwargs)
-
-class RationalExpression(Expression):
-    def __init__(self, rational):
-        self.Rational = rational
-
-    def _num(self):
-        return self.Rational.numerator
-    numerator=property(_num)
-
-    def _den(self):
-        return self.Rational.denominator
-    denominator=property(_den)
-
-    def __nonzero__(self):
-        return bool(self.Rational)
-
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_rational(self, *args, **kwargs)
+        return mapper.map_quotient(self, *args, **kwargs)
 
 class Power(Expression):
     def __init__(self, base, exponent):
@@ -618,11 +468,17 @@ def polynomial_from_expression(expression):
 
 
 
-def make_quotient(numerator, denominator):
+def quotient(numerator, denominator):
+    if not isinstance(numerator, Expression):
+        numerator = Constant(numerator)
+    if not isinstance(denominator, Expression):
+        denominator = Constant(denominator)
+        
     try:
+        import pymbolic.rational as rat
         if isinstance(traits.common_traits(numerator, denominator), 
-                      EuclideanRingTraits):
-            return RationalExpression(numerator, denominator)
+                      traits.EuclideanRingTraits):
+            return rat.Rational(numerator, denominator)
     except traits.NoCommonTraitsError:
         pass
     except traits.NoTraitsError:

@@ -1,3 +1,5 @@
+class Mapper:
+    def __call__(self, *args, **kwargs):
 class CombineMapper:
     def combine(self, values):
         raise NotImplementedError
