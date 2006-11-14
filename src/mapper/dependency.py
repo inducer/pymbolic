@@ -27,5 +27,5 @@ def is_constant(expr, with_respect_to=None):
     if not with_respect_to:
         return not bool(get_dependencies(expr))
     else:
-        return not (set(with_respect_to) and get_dependencies(expr))
+        return not (set(with_respect_to) & get_dependencies(expr))
 

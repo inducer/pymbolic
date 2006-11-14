@@ -72,7 +72,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
             for i, child in enumerate(expr.children)
             if not self._isc(child)))
 
-    def map_rational(self, expr):
+    def map_quotient(self, expr):
         f = expr.numerator
         g = expr.denominator
         f_const = self._isc(f)
@@ -93,7 +93,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
         f_const = self._isc(f)
         g_const = self._isc(g)
 
-        log = "log"
+        log = pymbolic.var("log")
 
         if f_const and g_const:
             return 0

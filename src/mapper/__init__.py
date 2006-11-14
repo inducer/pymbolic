@@ -1,8 +1,13 @@
+
+
+
+
 class Mapper(object):
     def __call__(self, victim, *args, **kwargs):
-        try:
+        import pymbolic.primitives as primitives
+        if isinstance(victim, primitives.Expression):
             return victim.invoke_mapper(self, *args, **kwargs)
-        except AttributeError:
+        else:
             return self.map_constant(victim, *args, **kwargs)
 
     def map_rational(self, expr, *args, **kwargs):

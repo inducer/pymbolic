@@ -86,4 +86,3 @@ if __name__ == "__main__":
     print ex2
     print differentiate(ex2, parse("x"))
 
-

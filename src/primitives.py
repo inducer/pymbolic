@@ -85,14 +85,7 @@ class Expression(object):
         return Negation(self)
 
     def __call__(self, *pars):
-        processed = []
-        for par in pars:
-            if isinstance(par, Expression):
-                processed.append(par)
-            else:
-                processed.append(par)
-
-        return Call(self, tuple(processed))
+        return Call(self, pars)
 
     def __hash__(self):
         try:
