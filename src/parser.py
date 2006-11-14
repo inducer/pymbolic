@@ -51,11 +51,11 @@ def parse(expr_str):
     def parse_terminal(pstate):
         next_tag = pstate.next_tag()
         if next_tag is _int:
-            return primitives.Constant(int(pstate.next_str_and_advance()))
+            return int(pstate.next_str_and_advance())
         elif next_tag is _float:
-            return primitives.Constant(float(pstate.next_str_and_advance()))
+            return float(pstate.next_str_and_advance())
         elif next_tag is _imaginary:
-            return primitives.Constant(complex(pstate.next_str_and_advance()))
+            return complex(pstate.next_str_and_advance())
         elif next_tag is _identifier:
             return primitives.Variable(pstate.next_str_and_advance())
         else:

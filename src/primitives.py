@@ -64,13 +64,11 @@ class Expression(object):
 
     def __rdiv__(self, other):
         assert not isinstance(other, Expression)
-        return quotient(Constant(other), self)
+        return quotient(other, self)
 
     def __pow__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
         if not other: # exponent zero
-            return Constant(1)
+            return 1
         elif not (other-1): # exponent one
             return self
         return Power(self, other)
@@ -78,9 +76,9 @@ class Expression(object):
     def __rpow__(self, other):
         assert not isinstance(other, Expression)
         if not other: # base zero
-            return Constant(0)
+            return 0
         elif not (other-1): # base one
-            return Constant(1)
+            return 1
         return Power(other, self)
 
     def __neg__(self):
@@ -92,7 +90,7 @@ class Expression(object):
             if isinstance(par, Expression):
                 processed.append(par)
             else:
-                processed.append(Constant(par))
+                processed.append(par)
 
         return Call(self, tuple(processed))
 
@@ -237,26 +235,20 @@ class Sum(Expression):
         return isinstance(other, Sum) and (self._Children == other._Children)
 
     def __add__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
-        elif isinstance(other, Sum):
+        if isinstance(other, Sum):
             return Sum(*(self._Children + other._Children))
         if not other:
             return self
         return Sum(*(self._Children + (other,)))
 
     def __radd__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
-        elif isinstance(other, Sum):
+        if isinstance(other, Sum):
             return Sum(*(other._Children + self._Children))
         if not other:
             return self
         return Sum(*((other,) + self._Children))
 
     def __sub__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
         if not other:
             return self
         return Sum(*(self._Children + (-other,)))
@@ -288,23 +280,19 @@ class Product(Expression):
         return isinstance(other, Product) and (self._Children == other._Children)
 
     def __mul__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
-        elif isinstance(other, Product):
+        if isinstance(other, Product):
             return Product(*(self._Children + other._Children))
         if not other:
-            return Constant(0)
+            return 0
         if not other-1:
             return self
         return Product(*(self._Children + (other,)))
 
     def __rmul__(self, other):
-        if not isinstance(other, Expression):
-            other = Constant(other)
-        elif isinstance(other, Product):
+        if isinstance(other, Product):
             return Product(*(other._Children + self._Children))
         if not other:
-            return Constant(0)
+            return 0
         if not other-1:
             return self
         return Product(*((other,) + self._Children))
@@ -418,17 +406,15 @@ def make_variable(var_or_string):
 
 
 def subscript(expression, index):
-    if not isinstance(index, Expression):
-        index = Constant(index)
     return Subscript(expression, index)
 
 
 
 
-def sum(*components):
+def sum(components):
     components = tuple(c for c in components if c)
     if len(components) == 0:
-        return Constant(0)
+        return 0
     elif len(components) == 1:
         return components[0]
     else:
@@ -438,9 +424,9 @@ def sum(*components):
 
 
 def linear_combination(coefficients, expressions):
-    return sum(*[coefficient * expression
+    return sum(coefficient * expression
                  for coefficient, expression in zip(coefficients, expressions)
-                 if coefficient and expression])
+                 if coefficient and expression)
 
 
 
@@ -448,12 +434,12 @@ def linear_combination(coefficients, expressions):
 def product(*components):
     for c in components:
         if not c:
-            return Constant(0)
+            return 0
 
     components = tuple(c for c in components if (c-1))
 
     if len(components) == 0:
-        return Constant(1)
+        return 1
     elif len(components) == 1:
         return components[0]
     else:
@@ -469,15 +455,17 @@ def polynomial_from_expression(expression):
 
 
 def quotient(numerator, denominator):
-    if not isinstance(numerator, Expression):
-        numerator = Constant(numerator)
-    if not isinstance(denominator, Expression):
-        denominator = Constant(denominator)
-        
+    if not (denominator-1):
+        return numerator
+
+    import pymbolic.rational as rat
+    if isinstance(numerator, rat.Rational) and \
+            isinstance(denominator, rat.Rational):
+        return numerator * denominator.reciprocal()
+
     try:
-        import pymbolic.rational as rat
-        if isinstance(traits.common_traits(numerator, denominator), 
-                      traits.EuclideanRingTraits):
+        c_traits = traits.common_traits(numerator, denominator)
+        if isinstance(c_traits, traits.EuclideanRingTraits):
             return rat.Rational(numerator, denominator)
     except traits.NoCommonTraitsError:
         pass

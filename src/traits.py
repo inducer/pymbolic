@@ -16,8 +16,8 @@ def traits(x):
     try:
         return x.traits()
     except AttributeError:
-        if isinstance(x, (complex, float)): return FieldTraits
-        if isinstance(x, int): return IntegerTraits
+        if isinstance(x, (complex, float)): return FieldTraits()
+        if isinstance(x, int): return IntegerTraits()
         raise NoTraitsError
 
 
@@ -102,3 +102,4 @@ class IntegerTraits(EuclideanRingTraits):
             return 1
         else:
             raise RuntimeError, "0 does not have a prime factor decomposition"
+

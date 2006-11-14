@@ -14,7 +14,7 @@ class EvaluationMapper(pymbolic.mapper.Mapper):
         self.Context = context
 
     def map_constant(self, expr):
-        return expr.value
+        return expr
 
     def map_variable(self, expr):
         try:

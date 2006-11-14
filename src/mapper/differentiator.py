@@ -24,7 +24,7 @@ def map_math_functions_by_name(i, func, pars):
     elif f is math.tan and len(pars) == 1:
         return make_f("tan")(*pars)**2+1
     elif f is math.log and len(pars) == 1:
-        return primitives.Constant(1)/pars[0]
+        return primitives.quotient(1, pars[0])
     elif f is math.exp and len(pars) == 1:
         return make_f("exp")(*pars)
     else:
@@ -39,20 +39,20 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
         self.FunctionMap = func_map
 
     def map_constant(self, expr):
-        return primitives.Constant(0)
+        return 0
 
     def map_variable(self, expr):
         if expr == self.Variable:
-            return primitives.Constant(1)
+            return 1
         else:
-            return primitives.Constant(0)
+            return 0
 
     def map_call(self, expr):
-        return pymbolic.sum(*(
+        return pymbolic.sum(
             self.FunctionMap(i, expr.function, expr.parameters)
             * self(par)
             for i, par in enumerate(expr.parameters)
-            if not self._isc(par)))
+            if not self._isc(par))
 
     map_subscript = map_variable
 
@@ -79,7 +79,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
         g_const = self._isc(g)
 
         if f_const and g_const:
-            return primitives.Constant(0)
+            return 0
         elif f_const:
             return -f*self(g)/g**2
         elif g_const:
@@ -93,10 +93,10 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
         f_const = self._isc(f)
         g_const = self._isc(g)
 
-        log = primitives.Constant("log")
+        log = "log"
 
         if f_const and g_const:
-            return primitives.Constant(0)
+            return 0
         elif f_const:
             return log(f) * f**g * self(g)
         elif g_const:

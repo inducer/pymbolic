@@ -9,7 +9,6 @@ import pymbolic.mapper.differentiator
 import pymbolic.primitives
 
 var = pymbolic.primitives.Variable
-const = pymbolic.primitives.Constant
 sum = pymbolic.primitives.sum
 subscript = pymbolic.primitives.subscript
 product = pymbolic.primitives.product
@@ -38,7 +37,7 @@ def jacobian(expression_list, variables):
     return [grad(expr, variables) for expr in expression_list]
     
 def laplace(expression, variables):
-    return sum(*[differentiate(differentiate(expression,var), var) for var in variables])
+    return sum(differentiate(differentiate(expression,var), var) for var in variables)
 
 
 
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     print ex
     print repr(parse("x+y"))
     print evaluate(ex, {"alpha":5, "math":math, "x":-math.pi})
-    compiled = compile(substitute(ex, {var("alpha"): const(5)}))
+    compiled = compile(substitute(ex, {var("alpha"): 5}))
     print compiled(-math.pi)
     import cPickle as pickle
     pickle.dumps(compiled)

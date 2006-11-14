@@ -117,8 +117,7 @@ class Polynomial(primitives.Expression):
             return Polynomial(self.Base, [(exp, coeff * other)
                                           for exp, coeff in self.Data])
 
-        result = []
-
+        result = [] 
         for s_exp, s_coeff in self.Data:
             for o_exp, o_coeff in other.Data:
                 result.append((s_exp+o_exp, s_coeff*o_coeff))
@@ -169,24 +168,6 @@ class Polynomial(primitives.Expression):
     def __mod__(self):
         return self.__divmod__(self, other)[1]
 
-    def __str__(self):
-        sbase = str(self.Base)
-        def stringify_expcoeff((exp, coeff)):
-            if exp == 1:
-                if not (coeff-1):
-                    return sbase
-                else:
-                    return "%s*%s" % (str(coeff), sbase)
-            elif exp == 0:
-                return str(coeff)
-            else:
-                if not (coeff-1):
-                    return "%s**%s" % (sbase, exp) 
-                else:
-                    return "%s*%s**%s" % (str(coeff), sbase, exp) 
-
-        return "(%s)" % " + ".join(stringify_expcoeff(i) for i in self.Data[::-1])
-
     def _data(self):
         return self.Data
     data = property(_data)
@@ -206,10 +187,8 @@ class Polynomial(primitives.Expression):
             return -1
     degree = property(_degree)
 
-    def __repr__(self):
-        return "%s(%s, %s)" % (self.__class__.__name__,
-                               repr(self.Base), 
-                               repr(self.Data))
+    def __getinitargs__(self):
+        return (self.Base, self.Data, self.Unit)
         
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_polynomial(self, *args, **kwargs)
@@ -255,10 +234,9 @@ class PolynomialTraits(traits.EuclideanRingTraits):
 
    
 if __name__ == "__main__":
-    
-    x = Polynomial(pymbolic.var("x"), unit=pymbolic.const(1))
-    y = Polynomial(pymbolic.var("y"), unit=pymbolic.const(1))
-    xpoly = x**2 + pymbolic.const(1)
+    x = Polynomial(pymbolic.var("x"))
+    y = Polynomial(pymbolic.var("y"))
+    xpoly = x**2 + 1
     ypoly = -y**2*xpoly + xpoly
     #print xpoly
     #print ypoly
@@ -270,6 +248,7 @@ if __name__ == "__main__":
     xp3 = xpoly**3
     print xp3
     print integrate(xp3)
+    print differentiate(integrate(xp3))
 
     #print 3*xpoly**3 + 1
     #print xpoly 

@@ -1,4 +1,3 @@
-import sets
 import pymbolic.mapper
 
 
@@ -10,10 +9,10 @@ class DependencyMapper(pymbolic.mapper.CombineMapper):
         return reduce(operator.or_, values)
 
     def map_constant(self, expr):
-        return sets.Set()
+        return set()
 
     def map_variable(self, expr):
-        return sets.Set([expr])
+        return set([expr])
 
 
 
@@ -28,5 +27,5 @@ def is_constant(expr, with_respect_to=None):
     if not with_respect_to:
         return not bool(get_dependencies(expr))
     else:
-        return not (sets.Set(with_respect_to) and get_dependencies(expr))
+        return not (set(with_respect_to) and get_dependencies(expr))
 

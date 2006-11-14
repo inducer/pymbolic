@@ -65,8 +65,13 @@ class Rational(prm.Expression):
             gcd_1 = t.gcd(self.Numerator, other.Denominator)
             gcd_2 = t.gcd(other.Numerator, self.Denominator)
 
-            return Rational(self.Numerator/gcd_1 * other.Numerator/gcd_2,
-                            self.Denominator/gcd_2 * other.Denominator/gcd_1)
+            new_num = self.Numerator/gcd_1 * other.Numerator/gcd_2
+            new_denom = self.Denominator/gcd_2 * other.Denominator/gcd_1
+
+            if not (new_denom-1):
+                return new_num
+
+            return Rational(new_num, new_denom)
         except traits.NoCommonTraitsError:
             return prm.Expression.__mul__(self, other)
 
@@ -89,6 +94,12 @@ class Rational(prm.Expression):
 
     def __float__(self):
         return float(self.Numerator) / flaot(self.Denominator)
+
+    def __getinitargs__(self):
+        return (self.Numerator, self.Denominator)
+
+    def reciprocal(self):
+        return Rational(self.Denominator, self.Numerator)
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_rational(self, *args, **kwargs)

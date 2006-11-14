@@ -14,7 +14,7 @@ PREC_NONE = 0
 
 class StringifyMapper(pymbolic.mapper.Mapper):
     def map_constant(self, expr, enclosing_prec):
-        return str(expr.value)
+        return str(expr)
 
     def map_variable(self, expr, enclosing_prec):
         return expr.name
@@ -75,7 +75,6 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             return "(%s)" % result
         else:
             return result
-    map_rational = map_quotient
 
     def map_power(self, expr, enclosing_prec):
         result = "%s**%s" % (
@@ -88,7 +87,26 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             return result
 
     def map_polynomial(self, expr, enclosing_prec):
-        raise NotImplementedError
+        sbase = str(expr.base)
+        def stringify_expcoeff((exp, coeff)):
+            if exp == 1:
+                if not (coeff-1):
+                    return sbase
+                else:
+                    return "%s*%s" % (str(coeff), sbase)
+            elif exp == 0:
+                return str(coeff)
+            else:
+                if not (coeff-1):
+                    return "%s**%s" % (sbase, exp) 
+                else:
+                    return "%s*%s**%s" % (str(coeff), sbase, exp) 
+
+        result = "%s" % " + ".join(stringify_expcoeff(i) for i in expr.data[::-1])
+        if enclosing_prec > PREC_SUM:
+            return "(%s)" % result
+        else:
+            return result
 
     def map_list(self, expr, enclosing_prec):
         return "[%s]" % ", ".join([self(i, PREC_NONE) for i in expr.children])

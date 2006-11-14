@@ -1,4 +1,3 @@
-import sets
 import math
 
 import pymbolic
@@ -22,8 +21,8 @@ class CompiledExpression:
         ctx = self.context()
 
         used_variables = pymbolic.get_dependencies(self._Expression)
-        used_variables -= sets.Set(self._Variables)
-        used_variables -= sets.Set(pymbolic.var(key) for key in ctx.keys())
+        used_variables -= set(self._Variables)
+        used_variables -= set(pymbolic.var(key) for key in ctx.keys())
         used_variables = list(used_variables)
         used_variables.sort()
         all_variables = self._Variables + used_variables

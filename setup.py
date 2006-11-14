@@ -9,7 +9,7 @@ import os.path
 setup(name="pymbolic",
       version="0.10",
       description="A package for symbolic computation",
-      author=u"Andreas Klöckner",
+      author=u"Andreas Kloeckner",
       author_email="inform@tiker.net",
       license = "BSD, like Python itself",
       url="http://news.tiker.net/software/pymbolic",
