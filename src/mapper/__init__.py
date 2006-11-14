@@ -1,7 +1,3 @@
-
-
-
-
 class Mapper(object):
     def __call__(self, victim, *args, **kwargs):
         import pymbolic.primitives as primitives
@@ -90,13 +86,12 @@ class IdentityMapper(Mapper):
         return expr.__class__(self(expr.child, *args, **kwargs))
 
     def map_sum(self, expr, *args, **kwargs):
-        return expr.__class__(
-                *[self(child, *args, **kwargs) 
-                    for child in expr.children])
+        return expr.__class__(tuple(
+            self(child, *args, **kwargs) for child in expr.children))
     
     map_product = map_sum
     
-    def map_rational(self, expr, *args, **kwargs):
+    def map_quotient(self, expr, *args, **kwargs):
         return expr.__class__(self(expr.numerator, *args, **kwargs),
                               self(expr.denominator, *args, **kwargs))
 

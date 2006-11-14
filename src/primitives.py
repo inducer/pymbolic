@@ -10,30 +10,18 @@ class Expression(object):
         return not self.__eq__(other)
 
     def __add__(self, other):
-        if not other:
-            return self
-        return Sum(self, other)
+        return sum((self, other))
 
     def __radd__(self, other):
         assert not isinstance(other, Expression)
-
-        if not other:
-            return self
-
-        return Sum(other, self)
+        return sum((other, self))
 
     def __sub__(self, other):
-        if not other:
-            return self
-        return Sum(self, -other)
+        return sum((self, -other))
 
     def __rsub__(self, other):
         assert not isinstance(other, Expression)
-
-        if not other:
-            return Negation(self)
-
-        return Sum(other, -self)
+        return sum((other, -self))
 
     def __mul__(self, other):
         if not (other - 1):
@@ -42,7 +30,7 @@ class Expression(object):
             return Negation(self)
         elif not other:
             return 0
-        return Product(self, other)
+        return product((self, other))
 
     def __rmul__(self, other):
         assert not isinstance(other, Expression)
@@ -52,9 +40,9 @@ class Expression(object):
         elif not other:
             return 0
         elif not (other+1):
-            return Negation(self)
+            return -self
         else:
-            return Product(other, self)
+            return product((other, self))
 
     def __div__(self, other):
         if not (other-1):
@@ -214,7 +202,7 @@ class Negation(Expression):
         return mapper.map_negation(self, *args, **kwargs)
 
 class Sum(Expression):
-    def __init__(self, *children):
+    def __init__(self, children):
         self._Children = children
 
     def __getinitargs__(self):
@@ -229,22 +217,22 @@ class Sum(Expression):
 
     def __add__(self, other):
         if isinstance(other, Sum):
-            return Sum(*(self._Children + other._Children))
+            return Sum(self._Children + other._Children)
         if not other:
             return self
-        return Sum(*(self._Children + (other,)))
+        return Sum(self._Children + (other,))
 
     def __radd__(self, other):
         if isinstance(other, Sum):
-            return Sum(*(other._Children + self._Children))
+            return Sum(other._Children + self._Children)
         if not other:
             return self
-        return Sum(*((other,) + self._Children))
+        return Sum((other,) + self._Children)
 
     def __sub__(self, other):
         if not other:
             return self
-        return Sum(*(self._Children + (-other,)))
+        return Sum(self._Children + (-other,))
 
     def __nonzero__(self):
         if len(self._Children) == 0:
@@ -259,7 +247,7 @@ class Sum(Expression):
         return mapper.map_sum(self, *args, **kwargs)
 
 class Product(Expression):
-    def __init__(self, *children):
+    def __init__(self, children):
         self._Children = children
 
     def __getinitargs__(self):
@@ -274,21 +262,21 @@ class Product(Expression):
 
     def __mul__(self, other):
         if isinstance(other, Product):
-            return Product(*(self._Children + other._Children))
+            return Product(self._Children + other._Children)
         if not other:
             return 0
         if not other-1:
             return self
-        return Product(*(self._Children + (other,)))
+        return Product(self._Children + (other,))
 
     def __rmul__(self, other):
         if isinstance(other, Product):
-            return Product(*(other._Children + self._Children))
+            return Product(other._Children + self._Children)
         if not other:
             return 0
         if not other-1:
             return self
-        return Product(*((other,) + self._Children))
+        return Product((other,) + self._Children)
 
     def __nonzero__(self):
         for i in self._Children:
@@ -411,7 +399,7 @@ def sum(components):
     elif len(components) == 1:
         return components[0]
     else:
-        return Sum(*components)
+        return Sum(components)
 
 
 
@@ -424,7 +412,7 @@ def linear_combination(coefficients, expressions):
 
 
 
-def product(*components):
+def product(components):
     for c in components:
         if not c:
             return 0
@@ -436,7 +424,7 @@ def product(*components):
     elif len(components) == 1:
         return components[0]
     else:
-        return Product(*components)
+        return Product(components)
 
 
 

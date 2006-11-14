@@ -60,17 +60,17 @@ class DifferentiationMapper(pymbolic.mapper.Mapper):
         return -self(expr.child)
 
     def map_sum(self, expr):
-        return pymbolic.sum(*(self(child)
-                              for child in expr.children
-                              if not self._isc(child)))
+        return pymbolic.sum(self(child) for child in expr.children
+                if not self._isc(child))
 
     def map_product(self, expr):
-        return pymbolic.sum(*(
-            pymbolic.product(*(expr.children[0:i] + 
-                             (self(child),) +
-                             expr.children[i+1:]))
+        return pymbolic.sum(
+            pymbolic.product(
+                expr.children[0:i] + 
+                (self(child),) +
+                expr.children[i+1:])
             for i, child in enumerate(expr.children)
-            if not self._isc(child)))
+            if not self._isc(child))
 
     def map_quotient(self, expr):
         f = expr.numerator
