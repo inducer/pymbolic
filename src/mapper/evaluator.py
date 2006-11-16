@@ -1,3 +1,4 @@
+from __future__ import division
 import pymbolic.mapper
 
 
@@ -23,39 +24,41 @@ class EvaluationMapper(pymbolic.mapper.Mapper):
             raise UnknownVariableError, expr.name
 
     def map_call(self, expr):
-        return self(expr.function)(*[self(par) for par in expr.parameters])
+        return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])
 
     def map_subscript(self, expr):
-        return self(expr.aggregate)[self(expr.index)]
+        return self.rec(expr.aggregate)[self.rec(expr.index)]
 
     def map_lookup(self, expr):
-        return getattr(self(expr.aggregate), expr.name)
+        return getattr(self.rec(expr.aggregate), expr.name)
 
     def map_negation(self, expr):
-        return -self(expr.child)
+        return -self.rec(expr.child)
 
     def map_sum(self, expr):
-        return sum(self(child) for child in expr.children)
+        return sum(self.rec(child) for child in expr.children)
 
     def map_product(self, expr):
         if len(expr.children) == 0:
             return 1 # FIXME?
-        result = self(expr.children[0])
+        result = self.rec(expr.children[0])
         for child in expr.children[1:]:
-            result *= self(child)
+            result *= self.rec(child)
         return result
 
     def map_rational(self, expr):
-        return self(expr.numerator) / self(expr.denominator)
+        return self.rec(expr.numerator) / self.rec(expr.denominator)
 
     def map_power(self, expr):
-        return self(expr.base) ** self(expr.exponent)
+        return self.rec(expr.base) ** self.rec(expr.exponent)
 
     def map_polynomial(self, expr):
-        raise NotImplementedError
+        return pymbolic.sum(
+                coeff*expr.base**exp
+                for exp,coeff in expr.data)
 
     def map_list(self, expr):
-        return [self(child) for child in expr.Children]
+        return [self.rec(child) for child in expr.Children]
 
 
 

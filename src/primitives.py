@@ -75,6 +75,9 @@ class Expression(object):
     def __call__(self, *pars):
         return Call(self, pars)
 
+    def __getitem__(self, subscript):
+        return Subscript(self, subscript)
+
     def __hash__(self):
         try:
             return self._HashValue

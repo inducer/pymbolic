@@ -1,10 +1,10 @@
-import pymbolic.primitives as prm
+import pymbolic.primitives as primitives
 import pymbolic.traits as traits
 
 
 
 
-class Rational(prm.Expression):
+class Rational(primitives.Expression):
     def __init__(self, numerator, denominator=1):
         d_unit = traits.traits(denominator).get_unit(denominator)
         numerator /= d_unit
@@ -44,8 +44,10 @@ class Rational(prm.Expression):
                      newother.Numerator * newden/newother.Denominator
             gcd = t.gcd(newden, newnum)
             return Rational(newnum/gcd, newden/gcd)
+        except traits.NoTraitsError:
+            return primitives.Expression.__add__(self, other)
         except traits.NoCommonTraitsError:
-            return prm.Expression.__add__(self, other)
+            return primitives.Expression.__add__(self, other)
 
     __radd__ = __add__
 
@@ -57,23 +59,25 @@ class Rational(prm.Expression):
 
     def __mul__(self, other):
         if not isinstance(other, Rational):
-            other = Rational(other)
+            newother = Rational(other)
 
         try:
-            t = traits.common_traits(self.Numerator, other.Numerator,
-                                     self.Denominator, other. Denominator)
-            gcd_1 = t.gcd(self.Numerator, other.Denominator)
-            gcd_2 = t.gcd(other.Numerator, self.Denominator)
+            t = traits.common_traits(self.Numerator, newother.Numerator,
+                                     self.Denominator, newother. Denominator)
+            gcd_1 = t.gcd(self.Numerator, newother.Denominator)
+            gcd_2 = t.gcd(newother.Numerator, self.Denominator)
 
-            new_num = self.Numerator/gcd_1 * other.Numerator/gcd_2
-            new_denom = self.Denominator/gcd_2 * other.Denominator/gcd_1
+            new_num = self.Numerator/gcd_1 * newother.Numerator/gcd_2
+            new_denom = self.Denominator/gcd_2 * newother.Denominator/gcd_1
 
             if not (new_denom-1):
                 return new_num
 
             return Rational(new_num, new_denom)
+        except traits.NoTraitsError:
+            return primitives.Expression.__mul__(self, other)
         except traits.NoCommonTraitsError:
-            return prm.Expression.__mul__(self, other)
+            return primitives.Expression.__mul__(self, other)
 
     __rmul__ = __mul__
 

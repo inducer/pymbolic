@@ -193,6 +193,20 @@ class Polynomial(primitives.Expression):
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_polynomial(self, *args, **kwargs)
 
+    def as_primitives(self):
+        deps = pymbolic.get_dependencies(self)
+        context = dict((dep, dep) for dep in deps)
+        return pymbolic.evaluate(self, context)
+
+
+
+
+
+def from_primitives(expr, var_order):
+    pass
+    
+
+
 
 
 
@@ -214,8 +228,25 @@ def integrate(poly):
 
 
 
+def integrate_definite(poly, a, b):
+    antideriv = integrate(poly)
+    a_bound = pymbolic.substitute(antideriv, {poly.base: a})
+    b_bound = pymbolic.substitute(antideriv, {poly.base: b})
+
+    return pymbolic.sum((b_bound, -a_bound))
+
+
+
+
 def leading_coefficient(poly):
     return poly.data[-1][1]
+
+
+
+
+def general_polynomial(base, coefflist, degree):
+    return Polynomial(base, 
+            ((i, coefflist[i]) for i in range(degree+1)))
 
 
 
@@ -254,6 +285,14 @@ if __name__ == "__main__":
     #print xpoly 
     #q,r = divmod(3*xpoly**3 + 1, xpoly)
     #print q, r
+
+    gp = general_polynomial(pymbolic.var("x"), pymbolic.var("a"), 7)
+    print gp
+    print gp.as_primitives()
+    
+    #def_int = integrate_definite(gp, 2, 3)
+    #print def_int
+    #print pymbolic.get_dependencies(def_int, True)
 
 
 

@@ -1,10 +1,16 @@
 class Mapper(object):
-    def __call__(self, victim, *args, **kwargs):
+    def __init__(self, recurse=True):
+        self.Recurse = True
+
+    def _rec(self, expr, *args, **kwargs):
+        return expr
+
+    def __call__(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
-        if isinstance(victim, primitives.Expression):
-            return victim.invoke_mapper(self, *args, **kwargs)
+        if isinstance(expr, primitives.Expression):
+            return expr.invoke_mapper(self, *args, **kwargs)
         else:
-            return self.map_constant(victim, *args, **kwargs)
+            return expr.map_constant(victim, *args, **kwargs)
 
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
@@ -13,51 +19,64 @@ class Mapper(object):
 
 
 
-class CombineMapper(Mapper):
-    def combine(self, values):
-        raise NotImplementedError
+class RecursiveMapper(Mapper):
+    def rec(self, victim, *args, **kwargs):
+        import pymbolic.primitives as primitives
+        if isinstance(victim, primitives.Expression):
+            return victim.invoke_mapper(self, *args, **kwargs)
+        else:
+            return self.map_constant(victim, *args, **kwargs)
 
+
+
+
+class CombineMapperBase(RecursiveMapper):
     def map_call(self, expr, *args, **kwargs):
         return self.combine(
-                (self(expr.function, *args, **kwargs),) + 
+                (self.rec(expr.function, *args, **kwargs),) + 
                 tuple(
-                    self(child, *args, **kwargs) for child in expr.parameters)
+                    self.rec(child, *args, **kwargs) for child in expr.parameters)
                 )
 
     def map_subscript(self, expr, *args, **kwargs):
         return self.combine(
-                [self(expr.aggregate, *args, **kwargs), 
-                    self(expr.index, *args, **kwargs)])
+                [self.rec(expr.aggregate, *args, **kwargs), 
+                    self.rec(expr.index, *args, **kwargs)])
 
     def map_lookup(self, expr, *args, **kwargs):
-        return self(expr.aggregate, *args, **kwargs)
+        return self.rec(expr.aggregate, *args, **kwargs)
 
     def map_negation(self, expr, *args, **kwargs):
-        return self(expr.child, *args, **kwargs)
+        return self.rec(expr.child, *args, **kwargs)
 
     def map_sum(self, expr, *args, **kwargs):
-        return self.combine(self(child, *args, **kwargs) 
+        return self.combine(self.rec(child, *args, **kwargs) 
                 for child in expr.children)
 
     map_product = map_sum
 
     def map_quotient(self, expr, *args, **kwargs):
         return self.combine((
-            self(expr.numerator, *args, **kwargs), 
-            self(expr.denominator, *args, **kwargs)))
+            self.rec(expr.numerator, *args, **kwargs), 
+            self.rec(expr.denominator, *args, **kwargs)))
 
     def map_power(self, expr, *args, **kwargs):
         return self.combine((
-                self(expr.base, *args, **kwargs), 
-                self(expr.exponent, *args, **kwargs)))
+                self.rec(expr.base, *args, **kwargs), 
+                self.rec(expr.exponent, *args, **kwargs)))
 
+    def map_polynomial(self, expr, *args, **kwargs):
+        return self.combine(
+                (self.rec(expr.base, *args, **kwargs),) + 
+                tuple(
+                    self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data)
+                )
     map_list = map_sum
 
 
 
 
-
-class IdentityMapper(Mapper):
+class IdentityMapperBase(object):
     def map_constant(self, expr, *args, **kwargs):
         # leaf -- no need to rebuild
         return expr
@@ -68,39 +87,49 @@ class IdentityMapper(Mapper):
 
     def map_call(self, expr, *args, **kwargs):
         return expr.__class__(
-                self(expr.function, *args, **kwargs),
-                tuple(self(child, *args, **kwargs)
+                self.rec(expr.function, *args, **kwargs),
+                tuple(self.rec(child, *args, **kwargs)
                     for child in expr.parameters))
 
     def map_subscript(self, expr, *args, **kwargs):
         return expr.__class__(
-                self(expr.aggregate, *args, **kwargs), 
-                self(expr.index, *args, **kwargs))
+                self.rec(expr.aggregate, *args, **kwargs), 
+                self.rec(expr.index, *args, **kwargs))
 
     def map_lookup(self, expr, *args, **kwargs):
         return expr.__class__(
-                self(expr.aggregate, *args, **kwargs), 
+                self.rec(expr.aggregate, *args, **kwargs), 
                 expr.name)
 
     def map_negation(self, expr, *args, **kwargs):
-        return expr.__class__(self(expr.child, *args, **kwargs))
+        return expr.__class__(self.rec(expr.child, *args, **kwargs))
 
     def map_sum(self, expr, *args, **kwargs):
         return expr.__class__(tuple(
-            self(child, *args, **kwargs) for child in expr.children))
+            self.rec(child, *args, **kwargs) for child in expr.children))
     
     map_product = map_sum
     
     def map_quotient(self, expr, *args, **kwargs):
-        return expr.__class__(self(expr.numerator, *args, **kwargs),
-                              self(expr.denominator, *args, **kwargs))
+        return expr.__class__(self.rec(expr.numerator, *args, **kwargs),
+                              self.rec(expr.denominator, *args, **kwargs))
 
     def map_power(self, expr, *args, **kwargs):
-        return expr.__class__(self(expr.base, *args, **kwargs),
-                              self(expr.exponent, *args, **kwargs))
+        return expr.__class__(self.rec(expr.base, *args, **kwargs),
+                              self.rec(expr.exponent, *args, **kwargs))
 
     def map_polynomial(self, expr, *args, **kwargs):
-        raise NotImplementedError
+        return expr.__class__(self.rec(expr.base, *args, **kwargs),
+                              ((exp, self.rec(coeff, *args, **kwargs))
+                                  for exp, coeff in expr.data))
+
 
     map_list = map_sum
 
+
+
+
+class IdentityMapper(RecursiveMapper, IdentityMapperBase):
+    pass
+class NonrecursiveIdentityMapper(Mapper, IdentityMapperBase):
+    pass
