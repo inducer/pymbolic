@@ -36,6 +36,8 @@ class Rational(primitives.Expression):
     def __add__(self, other):
         if not isinstance(other, Rational):
             newother = Rational(other)
+        else:
+            newother = other
 
         try:
             t = traits.common_traits(self.Denominator, newother.Denominator)
@@ -43,7 +45,7 @@ class Rational(primitives.Expression):
             newnum = self.Numerator * newden/self.Denominator + \
                      newother.Numerator * newden/newother.Denominator
             gcd = t.gcd(newden, newnum)
-            return Rational(newnum/gcd, newden/gcd)
+            return primitives.quotient(newnum/gcd, newden/gcd)
         except traits.NoTraitsError:
             return primitives.Expression.__add__(self, other)
         except traits.NoCommonTraitsError:

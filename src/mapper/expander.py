@@ -91,31 +91,39 @@ class ExpandMapper(IdentityMapper):
         self.Collector = collector
     
     def map_product(self, expr):
-        from pymbolic.primitives import Sum
+        from pymbolic.primitives import Sum, Product
 
-        def expand(children):
+        def expand(prod):
+            if not isinstance(prod, Product):
+                return prod
+
             leading = []
-            for i in children:
+            for i in prod.children:
                 if isinstance(i, Sum):
                     break
                 else:
                     leading.append(i)
 
-            if len(leading) == len(children):
+            if len(leading) == len(prod.children):
                 # no more sums found
-                result = pymbolic.product(children)
+                result = pymbolic.product(prod.children)
                 return result
             else:
-                sum = children[len(leading)]
+                sum = prod.children[len(leading)]
                 assert isinstance(sum, Sum)
-                rest = children[len(leading)+1:]
+                rest = prod.children[len(leading)+1:]
+                if rest:
+                    rest = expand(Product(rest))
+                else:
+                    rest = 1
 
                 result = self.Collector(pymbolic.sum(
-                       expand(leading+[sumchild]+rest)
-                       for sumchild in sum.children))
+                       pymbolic.product(leading) * expand(sumchild*rest)
+                       for sumchild in sum.children
+                       ))
                 return result
 
-        return expand([self.rec(child) for child in expr.children])
+        return expand(IdentityMapper.map_product(self, expr))
 
     def map_quotient(self, expr):
         raise NotImplementedError
@@ -139,5 +147,8 @@ class ExpandMapper(IdentityMapper):
 
 
 
-def expand(expr):
-    return ExpandMapper()(expr)
+def expand(expr, parameters, commutatitve=True):
+    if commutative:
+        return ExpandMapper(CommutativeTermCollector(parameters))(expr)
+    else:
+        return ExpandMapper(lambda x: x)(expr)

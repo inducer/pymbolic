@@ -87,23 +87,27 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
             return result
 
     def map_polynomial(self, expr, enclosing_prec):
-        sbase = str(expr.base)
+        sbase = self(expr.base, PREC_POWER)
         def stringify_expcoeff((exp, coeff)):
-            if exp == 1:
-                if not (coeff-1):
-                    return sbase
-                else:
-                    return "%s*%s" % (str(coeff), sbase)
-            elif exp == 0:
-                return str(coeff)
+            if exp == 0:
+                return self(coeff, PREC_SUM)
+            elif exp == 1:
+                strexp = ""
             else:
-                if not (coeff-1):
-                    return "%s**%s" % (sbase, exp) 
-                else:
-                    return "%s*%s**%s" % (str(coeff), sbase, exp) 
+                strexp = "**%s" % exp
+
+            if not (coeff-1):
+                return "%s%s" % (sbase, strexp) 
+            elif not (coeff+1):
+                return "-%s%s" % (sbase, strexp) 
+            else:
+                return "%s*%s%s" % (self(coeff, PREC_PRODUCT), sbase, strexp) 
+
+        if not expr.data:
+            return "0"
 
         result = "%s" % " + ".join(stringify_expcoeff(i) for i in expr.data[::-1])
-        if enclosing_prec > PREC_SUM:
+        if enclosing_prec > PREC_SUM and len(expr.data) > 1:
             return "(%s)" % result
         else:
             return result

@@ -1,8 +1,8 @@
 from __future__ import division
 import pymbolic
-import pymbolic.primitives as primitives
+from pymbolic.primitives import Expression
 import pymbolic.algorithm as algorithm
-import pymbolic.traits as traits
+from pymbolic.traits import traits, EuclideanRingTraits, FieldTraits
 
 
 
@@ -30,10 +30,28 @@ def _sort_uniq(data):
 
 
 
-class Polynomial(primitives.Expression):
-    def __init__(self, base, data=None, unit=1):
+class LexicalMonomialOrder:
+    def __call__(self, a, b):
+        from pymbolic.primitives import Variable
+        # is a < b?
+        assert isinstance(a, Variable) and isinstance(b, Variable)
+        return a.name < b.name
+
+    def __eq__(self, other):
+        return isinstance(other, LexicalMonomialOrder)
+
+    def __repr__(self):
+        return "LexicalMonomialOrder()"
+
+
+
+
+
+class Polynomial(Expression):
+    def __init__(self, base, data=None, unit=1, var_less=LexicalMonomialOrder()):
         self.Base = base
         self.Unit = unit
+        self.VarLess = var_less
 
         # list of (exponent, coefficient tuples)
         # sorted in increasing order
@@ -67,8 +85,16 @@ class Polynomial(primitives.Expression):
                            for (exp, coeff) in self.Data])
 
     def __add__(self, other):
-        if not isinstance(other, Polynomial) or other.Base != self.Base:
+        if not isinstance(other, Polynomial):
             other = Polynomial(self.Base, ((0, other),))
+
+        if other.Base != self.Base:
+            assert self.VarLess == other.VarLess
+
+            if self.VarLess(self.Base, other.Base):
+                other = Polynomial(self.Base, ((0, other),))
+            else:
+                return other.__add__(self)
 
         iself = 0
         iother = 0
@@ -113,9 +139,18 @@ class Polynomial(primitives.Expression):
         return (-other)+self
 
     def __mul__(self, other):
-        if not isinstance(other, Polynomial) or other.Base != self.Base:
+        if not isinstance(other, Polynomial):
             return Polynomial(self.Base, [(exp, coeff * other)
                                           for exp, coeff in self.Data])
+
+        if other.Base != self.Base:
+            assert self.VarLess == other.VarLess
+
+            if self.VarLess(self.Base, other.Base):
+                return Polynomial(self.Base, [(exp, coeff * other)
+                                              for exp, coeff in self.Data])
+            else:
+                return other.__mul__(self)
 
         result = [] 
         for s_exp, s_coeff in self.Data:
@@ -133,29 +168,50 @@ class Polynomial(primitives.Expression):
                                        Polynomial(self.Base, ((0, 1),)))
 
     def __divmod__(self, other):
-        if not isinstance(other, Polynomial) or other.Base != self.Base:
-            dm_list = [(exp, divmod(coeff * other)) for exp, coeff in self.Data]
+        if not isinstance(other, Polynomial):
+            dm_list = [(exp, divmod(coeff, other)) for exp, coeff in self.Data]
             return Polynomial(self.Base, [(exp, quot) for (exp, (quot, rem)) in dm_list]),\
                    Polynomial(self.Base, [(exp, rem) for (exp, (quot, rem)) in dm_list])
+
+        if other.Base != self.Base:
+            assert self.VarLess == other.VarLess
+
+            if self.VarLess(self.Base, other.Base):
+                dm_list = [(exp, divmod(coeff, other)) for exp, coeff in self.Data]
+                return Polynomial(self.Base, [(exp, quot) for (exp, (quot, rem)) in dm_list]),\
+                        Polynomial(self.Base, [(exp, rem) for (exp, (quot, rem)) in dm_list])
+            else:
+                other_unit = Polynomial(other.Base, ((0,other.unit),), self.VarLess)
+                quot, rem = divmod(other_unit, other)
+                return quot * self, rem * self
 
         if other.degree == -1:
             raise DivisionByZeroError
 
-        quotient = Polynomial(self.Base, ())
-        remainder = self
+        quot = Polynomial(self.Base, ())
+        rem = self
         other_lead_coeff = other.Data[-1][1]
         other_lead_exp = other.Data[-1][0]
-        while remainder.degree >= other.degree:
-            coeff_factor = remainder.Data[-1][1] / other_lead_coeff
-            deg_diff = remainder.Data[-1][0] - other_lead_exp
+
+        
+        coeffs_are_field = isinstance(traits(self.Unit), FieldTraits)
+        from pymbolic.primitives import quotient
+        while rem.degree >= other.degree:
+            if coeffs_are_field:
+                coeff_factor = quotient(rem.Data[-1][1], other_lead_coeff)
+            else:
+                coeff_factor, lead_rem = divmod(rem.Data[-1][1], other_lead_coeff)
+                if lead_rem:
+                    return quot, rem
+            deg_diff = rem.Data[-1][0] - other_lead_exp
 
             this_fac = Polynomial(self.Base, ((deg_diff, coeff_factor),))
-            quotient += this_fac
-            remainder -= this_fac * other
-        return quotient, remainder
+            quot += this_fac
+            rem -= this_fac * other
+        return quot, rem
 
-    def __div__(self):
-        q, r = self.__divmod__(self, other)
+    def __div__(self, other):
+        q, r = divmod(self, other)
         if r.degree != -1:
             raise ValueError, "division yielded a remainder"
         return q
@@ -188,7 +244,7 @@ class Polynomial(primitives.Expression):
     degree = property(_degree)
 
     def __getinitargs__(self):
-        return (self.Base, self.Data, self.Unit)
+        return (self.Base, self.Data, self.Unit, self.VarLess)
         
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_polynomial(self, *args, **kwargs)
@@ -203,9 +259,16 @@ class Polynomial(primitives.Expression):
 
 
 def from_primitives(expr, var_order):
-    pass
-    
+    from pymbolic import get_dependencies, evaluate
 
+    deps = get_dependencies(expr)
+    var_deps = [dep for dep in deps if dep in var_order]
+    context = dict((vd, Polynomial(vd, var_order=var_order))
+            for vd in var_deps)
+
+    # FIXME not fast, but works
+    # (and exercises multivariate polynomial code)
+    return evaluate(expr, context)
 
 
 
@@ -251,7 +314,7 @@ def general_polynomial(base, coefflist, degree):
 
 
 
-class PolynomialTraits(traits.EuclideanRingTraits):
+class PolynomialTraits(EuclideanRingTraits):
     @staticmethod
     def norm(x):
         return x.degree
@@ -259,7 +322,7 @@ class PolynomialTraits(traits.EuclideanRingTraits):
     @staticmethod
     def get_unit(x):
         lc = leading_coefficient(x)
-        return traits.traits(lc).get_unit(lc)
+        return traits(lc).get_unit(lc)
 
 
 
@@ -267,32 +330,15 @@ class PolynomialTraits(traits.EuclideanRingTraits):
 if __name__ == "__main__":
     x = Polynomial(pymbolic.var("x"))
     y = Polynomial(pymbolic.var("y"))
-    xpoly = x**2 + 1
-    ypoly = -y**2*xpoly + xpoly
-    #print xpoly
-    #print ypoly
-    #u = xpoly*ypoly
-    #print u
-    #print u**3
-    #print
 
-    xp3 = xpoly**3
-    print xp3
-    print integrate(xp3)
-    print differentiate(integrate(xp3))
-
-    #print 3*xpoly**3 + 1
-    #print xpoly 
-    #q,r = divmod(3*xpoly**3 + 1, xpoly)
-    #print q, r
-
-    gp = general_polynomial(pymbolic.var("x"), pymbolic.var("a"), 7)
-    print gp
-    print gp.as_primitives()
-    
-    #def_int = integrate_definite(gp, 2, 3)
-    #print def_int
-    #print pymbolic.get_dependencies(def_int, True)
-
+    # NOT WORKING INTRODUCE TESTS
+    u = (x+y)**5
+    v = x+y
+    #u = x+1
+    #v = 3*x+1
+    q, r = divmod(u, v)
+    print q, "R", r
+    print q*v 
+    print "REASSEMBLY:", q*v + r
 
 

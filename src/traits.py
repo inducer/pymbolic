@@ -45,7 +45,13 @@ class Traits(object):
 
 
 
-class EuclideanRingTraits(Traits):
+class IntegralDomainTraits(Traits):
+    pass
+
+
+
+
+class EuclideanRingTraits(IntegralDomainTraits):
     @classmethod
     def norm(cls, x):
         """Returns the algebraic norm of the element x.
@@ -83,7 +89,7 @@ class EuclideanRingTraits(Traits):
 
 
 
-class FieldTraits(Traits):
+class FieldTraits(IntegralDomainTraits):
     pass
 
 
