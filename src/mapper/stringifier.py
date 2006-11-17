@@ -52,7 +52,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
             return result
 
     def map_sum(self, expr, enclosing_prec):
-        result = "+".join(self.rec(i, PREC_SUM) for i in expr.children)
+        result = " + ".join(self.rec(i, PREC_SUM) for i in expr.children)
         if enclosing_prec > PREC_SUM:
             return "(%s)" % result
         else:

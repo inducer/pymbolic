@@ -1,4 +1,9 @@
-class HashMapper:
+from pymbolic.mapper import Mapper
+
+
+
+
+class HashMapper(Mapper):
     def map_constant(self, expr):
         return 0x131 ^ hash(expr.value)
 

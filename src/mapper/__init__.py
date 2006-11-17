@@ -10,7 +10,7 @@ class Mapper(object):
         if isinstance(expr, primitives.Expression):
             return expr.invoke_mapper(self, *args, **kwargs)
         else:
-            return expr.map_constant(victim, *args, **kwargs)
+            return self.map_constant(expr, *args, **kwargs)
 
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
@@ -30,7 +30,7 @@ class RecursiveMapper(Mapper):
 
 
 
-class CombineMapperBase(RecursiveMapper):
+class CombineMapper(RecursiveMapper):
     def map_call(self, expr, *args, **kwargs):
         return self.combine(
                 (self.rec(expr.function, *args, **kwargs),) + 

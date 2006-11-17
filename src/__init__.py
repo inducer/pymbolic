@@ -88,7 +88,7 @@ if __name__ == "__main__":
     #print ex2
     #print differentiate(ex2, parse("x"))
 
-    ex = parse("(a+b)**12*(c+d)")
+    ex = parse("(a+b)**12")
     print ex
     print expand(ex)
 

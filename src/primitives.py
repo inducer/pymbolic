@@ -1,6 +1,5 @@
 import traits
 import pymbolic.mapper.stringifier
-import pymbolic.mapper.hash_generator
 
 
 
@@ -78,21 +77,31 @@ class Expression(object):
     def __getitem__(self, subscript):
         return Subscript(self, subscript)
 
+    
     def __hash__(self):
         try:
             return self._HashValue
         except AttributeError:
-            self._HashValue = self.invoke_mapper(pymbolic.mapper.hash_generator.HashMapper())
+            from pymbolic.mapper.hash_generator import HashMapper
+            self._HashValue = self.invoke_mapper(HashMapper())
             return self._HashValue
 
     def __str__(self):
         from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE
-        return self.invoke_mapper(StringifyMapper(), PREC_NONE)
+        return StringifyMapper()(self, PREC_NONE)
 
     def __repr__(self):
-        return "%s%s" % (self.__class__.__name__, repr(self.__getinitargs__()))
+        initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
 
-class Variable(Expression):
+        return "%s(%s)" % (self.__class__.__name__, initargs_str)
+
+class AlgebraicLeaf(Expression):
+    pass
+
+class Leaf(AlgebraicLeaf):
+    pass
+
+class Variable(Leaf):
     def __init__(self, name):
         self._Name = name
 
@@ -115,7 +124,7 @@ class Variable(Expression):
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_variable(self, *args, **kwargs)
 
-class Call(Expression):
+class Call(AlgebraicLeaf):
     def __init__(self, function, parameters):
         self._Function = function
         self._Parameters = parameters
@@ -139,7 +148,7 @@ class Call(Expression):
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_call(self, *args, **kwargs)
 
-class Subscript(Expression):
+class Subscript(AlgebraicLeaf):
     def __init__(self, aggregate, index):
         self._Aggregate = aggregate
         self._Index = index
@@ -162,8 +171,10 @@ class Subscript(Expression):
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_subscript(self, *args, **kwargs)
+        
 
-class ElementLookup(Expression):
+
+class ElementLookup(AlgebraicLeaf):
     def __init__(self, aggregate, name):
         self._Aggregate = aggregate
         self._Name = name
@@ -206,6 +217,8 @@ class Negation(Expression):
 
 class Sum(Expression):
     def __init__(self, children):
+        assert isinstance(children, tuple)
+
         self._Children = children
 
     def __getinitargs__(self):
@@ -251,6 +264,7 @@ class Sum(Expression):
 
 class Product(Expression):
     def __init__(self, children):
+        assert isinstance(children, tuple)
         self._Children = children
 
     def __getinitargs__(self):
@@ -307,9 +321,10 @@ class Quotient(Expression):
     denominator=property(_den)
 
     def __eq__(self, other):
-        return isinstance(other, Quotient) \
-               and (self._Numerator == other._Numerator) \
-               and (self._Denominator == other._Denominator)
+        from pymbolic.rational import Rational
+        return isinstance(other, (Rational, Quotient)) \
+               and (self._Numerator == other.numerator) \
+               and (self._Denominator == other.denominator)
 
     def __nonzero__(self):
         return bool(self._Numerator)
@@ -340,24 +355,6 @@ class Power(Expression):
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_power(self, *args, **kwargs)
-
-class PolynomialExpression(Expression):
-    def __init__(self, base=None, data=None, polynomial=None):
-        if polynomial:
-            self._Polynomial = polynomial
-        else:
-            self._Polynomial = polynomial.Polynomial(base, data)
-            
-    def _polynomial(self):
-        return self._Polynomial
-    polynomial = property(_polynomial)
-
-    def __eq__(self, other):
-        return isinstance(other, PolynomialExpression) \
-               and (self._Polynomial == other._Polynomial)
-
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_polynomial(self, *args, **kwargs)
 
 class List(Expression):
     def __init__(self, children):
@@ -397,12 +394,24 @@ def subscript(expression, index):
 
 def sum(components):
     components = tuple(c for c in components if c)
-    if len(components) == 0:
+
+    # flatten any potential sub-sums
+    queue = list(components)
+    done = []
+
+    while queue:
+        item = queue.pop(0)
+        if isinstance(item, Sum):
+            queue += item.children
+        else:
+            done.append(item)
+
+    if len(done) == 0:
         return 0
     elif len(components) == 1:
-        return components[0]
+        return done[0]
     else:
-        return Sum(components)
+        return Sum(tuple(done))
 
 
 
@@ -416,18 +425,25 @@ def linear_combination(coefficients, expressions):
 
 
 def product(components):
-    for c in components:
-        if not c:
-            return 0
-
     components = tuple(c for c in components if (c-1))
 
-    if len(components) == 0:
+    # flatten any potential sub-products
+    queue = list(components)
+    done = []
+
+    while queue:
+        item = queue.pop(0)
+        if isinstance(item, Product):
+            queue += item.children
+        else:
+            done.append(item)
+
+    if len(done) == 0:
         return 1
-    elif len(components) == 1:
+    elif len(done) == 1:
         return components[0]
     else:
-        return Product(components)
+        return Product(tuple(done))
 
 
 
