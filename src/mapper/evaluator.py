@@ -1,5 +1,5 @@
 from __future__ import division
-import pymbolic.mapper
+from pymbolic.mapper import RecursiveMapper
 
 
 
@@ -10,7 +10,7 @@ class UnknownVariableError(Exception):
 
 
 
-class EvaluationMapper(pymbolic.mapper.Mapper):
+class EvaluationMapper(RecursiveMapper):
     def __init__(self, context={}):
         self.Context = context
 
@@ -46,8 +46,8 @@ class EvaluationMapper(pymbolic.mapper.Mapper):
             result *= self.rec(child)
         return result
 
-    def map_rational(self, expr):
-        return self.rec(expr.numerator) / self.rec(expr.denominator)
+    def map_quotient(self, expr):
+        return pymbolic.quotient(self.rec(expr.numerator), self.rec(expr.denominator))
 
     def map_power(self, expr):
         return self.rec(expr.base) ** self.rec(expr.exponent)
@@ -63,6 +63,20 @@ class EvaluationMapper(pymbolic.mapper.Mapper):
 
 
 
+class FloatEvaluationMapper(EvaluationMapper):
+    def map_constant(self, expr):
+        return float(expr)
+
+    def map_rational(self, expr):
+        return self.rec(expr.numerator) / self.rec(expr.denominator)
+
+
+
+
 def evaluate(expression, context={}):
     return EvaluationMapper(context)(expression)
+
+def evaluate_to_float(expression, context={}):
+    return FloatEvaluationMapper(context)(expression)
+    
     

@@ -25,13 +25,13 @@ class DependencyMapper(CombineMapper):
         if self.IncludeCalls:
             return set([expr])
         else:
-            return CombineMapper.map_subscript(self, expr)
+            return CombineMapper.map_call(self, expr)
 
     def map_lookup(self, expr, *args, **kwargs):
         if self.IncludeLookups:
             return set([expr])
         else:
-            return CombineMapper.map_subscript(self, expr)
+            return CombineMapper.map_lookup(self, expr)
 
     def map_subscript(self, expr):
         if self.IncludeSubscripts:

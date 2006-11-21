@@ -86,6 +86,10 @@ class Expression(object):
             self._HashValue = self.invoke_mapper(HashMapper())
             return self._HashValue
 
+    def __float__(self):
+        from pymbolic.mapper.evaluator import evaluate_to_float
+        return evaluate_to_float(self)
+
     def __str__(self):
         from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE
         return StringifyMapper()(self, PREC_NONE)

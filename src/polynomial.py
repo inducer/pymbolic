@@ -254,6 +254,12 @@ class Polynomial(Expression):
         context = dict((dep, dep) for dep in deps)
         return pymbolic.evaluate(self, context)
 
+    def get_coefficient(self, sought_exp):
+        # FIXME use bisection
+        for exp, coeff in self.Data:
+            if exp == sought_exp:
+                return coeff
+        return 0
 
 
 

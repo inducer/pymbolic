@@ -7,6 +7,7 @@ import pymbolic.mapper.dependency
 import pymbolic.mapper.substitutor
 import pymbolic.mapper.differentiator
 import pymbolic.mapper.expander
+import pymbolic.mapper.coefficient_finder
 import pymbolic.primitives
 
 var = pymbolic.primitives.Variable
@@ -24,6 +25,7 @@ get_dependencies = pymbolic.mapper.dependency.get_dependencies
 substitute = pymbolic.mapper.substitutor.substitute
 differentiate = pymbolic.mapper.differentiator.differentiate
 expand = pymbolic.mapper.expander.expand
+find_coefficient = pymbolic.mapper.coefficient_finder.find_coefficient
 
 
 

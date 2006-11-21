@@ -26,7 +26,7 @@ class Rational(primitives.Expression):
     def __neg__(self):
         return Rational(-self.Numerator, self.Denominator)
 
-    def __eq__(self):
+    def __eq__(self, other):
         if not isinstance(other, Rational):
             other = Rational(other)
 
@@ -97,9 +97,6 @@ class Rational(primitives.Expression):
 
     def __pow__(self, other):
         return Rational(self.Denominator**other, self.Numerator**other)
-
-    def __float__(self):
-        return float(self.Numerator) / flaot(self.Denominator)
 
     def __getinitargs__(self):
         return (self.Numerator, self.Denominator)
