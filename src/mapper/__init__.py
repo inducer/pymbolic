@@ -12,6 +12,15 @@ class Mapper(object):
         else:
             return self.map_constant(expr, *args, **kwargs)
 
+    def map_subscript(self, expr, *args, **kwargs):
+        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+
+    def map_call(self, expr, *args, **kwargs):
+        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+
+    def map_lookup(self, expr, *args, **kwargs):
+        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
 

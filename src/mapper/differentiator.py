@@ -42,6 +42,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         return 0
 
     def map_variable(self, expr):
+        print expr, self.Variable
         if expr == self.Variable:
             return 1
         else:
@@ -109,7 +110,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         raise NotImplementedError
     
     def _isc(self,subexp):
-        return pymbolic.is_constant(subexp, [self.Variable])
+        return pymbolic.is_constant(subexp, [self.Variable],
+                include_lookups=True, include_subscripts=True
+                )
   
 
 
