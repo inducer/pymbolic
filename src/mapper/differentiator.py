@@ -42,7 +42,6 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         return 0
 
     def map_variable(self, expr):
-        print expr, self.Variable
         if expr == self.Variable:
             return 1
         else:
