@@ -397,25 +397,15 @@ def subscript(expression, index):
 
 
 def sum(components):
-    components = tuple(c for c in components if c)
-
-    # flatten any potential sub-sums
-    queue = list(components)
-    done = []
-
-    while queue:
-        item = queue.pop(0)
-        if isinstance(item, Sum):
-            queue += item.children
-        else:
-            done.append(item)
-
-    if len(done) == 0:
+    it = components.__iter__()
+    try:
+        result = it.next()
+    except StopIteration:
         return 0
-    elif len(components) == 1:
-        return done[0]
-    else:
-        return Sum(tuple(done))
+
+    for i in it:
+        result = result + i
+    return result
 
 
 
