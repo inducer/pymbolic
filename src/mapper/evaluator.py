@@ -53,8 +53,9 @@ class EvaluationMapper(RecursiveMapper):
         return self.rec(expr.base) ** self.rec(expr.exponent)
 
     def map_polynomial(self, expr):
+        import pymbolic
         return pymbolic.sum(
-                coeff*expr.base**exp
+                self.rec(coeff)*self.rec(expr.base)**exp
                 for exp,coeff in expr.data)
 
     def map_list(self, expr):
@@ -74,6 +75,9 @@ class FloatEvaluationMapper(EvaluationMapper):
 
 
 def evaluate(expression, context={}):
+    return EvaluationMapper(context)(expression)
+
+def evaluate_kw(expression, **context):
     return EvaluationMapper(context)(expression)
 
 def evaluate_to_float(expression, context={}):
