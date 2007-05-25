@@ -10,6 +10,8 @@ import pymbolic.mapper.expander
 import pymbolic.mapper.coefficient_finder
 import pymbolic.primitives
 
+from pymbolic.polynomial import Polynomial
+
 var = pymbolic.primitives.Variable
 sum = pymbolic.primitives.sum
 subscript = pymbolic.primitives.subscript
@@ -19,6 +21,7 @@ linear_combination = pymbolic.primitives.linear_combination
 
 parse = pymbolic.parser.parse
 evaluate = pymbolic.mapper.evaluator.evaluate
+evaluate_kw = pymbolic.mapper.evaluator.evaluate_kw
 compile = pymbolic.compiler.compile
 is_constant = pymbolic.mapper.dependency.is_constant
 get_dependencies = pymbolic.mapper.dependency.get_dependencies

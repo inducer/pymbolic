@@ -211,6 +211,8 @@ class Polynomial(Expression):
         return quot, rem
 
     def __div__(self, other):
+        if not isinstance(other, Polynomial):
+            return 1/other * self
         q, r = divmod(self, other)
         if r.degree != -1:
             raise ValueError, "division yielded a remainder"
