@@ -85,6 +85,9 @@ class Polynomial(Expression):
                            for (exp, coeff) in self.Data])
 
     def __add__(self, other):
+        if not other:
+            return self
+
         if not isinstance(other, Polynomial):
             other = Polynomial(self.Base, ((0, other),))
 

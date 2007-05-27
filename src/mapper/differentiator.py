@@ -106,7 +106,27 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
                    g * f**(g-1) * self.rec(f)
 
     def map_polynomial(self, expr):
-        raise NotImplementedError
+        # (a(x)*f(x))^n)' = a'(x)f(x)^n + a(x)f'(x)*n*f(x)^(n-1)
+        deriv_coeff = []
+        deriv_base = []
+
+        dbase = self.rec(expr.base)
+
+        for exp, coeff in expr.data:
+            dcoeff = self.rec(coeff)
+            if dcoeff:
+                deriv_coeff.append((exp, dcoeff))
+            if dbase and exp > 0:
+                deriv_base.append((exp-1, exp*dbase*coeff))
+
+        from pymbolic import Polynomial
+
+        return \
+                Polynomial(expr.base, tuple(deriv_coeff), expr.unit) + \
+                Polynomial(expr.base, tuple(deriv_base), expr.unit)
+            
+
+
     
     def _isc(self,subexp):
         return pymbolic.is_constant(subexp, [self.Variable],
