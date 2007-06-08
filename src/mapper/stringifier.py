@@ -12,10 +12,7 @@ PREC_NONE = 0
 
 
 
-class StringifyMapper(pymbolic.mapper.RecursiveMapper):
-    def map_constant(self, expr, enclosing_prec):
-        return str(expr)
-
+class StringifyMapperBase(pymbolic.mapper.RecursiveMapper):
     def map_variable(self, expr, enclosing_prec):
         return expr.name
 
@@ -114,4 +111,18 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_list(self, expr, enclosing_prec):
         return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr.children])
+
+
+
+
+class StringifyMapper(StringifyMapperBase):
+    def map_constant(self, expr, enclosing_prec):
+        return str(expr)
+
+
+
+
+class ReprMapper(StringifyMapperBase):
+    def map_constant(self, expr, enclosing_prec):
+        return repr(expr)
 

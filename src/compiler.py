@@ -1,7 +1,6 @@
 import math
 
 import pymbolic
-import pymbolic.mapper.stringifier
 import pymbolic.mapper.dependency
 
 
@@ -18,6 +17,7 @@ class CompiledExpression:
         self.__compile__()
 
     def __compile__(self):
+        from pymbolic.mapper.stringifier import ReprMapper, PREC_NONE
         ctx = self.context()
 
         used_variables = pymbolic.get_dependencies(self._Expression)
@@ -28,7 +28,7 @@ class CompiledExpression:
         all_variables = self._Variables + used_variables
 
         expr_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
-                                   str(self._Expression))
+                                   ReprMapper()(self._Expression, PREC_NONE))
         self.__call__ = eval(expr_s, ctx)
     
     def __getinitargs__(self):

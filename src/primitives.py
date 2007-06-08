@@ -9,18 +9,27 @@ class Expression(object):
         return not self.__eq__(other)
 
     def __add__(self, other):
-        return sum((self, other))
+        if other:
+            return Sum((self, other))
+        else:
+            return self
 
     def __radd__(self, other):
         assert not isinstance(other, Expression)
-        return sum((other, self))
+        return Sum((other, self))
 
     def __sub__(self, other):
-        return sum((self, -other))
+        if other:
+            return Sum((self, -other))
+        else:
+            return self
 
     def __rsub__(self, other):
         assert not isinstance(other, Expression)
-        return sum((other, -self))
+        if other:
+            return Sum((other, -self))
+        else:
+            return -self
 
     def __mul__(self, other):
         if not (other - 1):
@@ -29,7 +38,7 @@ class Expression(object):
             return Negation(self)
         elif not other:
             return 0
-        return product((self, other))
+        return Product((self, other))
 
     def __rmul__(self, other):
         assert not isinstance(other, Expression)
@@ -41,7 +50,7 @@ class Expression(object):
         elif not (other+1):
             return -self
         else:
-            return product((other, self))
+            return Product((other, self))
 
     def __div__(self, other):
         if not (other-1):
