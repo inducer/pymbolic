@@ -54,9 +54,18 @@ class EvaluationMapper(RecursiveMapper):
 
     def map_polynomial(self, expr):
         import pymbolic
-        return pymbolic.sum(
-                self.rec(coeff)*self.rec(expr.base)**exp
-                for exp,coeff in expr.data)
+
+        # evaluate using Horner's scheme
+        result = 0
+        rev_data = expr.data[::-1]
+        for i, (exp, coeff) in enumerate(rev_data):
+            if i+1 < len(rev_data):
+                next_exp = rev_data[i+1][0]
+            else:
+                next_exp = 0
+            result = (result+coeff)*expr.base**(exp-next_exp)
+
+        return result
 
     def map_list(self, expr):
         return [self.rec(child) for child in expr.Children]

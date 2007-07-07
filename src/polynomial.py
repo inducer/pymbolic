@@ -143,8 +143,11 @@ class Polynomial(Expression):
 
     def __mul__(self, other):
         if not isinstance(other, Polynomial):
-            return Polynomial(self.Base, [(exp, coeff * other)
-                                          for exp, coeff in self.Data])
+            if other == self.Base:
+                other = Polynomial(self.Base)
+            else:
+                return Polynomial(self.Base, [(exp, coeff * other)
+                                              for exp, coeff in self.Data])
 
         if other.Base != self.Base:
             assert self.VarLess == other.VarLess
@@ -342,14 +345,20 @@ if __name__ == "__main__":
     x = Polynomial(pymbolic.var("x"))
     y = Polynomial(pymbolic.var("y"))
 
-    # NOT WORKING INTRODUCE TESTS
-    u = (x+y)**5
-    v = x+y
-    #u = x+1
-    #v = 3*x+1
-    q, r = divmod(u, v)
-    print q, "R", r
-    print q*v 
-    print "REASSEMBLY:", q*v + r
+    u = (x+1)**5
+    v = pymbolic.evaluate_kw(u, x=x)
+    print u
+    print v
+
+    if False:
+        # NOT WORKING INTRODUCE TESTS
+        u = (x+y)**5
+        v = x+y
+        #u = x+1
+        #v = 3*x+1
+        q, r = divmod(u, v)
+        print q, "R", r
+        print q*v 
+        print "REASSEMBLY:", q*v + r
 
 

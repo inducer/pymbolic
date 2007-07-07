@@ -22,6 +22,12 @@ def integer_power(x, n, one=1):
   
   
   
+def gcd(q, r):
+    return extended_euclidean(q, r)[0]
+
+
+
+
 def extended_euclidean(q, r):
     """Return a tuple (p, a, b) such that p = aq + br, 
     where p is the greatest common divisor.

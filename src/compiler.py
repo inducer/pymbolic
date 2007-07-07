@@ -2,6 +2,41 @@ import math
 
 import pymbolic
 import pymbolic.mapper.dependency
+from pymbolic.mapper.stringifier import ReprMapper, PREC_NONE, PREC_SUM, PREC_POWER
+
+
+
+
+class CompileMapper(ReprMapper):
+    def map_polynomial(self, expr, enclosing_prec):
+        # Use Horner's scheme to evaluate the polynomial
+
+        sbase = self(expr.base, PREC_POWER)
+        def stringify_exp(exp):
+            if exp == 0:
+                return ""
+            elif exp == 1:
+                return "*%s" % sbase
+            else:
+                return "*%s**%s" % (sbase, exp)
+
+        result = ""
+        rev_data = expr.data[::-1]
+        for i, (exp, coeff) in enumerate(rev_data):
+            if i+1 < len(rev_data):
+                next_exp = rev_data[i+1][0]
+            else:
+                next_exp = 0
+            result = "(%s+%s)%s" % (result, self(coeff, PREC_SUM), 
+                    stringify_exp(exp-next_exp))
+        #print "A", result
+        #print "B", expr
+
+        if enclosing_prec > PREC_SUM and len(expr.data) > 1:
+            return "(%s)" % result
+        else:
+            return result
+
 
 
 
@@ -17,7 +52,6 @@ class CompiledExpression:
         self.__compile__()
 
     def __compile__(self):
-        from pymbolic.mapper.stringifier import ReprMapper, PREC_NONE
         ctx = self.context()
 
         used_variables = pymbolic.get_dependencies(self._Expression)
@@ -28,7 +62,7 @@ class CompiledExpression:
         all_variables = self._Variables + used_variables
 
         expr_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
-                                   ReprMapper()(self._Expression, PREC_NONE))
+                                   CompileMapper()(self._Expression, PREC_NONE))
         self.__call__ = eval(expr_s, ctx)
     
     def __getinitargs__(self):
