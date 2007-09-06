@@ -4,34 +4,66 @@ import pymbolic.mapper.stringifier
 
 
 
+VALID_CONSTANT_CLASSES = [int, float, complex]
+
+
+
+
+def is_constant(value):
+    return isinstance(value, tuple(VALID_CONSTANT_CLASSES))
+
+def is_valid_operand(value):
+    return isinstance(value, Expression) or is_constant(value)
+
+
+
+
+def register_constant_class(class_):
+    VALID_CONSTANT_CLASSES.append(class_)
+
+def unregister_constant_class(class_):
+    VALID_CONSTANT_CLASSES.remove(class_)
+
+
+
+
 class Expression(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __add__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
         if other:
             return Sum((self, other))
         else:
             return self
 
     def __radd__(self, other):
-        assert not isinstance(other, Expression)
+        assert is_constant(other)
         return Sum((other, self))
 
     def __sub__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if other:
             return Sum((self, -other))
         else:
             return self
 
     def __rsub__(self, other):
-        assert not isinstance(other, Expression)
+        assert is_constant(other)
+
         if other:
             return Sum((other, -self))
         else:
             return -self
 
     def __mul__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if not (other - 1):
             return self
         elif not (other+1):
@@ -41,7 +73,7 @@ class Expression(object):
         return Product((self, other))
 
     def __rmul__(self, other):
-        assert not isinstance(other, Expression)
+        assert is_constant(other)
 
         if not (other-1):
             return self
@@ -53,16 +85,22 @@ class Expression(object):
             return Product((other, self))
 
     def __div__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if not (other-1):
             return self
         return quotient(self, other)
     __truediv__ = __div__
 
     def __rdiv__(self, other):
-        assert not isinstance(other, Expression)
+        assert is_constant(other)
         return quotient(other, self)
 
     def __pow__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if not other: # exponent zero
             return 1
         elif not (other-1): # exponent one
@@ -70,7 +108,8 @@ class Expression(object):
         return Power(self, other)
 
     def __rpow__(self, other):
-        assert not isinstance(other, Expression)
+        assert is_constant(other)
+
         if not other: # base zero
             return 0
         elif not (other-1): # base one
@@ -85,7 +124,6 @@ class Expression(object):
 
     def __getitem__(self, subscript):
         return Subscript(self, subscript)
-
     
     def __hash__(self):
         try:
@@ -100,7 +138,8 @@ class Expression(object):
         return evaluate_to_float(self)
 
     def __str__(self):
-        from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE
+        from pymbolic.mapper.stringifier import \
+                StringifyMapper, PREC_NONE
         return StringifyMapper()(self, PREC_NONE)
 
     def __repr__(self):
