@@ -8,9 +8,9 @@ class Mapper(object):
     def __call__(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
         if isinstance(expr, primitives.Expression):
-            return expr.invoke_mapper(self, *args, **kwargs)
+            return expr.get_mapper_method(self)(expr, *args, **kwargs)
         else:
-            return self.map_constant(expr, *args, **kwargs)
+            return self.map_foreign(expr, *args, **kwargs)
 
     def map_subscript(self, expr, *args, **kwargs):
         return self.map_algebraic_leaf(self, expr, *args, **kwargs)
@@ -24,17 +24,37 @@ class Mapper(object):
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
 
+    def map_foreign(self, expr, *args, **kwargs):
+        from pymbolic.primitives import is_constant
+        
+        if is_constant(expr):
+            return self.map_constant(expr, *args, **kwargs)
+        elif isinstance(expr, list):
+            return self.map_list(expr, *args, **kwargs)
+        else:
+            raise ValueError, "encountered invalid foreign object: %s" % str(expr)
+
+
 
 
 
 
 class RecursiveMapper(Mapper):
-    def rec(self, victim, *args, **kwargs):
+    def handle_unsupported_expression(self, expr, *args, **kwargs):
+        raise ValueError, "%s cannot handle expressions of type %s" % (
+                self.__class__.__name__, expr.__class__.__name__)
+
+    def rec(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
-        if isinstance(victim, primitives.Expression):
-            return victim.invoke_mapper(self, *args, **kwargs)
+        if isinstance(expr, primitives.Expression):
+            try:
+                method = expr.get_mapper_method(self)
+            except AttributeError:
+                return self.handle_unsupported_expression(expr, *args, **kwargs)
+            else:
+                return method(expr, *args, **kwargs)
         else:
-            return self.map_constant(victim, *args, **kwargs)
+            return self.map_foreign(expr, *args, **kwargs)
 
 
 
@@ -80,6 +100,7 @@ class CombineMapper(RecursiveMapper):
                 tuple(
                     self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data)
                 )
+
     map_list = map_sum
 
 

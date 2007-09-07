@@ -2,12 +2,15 @@ import math
 
 import pymbolic
 import pymbolic.mapper.dependency
-from pymbolic.mapper.stringifier import ReprMapper, PREC_NONE, PREC_SUM, PREC_POWER
+from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE, PREC_SUM, PREC_POWER
 
 
 
 
-class CompileMapper(ReprMapper):
+class CompileMapper(StringifyMapper):
+    def __init__(self):
+        StringifyMapper.__init__(self, use_repr_for_constants=True)
+
     def map_polynomial(self, expr, enclosing_prec):
         # Use Horner's scheme to evaluate the polynomial
 
@@ -42,7 +45,11 @@ class CompileMapper(ReprMapper):
 
 
 class CompiledExpression:
-    """This class is necessary to make compiled expressions picklable."""
+    """This class encapsulates a compiled expression.
+    
+    The main reason for its existence is the fact that a dynamically-constructed
+    lambda function is not picklable.
+    """
   
     def __init__(self, expression, variables = []):
         import pymbolic.primitives as primi

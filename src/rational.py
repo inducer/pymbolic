@@ -104,8 +104,8 @@ class Rational(primitives.Expression):
     def reciprocal(self):
         return Rational(self.Denominator, self.Numerator)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_rational(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_rational
 
 
 

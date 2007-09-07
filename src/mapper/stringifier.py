@@ -12,7 +12,19 @@ PREC_NONE = 0
 
 
 
-class StringifyMapperBase(pymbolic.mapper.RecursiveMapper):
+class StringifyMapper(pymbolic.mapper.RecursiveMapper):
+    def __init__(self, use_repr_for_constants=False):
+        self.use_repr_for_constants = use_repr_for_constants
+
+    def handle_unsupported_expression(self, victim, enclosing_prec):
+        return victim.stringify(enclosing_prec, self.use_repr_for_constants)
+
+    def map_constant(self, expr, enclosing_prec):
+        if self.use_repr_for_constants:
+            return repr(expr)
+        else:
+            return str(expr)
+
     def map_variable(self, expr, enclosing_prec):
         return expr.name
 
@@ -56,8 +68,7 @@ class StringifyMapperBase(pymbolic.mapper.RecursiveMapper):
             return result
 
     def map_product(self, expr, enclosing_prec):
-        result = "*".join(self.rec(i, PREC_PRODUCT) 
-                for i in expr.children)
+        result = "*".join(self.rec(i, PREC_PRODUCT) for i in expr.children)
         if enclosing_prec > PREC_PRODUCT:
             return "(%s)" % result
         else:
@@ -110,19 +121,4 @@ class StringifyMapperBase(pymbolic.mapper.RecursiveMapper):
             return result
 
     def map_list(self, expr, enclosing_prec):
-        return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr.children])
-
-
-
-
-class StringifyMapper(StringifyMapperBase):
-    def map_constant(self, expr, enclosing_prec):
-        return str(expr)
-
-
-
-
-class ReprMapper(StringifyMapperBase):
-    def map_constant(self, expr, enclosing_prec):
-        return repr(expr)
-
+        return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr])

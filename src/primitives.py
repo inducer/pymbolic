@@ -130,17 +130,20 @@ class Expression(object):
             return self._HashValue
         except AttributeError:
             from pymbolic.mapper.hash_generator import HashMapper
-            self._HashValue = self.invoke_mapper(HashMapper())
+            self._HashValue = HashMapper()(self)
             return self._HashValue
 
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
+    def stringify(self, enclosing_prec, use_repr_for_constants=False):
+        from pymbolic.mapper.stringifier import StringifyMapper
+        return StringifyMapper(use_repr_for_constants)(self, enclosing_prec)
+
     def __str__(self):
-        from pymbolic.mapper.stringifier import \
-                StringifyMapper, PREC_NONE
-        return StringifyMapper()(self, PREC_NONE)
+        from pymbolic.mapper.stringifier import PREC_NONE
+        return self.stringify(PREC_NONE)
 
     def __repr__(self):
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
@@ -173,8 +176,8 @@ class Variable(Leaf):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_variable(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_variable
 
 class Call(AlgebraicLeaf):
     def __init__(self, function, parameters):
@@ -197,8 +200,8 @@ class Call(AlgebraicLeaf):
                and (self._Function == other._Function) \
                and (self._Parameters == other._Parameters)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_call(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_call
 
 class Subscript(AlgebraicLeaf):
     def __init__(self, aggregate, index):
@@ -221,8 +224,8 @@ class Subscript(AlgebraicLeaf):
                and (self._Aggregate == other._Aggregate) \
                and (self._Index == other._Index)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_subscript(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_subscript(self)
         
 
 
@@ -247,8 +250,8 @@ class ElementLookup(AlgebraicLeaf):
                and (self._Aggregate == other._Aggregate) \
                and (self._Name == other._Name)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_lookup(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_lookup
 
 class Negation(Expression):
     def __init__(self, child):
@@ -264,8 +267,8 @@ class Negation(Expression):
     def __eq__(self, other):
         return isinstance(other, Negation) and (self.Child == other.Child)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_negation(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_negation
 
 class Sum(Expression):
     def __init__(self, children):
@@ -311,8 +314,8 @@ class Sum(Expression):
             # FIXME: Right semantics?
             return True
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_sum(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_sum
 
 class Product(Expression):
     def __init__(self, children):
@@ -353,8 +356,8 @@ class Product(Expression):
                 return False
         return True
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_product(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_product
 
 class Quotient(Expression):
     def __init__(self, numerator, denominator=1):
@@ -381,8 +384,8 @@ class Quotient(Expression):
     def __nonzero__(self):
         return bool(self._Numerator)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_quotient(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_quotient
 
 class Power(Expression):
     def __init__(self, base, exponent):
@@ -405,24 +408,8 @@ class Power(Expression):
                and (self._Base == other._Base) \
                and (self._Exponent == other._Exponent)
 
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_power(self, *args, **kwargs)
-
-class List(Expression):
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self._Children = children
-
-    def _children(self):
-        return self.Children
-    children = property(_children)
-
-    def __eq__(self, other):
-        return isinstance(other, List) \
-               and (self.Children == other.Children)
-
-    def invoke_mapper(self, mapper, *args, **kwargs):
-        return mapper.map_list(self, *args, **kwargs)
+    def get_mapper_method(self, mapper):
+        return mapper.map_power
 
 
 
