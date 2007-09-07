@@ -4,6 +4,16 @@ import pymbolic.mapper.stringifier
 
 
 
+PREC_CALL = 5
+PREC_POWER = 4
+PREC_UNARY = 3
+PREC_PRODUCT = 2
+PREC_SUM = 1
+PREC_NONE = 0
+
+
+
+
 VALID_CONSTANT_CLASSES = [int, float, complex]
 
 
@@ -138,9 +148,7 @@ class Expression(object):
         return evaluate_to_float(self)
 
     def __str__(self):
-        from pymbolic.mapper.stringifier import \
-                StringifyMapper, PREC_NONE
-        return StringifyMapper()(self, PREC_NONE)
+        return self.stringify(PREC_NONE)
 
     def __repr__(self):
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
@@ -173,6 +181,9 @@ class Variable(Leaf):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
+    def stringify(self, self, enclosing_prec):
+        return self.name
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_variable(self, *args, **kwargs)
 
@@ -197,6 +208,15 @@ class Call(AlgebraicLeaf):
                and (self._Function == other._Function) \
                and (self._Parameters == other._Parameters)
 
+    def stringify(self, enclosing_prec):
+        result = "%s(%s)" % \
+                (self.function.stringify(PREC_CALL),
+                        ", ".join(p.stringify(PREC_NONE) for p in self.parameters))
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_call(self, *args, **kwargs)
 
@@ -220,6 +240,16 @@ class Subscript(AlgebraicLeaf):
         return isinstance(other, Subscript) \
                and (self._Aggregate == other._Aggregate) \
                and (self._Index == other._Index)
+
+    def stringify(self, enclosing_prec):
+        result = "%s[%s]" % \
+                (self.aggregate.stringify(PREC_CALL), 
+                        self.index.stringify(PREC_CALL))
+
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_subscript(self, *args, **kwargs)
@@ -247,6 +277,14 @@ class ElementLookup(AlgebraicLeaf):
                and (self._Aggregate == other._Aggregate) \
                and (self._Name == other._Name)
 
+    def stringify(self, enclosing_prec):
+        result = "%s.%s" % (self.aggregate.stringify(PREC_CALL)
+
+        if enclosing_prec > PREC_CALL:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_lookup(self, *args, **kwargs)
 
@@ -263,6 +301,14 @@ class Negation(Expression):
 
     def __eq__(self, other):
         return isinstance(other, Negation) and (self.Child == other.Child)
+
+    def stringify(self, enclosing_prec):
+        result = "-%s" % self.child.stringify(PREC_UNARY)
+
+        if enclosing_prec > PREC_UNARY:
+            return "(%s)" % result
+        else:
+            return result
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_negation(self, *args, **kwargs)
@@ -311,6 +357,14 @@ class Sum(Expression):
             # FIXME: Right semantics?
             return True
 
+    def stringify(self, enclosing_prec):
+        result = " + ".join(i.stringify(PREC_SUM) for i in expr.children)
+        
+        if enclosing_prec > PREC_SUM:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_sum(self, *args, **kwargs)
 
@@ -353,6 +407,13 @@ class Product(Expression):
                 return False
         return True
 
+    def stringify(self, enclosing_prec):
+        result = "*".join(i.stringify(PREC_PRODUCT) for i in expr.children)
+        if enclosing_prec > PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_product(self, *args, **kwargs)
 
@@ -381,6 +442,16 @@ class Quotient(Expression):
     def __nonzero__(self):
         return bool(self._Numerator)
 
+    def stringify(self, enclosing_prec):
+        result = "%s/%s" % (
+                self.numerator.stringify(PREC_PRODUCT), 
+                self.denominator.stringify(PREC_PRODUCT)
+                )
+        if enclosing_prec > PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_quotient(self, *args, **kwargs)
 
@@ -405,6 +476,17 @@ class Power(Expression):
                and (self._Base == other._Base) \
                and (self._Exponent == other._Exponent)
 
+    def stringify(self, enclosing_prec):
+        result = "%s**%s" % (
+                self.base.stringify(PREC_POWER), 
+                self.exponent.stringify(PREC_POWER)
+                )
+
+        if enclosing_prec > PREC_POWER:
+            return "(%s)" % result
+        else:
+            return result
+
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_power(self, *args, **kwargs)
 
@@ -420,6 +502,9 @@ class List(Expression):
     def __eq__(self, other):
         return isinstance(other, List) \
                and (self.Children == other.Children)
+
+    def stringify(self, enclosing_prec):
+        return "[%s]" % ", ".join(i.stringify(PREC_NONE) for i in expr.children)
 
     def invoke_mapper(self, mapper, *args, **kwargs):
         return mapper.map_list(self, *args, **kwargs)

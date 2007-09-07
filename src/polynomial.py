@@ -269,6 +269,31 @@ class Polynomial(Expression):
                 return coeff
         return 0
 
+    def stringify(self, enclosing_prec):
+        sbase = self(expr.base, PREC_POWER)
+        def stringify_expcoeff((exp, coeff)):
+            if exp == 0:
+                return self(coeff, PREC_SUM)
+            elif exp == 1:
+                strexp = ""
+            else:
+                strexp = "**%s" % exp
+
+            if not (coeff-1):
+                return "%s%s" % (sbase, strexp) 
+            elif not (coeff+1):
+                return "-%s%s" % (sbase, strexp) 
+            else:
+                return "%s*%s%s" % (self(coeff, PREC_PRODUCT), sbase, strexp) 
+
+        if not expr.data:
+            return "0"
+
+        result = "%s" % " + ".join(stringify_expcoeff(i) for i in expr.data[::-1])
+        if enclosing_prec > PREC_SUM and len(expr.data) > 1:
+            return "(%s)" % result
+        else:
+            return result
 
 
 
