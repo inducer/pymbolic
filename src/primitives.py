@@ -35,13 +35,22 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
         if other:
-            return Sum((self, other))
+            if self:
+                return Sum((self, other))
+            else:
+                return other
         else:
             return self
 
     def __radd__(self, other):
         assert is_constant(other)
-        return Sum((other, self))
+        if other:
+            if self:
+                return Sum((other, self))
+            else:
+                return other
+        else:
+            return self
 
     def __sub__(self, other):
         if not is_valid_operand(other):
@@ -125,14 +134,6 @@ class Expression(object):
     def __getitem__(self, subscript):
         return Subscript(self, subscript)
     
-    def __hash__(self):
-        try:
-            return self._HashValue
-        except AttributeError:
-            from pymbolic.mapper.hash_generator import HashMapper
-            self._HashValue = HashMapper()(self)
-            return self._HashValue
-
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
@@ -176,6 +177,9 @@ class Variable(Leaf):
     def __eq__(self, other):
         return isinstance(other, Variable) and self._Name == other._Name
 
+    def __hash__(self):
+        return 0x111 ^ hash(self.name)
+
     def get_mapper_method(self, mapper):
         return mapper.map_variable
 
@@ -200,6 +204,9 @@ class Call(AlgebraicLeaf):
                and (self._Function == other._Function) \
                and (self._Parameters == other._Parameters)
 
+    def __hash__(self):
+        return hash(self.function) ^ hash(self.parameters)
+
     def get_mapper_method(self, mapper):
         return mapper.map_call
 
@@ -223,6 +230,9 @@ class Subscript(AlgebraicLeaf):
         return isinstance(other, Subscript) \
                and (self._Aggregate == other._Aggregate) \
                and (self._Index == other._Index)
+
+    def __hash__(self):
+        return 0x123 ^ hash(self.aggregate) ^ hash(self.index)
 
     def get_mapper_method(self, mapper):
         return mapper.map_subscript(self)
@@ -250,6 +260,9 @@ class ElementLookup(AlgebraicLeaf):
                and (self._Aggregate == other._Aggregate) \
                and (self._Name == other._Name)
 
+    def __hash__(self):
+        return 0x183 ^ hash(self.aggregate) ^ hash(self.name)
+
     def get_mapper_method(self, mapper):
         return mapper.map_lookup
 
@@ -266,6 +279,9 @@ class Negation(Expression):
 
     def __eq__(self, other):
         return isinstance(other, Negation) and (self.Child == other.Child)
+
+    def __hash__(self):
+        return ~hash(self.child)
 
     def get_mapper_method(self, mapper):
         return mapper.map_negation
@@ -314,6 +330,9 @@ class Sum(Expression):
             # FIXME: Right semantics?
             return True
 
+    def __hash__(self):
+        return 0x456 ^ hash(self.children)
+
     def get_mapper_method(self, mapper):
         return mapper.map_sum
 
@@ -356,6 +375,9 @@ class Product(Expression):
                 return False
         return True
 
+    def __hash__(self):
+        return 0x789 ^ hash(self.children)
+
     def get_mapper_method(self, mapper):
         return mapper.map_product
 
@@ -384,6 +406,9 @@ class Quotient(Expression):
     def __nonzero__(self):
         return bool(self._Numerator)
 
+    def __hash__(self):
+        return 0xabc ^ hash(self.numerator) ^ hash(self.denominator)
+
     def get_mapper_method(self, mapper):
         return mapper.map_quotient
 
@@ -407,6 +432,9 @@ class Power(Expression):
         return isinstance(other, Power) \
                and (self._Base == other._Base) \
                and (self._Exponent == other._Exponent)
+
+    def __hash__(self):
+        return 0xdef ^ hash(self.base) ^ hash(self.exponent)
 
     def get_mapper_method(self, mapper):
         return mapper.map_power
