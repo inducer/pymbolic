@@ -75,8 +75,6 @@ class Expression(object):
 
         if not (other - 1):
             return self
-        elif not (other+1):
-            return Negation(self)
         elif not other:
             return 0
         return Product((self, other))
@@ -126,7 +124,7 @@ class Expression(object):
         return Power(other, self)
 
     def __neg__(self):
-        return Negation(self)
+        return -1*self
 
     def __call__(self, *pars):
         return Call(self, pars)
@@ -265,26 +263,6 @@ class ElementLookup(AlgebraicLeaf):
 
     def get_mapper_method(self, mapper):
         return mapper.map_lookup
-
-class Negation(Expression):
-    def __init__(self, child):
-        self._Child = child
-
-    def __getinitargs__(self):
-        return self._Child, 
-
-    def _child(self):
-        return self._Child
-    child = property(_child)
-
-    def __eq__(self, other):
-        return isinstance(other, Negation) and (self.Child == other.Child)
-
-    def __hash__(self):
-        return ~hash(self.child)
-
-    def get_mapper_method(self, mapper):
-        return mapper.map_negation
 
 class Sum(Expression):
     def __init__(self, children):

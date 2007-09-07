@@ -160,6 +160,8 @@ class IdentityMapperBase(object):
 
 
 class IdentityMapper(RecursiveMapper, IdentityMapperBase):
-    pass
+    def handle_unsupported_expression(self, expr, *args, **kwargs):
+        return expr
+
 class NonrecursiveIdentityMapper(Mapper, IdentityMapperBase):
     pass

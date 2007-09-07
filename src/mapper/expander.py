@@ -71,10 +71,7 @@ class CommutativeTermCollector(object):
         term2coeff = {}
         for child in mysum.children:
             term, coeff = self.split_term(child)
-            if term in term2coeff:
-                term2coeff[term] += coeff
-            else:
-                term2coeff[term] = coeff
+            term2coeff[term] = term.get(term, 0) + coeff
 
         def rep2term(rep):
             return pymbolic.product(base**exp for base, exp in rep)
@@ -147,7 +144,7 @@ class ExpandMapper(IdentityMapper):
 
 
 
-def expand(expr, parameters, commutatitve=True):
+def expand(expr, parameters=set(), commutative=True):
     if commutative:
         return ExpandMapper(CommutativeTermCollector(parameters))(expr)
     else:
