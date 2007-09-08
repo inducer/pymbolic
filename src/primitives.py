@@ -36,7 +36,10 @@ class Expression(object):
             return NotImplemented
         if other:
             if self:
-                return Sum((self, other))
+                if isinstance(other, Sum):
+                    return Sum((self,) + other.children)
+                else:
+                    return Sum((self, other))
             else:
                 return other
         else:
@@ -57,7 +60,7 @@ class Expression(object):
             return NotImplemented
 
         if other:
-            return Sum((self, -other))
+            return self.__add__(-other)
         else:
             return self
 
@@ -86,8 +89,6 @@ class Expression(object):
             return self
         elif not other:
             return 0
-        elif not (other+1):
-            return -self
         else:
             return Product((other, self))
 
@@ -437,7 +438,7 @@ def subscript(expression, index):
 
 
 
-def sum(components):
+def flattened_sum(components):
     it = components.__iter__()
     try:
         result = it.next()
@@ -459,7 +460,7 @@ def linear_combination(coefficients, expressions):
 
 
 
-def product(components):
+def flattened_product(components):
     components = tuple(c for c in components if (c-1))
 
     # flatten any potential sub-products
@@ -468,6 +469,10 @@ def product(components):
 
     while queue:
         item = queue.pop(0)
+
+        if not (item-1):
+            continue
+
         if isinstance(item, Product):
             queue += item.children
         else:

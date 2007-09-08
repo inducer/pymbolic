@@ -2,13 +2,19 @@ class Mapper(object):
     def __init__(self, recurse=True):
         self.Recurse = True
 
-    def _rec(self, expr, *args, **kwargs):
-        return expr
+    def handle_unsupported_expression(self, expr, *args, **kwargs):
+        raise ValueError, "%s cannot handle expressions of type %s" % (
+                self.__class__.__name__, expr.__class__.__name__)
 
     def __call__(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
         if isinstance(expr, primitives.Expression):
-            return expr.get_mapper_method(self)(expr, *args, **kwargs)
+            try:
+                method = expr.get_mapper_method(self)
+            except AttributeError:
+                return self.handle_unsupported_expression(expr, *args, **kwargs)
+            else:
+                return method(expr, *args, **kwargs)
         else:
             return self.map_foreign(expr, *args, **kwargs)
 
@@ -40,10 +46,6 @@ class Mapper(object):
 
 
 class RecursiveMapper(Mapper):
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
-        raise ValueError, "%s cannot handle expressions of type %s" % (
-                self.__class__.__name__, expr.__class__.__name__)
-
     def rec(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
         if isinstance(expr, primitives.Expression):

@@ -63,7 +63,7 @@ class CommutativeTermCollector(object):
                 cleaned_base2exp[base] = exp
 
         term = frozenset((base,exp) for base, exp in cleaned_base2exp.iteritems())
-        return term, pymbolic.product(coefficients)
+        return term, pymbolic.flattened_product(coefficients)
 
     def __call__(self, mysum):
         assert isinstance(mysum, Sum)
@@ -71,12 +71,12 @@ class CommutativeTermCollector(object):
         term2coeff = {}
         for child in mysum.children:
             term, coeff = self.split_term(child)
-            term2coeff[term] = term.get(term, 0) + coeff
+            term2coeff[term] = term2coeff.get(term, 0) + coeff
 
         def rep2term(rep):
-            return pymbolic.product(base**exp for base, exp in rep)
+            return pymbolic.flattened_product(base**exp for base, exp in rep)
 
-        result = pymbolic.sum(coeff*rep2term(termrep) 
+        result = pymbolic.flattened_sum(coeff*rep2term(termrep) 
                 for termrep, coeff in term2coeff.iteritems())
         return result
 
@@ -103,7 +103,7 @@ class ExpandMapper(IdentityMapper):
 
             if len(leading) == len(prod.children):
                 # no more sums found
-                result = pymbolic.product(prod.children)
+                result = pymbolic.flattened_product(prod.children)
                 return result
             else:
                 sum = prod.children[len(leading)]
@@ -114,8 +114,8 @@ class ExpandMapper(IdentityMapper):
                 else:
                     rest = 1
 
-                result = self.Collector(pymbolic.sum(
-                       pymbolic.product(leading) * expand(sumchild*rest)
+                result = self.Collector(pymbolic.flattened_sum(
+                       pymbolic.flattened_product(leading) * expand(sumchild*rest)
                        for sumchild in sum.children
                        ))
                 return result

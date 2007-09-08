@@ -21,9 +21,19 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_constant(self, expr, enclosing_prec):
         if self.use_repr_for_constants:
-            return repr(expr)
+            result = repr(expr)
         else:
-            return str(expr)
+            result = str(expr)
+
+        if (
+                (isinstance(expr, (int, float, long)) and expr < 0) 
+                or 
+                (isinstance(expr, complex) and expr.imag and expr.real)
+                ) and (enclosing_prec > PREC_SUM):
+            return "(%s)" % result
+        else:
+            return result
+
 
     def map_variable(self, expr, enclosing_prec):
         return expr.name
@@ -49,13 +59,6 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def map_lookup(self, expr, enclosing_prec):
         result = "%s.%s" % (self.rec(expr.aggregate, PREC_CALL), expr.name)
         if enclosing_prec > PREC_CALL:
-            return "(%s)" % result
-        else:
-            return result
-
-    def map_negation(self, expr, enclosing_prec):
-        result = "-%s" % self.rec(expr.child, PREC_UNARY)
-        if enclosing_prec > PREC_UNARY:
             return "(%s)" % result
         else:
             return result

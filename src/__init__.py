@@ -7,15 +7,16 @@ import pymbolic.mapper.dependency
 import pymbolic.mapper.substitutor
 import pymbolic.mapper.differentiator
 import pymbolic.mapper.expander
+import pymbolic.mapper.flattener
 import pymbolic.mapper.coefficient_finder
 import pymbolic.primitives
 
 from pymbolic.polynomial import Polynomial
 
 var = pymbolic.primitives.Variable
-sum = pymbolic.primitives.sum
+flattened_sum = pymbolic.primitives.flattened_sum
 subscript = pymbolic.primitives.subscript
-product = pymbolic.primitives.product
+flattened_product = pymbolic.primitives.flattened_product
 quotient = pymbolic.primitives.quotient
 linear_combination = pymbolic.primitives.linear_combination
 
@@ -28,6 +29,7 @@ get_dependencies = pymbolic.mapper.dependency.get_dependencies
 substitute = pymbolic.mapper.substitutor.substitute
 differentiate = pymbolic.mapper.differentiator.differentiate
 expand = pymbolic.mapper.expander.expand
+flatten = pymbolic.mapper.flattener.flatten
 find_coefficient = pymbolic.mapper.coefficient_finder.find_coefficient
 
 

@@ -15,6 +15,9 @@ class DependencyMapper(CombineMapper):
         import operator
         return reduce(operator.or_, values, set())
 
+    def handle_unsupported_expression(self, expr, *args, **kwargs):
+        return set([expr])
+
     def map_constant(self, expr):
         return set()
 
