@@ -65,7 +65,8 @@ class Expression(object):
             return self
 
     def __rsub__(self, other):
-        assert is_constant(other)
+        if not is_constant(other):
+            return NotImplemented
 
         if other:
             return Sum((other, -self))
@@ -83,7 +84,8 @@ class Expression(object):
         return Product((self, other))
 
     def __rmul__(self, other):
-        assert is_constant(other)
+        if not is_constant(other):
+            return NotImplemented
 
         if not (other-1):
             return self
@@ -102,7 +104,9 @@ class Expression(object):
     __truediv__ = __div__
 
     def __rdiv__(self, other):
-        assert is_constant(other)
+        if not is_constant(other):
+            return NotImplemented
+
         return quotient(other, self)
 
     def __pow__(self, other):
@@ -234,7 +238,7 @@ class Subscript(AlgebraicLeaf):
         return 0x123 ^ hash(self.aggregate) ^ hash(self.index)
 
     def get_mapper_method(self, mapper):
-        return mapper.map_subscript(self)
+        return mapper.map_subscript
         
 
 
@@ -282,6 +286,9 @@ class Sum(Expression):
         return isinstance(other, Sum) and (self._Children == other._Children)
 
     def __add__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if isinstance(other, Sum):
             return Sum(self._Children + other._Children)
         if not other:
@@ -289,6 +296,9 @@ class Sum(Expression):
         return Sum(self._Children + (other,))
 
     def __radd__(self, other):
+        if not is_constant(other):
+            return NotImplemented
+
         if isinstance(other, Sum):
             return Sum(other._Children + self._Children)
         if not other:
@@ -296,6 +306,9 @@ class Sum(Expression):
         return Sum((other,) + self._Children)
 
     def __sub__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
         if not other:
             return self
         return Sum(self._Children + (-other,))
@@ -331,6 +344,8 @@ class Product(Expression):
         return isinstance(other, Product) and (self._Children == other._Children)
 
     def __mul__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
         if isinstance(other, Product):
             return Product(self._Children + other._Children)
         if not other:
@@ -340,6 +355,8 @@ class Product(Expression):
         return Product(self._Children + (other,))
 
     def __rmul__(self, other):
+        if not is_constant(other):
+            return NotImplemented
         if isinstance(other, Product):
             return Product(other._Children + self._Children)
         if not other:
