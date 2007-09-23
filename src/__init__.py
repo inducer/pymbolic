@@ -8,7 +8,6 @@ import pymbolic.mapper.substitutor
 import pymbolic.mapper.differentiator
 import pymbolic.mapper.expander
 import pymbolic.mapper.flattener
-import pymbolic.mapper.coefficient_finder
 import pymbolic.primitives
 
 from pymbolic.polynomial import Polynomial
@@ -30,7 +29,6 @@ substitute = pymbolic.mapper.substitutor.substitute
 differentiate = pymbolic.mapper.differentiator.differentiate
 expand = pymbolic.mapper.expander.expand
 flatten = pymbolic.mapper.flattener.flatten
-find_coefficient = pymbolic.mapper.coefficient_finder.find_coefficient
 
 
 
