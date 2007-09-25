@@ -24,13 +24,13 @@ class DependencyMapper(CombineMapper):
     def map_variable(self, expr):
         return set([expr])
 
-    def map_call(self, expr, *args, **kwargs):
+    def map_call(self, expr):
         if self.IncludeCalls:
             return set([expr])
         else:
             return CombineMapper.map_call(self, expr)
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_lookup(self, expr):
         if self.IncludeLookups:
             return set([expr])
         else:

@@ -74,6 +74,12 @@ class EvaluationMapper(RecursiveMapper):
 
 
 class FloatEvaluationMapper(EvaluationMapper):
+    def handle_unsupported_expression(self, expr):
+        try:
+            return float(expr)
+        except:
+            raise TypeError, "cannot convert %s to float" % type(expr)
+
     def map_constant(self, expr):
         return float(expr)
 

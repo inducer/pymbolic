@@ -34,25 +34,25 @@ def map_math_functions_by_name(i, func, pars):
 
 
 class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
-    def __init__(self, variable, func_map):
-        self.Variable = variable
-        self.FunctionMap = func_map
+    def __init__(self, variable, func_map=map_math_functions_by_name):
+        self.variable = variable
+        self.function_map = func_map
 
     def map_constant(self, expr):
         return 0
 
     def map_variable(self, expr):
-        if expr == self.Variable:
+        if expr == self.variable:
             return 1
         else:
             return 0
 
     def map_call(self, expr):
-        return pymbolic.sum(
-            self.FunctionMap(i, expr.function, expr.parameters)
+        return pymbolic.flattened_sum(
+            self.function_map(i, expr.function, expr.parameters)
             * self.rec(par)
             for i, par in enumerate(expr.parameters)
-            if not self._isc(par))
+            )
 
     map_subscript = map_variable
 
@@ -60,29 +60,27 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         return -self.rec(expr.child)
 
     def map_sum(self, expr):
-        return pymbolic.sum(self.rec(child) for child in expr.children
-                if not self._isc(child))
+        return pymbolic.flattened_sum(self.rec(child) for child in expr.children)
 
     def map_product(self, expr):
-        return pymbolic.sum(
-            pymbolic.product(
+        return pymbolic.flattened_sum(
+            pymbolic.flattened_product(
                 expr.children[0:i] + 
                 (self.rec(child),) +
                 expr.children[i+1:])
-            for i, child in enumerate(expr.children)
-            if not self._isc(child))
+            for i, child in enumerate(expr.children))
 
     def map_quotient(self, expr):
         f = expr.numerator
         g = expr.denominator
-        f_const = self._isc(f)
-        g_const = self._isc(g)
+        df = self.rec(f)
+        dg = self.rec(g)
 
-        if f_const and g_const:
+        if (not df) and (not dg):
             return 0
-        elif f_const:
+        elif (not df):
             return -f*self.rec(g)/g**2
-        elif g_const:
+        elif (not dg):
             return self.rec(f)/g
         else:
             return (self.rec(f)*g-self.rec(g)*f)/g**2
@@ -90,16 +88,16 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     def map_power(self, expr):
         f = expr.base
         g = expr.exponent
-        f_const = self._isc(f)
-        g_const = self._isc(g)
+        df = self.rec(f)
+        dg = self.rec(g)
 
         log = pymbolic.var("log")
 
-        if f_const and g_const:
+        if (not df) and (not dg):
             return 0
-        elif f_const:
+        elif (not df):
             return log(f) * f**g * self.rec(g)
-        elif g_const:
+        elif (not dg):
             return g * f**(g-1) * self.rec(f)
         else:
             return log(f) * f**g * self.rec(g) + \
@@ -124,14 +122,6 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         return \
                 Polynomial(expr.base, tuple(deriv_coeff), expr.unit) + \
                 Polynomial(expr.base, tuple(deriv_base), expr.unit)
-            
-
-
-    
-    def _isc(self,subexp):
-        return pymbolic.is_constant(subexp, [self.Variable],
-                include_lookups=True, include_subscripts=True
-                )
   
 
 
