@@ -175,7 +175,7 @@ class Variable(Leaf):
         self.name = name
 
     def __getinitargs__(self):
-        return self._Name,
+        return self.name,
 
     def __lt__(self, other):
         if isinstance(other, Variable):

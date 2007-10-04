@@ -1,6 +1,8 @@
 import pymbolic
 from pymbolic.mapper import IdentityMapper
-from pymbolic.primitives import Sum, Product, Power, AlgebraicLeaf
+from pymbolic.primitives import \
+        Sum, Product, Power, AlgebraicLeaf, \
+        is_constant
 
 
 
@@ -39,6 +41,8 @@ class CommutativeTermCollector(object):
         if isinstance(mul_term, Product):
             terms = mul_term.children
         elif isinstance(mul_term, (Power, AlgebraicLeaf)):
+            terms = [mul_term]
+        elif is_constant(mul_term):
             terms = [mul_term]
         else:
             raise RuntimeError, "split_term expects a multiplicative term"
@@ -129,13 +133,13 @@ class ExpandMapper(IdentityMapper):
         from pymbolic.primitives import Expression, Sum
 
         if isinstance(expr.base, Product):
-            return self.rec(pymbolic.product(
+            return self.rec(pymbolic.flattened_product(
                 child**expr.exponent for child in newbase))
 
         if isinstance(expr.exponent, int):
             newbase = self.rec(expr.base)
             if isinstance(newbase, Sum):
-                return self.map_product(pymbolic.product(expr.exponent*(newbase,)))
+                return self.map_product(pymbolic.flattened_product(expr.exponent*(newbase,)))
             else:
                 return IdentitityMapper.map_power(expr)
         else:
