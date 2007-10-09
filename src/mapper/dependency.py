@@ -4,9 +4,21 @@ from pymbolic.mapper import CombineMapper
 
 
 class DependencyMapper(CombineMapper):
-    def __init__(self, include_subscripts=False, 
-            include_lookups=False,
-            include_calls=False):
+    def __init__(self, 
+            include_subscripts=True, 
+            include_lookups=True,
+            include_calls=True,
+            composite_leaves=None):
+
+        if composite_leaves == False:
+            include_subscripts = False
+            include_lookups = False
+            include_calls = False
+        if composite_leaves == True:
+            include_subscripts = True
+            include_lookups = True
+            include_calls = True
+
         self.IncludeSubscripts = include_subscripts
         self.IncludeLookups = include_lookups
         self.IncludeCalls = include_calls
@@ -46,16 +58,8 @@ class DependencyMapper(CombineMapper):
 
 
 
-def get_dependencies(expr, 
-        include_subscripts=False, include_lookups=False, include_calls=False,
-        include_all=False):
-    if include_all:
-        include_subscripts = True
-        include_lookups = True
-        include_calls = True
-
-    return DependencyMapper(include_subscripts, include_lookups,
-            include_calls)(expr)
+def get_dependencies(expr, **kwargs):
+    return DependencyMapper(**kwargs)(expr)
 
 
 
