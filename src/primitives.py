@@ -221,7 +221,7 @@ class Subscript(AlgebraicLeaf):
         self.index = index
 
     def __getinitargs__(self):
-        return self._Aggregate, self._Index
+        return self.aggregate, self.index
 
     def __eq__(self, other):
         return isinstance(other, Subscript) \
@@ -243,7 +243,7 @@ class ElementLookup(AlgebraicLeaf):
         self.name = name
 
     def __getinitargs__(self):
-        return self._Aggregate, self._Name
+        return self.aggregate, self.name
 
     def __eq__(self, other):
         return isinstance(other, ElementLookup) \
