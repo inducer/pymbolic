@@ -21,10 +21,10 @@ _dot = intern("dot")
 _LEX_TABLE = [
     (_imaginary, (_float, pytools.lex.RE("j"))),
     (_float, ("|", 
-               pytools.lex.RE(r"-?[0-9]+\.[0-9]*([eE][0-9]+)?"),
-               pytools.lex.RE(r"-?[0-9]+(\.[0-9]*)?[eE][0-9]+"),
-               pytools.lex.RE(r"-?[0-9]*\.[0-9]+([eE][0-9]+)?"),
-               pytools.lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE][0-9]+"))),
+               pytools.lex.RE(r"-?[0-9]+\.[0-9]*([eE]-?[0-9]+)?"),
+               pytools.lex.RE(r"-?[0-9]+(\.[0-9]*)?[eE]-?[0-9]+"),
+               pytools.lex.RE(r"-?[0-9]*\.[0-9]+([eE]-?[0-9]+)?"),
+               pytools.lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE]-?[0-9]+"))),
     (_int, pytools.lex.RE(r"-?[0-9]+")),
     (_plus, pytools.lex.RE(r"\+")),
     (_minus, pytools.lex.RE(r"-")),
@@ -90,7 +90,7 @@ def parse(expr_str):
             
             next_tag = pstate.next_tag()
 
-            if next_tag is _openpar and _PREC_CALL >= min_precedence:
+            if next_tag is _openpar and _PREC_CALL > min_precedence:
                 pstate.advance()
                 pstate.expect_not_end()
                 if pstate.next_tag is _closepar:
@@ -102,36 +102,36 @@ def parse(expr_str):
                     pstate.expect(_closepar)
                     pstate.advance()
                 did_something = True
-            elif next_tag is _openbracket and _PREC_CALL >= min_precedence:
+            elif next_tag is _openbracket and _PREC_CALL > min_precedence:
                 pstate.advance()
                 pstate.expect_not_end()
                 left_exp = primitives.Subscript(left_exp, parse_expression(pstate))
                 pstate.expect(_closebracket)
                 pstate.advance()
                 did_something = True
-            elif next_tag is _dot and _PREC_CALL >= min_precedence:
+            elif next_tag is _dot and _PREC_CALL > min_precedence:
                 pstate.advance()
                 pstate.expect(_identifier)
                 left_exp = primitives.ElementLookup(left_exp, pstate.next_str())
                 pstate.advance()
                 did_something = True
-            elif next_tag is _plus and _PREC_PLUS >= min_precedence:
+            elif next_tag is _plus and _PREC_PLUS > min_precedence:
                 pstate.advance()
                 left_exp += parse_expression(pstate, _PREC_PLUS)
                 did_something = True
-            elif next_tag is _minus and _PREC_PLUS >= min_precedence:
+            elif next_tag is _minus and _PREC_PLUS > min_precedence:
                 pstate.advance()
                 left_exp -= parse_expression(pstate, _PREC_PLUS)
                 did_something = True
-            elif next_tag is _times and _PREC_TIMES >= min_precedence:
+            elif next_tag is _times and _PREC_TIMES > min_precedence:
                 pstate.advance()
                 left_exp *= parse_expression(pstate, _PREC_TIMES)
                 did_something = True
-            elif next_tag is _over and _PREC_TIMES >= min_precedence:
+            elif next_tag is _over and _PREC_TIMES > min_precedence:
                 pstate.advance()
                 left_exp /= parse_expression(pstate, _PREC_TIMES)
                 did_something = True
-            elif next_tag is _power and _PREC_POWER >= min_precedence:
+            elif next_tag is _power and _PREC_POWER > min_precedence:
                 pstate.advance()
                 left_exp **= parse_expression(pstate, _PREC_POWER)
                 did_something = True
@@ -144,5 +144,9 @@ def parse(expr_str):
          for (tag, s, idx) in pytools.lex.lex(_LEX_TABLE, expr_str)
          if tag is not _whitespace], expr_str)
 
-    return parse_expression(pstate)
-    
+    result = parse_expression(pstate)
+    if not pstate.is_at_end():
+        pstate.raise_parse_error("leftover input after completed parse")
+    return result
+
+
