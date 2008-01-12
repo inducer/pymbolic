@@ -47,7 +47,7 @@ class EvaluationMapper(RecursiveMapper):
         return result
 
     def map_quotient(self, expr):
-        return pymbolic.quotient(self.rec(expr.numerator), self.rec(expr.denominator))
+        return self.rec(expr.numerator) / self.rec(expr.denominator)
 
     def map_power(self, expr):
         return self.rec(expr.base) ** self.rec(expr.exponent)
