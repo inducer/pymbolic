@@ -18,6 +18,9 @@ class Mapper(object):
         else:
             return self.map_foreign(expr, *args, **kwargs)
 
+    def map_variable(self, expr, *args, **kwargs):
+        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+
     def map_subscript(self, expr, *args, **kwargs):
         return self.map_algebraic_leaf(self, expr, *args, **kwargs)
 
@@ -161,9 +164,10 @@ class IdentityMapperBase(object):
 
 
 
-class IdentityMapper(RecursiveMapper, IdentityMapperBase):
+class IdentityMapper(IdentityMapperBase, RecursiveMapper):
     def handle_unsupported_expression(self, expr, *args, **kwargs):
         return expr
 
-class NonrecursiveIdentityMapper(Mapper, IdentityMapperBase):
-    pass
+class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
+    def handle_unsupported_expression(self, expr, *args, **kwargs):
+        return expr
