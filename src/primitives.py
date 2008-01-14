@@ -237,7 +237,7 @@ class Subscript(AlgebraicLeaf):
 
 
 
-class ElementLookup(AlgebraicLeaf):
+class Lookup(AlgebraicLeaf):
     def __init__(self, aggregate, name):
         self.aggregate = aggregate
         self.name = name
@@ -246,7 +246,7 @@ class ElementLookup(AlgebraicLeaf):
         return self.aggregate, self.name
 
     def __eq__(self, other):
-        return isinstance(other, ElementLookup) \
+        return isinstance(other, Lookup) \
                and (self.aggregate == other.aggregate) \
                and (self.name == other.name)
 
@@ -426,7 +426,7 @@ class Power(Expression):
 
 # intelligent makers ---------------------------------------------------------
 def make_variable(var_or_string):
-    if not isinstance(var_or_string, Variable):
+    if not isinstance(var_or_string, Expression):
         return Variable(var_or_string)
     else:
         return var_or_string

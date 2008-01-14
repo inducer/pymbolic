@@ -15,7 +15,7 @@ def map_math_functions_by_name(i, func, pars):
         raise RuntimeError, "No derivative of non-constant function "+str(func)
 
     def make_f(name):
-        return primitives.ElementLookup(primitives.Variable("math"), name)
+        return primitives.Lookup(primitives.Variable("math"), name)
 
     if f is math.sin and len(pars) == 1:
         return make_f("cos")(*pars)

@@ -112,7 +112,7 @@ def parse(expr_str):
             elif next_tag is _dot and _PREC_CALL > min_precedence:
                 pstate.advance()
                 pstate.expect(_identifier)
-                left_exp = primitives.ElementLookup(left_exp, pstate.next_str())
+                left_exp = primitives.Lookup(left_exp, pstate.next_str())
                 pstate.advance()
                 did_something = True
             elif next_tag is _plus and _PREC_PLUS > min_precedence:
