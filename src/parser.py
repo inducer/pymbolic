@@ -21,11 +21,11 @@ _dot = intern("dot")
 _LEX_TABLE = [
     (_imaginary, (_float, pytools.lex.RE("j"))),
     (_float, ("|", 
-               pytools.lex.RE(r"-?[0-9]+\.[0-9]*([eE]-?[0-9]+)?"),
-               pytools.lex.RE(r"-?[0-9]+(\.[0-9]*)?[eE]-?[0-9]+"),
-               pytools.lex.RE(r"-?[0-9]*\.[0-9]+([eE]-?[0-9]+)?"),
-               pytools.lex.RE(r"-?[0-9]*(\.[0-9]+)?[eE]-?[0-9]+"))),
-    (_int, pytools.lex.RE(r"-?[0-9]+")),
+               pytools.lex.RE(r"[0-9]+\.[0-9]*([eE]-?[0-9]+)?"),
+               pytools.lex.RE(r"[0-9]+(\.[0-9]*)?[eE]-?[0-9]+"),
+               pytools.lex.RE(r"[0-9]*\.[0-9]+([eE]-?[0-9]+)?"),
+               pytools.lex.RE(r"[0-9]*(\.[0-9]+)?[eE]-?[0-9]+"))),
+    (_int, pytools.lex.RE(r"[0-9]+")),
     (_plus, pytools.lex.RE(r"\+")),
     (_minus, pytools.lex.RE(r"-")),
     (_power, pytools.lex.RE(r"\*\*")),
@@ -146,6 +146,7 @@ def parse(expr_str):
 
     result = parse_expression(pstate)
     if not pstate.is_at_end():
+        print pstate.next_tag()
         pstate.raise_parse_error("leftover input after completed parse")
     return result
 
