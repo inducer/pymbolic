@@ -35,7 +35,7 @@ _LEX_TABLE = [
     (_closepar, pytools.lex.RE(r"\)")),
     (_openbracket, pytools.lex.RE(r"\[")),
     (_closebracket, pytools.lex.RE(r"\]")),
-    (_identifier, pytools.lex.RE(r"[a-zA-Z_]+")),
+    (_identifier, pytools.lex.RE(r"[a-z_A-Z_][a-zA-Z_0-9]*")),
     (_whitespace, pytools.lex.RE("[ \n\t]*")),
     (_comma, pytools.lex.RE(",")),
     (_dot, pytools.lex.RE(".")),
