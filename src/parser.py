@@ -73,7 +73,7 @@ def parse(expr_str):
 
         if pstate.is_next(_minus):
             pstate.advance()
-            return primitives.Negation(parse_expression(pstate, _PREC_UNARY_MINUS))
+            return -parse_expression(pstate, _PREC_UNARY_MINUS)
         if pstate.is_next(_openpar):
             pstate.advance()
             left_exp = parse_expression(pstate)
