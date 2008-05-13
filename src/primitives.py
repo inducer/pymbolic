@@ -6,6 +6,12 @@ import pymbolic.mapper.stringifier
 
 VALID_CONSTANT_CLASSES = [int, float, complex]
 
+try: 
+    import numpy
+    VALID_CONSTANT_CLASSES.append(numpy.ndarray)
+except ImportError:
+    pass
+
 
 
 
@@ -27,6 +33,19 @@ def unregister_constant_class(class_):
 
 
 
+def is_nonzero(value):
+    try:
+        return bool(value)
+    except ValueError:
+        return True
+
+def is_zero(value):
+    return not is_nonzero(value)
+
+
+
+
+
 class Expression(object):
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -34,7 +53,7 @@ class Expression(object):
     def __add__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
-        if other:
+        if is_nonzero(other):
             if self:
                 if isinstance(other, Sum):
                     return Sum((self,) + other.children)
@@ -47,7 +66,7 @@ class Expression(object):
 
     def __radd__(self, other):
         assert is_constant(other)
-        if other:
+        if is_nonzero(other):
             if self:
                 return Sum((other, self))
             else:
@@ -59,7 +78,7 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if other:
+        if is_nonzero(other):
             return self.__add__(-other)
         else:
             return self
@@ -68,7 +87,7 @@ class Expression(object):
         if not is_constant(other):
             return NotImplemented
 
-        if other:
+        if is_nonzero(other):
             return Sum((other, -self))
         else:
             return -self
@@ -77,19 +96,20 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if not (other - 1):
+        if is_zero(other - 1):
             return self
-        elif not other:
+        elif is_zero(other):
             return 0
-        return Product((self, other))
+        else:
+            return Product((self, other))
 
     def __rmul__(self, other):
         if not is_constant(other):
             return NotImplemented
 
-        if not (other-1):
+        if is_zero(other-1):
             return self
-        elif not other:
+        elif is_zero(other):
             return 0
         else:
             return Product((other, self))
@@ -98,7 +118,7 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if not (other-1):
+        if is_zero(other-1):
             return self
         return quotient(self, other)
     __truediv__ = __div__
@@ -113,18 +133,18 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if not other: # exponent zero
+        if is_zero(other): # exponent zero
             return 1
-        elif not (other-1): # exponent one
+        elif is_zero(other-1): # exponent one
             return self
         return Power(self, other)
 
     def __rpow__(self, other):
         assert is_constant(other)
 
-        if not other: # base zero
+        if is_zero(other): # base zero
             return 0
-        elif not (other-1): # base one
+        elif is_zero(other-1): # base one
             return 1
         return Power(other, self)
 
@@ -141,13 +161,13 @@ class Expression(object):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
-    def stringify(self, enclosing_prec, use_repr_for_constants=False):
+    def stringifier(self):
         from pymbolic.mapper.stringifier import StringifyMapper
-        return StringifyMapper(use_repr_for_constants)(self, enclosing_prec)
+        return StringifyMapper
 
     def __str__(self):
         from pymbolic.mapper.stringifier import PREC_NONE
-        return self.stringify(PREC_NONE)
+        return self.stringifier()()(self, PREC_NONE)
 
     def __repr__(self):
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
@@ -354,7 +374,7 @@ class Product(Expression):
 
     def __nonzero__(self):
         for i in self.children:
-            if not i:
+            if is_zero(i):
                 return False
         return True
 
@@ -423,6 +443,77 @@ class Power(Expression):
 
 
 
+class Vector(Expression):
+    """An immutable sequence that you can compute with."""
+
+    def __init__(self, children):
+        assert isinstance(children, tuple)
+        self.children = children
+
+    def __nonzero__(self):
+        for i in self.children:
+            if is_nonzero(i):
+                return False
+        return True
+
+    def __len__(self):
+        return len(self.children)
+
+    def __getitem__(self, index):
+        if is_constant(index):
+            return self.children[index]
+        else:
+            return Expression.__getitem__(self, index)
+
+    def __neg__(self):
+        return Vector(tuple(-x for x in self))
+
+    def __add__(self, other):
+        if len(other) != len(self):
+            raise ValueError, "can't add values of differing lengths"
+        return Vector(tuple(x+y for x, y in zip(self, other)))
+
+    def __radd__(self, other):
+        if len(other) != len(self):
+            raise ValueError, "can't add values of differing lengths"
+        return Vector(tuple(y+x for x, y in zip(self, other)))
+
+    def __sub__(self, other):
+        if len(other) != len(self):
+            raise ValueError, "can't subtract values of differing lengths"
+        return Vector(tuple(x-y for x, y in zip(self, other)))
+
+    def __rsub__(self, other):
+        if len(other) != len(self):
+            raise ValueError, "can't subtract values of differing lengths"
+        return Vector(tuple(y-x for x, y in zip(self, other)))
+
+    def __mul__(self, other):
+        return Vector(tuple(x*other for x in self))
+
+    def __rmul__(self, other):
+        return Vector(tuple(other*x for x in self))
+
+    def __div__(self, other):
+        return Vector(tuple(operator.div(x, other) for x in self))
+
+    def __truediv__(self, other):
+        return Vector(tuple(operator.truediv(x, other) for x in self))
+
+    def __floordiv__(self, other):
+        return Vector(tuple(x//other for x in self))
+
+    def __getinitargs__(self):
+        return self.children
+
+    def __hash__(self):
+        return hash(self.children) ^ 0xacc9f12
+
+    def get_mapper_method(self, mapper):
+        return mapper.map_vector
+
+
+
 
 # intelligent makers ---------------------------------------------------------
 def make_variable(var_or_string):
@@ -463,8 +554,6 @@ def linear_combination(coefficients, expressions):
 
 
 def flattened_product(components):
-    components = tuple(c for c in components if (c-1))
-
     # flatten any potential sub-products
     queue = list(components)
     done = []
@@ -472,7 +561,7 @@ def flattened_product(components):
     while queue:
         item = queue.pop(0)
 
-        if not (item-1):
+        if is_zero(item-1):
             continue
 
         if isinstance(item, Product):
@@ -483,7 +572,7 @@ def flattened_product(components):
     if len(done) == 0:
         return 1
     elif len(done) == 1:
-        return components[0]
+        return done[0]
     else:
         return Product(tuple(done))
 

@@ -9,7 +9,7 @@ from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE, PREC_SUM, PR
 
 class CompileMapper(StringifyMapper):
     def __init__(self):
-        StringifyMapper.__init__(self, use_repr_for_constants=True)
+        StringifyMapper.__init__(self, constant_mapper=repr)
 
     def map_polynomial(self, expr, enclosing_prec):
         # Use Horner's scheme to evaluate the polynomial

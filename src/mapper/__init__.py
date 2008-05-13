@@ -41,8 +41,7 @@ class Mapper(object):
         elif isinstance(expr, list):
             return self.map_list(expr, *args, **kwargs)
         else:
-            raise ValueError, "encountered invalid foreign object: %s" % str(expr)
-
+            raise ValueError, "encountered invalid foreign object: %s" % repr(expr)
 
 
 
@@ -107,6 +106,7 @@ class CombineMapper(RecursiveMapper):
                 )
 
     map_list = map_sum
+    map_vector = map_sum
 
 
 
@@ -160,6 +160,7 @@ class IdentityMapperBase(object):
 
 
     map_list = map_sum
+    map_vector = map_sum
 
 
 

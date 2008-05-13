@@ -13,17 +13,18 @@ PREC_NONE = 0
 
 
 class StringifyMapper(pymbolic.mapper.RecursiveMapper):
-    def __init__(self, use_repr_for_constants=False):
-        self.use_repr_for_constants = use_repr_for_constants
+    def __init__(self, constant_mapper=str):
+        self.constant_mapper = constant_mapper
 
     def handle_unsupported_expression(self, victim, enclosing_prec):
-        return victim.stringify(enclosing_prec, self.use_repr_for_constants)
+        strifier = victim.stringifier()
+        if isinstance(self, strifier):
+            raise ValueError("stringifier '%s' can't handle '%s'" 
+                    % (self, victim.__class__))
+        return strifier(self.constant_mapper)(victim, enclosing_prec)
 
     def map_constant(self, expr, enclosing_prec):
-        if self.use_repr_for_constants:
-            result = repr(expr)
-        else:
-            result = str(expr)
+        result = self.constant_mapper(expr)
 
         if (
                 (isinstance(expr, (int, float, long)) and expr < 0) 
@@ -125,3 +126,5 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_list(self, expr, enclosing_prec):
         return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr])
+
+    map_vector = map_list
