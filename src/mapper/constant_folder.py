@@ -34,6 +34,9 @@ class ConstantFoldingMapperBase(object):
 
         return self.fold(expr, Sum, operator.add, Sum)
 
+    def handle_unsupported_expression(self, expr):
+        return expr
+
 
 
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):

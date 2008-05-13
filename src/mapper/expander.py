@@ -66,6 +66,8 @@ class ExpandMapper(IdentityMapper):
         else:
             return IdentitityMapper.map_power(expr)
 
+    def handle_unsupported_expression(self, expr):
+        return expr
 
 
 

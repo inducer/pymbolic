@@ -68,8 +68,15 @@ class EvaluationMapper(RecursiveMapper):
         return result
 
     def map_list(self, expr):
-        return [self.rec(child) for child in expr.Children]
+        return [self.rec(child) for child in expr]
 
+    def map_numpy_array(self, expr):
+        import numpy
+        result = numpy.empty(expr.shape, dtype=object)
+        from pytools import indices_in_shape
+        for i in indices_in_shape(expr.shape):
+            result[i] = self.rec(expr[i])
+        return result
 
 
 

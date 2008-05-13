@@ -1,3 +1,15 @@
+try:
+    import numpy
+
+    def is_numpy_array(val):
+        return isinstance(val, numpy.ndarray)
+except ImportError:
+    def is_numpy_array(ary):
+        return False
+
+
+
+
 class Mapper(object):
     def __init__(self, recurse=True):
         self.Recurse = True
@@ -40,6 +52,8 @@ class Mapper(object):
             return self.map_constant(expr, *args, **kwargs)
         elif isinstance(expr, list):
             return self.map_list(expr, *args, **kwargs)
+        elif is_numpy_array(expr):
+            return self.map_numpy_array(expr, *args, **kwargs)
         else:
             raise ValueError, "encountered invalid foreign object: %s" % repr(expr)
 
@@ -108,6 +122,8 @@ class CombineMapper(RecursiveMapper):
     map_list = map_sum
     map_vector = map_sum
 
+    def map_numpy_array(self, expr):
+        return self.combine(expr.flat)
 
 
 
@@ -158,17 +174,21 @@ class IdentityMapperBase(object):
                               ((exp, self.rec(coeff, *args, **kwargs))
                                   for exp, coeff in expr.data))
 
-
     map_list = map_sum
     map_vector = map_sum
 
+    def map_numpy_array(self, expr):
+        import numpy
+        result = numpy.empty(expr.shape, dtype=object)
+        from pytools import indices_in_shape
+        for i in indices_in_shape(expr.shape):
+            result[i] = self.rec(expr[i])
+        return result
 
 
 
 class IdentityMapper(IdentityMapperBase, RecursiveMapper):
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
-        return expr
+    pass
 
 class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
-        return expr
+    pass
