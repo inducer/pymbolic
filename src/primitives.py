@@ -6,12 +6,6 @@ import pymbolic.mapper.stringifier
 
 VALID_CONSTANT_CLASSES = [int, float, complex]
 
-try: 
-    import numpy
-    VALID_CONSTANT_CLASSES.append(numpy.ndarray)
-except ImportError:
-    pass
-
 
 
 
