@@ -128,3 +128,6 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
         return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr])
 
     map_vector = map_list
+
+    def map_numpy_array(self, expr, enclosing_prec):
+        return 'array(%s)' % str(expr)

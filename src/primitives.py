@@ -4,42 +4,6 @@ import pymbolic.mapper.stringifier
 
 
 
-VALID_CONSTANT_CLASSES = [int, float, complex]
-
-
-
-
-def is_constant(value):
-    return isinstance(value, tuple(VALID_CONSTANT_CLASSES))
-
-def is_valid_operand(value):
-    return isinstance(value, Expression) or is_constant(value)
-
-
-
-
-def register_constant_class(class_):
-    VALID_CONSTANT_CLASSES.append(class_)
-
-def unregister_constant_class(class_):
-    VALID_CONSTANT_CLASSES.remove(class_)
-
-
-
-
-def is_nonzero(value):
-    try:
-        return bool(value)
-    except ValueError:
-        return True
-
-def is_zero(value):
-    return not is_nonzero(value)
-
-
-
-
-
 class Expression(object):
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -598,4 +562,45 @@ def quotient(numerator, denominator):
         pass
 
     return Quotient(numerator, denominator)
+
+
+
+
+# tool functions --------------------------------------------------------------
+VALID_CONSTANT_CLASSES = [int, float, complex]
+VALID_OPERANDS = [Expression]
+
+
+
+def is_constant(value):
+    return isinstance(value, tuple(VALID_CONSTANT_CLASSES))
+
+def is_valid_operand(value):
+    return isinstance(value, tuple(VALID_OPERANDS)) or is_constant(value)
+
+
+
+
+def register_constant_class(class_):
+    VALID_CONSTANT_CLASSES.append(class_)
+
+def unregister_constant_class(class_):
+    VALID_CONSTANT_CLASSES.remove(class_)
+
+
+
+
+def is_nonzero(value):
+    try:
+        return bool(value)
+    except ValueError:
+        return True
+
+def is_zero(value):
+    return not is_nonzero(value)
+
+
+
+
+
 
