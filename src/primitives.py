@@ -355,9 +355,9 @@ class Product(Expression):
             return NotImplemented
         if isinstance(other, Product):
             return Product(self.children + other.children)
-        if not other:
+        if is_zero(other):
             return 0
-        if not other-1:
+        if is_zero(other-1):
             return self
         return Product(self.children + (other,))
 
@@ -366,9 +366,9 @@ class Product(Expression):
             return NotImplemented
         if isinstance(other, Product):
             return Product(other.children + self.children)
-        if not other:
+        if is_zero(other):
             return 0
-        if not other-1:
+        if is_zero(other-1):
             return self
         return Product((other,) + self.children)
 
