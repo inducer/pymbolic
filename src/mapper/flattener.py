@@ -11,7 +11,9 @@ class FlattenMapper(IdentityMapper):
     def map_product(self, expr):
         from pymbolic.primitives import flattened_product
         return flattened_product(expr.children)
-            
+
+    def handle_unsupported_expression(self, expr):
+        return expr
 
 
 
