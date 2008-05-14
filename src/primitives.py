@@ -148,6 +148,22 @@ class Leaf(AlgebraicLeaf):
 
 
 
+class Constant(Leaf):
+    def __init__(self, value):
+        self.value = value
+
+    def __getinitargs__(self):
+        return self.value,
+
+    def __hash__(self):
+        return 0x493120aa ^ hash(self.name)
+
+    def get_mapper_method(self, mapper):
+        return mapper.map_constant
+
+
+
+
 class Variable(Leaf):
     def __init__(self, name):
         self.name = name
