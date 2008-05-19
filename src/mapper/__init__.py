@@ -16,7 +16,7 @@ class Mapper(object):
 
     def handle_unsupported_expression(self, expr, *args, **kwargs):
         raise ValueError, "%s cannot handle expressions of type %s" % (
-                self.__class__.__name__, expr.__class__.__name__)
+                self.__class__, expr.__class__)
 
     def __call__(self, expr, *args, **kwargs):
         import pymbolic.primitives as primitives
@@ -55,7 +55,8 @@ class Mapper(object):
         elif is_numpy_array(expr):
             return self.map_numpy_array(expr, *args, **kwargs)
         else:
-            raise ValueError, "encountered invalid foreign object: %s" % repr(expr)
+            raise ValueError, "%s encountered invalid foreign object: %s" % (
+                    self.__class__, repr(expr))
 
 
 
