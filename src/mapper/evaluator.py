@@ -32,9 +32,6 @@ class EvaluationMapper(RecursiveMapper):
     def map_lookup(self, expr):
         return getattr(self.rec(expr.aggregate), expr.name)
 
-    def map_negation(self, expr):
-        return -self.rec(expr.child)
-
     def map_sum(self, expr):
         return sum(self.rec(child) for child in expr.children)
 
