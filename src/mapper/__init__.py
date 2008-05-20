@@ -157,10 +157,14 @@ class IdentityMapperBase(object):
         return expr.__class__(self.rec(expr.child, *args, **kwargs))
 
     def map_sum(self, expr, *args, **kwargs):
-        return expr.__class__(tuple(
+        from pymbolic.primitives import flattened_sum
+        return flattened_sum(tuple(
             self.rec(child, *args, **kwargs) for child in expr.children))
     
-    map_product = map_sum
+    def map_product(self, expr, *args, **kwargs):
+        from pymbolic.primitives import flattened_product
+        return flattened_product(tuple(
+            self.rec(child, *args, **kwargs) for child in expr.children))
     
     def map_quotient(self, expr, *args, **kwargs):
         return expr.__class__(self.rec(expr.numerator, *args, **kwargs),
