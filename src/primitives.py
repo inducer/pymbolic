@@ -156,7 +156,8 @@ class Constant(Leaf):
         return self.value,
 
     def __hash__(self):
-        return 0x493120aa ^ hash(self.name)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.value)
 
     def get_mapper_method(self, mapper):
         return mapper.map_constant
@@ -182,7 +183,8 @@ class Variable(Leaf):
                 and self.name == other.name)
 
     def __hash__(self):
-        return 0x111 ^ hash(self.name)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.name)
 
     def get_mapper_method(self, mapper):
         return mapper.map_variable
@@ -201,7 +203,8 @@ class Call(AlgebraicLeaf):
                and (self.parameters == other.parameters)
 
     def __hash__(self):
-        return hash(self.function) ^ hash(self.parameters)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.function, self.parameters)
 
     def get_mapper_method(self, mapper):
         return mapper.map_call
@@ -223,7 +226,8 @@ class Subscript(AlgebraicLeaf):
                and (self.index == other.index)
 
     def __hash__(self):
-        return 0x123 ^ hash(self.aggregate) ^ hash(self.index)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.aggregate, self.index)
 
     def get_mapper_method(self, mapper):
         return mapper.map_subscript
@@ -245,7 +249,8 @@ class Lookup(AlgebraicLeaf):
                and (self.name == other.name)
 
     def __hash__(self):
-        return 0x183 ^ hash(self.aggregate) ^ hash(self.name)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.aggregate, self.index)
 
     def get_mapper_method(self, mapper):
         return mapper.map_lookup
@@ -304,7 +309,8 @@ class Sum(Expression):
             return True
 
     def __hash__(self):
-        return 0x456 ^ hash(self.children)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.children)
 
     def get_mapper_method(self, mapper):
         return mapper.map_sum
@@ -353,7 +359,8 @@ class Product(Expression):
         return True
 
     def __hash__(self):
-        return 0x789 ^ hash(self.children)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.children)
 
     def get_mapper_method(self, mapper):
         return mapper.map_product
@@ -387,7 +394,8 @@ class Quotient(Expression):
         return bool(self.numerator)
 
     def __hash__(self):
-        return 0xabc ^ hash(self.numerator) ^ hash(self.denominator)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.numerator, self.denominator)
 
     def get_mapper_method(self, mapper):
         return mapper.map_quotient
@@ -409,7 +417,8 @@ class Power(Expression):
                and (self.exponent == other.exponent)
 
     def __hash__(self):
-        return 0xdef ^ hash(self.base) ^ hash(self.exponent)
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.base, self.exponent)
 
     def get_mapper_method(self, mapper):
         return mapper.map_power
@@ -481,7 +490,8 @@ class Vector(Expression):
         return self.children
 
     def __hash__(self):
-        return hash(self.children) ^ 0xacc9f12
+        from pytools import hash_combine
+        return hash_combine(self.__class__, self.children)
 
     def get_mapper_method(self, mapper):
         return mapper.map_vector
