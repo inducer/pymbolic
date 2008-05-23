@@ -250,7 +250,7 @@ class Lookup(AlgebraicLeaf):
 
     def __hash__(self):
         from pytools import hash_combine
-        return hash_combine(self.__class__, self.aggregate, self.index)
+        return hash_combine(self.__class__, self.aggregate, self.name)
 
     def get_mapper_method(self, mapper):
         return mapper.map_lookup
