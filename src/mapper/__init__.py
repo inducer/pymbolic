@@ -31,16 +31,16 @@ class Mapper(object):
             return self.map_foreign(expr, *args, **kwargs)
 
     def map_variable(self, expr, *args, **kwargs):
-        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+        return self.map_algebraic_leaf(expr, *args, **kwargs)
 
     def map_subscript(self, expr, *args, **kwargs):
-        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+        return self.map_algebraic_leaf(expr, *args, **kwargs)
 
     def map_call(self, expr, *args, **kwargs):
-        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+        return self.map_algebraic_leaf(expr, *args, **kwargs)
 
     def map_lookup(self, expr, *args, **kwargs):
-        return self.map_algebraic_leaf(self, expr, *args, **kwargs)
+        return self.map_algebraic_leaf(expr, *args, **kwargs)
 
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
