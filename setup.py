@@ -8,7 +8,7 @@ ez_setup.use_setuptools()
 from setuptools import setup
 
 setup(name="pymbolic",
-      version="0.90",
+      version="0.91",
       description="A package for symbolic computation",
       long_description="""
       Pymbolic is a small symbolic manipulation library. Two things set it apart
