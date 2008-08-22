@@ -545,6 +545,8 @@ def flattened_product(components):
     while queue:
         item = queue.pop(0)
 
+        if is_zero(item):
+            return 0
         if is_zero(item-1):
             continue
 
