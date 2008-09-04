@@ -1,5 +1,4 @@
 import traits
-import pymbolic.mapper.stringifier
 
 
 
@@ -156,8 +155,7 @@ class Constant(Leaf):
         return self.value,
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.value)
+        return hash((self.__class__, self.value))
 
     def get_mapper_method(self, mapper):
         return mapper.map_constant
@@ -183,8 +181,7 @@ class Variable(Leaf):
                 and self.name == other.name)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.name)
+        return hash((self.__class__, self.name))
 
     def get_mapper_method(self, mapper):
         return mapper.map_variable
@@ -203,8 +200,7 @@ class Call(AlgebraicLeaf):
                and (self.parameters == other.parameters)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.function, self.parameters)
+        return hash((self.__class__, self.function, self.parameters))
 
     def get_mapper_method(self, mapper):
         return mapper.map_call
@@ -226,8 +222,7 @@ class Subscript(AlgebraicLeaf):
                and (self.index == other.index)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.aggregate, self.index)
+        return hash((self.__class__, self.aggregate, self.index))
 
     def get_mapper_method(self, mapper):
         return mapper.map_subscript
@@ -249,8 +244,7 @@ class Lookup(AlgebraicLeaf):
                and (self.name == other.name)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.aggregate, self.name)
+        return hash((self.__class__, self.aggregate, self.name))
 
     def get_mapper_method(self, mapper):
         return mapper.map_lookup
@@ -309,8 +303,7 @@ class Sum(Expression):
             return True
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.children)
+        return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
         return mapper.map_sum
@@ -359,8 +352,7 @@ class Product(Expression):
         return True
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.children)
+        return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
         return mapper.map_product
@@ -394,8 +386,7 @@ class Quotient(Expression):
         return bool(self.numerator)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.numerator, self.denominator)
+        return hash((self.__class__, self.numerator, self.denominator))
 
     def get_mapper_method(self, mapper):
         return mapper.map_quotient
@@ -417,8 +408,7 @@ class Power(Expression):
                and (self.exponent == other.exponent)
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.base, self.exponent)
+        return hash((self.__class__, self.base, self.exponent))
 
     def get_mapper_method(self, mapper):
         return mapper.map_power
@@ -490,8 +480,7 @@ class Vector(Expression):
         return self.children
 
     def __hash__(self):
-        from pytools import hash_combine
-        return hash_combine(self.__class__, self.children)
+        return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
         return mapper.map_vector
@@ -595,25 +584,27 @@ def quotient(numerator, denominator):
 
 
 # tool functions --------------------------------------------------------------
-VALID_CONSTANT_CLASSES = [int, float, complex]
-VALID_OPERANDS = [Expression]
+VALID_CONSTANT_CLASSES = (int, float, complex)
+VALID_OPERANDS = (Expression,)
 
 
 
 def is_constant(value):
-    return isinstance(value, tuple(VALID_CONSTANT_CLASSES))
+    return isinstance(value, VALID_CONSTANT_CLASSES)
 
 def is_valid_operand(value):
-    return isinstance(value, tuple(VALID_OPERANDS)) or is_constant(value)
+    return isinstance(value, VALID_OPERANDS) or is_constant(value)
 
 
 
 
 def register_constant_class(class_):
-    VALID_CONSTANT_CLASSES.append(class_)
+    VALID_CONSTANT_CLASSES += (class_,)
 
 def unregister_constant_class(class_):
-    VALID_CONSTANT_CLASSES.remove(class_)
+    tmp = list(VALID_CONSTANT_CLASSES)
+    tmp.remove(class_)
+    VALID_CONSTANT_CLASSES = tuple(tmp)
 
 
 

@@ -1,4 +1,3 @@
-import pymbolic.primitives as primitives
 import pytools.lex
 
 _imaginary = intern("imaginary")
@@ -48,6 +47,8 @@ _PREC_UNARY_MINUS = 40
 _PREC_CALL = 50
 
 def parse(expr_str):
+    import pymbolic.primitives as primitives
+
     def parse_terminal(pstate):
         next_tag = pstate.next_tag()
         if next_tag is _int:

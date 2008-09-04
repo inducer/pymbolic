@@ -1,7 +1,6 @@
 import math
 
 import pymbolic
-import pymbolic.mapper.dependency
 from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE, PREC_SUM, PREC_POWER
 
 
