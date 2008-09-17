@@ -125,7 +125,7 @@ class CombineMapper(RecursiveMapper):
     map_vector = map_sum
 
     def map_numpy_array(self, expr):
-        return self.combine(expr.flat)
+        return self.combine(self.rec(el) for el in expr.flat)
 
 
 
