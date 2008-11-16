@@ -135,7 +135,39 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
 
 
+class SortingStringifyMapper(StringifyMapper):
+    def __init__(self, constant_mapper=str, reverse=True):
+        StringifyMapper.__init__(self, constant_mapper)
+        self.reverse = reverse
+
+    def map_sum(self, expr, enclosing_prec):
+        entries = [self.rec(i, PREC_SUM) for i in expr.children]
+        entries.sort(reverse=self.reverse)
+        result = " + ".join(entries)
+
+        if enclosing_prec > PREC_SUM:
+            return "(%s)" % result
+        else:
+            return result
+
+    def map_product(self, expr, enclosing_prec):
+        entries = [self.rec(i, PREC_PRODUCT) for i in expr.children]
+        entries.sort(reverse=self.reverse)
+        result = "*".join(entries)
+
+        if enclosing_prec > PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
+
+
+
+
 class SimplifyingSortingStringifyMapper(StringifyMapper):
+    def __init__(self, constant_mapper=str, reverse=True):
+        StringifyMapper.__init__(self, constant_mapper)
+        self.reverse = reverse
+
     def map_sum(self, expr, enclosing_prec):
         entries = [self.rec(i, PREC_SUM) for i in expr.children]
 
@@ -158,10 +190,10 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
             else:
                 positives.append(self.rec(ch, PREC_SUM))
 
-        positives.sort()
-        positives = " + ".join(positives[::-1])
-        negatives.sort()
-        negatives = "".join(" - " + entry for entry in negatives[::-1])
+        positives.sort(reverse=self.reverse)
+        positives = " + ".join(positives)
+        negatives.sort(reverse=self.reverse)
+        negatives = "".join(" - " + entry for entry in negatives)
 
         result = positives + negatives
 
@@ -187,8 +219,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
                     i += 1
 
         entries = list(generate_entries())
-        entries.sort()
-        #entries = entries[::-1]
+        entries.sort(reverse=self.reverse)
 
         if enclosing_prec > PREC_PRODUCT:
             return "(%s)" % "*".join(entries)
