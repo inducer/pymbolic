@@ -4,6 +4,11 @@ import traits
 
 
 class Expression(object):
+    """An evaluatable part of a mathematical expression.
+
+    Expression objects are immutable.
+    """
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -131,6 +136,13 @@ class Expression(object):
 
         return "%s(%s)" % (self.__class__.__name__, initargs_str)
 
+    def __hash__(self):
+        try:
+            return self.hash_value
+        except AttributeError:
+            self.hash_value = self.get_hash()
+            return self.hash_value
+
 
 
 
@@ -154,7 +166,7 @@ class Constant(Leaf):
     def __getinitargs__(self):
         return self.value,
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.value))
 
     def get_mapper_method(self, mapper):
@@ -180,7 +192,7 @@ class Variable(Leaf):
         return (isinstance(other, Variable) 
                 and self.name == other.name)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.name))
 
     def get_mapper_method(self, mapper):
@@ -199,7 +211,7 @@ class Call(AlgebraicLeaf):
                and (self.function == other.function) \
                and (self.parameters == other.parameters)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.function, self.parameters))
 
     def get_mapper_method(self, mapper):
@@ -221,7 +233,7 @@ class Subscript(AlgebraicLeaf):
                and (self.aggregate == other.aggregate) \
                and (self.index == other.index)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.aggregate, self.index))
 
     def get_mapper_method(self, mapper):
@@ -243,7 +255,7 @@ class Lookup(AlgebraicLeaf):
                and (self.aggregate == other.aggregate) \
                and (self.name == other.name)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.aggregate, self.name))
 
     def get_mapper_method(self, mapper):
@@ -302,7 +314,7 @@ class Sum(Expression):
             # FIXME: Right semantics?
             return True
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
@@ -351,7 +363,7 @@ class Product(Expression):
                 return False
         return True
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
@@ -385,7 +397,7 @@ class Quotient(Expression):
     def __nonzero__(self):
         return bool(self.numerator)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.numerator, self.denominator))
 
     def get_mapper_method(self, mapper):
@@ -407,7 +419,7 @@ class Power(Expression):
                and (self.base == other.base) \
                and (self.exponent == other.exponent)
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.base, self.exponent))
 
     def get_mapper_method(self, mapper):
@@ -479,7 +491,7 @@ class Vector(Expression):
     def __getinitargs__(self):
         return self.children
 
-    def __hash__(self):
+    def get_hash(self):
         return hash((self.__class__, self.children))
 
     def get_mapper_method(self, mapper):
