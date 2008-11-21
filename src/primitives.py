@@ -167,8 +167,8 @@ class Expression(object):
     def is_equal(self, other):
         return NotImplemented
 
-    def get_hash(self, other):
-        raise NotImplementedError
+    def get_hash(self):
+        raise NotImplementedError("get_hash() in "+str(type(self)))
 
 
 
