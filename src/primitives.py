@@ -624,8 +624,17 @@ def quotient(numerator, denominator):
 
 
 # tool functions --------------------------------------------------------------
+global VALID_CONSTANT_CLASSES
+global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
 VALID_OPERANDS = (Expression,)
+
+try:
+    import numpy
+    VALID_CONSTANT_CLASSES += (numpy.number,)
+except ImportError:
+    pass
+
 
 
 
@@ -639,9 +648,13 @@ def is_valid_operand(value):
 
 
 def register_constant_class(class_):
+    global VALID_CONSTANT_CLASSES
+
     VALID_CONSTANT_CLASSES += (class_,)
 
 def unregister_constant_class(class_):
+    global VALID_CONSTANT_CLASSES
+
     tmp = list(VALID_CONSTANT_CLASSES)
     tmp.remove(class_)
     VALID_CONSTANT_CLASSES = tuple(tmp)
@@ -657,9 +670,6 @@ def is_nonzero(value):
 
 def is_zero(value):
     return not is_nonzero(value)
-
-
-
 
 
 
