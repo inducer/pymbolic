@@ -83,10 +83,11 @@ class Expression(object):
     __truediv__ = __div__
 
     def __rdiv__(self, other):
-        if not is_constant(other):
+        if not is_valid_operand(other):
             return NotImplemented
 
         return quotient(other, self)
+    __rtruediv__ = __rdiv__
 
     def __pow__(self, other):
         if not is_valid_operand(other):
