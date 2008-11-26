@@ -169,14 +169,16 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         self.reverse = reverse
 
     def map_sum(self, expr, enclosing_prec):
-        entries = [self.rec(i, PREC_SUM) for i in expr.children]
-
         def get_neg_product(expr):
             from pymbolic.primitives import is_zero, Product
 
             if isinstance(expr, Product) \
                     and len(expr.children) and is_zero(expr.children[0]+1):
-                return Product(expr.children[1:])
+                if len(expr.children) == 2:
+                    # only the minus sign and the other child
+                    return expr.children[1]
+                else:
+                    return Product(expr.children[1:])
             else:
                 return None
 
@@ -203,25 +205,25 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
             return result
 
     def map_product(self, expr, enclosing_prec):
-        def generate_entries():
-            i = 0
-            from pymbolic.primitives import is_zero
+        entries = []
+        i = 0
+        from pymbolic.primitives import is_zero
 
-            while i < len(expr.children):
-                child = expr.children[i]
-                if is_zero(child+1) and i+1 < len(expr.children):
-                    # NOTE: That space needs to be there. 
-                    # Otherwise two unary minus signs merge into a pre-decrement.
-                    yield "- %s" % self.rec(expr.children[i+1], PREC_UNARY)
-                    i += 2
-                else:
-                    yield self.rec(child, PREC_PRODUCT)
-                    i += 1
+        while i < len(expr.children):
+            child = expr.children[i]
+            if False and is_zero(child+1) and i+1 < len(expr.children):
+                # NOTE: That space needs to be there. 
+                # Otherwise two unary minus signs merge into a pre-decrement.
+                entries.append("- %s" % self.rec(expr.children[i+1], PREC_UNARY))
+                i += 2
+            else:
+                entries.append(self.rec(child, PREC_PRODUCT))
+                i += 1
 
-        entries = list(generate_entries())
         entries.sort(reverse=self.reverse)
+        result = "*".join(entries)
 
         if enclosing_prec > PREC_PRODUCT:
-            return "(%s)" % "*".join(entries)
+            return "(%s)" % result
         else:
-            return "*".join(entries)
+            return result
