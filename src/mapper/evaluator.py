@@ -36,12 +36,8 @@ class EvaluationMapper(RecursiveMapper):
         return sum(self.rec(child) for child in expr.children)
 
     def map_product(self, expr):
-        if len(expr.children) == 0:
-            return 1 # FIXME?
-        result = self.rec(expr.children[0])
-        for child in expr.children[1:]:
-            result *= self.rec(child)
-        return result
+        from pytools import product
+        return product(self.rec(child) for child in expr.children)
 
     def map_quotient(self, expr):
         return self.rec(expr.numerator) / self.rec(expr.denominator)
