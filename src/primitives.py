@@ -166,7 +166,7 @@ class Expression(object):
 
     # hashable backend --------------------------------------------------------
     def is_equal(self, other):
-        return NotImplemented
+        raise NotImplementedError("is_equal() in "+str(type(self)))
 
     def get_hash(self):
         raise NotImplementedError("get_hash() in "+str(type(self)))
