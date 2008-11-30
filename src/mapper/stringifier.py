@@ -16,6 +16,27 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def __init__(self, constant_mapper=str):
         self.constant_mapper = constant_mapper
 
+    # replaceable string composition interface --------------------------------
+    def format(self, s, *args):
+        return s % args
+
+    def join(self, joiner, iterable):
+        return self.format(joiner.join("%s" for i in iterable), *iterable)
+
+    def join_rec(self, joiner, iterable, prec):
+        f = joiner.join("%s" for i in iterable)
+        return self.format(f, *[self.rec(i, prec) for i in iterable])
+
+    def parenthesize(self, s):
+        return "(%s)" % s
+
+    def parenthesize_if_needed(self, s, enclosing_prec, my_prec):
+        if enclosing_prec > my_prec:
+            return "(%s)" % s
+        else:
+            return s
+
+    # mappings ----------------------------------------------------------------
     def handle_unsupported_expression(self, victim, enclosing_prec):
         strifier = victim.stringifier()
         if isinstance(self, strifier):
@@ -31,7 +52,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                 or 
                 (isinstance(expr, complex) and expr.imag and expr.real)
                 ) and (enclosing_prec > PREC_SUM):
-            return "(%s)" % result
+            return self.parenthesize(result)
         else:
             return result
 
@@ -40,98 +61,64 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
         return expr.name
 
     def map_call(self, expr, enclosing_prec):
-        result = "%s(%s)" % \
-                (self.rec(expr.function, PREC_CALL),
-                        ", ".join(self.rec(i, PREC_NONE) 
-                            for i in expr.parameters))
-        if enclosing_prec > PREC_CALL:
-            return "(%s)" % result
-        else:
-            return result
+        return self.format("%s(%s)",
+                self.rec(expr.function, PREC_CALL),
+                self.join_rec(", ", expr.parameters, PREC_NONE))
 
     def map_subscript(self, expr, enclosing_prec):
-        result = "%s[%s]" % \
-                (self.rec(expr.aggregate, PREC_CALL), self.rec(expr.index, PREC_CALL))
-        if enclosing_prec > PREC_CALL:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.format("%s[%s]", 
+                    self.rec(expr.aggregate, PREC_CALL), 
+                    self.rec(expr.index, PREC_NONE)),
+                enclosing_prec, PREC_CALL)
 
     def map_lookup(self, expr, enclosing_prec):
-        result = "%s.%s" % (self.rec(expr.aggregate, PREC_CALL), expr.name)
-        if enclosing_prec > PREC_CALL:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.format("%s.%s", 
+                    self.rec(expr.aggregate, PREC_CALL), 
+                    expr.name),
+                enclosing_prec, PREC_CALL)
 
     def map_sum(self, expr, enclosing_prec):
-        result = " + ".join(self.rec(i, PREC_SUM) for i in expr.children)
-        if enclosing_prec > PREC_SUM:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.join_rec(" + ", expr.children, PREC_SUM),
+                enclosing_prec, PREC_SUM)
 
     def map_product(self, expr, enclosing_prec):
-        result = "*".join(self.rec(i, PREC_PRODUCT) for i in expr.children)
-        if enclosing_prec > PREC_PRODUCT:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.join_rec("*", expr.children, PREC_PRODUCT),
+                enclosing_prec, PREC_PRODUCT)
 
     def map_quotient(self, expr, enclosing_prec):
-        result = "%s/%s" % (
-                self.rec(expr.numerator, PREC_PRODUCT), 
-                self.rec(expr.denominator, PREC_PRODUCT)
-                )
-        if enclosing_prec > PREC_PRODUCT:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.format("%s/%s", 
+                    self.rec(expr.numerator, PREC_PRODUCT), 
+                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
+                enclosing_prec, PREC_PRODUCT)
 
     def map_power(self, expr, enclosing_prec):
-        result = "%s**%s" % (
-                self.rec(expr.base, PREC_POWER), 
-                self.rec(expr.exponent, PREC_POWER)
-                )
-        if enclosing_prec > PREC_POWER:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.format("%s**%s", 
+                    self.rec(expr.numerator, PREC_POWER), 
+                    self.rec(expr.denominator, PREC_POWER)),
+                enclosing_prec, PREC_POWER)
 
     def map_polynomial(self, expr, enclosing_prec):
-        sbase = self(expr.base, PREC_POWER)
-        def stringify_expcoeff((exp, coeff)):
-            if exp == 0:
-                return self(coeff, PREC_SUM)
-            elif exp == 1:
-                strexp = ""
-            else:
-                strexp = "**%s" % exp
-
-            if not (coeff-1):
-                return "%s%s" % (sbase, strexp) 
-            elif not (coeff+1):
-                return "-%s%s" % (sbase, strexp) 
-            else:
-                return "%s*%s%s" % (self(coeff, PREC_PRODUCT), sbase, strexp) 
-
-        if not expr.data:
-            return "0"
-
-        result = "%s" % " + ".join(stringify_expcoeff(i) for i in expr.data[::-1])
-        if enclosing_prec > PREC_SUM and len(expr.data) > 1:
-            return "(%s)" % result
-        else:
-            return result
+        from pymbolic.primitives import flattened_sum
+        return self.rec(flattened_sum(
+            [coeff*base**exp for exp, coeff in expr.data[::-1]]),
+            enclosing_prec)
 
     def map_list(self, expr, enclosing_prec):
-        return "[%s]" % ", ".join([self.rec(i, PREC_NONE) for i in expr])
+        return self.format("[%s]", self.join_rec(", ", expr, PREC_NONE))
 
     map_vector = map_list
 
     def map_numpy_array(self, expr, enclosing_prec):
-        return 'array(%s)' % str(expr)
+        return self.format('array(%s)', str(expr))
 
+    def map_common_subexpression(self, expr, enclosing_prec):
+        return self.format("CSE(%s)", self.rec(expr.child, PREC_NONE))
 
 
 
@@ -143,22 +130,16 @@ class SortingStringifyMapper(StringifyMapper):
     def map_sum(self, expr, enclosing_prec):
         entries = [self.rec(i, PREC_SUM) for i in expr.children]
         entries.sort(reverse=self.reverse)
-        result = " + ".join(entries)
-
-        if enclosing_prec > PREC_SUM:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.join(" + ", entries),
+                enclosing_prec, PREC_SUM)
 
     def map_product(self, expr, enclosing_prec):
         entries = [self.rec(i, PREC_PRODUCT) for i in expr.children]
         entries.sort(reverse=self.reverse)
-        result = "*".join(entries)
-
-        if enclosing_prec > PREC_PRODUCT:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(
+                self.join("*", entries),
+                enclosing_prec, PREC_PRODUCT)
 
 
 
@@ -195,14 +176,12 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         positives.sort(reverse=self.reverse)
         positives = " + ".join(positives)
         negatives.sort(reverse=self.reverse)
-        negatives = "".join(" - " + entry for entry in negatives)
+        negatives = self.join("", 
+                [self.format(" - %s", entry) for entry in negatives])
 
         result = positives + negatives
 
-        if enclosing_prec > PREC_SUM:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(result, enclosing_prec, PREC_SUM)
 
     def map_product(self, expr, enclosing_prec):
         entries = []
@@ -214,7 +193,8 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
             if False and is_zero(child+1) and i+1 < len(expr.children):
                 # NOTE: That space needs to be there. 
                 # Otherwise two unary minus signs merge into a pre-decrement.
-                entries.append("- %s" % self.rec(expr.children[i+1], PREC_UNARY))
+                entries.append(
+                        self.format("- %s", self.rec(expr.children[i+1], PREC_UNARY)))
                 i += 2
             else:
                 entries.append(self.rec(child, PREC_PRODUCT))
@@ -223,7 +203,4 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         entries.sort(reverse=self.reverse)
         result = "*".join(entries)
 
-        if enclosing_prec > PREC_PRODUCT:
-            return "(%s)" % result
-        else:
-            return result
+        return self.parenthesize_if_needed(result, enclosing_prec, PREC_PRODUCT)

@@ -124,8 +124,11 @@ class CombineMapper(RecursiveMapper):
     map_list = map_sum
     map_vector = map_sum
 
-    def map_numpy_array(self, expr):
+    def map_numpy_array(self, expr, *args):
         return self.combine(self.rec(el) for el in expr.flat)
+
+    def map_common_subexpression(self, expr, *args):
+        return self.rec(expr.child, *args)
 
 
 
@@ -190,6 +193,10 @@ class IdentityMapperBase(object):
         for i in indices_in_shape(expr.shape):
             result[i] = self.rec(expr[i])
         return result
+
+    def map_common_subexpression(self, expr, *args, **kwargs):
+        return expr.__class__(self.rec(expr.child, *args, **kwargs))
+
 
 
 

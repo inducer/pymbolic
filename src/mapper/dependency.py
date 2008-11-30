@@ -8,6 +8,7 @@ class DependencyMapper(CombineMapper):
             include_subscripts=True, 
             include_lookups=True,
             include_calls=True,
+            include_cses=False,
             composite_leaves=None):
 
         if composite_leaves == False:
@@ -19,16 +20,22 @@ class DependencyMapper(CombineMapper):
             include_lookups = True
             include_calls = True
 
-        self.IncludeSubscripts = include_subscripts
-        self.IncludeLookups = include_lookups
-        self.IncludeCalls = include_calls
+        self.include_subscripts = include_subscripts
+        self.include_lookups = include_lookups
+        self.include_calls = include_calls
+
+        self.include_cses = include_cses
 
     def combine(self, values):
         import operator
         return reduce(operator.or_, values, set())
 
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
-        return set([expr])
+    def handle_unsupported_expression(self, expr):
+        from pymbolic.primitives import AlgebraicLeaf
+        if isinstance(expr, AlgebraicLeaf):
+            return set([expr])
+        else:
+            CombineMapper.handle_unsupported_expression(self, expr)
 
     def map_constant(self, expr):
         return set()
@@ -37,22 +44,28 @@ class DependencyMapper(CombineMapper):
         return set([expr])
 
     def map_call(self, expr):
-        if self.IncludeCalls:
+        if self.include_calls:
             return set([expr])
         else:
             return CombineMapper.map_call(self, expr)
 
     def map_lookup(self, expr):
-        if self.IncludeLookups:
+        if self.include_lookups:
             return set([expr])
         else:
             return CombineMapper.map_lookup(self, expr)
 
     def map_subscript(self, expr):
-        if self.IncludeSubscripts:
+        if self.include_subscripts:
             return set([expr])
         else:
             return CombineMapper.map_subscript(self, expr)
+
+    def map_common_subexpression(self, expr):
+        if self.include_cses:
+            return set([expr])
+        else:
+            return CombineMapper.map_common_subexpression(self, expr)
 
 
 

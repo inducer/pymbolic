@@ -177,12 +177,17 @@ class Expression(object):
 
 
 class AlgebraicLeaf(Expression):
+    """An expression that serves as a leaf for arithmetic evaluation.
+    This may end up having child nodes still, but they're not reached by
+    ways of arithmetic."""
     pass
 
 
 
 
 class Leaf(AlgebraicLeaf):
+    """An expression that is irreducible, i.e. has no Expression-type parts 
+    whatsoever."""
     pass
 
 
@@ -525,6 +530,26 @@ class Vector(Expression):
 
     def get_mapper_method(self, mapper):
         return mapper.map_vector
+
+
+
+
+class CommonSubexpression(Expression):
+    def __init__(self, child):
+        self.child = child
+
+    def __getinitargs__(self):
+        return (self.child,)
+
+    def get_hash(self):
+        return hash((self.__class__, self.child))
+
+    def is_equal(self, other):
+        return (other.__class__ == self.__class__
+                and other.child == self.child)
+
+    def get_mapper_method(self, mapper): 
+        return mapper.map_common_subexpression
 
 
 

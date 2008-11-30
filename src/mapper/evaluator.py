@@ -12,14 +12,15 @@ class UnknownVariableError(Exception):
 
 class EvaluationMapper(RecursiveMapper):
     def __init__(self, context={}):
-        self.Context = context
+        self.context = context
+        self.common_subexp_cache = {}
 
     def map_constant(self, expr):
         return expr
 
     def map_variable(self, expr):
         try:
-            return self.Context[expr.name]
+            return self.context[expr.name]
         except KeyError:
             raise UnknownVariableError, expr.name
 
@@ -70,6 +71,14 @@ class EvaluationMapper(RecursiveMapper):
         for i in indices_in_shape(expr.shape):
             result[i] = self.rec(expr[i])
         return result
+
+    def map_common_subexpression(self, expr, out=None):
+        try:
+            return self.common_subexp_cache[expr.child]
+        except KeyError:
+            self.common_subexp_cache[expr.child] = value = self.rec(expr.child)
+            return value
+
 
 
 
