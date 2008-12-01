@@ -44,7 +44,10 @@ class DependencyMapper(CombineMapper):
         return set([expr])
 
     def map_call(self, expr):
-        if self.include_calls:
+        if self.include_calls == "descend_args":
+                return self.combine(
+                        [self.rec(child) for child in expr.parameters])
+        elif self.include_calls:
             return set([expr])
         else:
             return CombineMapper.map_call(self, expr)
