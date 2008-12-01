@@ -4,13 +4,24 @@ from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 
 
 class CCodeMapper(SimplifyingSortingStringifyMapper):
-    def __init__(self, constant_mapper=repr, reverse=True, cse_prefix="cse"):
+    def __init__(self, constant_mapper=repr, reverse=True, cse_prefix="_cse"):
         SimplifyingSortingStringifyMapper.__init__(self, constant_mapper, reverse)
         self.cse_prefix = cse_prefix
         self.cses = []
         self.cse_to_index = {}
 
     # mappings ----------------------------------------------------------------
+    def map_call(self, expr, enclosing_prec):
+        from pymbolic.primitives import Variable
+        from pymbolic.mapper.stringifier import PREC_NONE, PREC_CALL
+        if isinstance(expr.function, Variable):
+            func = expr.function.name
+        else:
+            func = self.rec(expr.function, PREC_CALL)
+
+        return self.format("%s(%s)",
+                func, self.join_rec(", ", expr.parameters, PREC_NONE))
+
     def map_power(self, expr, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_NONE
         from pymbolic.primitives import is_constant, is_zero
