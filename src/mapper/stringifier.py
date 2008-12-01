@@ -99,8 +99,8 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def map_power(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
                 self.format("%s**%s", 
-                    self.rec(expr.numerator, PREC_POWER), 
-                    self.rec(expr.denominator, PREC_POWER)),
+                    self.rec(expr.base, PREC_POWER), 
+                    self.rec(expr.exponent, PREC_POWER)),
                 enclosing_prec, PREC_POWER)
 
     def map_polynomial(self, expr, enclosing_prec):
