@@ -169,7 +169,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         for ch in expr.children:
             neg_prod = get_neg_product(ch)
             if neg_prod is not None:
-                negatives.append(self.rec(neg_prod, PREC_SUM))
+                negatives.append(self.rec(neg_prod, PREC_PRODUCT))
             else:
                 positives.append(self.rec(ch, PREC_SUM))
 
