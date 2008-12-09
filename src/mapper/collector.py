@@ -78,11 +78,3 @@ class TermCollector(IdentityMapper):
         result = pymbolic.flattened_sum(coeff*rep2term(termrep) 
                 for termrep, coeff in term2coeff.iteritems())
         return result
-
-    def handle_unsupported_expression(self, expr):
-        from pymbolic.primitives import AlgebraicLeaf
-        if isinstance(expr, AlgebraicLeaf):
-            return expr
-        else:
-            IdentityMapper.handle_unsupported_expression(self, expr)
-

@@ -4,8 +4,12 @@ from pymbolic.mapper import IdentityMapper, NonrecursiveIdentityMapper
 
 
 class ConstantFoldingMapperBase(object):
+    def is_constant(self, expr):
+        from pymbolic.mapper.dependency import DependencyMapper
+        return not bool(DependencyMapper()(expr))
+
     def fold(self, expr, klass, op, constructor):
-        from pymbolic import is_constant, evaluate
+        from pymbolic import evaluate
 
         constants = []
         nonconstants = []
@@ -16,7 +20,7 @@ class ConstantFoldingMapperBase(object):
             if isinstance(child, klass):
                 queue = list(child.children) + queue
             else:
-                if is_constant(child):
+                if self.is_constant(child):
                     constants.append(evaluate(child))
                 else:
                     nonconstants.append(child)
@@ -33,9 +37,6 @@ class ConstantFoldingMapperBase(object):
         import operator
 
         return self.fold(expr, Sum, operator.add, Sum)
-
-    def handle_unsupported_expression(self, expr):
-        return expr
 
 
 

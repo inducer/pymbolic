@@ -7,9 +7,6 @@ class FlopCounter(CombineMapper):
     def combine(self, values):
         return sum(values)
 
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
-        return 0
-
     def map_constant(self, expr):
         return 0
 

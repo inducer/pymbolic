@@ -30,13 +30,6 @@ class DependencyMapper(CombineMapper):
         import operator
         return reduce(operator.or_, values, set())
 
-    def handle_unsupported_expression(self, expr):
-        from pymbolic.primitives import AlgebraicLeaf
-        if isinstance(expr, AlgebraicLeaf):
-            return set([expr])
-        else:
-            CombineMapper.handle_unsupported_expression(self, expr)
-
     def map_constant(self, expr):
         return set()
 
@@ -69,20 +62,3 @@ class DependencyMapper(CombineMapper):
             return set([expr])
         else:
             return CombineMapper.map_common_subexpression(self, expr)
-
-
-
-
-
-def get_dependencies(expr, **kwargs):
-    return DependencyMapper(**kwargs)(expr)
-
-
-
-
-def is_constant(expr, with_respect_to=None, **kwargs):
-    if not with_respect_to:
-        return not bool(get_dependencies(expr, **kwargs))
-    else:
-        return not (set(with_respect_to) & get_dependencies(expr, **kwargs))
-

@@ -60,8 +60,9 @@ class CompiledExpression:
     def __compile__(self):
         ctx = self.context()
 
-        used_variables = pymbolic.get_dependencies(self._Expression, 
-                composite_leaves=False)
+        from pymbolic.mapper.dependency import DependencyMapper
+        used_variables = DependencyMapper(
+                composite_leaves=False)(self._Expression)
         used_variables -= set(self._Variables)
         used_variables -= set(pymbolic.var(key) for key in ctx.keys())
         used_variables = list(used_variables)
