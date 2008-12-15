@@ -20,6 +20,8 @@ class DependencyMapper(CombineMapper):
             include_lookups = True
             include_calls = True
 
+        assert include_calls in [True, False, "descend_args"]
+
         self.include_subscripts = include_subscripts
         self.include_lookups = include_lookups
         self.include_calls = include_calls
