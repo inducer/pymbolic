@@ -8,8 +8,14 @@ class ConstantFoldingMapperBase(object):
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))
 
-    def fold(self, expr, klass, op, constructor):
+    def evaluate(self, expr):
         from pymbolic import evaluate
+        try:
+            return evaluate(expr)
+        except ValueError:
+            return None
+
+    def fold(self, expr, klass, op, constructor):
 
         constants = []
         nonconstants = []
@@ -21,7 +27,12 @@ class ConstantFoldingMapperBase(object):
                 queue = list(child.children) + queue
             else:
                 if self.is_constant(child):
-                    constants.append(evaluate(child))
+                    value = self.evaluate(child)
+                    if value is None:
+                        # couldn't evaluate
+                        nonconstants.append(child)
+                    else:
+                        constants.append(value)
                 else:
                     nonconstants.append(child)
 
