@@ -52,7 +52,6 @@ setup(name="pymbolic",
       install_requires=[
           'pytools>=2'
           ],
-      package_dir={"pymbolic": "src", "pymbolic.mapper":"src/mapper"},
 
       zip_safe=False,
      )

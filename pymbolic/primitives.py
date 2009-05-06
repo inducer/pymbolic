@@ -548,6 +548,9 @@ class CommonSubexpression(Expression):
         return (other.__class__ == self.__class__
                 and other.child == self.child)
 
+    def get_extra_properties(self):
+        return {}
+
     def get_mapper_method(self, mapper): 
         return mapper.map_common_subexpression
 
