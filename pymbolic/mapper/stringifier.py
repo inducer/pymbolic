@@ -60,6 +60,9 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def map_variable(self, expr, enclosing_prec):
         return expr.name
 
+    def map_function_symbol(self, expr, enclosing_prec):
+        return expr.__class__.__name__
+
     def map_call(self, expr, enclosing_prec):
         return self.format("%s(%s)",
                 self.rec(expr.function, PREC_CALL),

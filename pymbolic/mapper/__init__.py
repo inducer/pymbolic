@@ -141,6 +141,9 @@ class IdentityMapperBase(object):
         # leaf -- no need to rebuild
         return expr
 
+    def map_function_symbol(self, expr, *args):
+        return expr
+
     def map_call(self, expr, *args):
         return expr.__class__(
                 self.rec(expr.function, *args),

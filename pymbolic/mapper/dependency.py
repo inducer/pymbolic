@@ -38,6 +38,9 @@ class DependencyMapper(CombineMapper):
     def map_variable(self, expr):
         return set([expr])
 
+    def map_function_symbol(self, expr):
+        return set()
+
     def map_call(self, expr):
         if self.include_calls == "descend_args":
                 return self.combine(

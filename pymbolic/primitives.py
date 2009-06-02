@@ -232,10 +232,46 @@ class Variable(Leaf):
     def get_mapper_method(self, mapper):
         return mapper.map_variable
 
+
+
+
+class FunctionSymbol(AlgebraicLeaf):
+    """Represents the name of a function.
+
+    May optionally have an `arg_count` attribute, which will
+    allow `Call` to check the number of arguments.
+    """
+
+    def __getinitargs__(self):
+        return ()
+
+    def is_equal(self, other):
+        return self.__class__ == other.__class
+
+    def get_hash(self):
+        return hash(self.__class__)
+
+    def get_mapper_method(self, mapper):
+        return mapper.map_function_symbol
+
+
+
+
+
 class Call(AlgebraicLeaf):
     def __init__(self, function, parameters):
         self.function = function
         self.parameters = parameters
+
+        try:
+            arg_count = self.function.arg_count
+        except AttributeError:
+            pass
+        else:
+            if len(self.parameters) != arg_count:
+                raise TypeError("%s called with wrong number of arguments "
+                        "(need %d, got %d)" % (
+                            self.function, arg_count, len(parameters)))
 
     def __getinitargs__(self):
         return self.function, self.parameters
