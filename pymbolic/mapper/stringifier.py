@@ -116,7 +116,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def map_polynomial(self, expr, enclosing_prec):
         from pymbolic.primitives import flattened_sum
         return self.rec(flattened_sum(
-            [coeff*base**exp for exp, coeff in expr.data[::-1]]),
+            [coeff*expr.base**exp for exp, coeff in expr.data[::-1]]),
             enclosing_prec)
 
     def map_list(self, expr, enclosing_prec):
