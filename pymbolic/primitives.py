@@ -89,6 +89,20 @@ class Expression(object):
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
+    def __mod__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
+        if is_zero(other-1):
+            return self
+        return Remainder(self, other)
+
+    def __rmod(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
+        return Remainder(other, self)
+    
     def __pow__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
@@ -442,7 +456,7 @@ class Product(Expression):
 
 
 
-class Quotient(Expression):
+class QuotientBase(Expression):
     def __init__(self, numerator, denominator=1):
         self.numerator = numerator
         self.denominator = denominator
@@ -458,20 +472,37 @@ class Quotient(Expression):
     def den(self):
         return self.denominator
 
-    def is_equal(self, other):
-        from pymbolic.rational import Rational
-        return isinstance(other, (Rational, Quotient)) \
-               and (self.numerator == other.numerator) \
-               and (self.denominator == other.denominator)
-
     def __nonzero__(self):
         return bool(self.numerator)
 
     def get_hash(self):
         return hash((self.__class__, self.numerator, self.denominator))
 
+
+
+
+class Quotient(QuotientBase):
+    def is_equal(self, other):
+        from pymbolic.rational import Rational
+        return isinstance(other, (Rational, Quotient)) \
+               and (self.numerator == other.numerator) \
+               and (self.denominator == other.denominator)
+
     def get_mapper_method(self, mapper):
         return mapper.map_quotient
+
+
+
+
+class Remainder(QuotientBase):
+    def is_equal(self, other):
+        from pymbolic.rational import Rational
+        return self.__class__ == other.__class__ \
+               and (self.numerator == other.numerator) \
+               and (self.denominator == other.denominator)
+
+    def get_mapper_method(self, mapper):
+        return mapper.map_remainder
 
 
 

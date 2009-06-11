@@ -106,6 +106,13 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                     self.rec(expr.exponent, PREC_POWER)),
                 enclosing_prec, PREC_POWER)
 
+    def map_remainder(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.format("%s %% %s", 
+                    self.rec(expr.numerator, PREC_PRODUCT), 
+                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
+                enclosing_prec, PREC_PRODUCT)
+
     def map_polynomial(self, expr, enclosing_prec):
         from pymbolic.primitives import flattened_sum
         return self.rec(flattened_sum(
