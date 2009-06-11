@@ -6,9 +6,26 @@ from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE, PREC_SUM, PR
 
 
 
+def _constant_mapper(c):
+    # work around numpy bug #1137 (locale-sensitive repr)
+    # http://projects.scipy.org/numpy/ticket/1137
+    try:
+        import numpy
+    except ImportError:
+        pass
+    else:
+        if isinstance(c, numpy.floating):
+            c = float(c)
+        elif isinstance(c, numpy.complexfloating):
+            c = complex(c)
+
+    return repr(c)
+
+
 class CompileMapper(StringifyMapper):
     def __init__(self):
-        StringifyMapper.__init__(self, constant_mapper=repr)
+        StringifyMapper.__init__(self, 
+                constant_mapper=_constant_mapper)
 
     def map_polynomial(self, expr, enclosing_prec):
         # Use Horner's scheme to evaluate the polynomial
