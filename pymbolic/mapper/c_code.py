@@ -4,13 +4,27 @@ from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 
 
 class CCodeMapper(SimplifyingSortingStringifyMapper):
-    def __init__(self, constant_mapper=repr, reverse=True, cse_prefix="_cse"):
+    def __init__(self, constant_mapper=repr, reverse=True, 
+            cse_prefix="_cse", complex_constant_base_type="double"):
         SimplifyingSortingStringifyMapper.__init__(self, constant_mapper, reverse)
         self.cse_prefix = cse_prefix
         self.cses = []
         self.cse_to_index = {}
 
+        self.complex_constant_base_type = complex_constant_base_type
+
     # mappings ----------------------------------------------------------------
+    def map_constant(self, x, enclosing_prec):
+        import numpy
+        if isinstance(x, complex):
+            return "std::complex<%s>(%s, %s)" % (
+                    complex_constant_base_type,
+                    self.constant_mapper(x.real), 
+                    self.constant_mapper(x.imag))
+        else:
+            return SimplifyingSortingStringifyMapper.map_constant(
+                    self, x, enclosing_prec)
+
     def map_call(self, expr, enclosing_prec):
         from pymbolic.primitives import Variable
         from pymbolic.mapper.stringifier import PREC_NONE, PREC_CALL
