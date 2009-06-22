@@ -18,7 +18,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         import numpy
         if isinstance(x, complex):
             return "std::complex<%s>(%s, %s)" % (
-                    complex_constant_base_type,
+                    self.complex_constant_base_type,
                     self.constant_mapper(x.real), 
                     self.constant_mapper(x.imag))
         else:
