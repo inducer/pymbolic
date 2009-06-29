@@ -1,4 +1,6 @@
-import pymbolic.traits as traits
+from __future__ import division
+import cmath
+from pytools import memoize
 
 
 
@@ -32,6 +34,7 @@ def extended_euclidean(q, r):
     """Return a tuple (p, a, b) such that p = aq + br,
     where p is the greatest common divisor.
     """
+    import pymbolic.traits as traits
 
     # see [Davenport], Appendix, p. 214
 
@@ -51,6 +54,88 @@ def extended_euclidean(q, r):
         Q, R = R, T
 
     return q, Q[0], Q[1]
+
+
+
+
+
+@memoize
+def find_factors(N):
+    from math import sqrt
+
+    N1 = 2
+    max_N1 = int(sqrt(N))+1
+    while N % N1 != 0 and N1 <= max_N1:
+        N1 += 1
+
+    if N1 > max_N1:
+        N1 = N
+
+    N2 = N // N1
+
+    return N1, N2
+
+
+
+
+def fft(x, sign=1, wrap_intermediate=lambda x: x):
+    """Computes the Fourier transform of x:
+
+    F[x]_i = \sum_{j=0}^{n-1} z^{ij} x_j
+
+    where z = exp(sign*-2j*pi/n) and n = len(x).
+    """
+
+    # http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm
+    # revision 293076305, http://is.gd/1c7PI
+
+    from math import pi
+    import numpy
+
+    N = len(x)
+
+    if N == 1:
+        return x
+
+    N1, N2 = find_factors(N)
+
+    # do the transform
+    sub_ffts = [
+            wrap_intermediate(
+                fft(x[n1::N1], sign, wrap_intermediate)
+                * numpy.exp(numpy.linspace(0, sign*(-2j)*pi*n1/N1, N2,
+                    endpoint=False)))
+            for n1 in range(N1)]
+
+    return numpy.hstack([
+        sum(subvec * cmath.exp(sign*(-2j)*pi*n1*k1/N1)
+            for n1, subvec in enumerate(sub_ffts))
+        for k1 in range(N1)
+        ])
+
+
+
+
+def ifft(x, wrap_intermediate=lambda x:x):
+    return (1/len(x))*fft(x, -1, wrap_intermediate)
+
+
+
+
+
+def csr_matrix_multiply(S,x):
+    """Multiplies a scipy.sparse.csr_matrix S by an object-array vector x.
+    """
+    h, w = S.shape
+
+    import numpy
+    result = numpy.empty_like(x)
+
+    for i in xrange(h):
+        result[i] = sum(S.data[idx]*x[S.indices[idx]] 
+                for idx in range(S.indptr[i], S.indptr[i+1]))
+
+    return result
 
 
 
