@@ -47,11 +47,9 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def map_constant(self, expr, enclosing_prec):
         result = self.constant_mapper(expr)
 
-        if (
-                (isinstance(expr, (int, float, long)) and expr < 0) 
-                or 
-                (isinstance(expr, complex) and expr.imag and expr.real)
-                ) and (enclosing_prec > PREC_SUM):
+        if not (result.startswith("(") and result.endswith(")")) \
+                and ("-" in result or "+" in result) \
+                and (enclosing_prec > PREC_SUM):
             return self.parenthesize(result)
         else:
             return result
