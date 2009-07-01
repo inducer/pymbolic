@@ -156,7 +156,7 @@ class Expression(object):
         Subclasses should generally not override this method, but instead 
         provide an implementation of L{is_equal}.
         """
-        if id(self) == id(other):
+        if self is other:
             return True
         elif hash(self) != hash(other):
             return False

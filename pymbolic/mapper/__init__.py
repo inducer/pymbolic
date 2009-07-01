@@ -210,3 +210,21 @@ class IdentityMapper(IdentityMapperBase, RecursiveMapper):
 
 class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
     pass
+
+
+
+
+class CSECachingMapperMixin(object):
+    def map_common_subexpression(self, expr):
+        try:
+            ccd = self._cse_cache_dict
+        except AttributeError:
+            from weakref import WeakKeyDictionary
+            ccd = self._cse_cache_dict = WeakKeyDictionary()
+
+        try:
+            return ccd[expr]
+        except KeyError:
+            result = self.map_common_subexpression_uncached(expr)
+            ccd[expr] = result
+            return result

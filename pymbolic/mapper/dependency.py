@@ -1,9 +1,9 @@
-from pymbolic.mapper import CombineMapper
+from pymbolic.mapper import CombineMapper, CSECachingMapperMixin
 
 
 
 
-class DependencyMapper(CombineMapper):
+class DependencyMapper(CSECachingMapperMixin, CombineMapper):
     def __init__(self, 
             include_subscripts=True, 
             include_lookups=True,
@@ -62,7 +62,7 @@ class DependencyMapper(CombineMapper):
         else:
             return CombineMapper.map_subscript(self, expr)
 
-    def map_common_subexpression(self, expr):
+    def map_common_subexpression_uncached(self, expr):
         if self.include_cses:
             return set([expr])
         else:

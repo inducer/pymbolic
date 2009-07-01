@@ -1,4 +1,7 @@
-from pymbolic.mapper import IdentityMapper, NonrecursiveIdentityMapper
+from pymbolic.mapper import \
+        IdentityMapper, \
+        NonrecursiveIdentityMapper, \
+        CSECachingMapperMixin
 
 
 
@@ -61,20 +64,35 @@ class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
 
 
 
-class ConstantFoldingMapper(ConstantFoldingMapperBase, IdentityMapper):
-    pass
+class ConstantFoldingMapper(
+        CSECachingMapperMixin, 
+        ConstantFoldingMapperBase, 
+        IdentityMapper):
+
+    map_common_subexpression_uncached = \
+            IdentityMapper.map_common_subexpression
 
 class NonrecursiveConstantFoldingMapper(
+        CSECachingMapperMixin,
         NonrecursiveIdentityMapper, 
         ConstantFoldingMapperBase):
-    pass
 
-class CommutativeConstantFoldingMapper(CommutativeConstantFoldingMapperBase,
+    map_common_subexpression_uncached = \
+            NonrecursiveIdentityMapper.map_common_subexpression
+
+class CommutativeConstantFoldingMapper(
+        CSECachingMapperMixin,
+        CommutativeConstantFoldingMapperBase,
         IdentityMapper):
-    pass
+
+    map_common_subexpression_uncached = \
+            IdentityMapper.map_common_subexpression
 
 class NonrecursiveCommutativeConstantFoldingMapper(
+        CSECachingMapperMixin,
         CommutativeConstantFoldingMapperBase,
         NonrecursiveIdentityMapper,):
-    pass
+
+    map_common_subexpression_uncached = \
+            NonrecursiveIdentityMapper.map_common_subexpression
 
