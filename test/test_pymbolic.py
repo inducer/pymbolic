@@ -64,21 +64,14 @@ def test_fft():
     numpy = py.test.importorskip("numpy")
 
     from pymbolic import var
-    from pymbolic.algorithm import fft
+    from pymbolic.algorithm import fft, sym_fft
 
     vars = numpy.array([var(chr(97+i)) for i in range(16)], dtype=object)
     print vars
 
-    def wrap_intermediate(x):
-        if len(x) > 1:
-            from hedge.optemplate import make_common_subexpression
-            return make_common_subexpression(x)
-        else:
-            return x
-
     nzk = NearZeroKiller()
-    print nzk(fft(vars))
-    traced_fft = nzk(fft(vars, wrap_intermediate=wrap_intermediate))
+    print fft(vars)
+    traced_fft = sym_fft(vars)
 
     from pymbolic.mapper.stringifier import PREC_NONE
     from pymbolic.mapper.c_code import CCodeMapper

@@ -99,7 +99,6 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
 
     N1, N2 = find_factors(N)
 
-    # do the transform
     sub_ffts = [
             wrap_intermediate(
                 fft(x[n1::N1], sign, wrap_intermediate)
@@ -123,7 +122,54 @@ def ifft(x, wrap_intermediate=lambda x:x):
 
 
 
-def csr_matrix_multiply(S,x):
+def sym_fft(x, sign=1):
+    """Perform an FFT on the numpy object array x.
+
+    Remove near-zero floating point constants, insert
+    CommonSubexpression wrappers at opportune points.
+    """
+
+    from pymbolic.mapper import IdentityMapper, CSECachingMapperMixin
+    class NearZeroKiller(CSECachingMapperMixin, IdentityMapper):
+        map_common_subexpression_uncached = \
+                IdentityMapper.map_common_subexpression
+
+        def map_constant(self, expr):
+            if isinstance(expr, complex):
+                r = expr.real
+                i = expr.imag
+                if abs(r) < 1e-15:
+                    r = 0
+                if abs(i) < 1e-15:
+                    i = 0
+                if i == 0:
+                    return r
+                else:
+                    return complex(r, i)
+            else:
+                return expr
+
+    import numpy
+
+    def wrap_intermediate(x):
+        if len(x) > 1:
+            from pymbolic.primitives import CommonSubexpression
+            result = numpy.empty(len(x), dtype=object)
+            for i, x_i in enumerate(x):
+                result[i] = CommonSubexpression(x_i)
+            return result
+        else:
+            return x
+
+    return NearZeroKiller()(
+            fft(wrap_intermediate(x), sign=sign, wrap_intermediate=wrap_intermediate))
+
+
+
+
+
+
+def csr_matrix_multiply(S, x):
     """Multiplies a scipy.sparse.csr_matrix S by an object-array vector x.
     """
     h, w = S.shape
