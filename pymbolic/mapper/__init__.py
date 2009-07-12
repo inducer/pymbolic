@@ -16,9 +16,6 @@ except ImportError:
 
 
 class Mapper(object):
-    def __init__(self, recurse=True):
-        self.Recurse = True
-
     def handle_unsupported_expression(self, expr, *args):
         raise ValueError, "%s cannot handle expressions of type %s" % (
                 self.__class__, expr.__class__)
