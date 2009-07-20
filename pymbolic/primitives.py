@@ -237,7 +237,7 @@ class Variable(Leaf):
             return NotImplemented
 
     def is_equal(self, other):
-        return (isinstance(other, Variable) 
+        return (other.__class__ == self.__class__
                 and self.name == other.name)
 
     def get_hash(self):
