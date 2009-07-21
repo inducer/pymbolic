@@ -107,3 +107,24 @@ def test_sparse_multiply():
     mat_vec_2 = csr_matrix_multiply(s_mat, vec)
 
     assert la.norm(mat_vec-mat_vec_2) < 1e-14
+
+
+
+def test_no_comparison():
+    from pymbolic import parse
+
+    x = parse("17+3*x") 
+    y = parse("12-5*y")
+
+    def expect_typeerror(f):
+        try:
+            f()
+        except TypeError:
+            pass
+        else:
+            assert False
+
+    expect_typeerror(lambda: x < y)
+    expect_typeerror(lambda: x <= y)
+    expect_typeerror(lambda: x > y)
+    expect_typeerror(lambda: x >= y)

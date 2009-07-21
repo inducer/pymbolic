@@ -185,6 +185,12 @@ class Expression(object):
     def get_hash(self):
         raise NotImplementedError("get_hash() in "+str(type(self)))
 
+    # comparison interface ----------------------------------------------------
+    def __le__(self, other): raise TypeError("expressions don't have an order")
+    def __lt__(self, other): raise TypeError("expressions don't have an order")
+    def __ge__(self, other): raise TypeError("expressions don't have an order")
+    def __gt__(self, other): raise TypeError("expressions don't have an order")
+
 
 
 
