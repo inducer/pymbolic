@@ -26,3 +26,8 @@ class FlopCounter(CombineMapper):
 
     def map_power(self, expr, *args):
         return 1 + self.rec(expr.base) + self.rec(expr.exponent)
+
+    def map_if_positive(self, expr):
+        return self.rec(expr.criterion) + max(
+                self.rec(expr.then),
+                self.rec(expr.else_))

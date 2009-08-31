@@ -213,22 +213,6 @@ class Leaf(AlgebraicLeaf):
 
 
 
-class Constant(Leaf):
-    def __init__(self, value):
-        self.value = value
-
-    def __getinitargs__(self):
-        return self.value,
-
-    def get_hash(self):
-        return hash((self.__class__, self.value))
-
-    def get_mapper_method(self, mapper):
-        return mapper.map_constant
-
-
-
-
 class Variable(Leaf):
     def __init__(self, name):
         self.name = name
@@ -626,6 +610,35 @@ class CommonSubexpression(Expression):
 
     def get_mapper_method(self, mapper): 
         return mapper.map_common_subexpression
+
+
+
+
+
+class IfPositive(Expression):
+    def __init__(self, criterion, then, else_):
+        self.criterion = criterion
+        self.then = then
+        self.else_ = else_
+
+    def __getinitargs__(self):
+        return self.criterion, self.then, self.else_
+
+    def is_equal(self, other):
+        return (isinstance(other, IfPositive)
+                and self.criterion == other.criterion
+                and self.then == other.then
+                and self.else_ == other.else_)
+
+    def get_hash(self):
+        return hash((
+                self.__class__,
+                self.criterion,
+                self.then,
+                self.else_))
+
+    def get_mapper_method(self, mapper):
+        return mapper.map_if_positive
 
 
 

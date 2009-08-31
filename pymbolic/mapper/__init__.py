@@ -127,6 +127,13 @@ class CombineMapper(RecursiveMapper):
     def map_common_subexpression(self, expr, *args):
         return self.rec(expr.child, *args)
 
+    def map_if_positive(self, expr):
+        return self.combine([
+            self.rec(expr.criterion),
+            self.rec(expr.then),
+            self.rec(expr.else_)])
+
+
 
 
 class IdentityMapperBase(object):
@@ -198,6 +205,13 @@ class IdentityMapperBase(object):
         return expr.__class__(
                 self.rec(expr.child, *args, **kwargs),
                 **expr.get_extra_properties())
+
+    def map_if_positive(self, expr):
+        return expr.__class__(
+                self.rec(expr.criterion),
+                self.rec(expr.then),
+                self.rec(expr.else_),
+                )
 
 
 

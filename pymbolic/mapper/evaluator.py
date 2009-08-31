@@ -79,6 +79,12 @@ class EvaluationMapper(RecursiveMapper):
             self.common_subexp_cache[expr.child] = value = self.rec(expr.child)
             return value
 
+    def map_if_positive(self, expr):
+        if self.rec(expr.criterion) > 0:
+            return self.rec(expr.then)
+        else:
+            return self.rec(expr.else_)
+
 
 
 

@@ -51,15 +51,6 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                 self.rec(expr.base, PREC_NONE), 
                 self.rec(expr.exponent, PREC_NONE))
 
-    def map_if_positive(self, expr, enclosing_prec):
-        # This occurs in hedge fluxes. We cheat and define it here.
-        from pymbolic.mapper.stringifier import PREC_NONE
-        return self.format("(%s > 0 ? %s : %s)",
-                self.rec(expr.criterion, PREC_NONE),
-                self.rec(expr.then, PREC_NONE),
-                self.rec(expr.else_, PREC_NONE),
-                )
-
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
             cse_index = self.cse_to_index[expr]
@@ -71,3 +62,12 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
             self.cses.append(my_cse_str)
 
         return self.cse_prefix + str(cse_index)
+
+    def map_if_positive(self, expr, enclosing_prec):
+        from pymbolic.mapper.stringifier import PREC_NONE
+        return self.format("(%s > 0 ? %s : %s)",
+                self.rec(expr.criterion, PREC_NONE),
+                self.rec(expr.then, PREC_NONE),
+                self.rec(expr.else_, PREC_NONE),
+                )
+
