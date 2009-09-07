@@ -150,6 +150,53 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
 
 
+
+class CSESplittingStringifyMapperMixin(object):
+    def map_common_subexpression(self, expr, enclosing_prec):
+        try:
+            self.cse_to_name
+        except AttributeError:
+            self.cse_to_name = {}
+            self.cse_names = set()
+            self.cse_name_list = []
+
+        try:
+            cse_name = self.cse_to_name[expr.child]
+        except KeyError:
+            str_child = self.rec(expr.child, PREC_NONE)
+        
+            if expr.prefix is not None:
+                def generate_cse_names():
+                    yield expr.prefix
+                    i = 2
+                    while True:
+                        yield expr.prefix + "_%d" % i
+                        i += 1
+            else:
+                def generate_cse_names():
+                    i = 0
+                    while True:
+                        yield "CSE"+str(i)
+                        i += 1
+
+            for cse_name in generate_cse_names():
+                if cse_name not in self.cse_names:
+                    break
+
+            self.cse_name_list.append((cse_name, str_child))
+            self.cse_to_name[expr.child] = cse_name
+            self.cse_names.add(cse_name)
+
+        return cse_name
+
+    def get_cse_strings(self):
+        return [ "%s : %s" % (cse_name, cse_str)
+                for cse_name, cse_str in 
+                    getattr(self, "cse_name_list", [])]
+
+
+
+
 class SortingStringifyMapper(StringifyMapper):
     def __init__(self, constant_mapper=str, reverse=True):
         StringifyMapper.__init__(self, constant_mapper)
