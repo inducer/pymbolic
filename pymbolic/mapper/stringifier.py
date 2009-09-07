@@ -123,7 +123,27 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     map_vector = map_list
 
     def map_numpy_array(self, expr, enclosing_prec):
-        return self.format('array(%s)', str(expr))
+        import numpy
+
+        from pytools import indices_in_shape
+        str_array = numpy.zeros(expr.shape, dtype="object")
+        max_length = 0
+        for i in indices_in_shape(expr.shape):
+            s = self.rec(expr[i], PREC_NONE)
+            max_length = max(len(s), max_length)
+            str_array[i] = s.replace("\n", "\n  ")
+
+        if len(expr.shape) == 1 and max_length < 15:
+            return "array(%s)" % ", ".join(str_array)
+        else:
+            lines = ["  %s: %s\n" % (
+                ",".join(str(i_i) for i_i in i), str_array[i])
+                for i in indices_in_shape(expr.shape)]
+            if max_length > 70:
+                splitter = "  " + "-"*75 + "\n"
+                return "array(\n%s)" % splitter.join(lines)
+            else:
+                return "array(\n%s)" % "".join(lines)
 
     def map_common_subexpression(self, expr, enclosing_prec):
         return self.format("CSE(%s)", self.rec(expr.child, PREC_NONE))
