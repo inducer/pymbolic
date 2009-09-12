@@ -64,7 +64,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
 
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
-            cse_name = self.cse_to_name[expr]
+            cse_name = self.cse_to_name[expr.child]
         except KeyError:
             from pymbolic.mapper.stringifier import PREC_NONE
             cse_str = self.rec(expr.child, PREC_NONE)
@@ -90,5 +90,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
             self.cse_name_list.append((cse_name, cse_str))
             self.cse_to_name[expr.child] = cse_name
             self.cse_names.add(cse_name)
+
+            assert len(self.cse_names) == len(self.cse_to_name)
 
         return cse_name
