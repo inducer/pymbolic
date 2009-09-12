@@ -123,7 +123,27 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     map_vector = map_list
 
     def map_numpy_array(self, expr, enclosing_prec):
-        return self.format('array(%s)', str(expr))
+        import numpy
+
+        from pytools import indices_in_shape
+        str_array = numpy.zeros(expr.shape, dtype="object")
+        max_length = 0
+        for i in indices_in_shape(expr.shape):
+            s = self.rec(expr[i], PREC_NONE)
+            max_length = max(len(s), max_length)
+            str_array[i] = s.replace("\n", "\n  ")
+
+        if len(expr.shape) == 1 and max_length < 15:
+            return "array(%s)" % ", ".join(str_array)
+        else:
+            lines = ["  %s: %s\n" % (
+                ",".join(str(i_i) for i_i in i), str_array[i])
+                for i in indices_in_shape(expr.shape)]
+            if max_length > 70:
+                splitter = "  " + "-"*75 + "\n"
+                return "array(\n%s)" % splitter.join(lines)
+            else:
+                return "array(\n%s)" % "".join(lines)
 
     def map_common_subexpression(self, expr, enclosing_prec):
         return self.format("CSE(%s)", self.rec(expr.child, PREC_NONE))
@@ -133,6 +153,53 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                 self.rec(expr.criterion, PREC_NONE), 
                 self.rec(expr.then, PREC_NONE),
                 self.rec(expr.else_, PREC_NONE))
+
+
+
+
+
+class CSESplittingStringifyMapperMixin(object):
+    def map_common_subexpression(self, expr, enclosing_prec):
+        try:
+            self.cse_to_name
+        except AttributeError:
+            self.cse_to_name = {}
+            self.cse_names = set()
+            self.cse_name_list = []
+
+        try:
+            cse_name = self.cse_to_name[expr.child]
+        except KeyError:
+            str_child = self.rec(expr.child, PREC_NONE)
+        
+            if expr.prefix is not None:
+                def generate_cse_names():
+                    yield expr.prefix
+                    i = 2
+                    while True:
+                        yield expr.prefix + "_%d" % i
+                        i += 1
+            else:
+                def generate_cse_names():
+                    i = 0
+                    while True:
+                        yield "CSE"+str(i)
+                        i += 1
+
+            for cse_name in generate_cse_names():
+                if cse_name not in self.cse_names:
+                    break
+
+            self.cse_name_list.append((cse_name, str_child))
+            self.cse_to_name[expr.child] = cse_name
+            self.cse_names.add(cse_name)
+
+        return cse_name
+
+    def get_cse_strings(self):
+        return [ "%s : %s" % (cse_name, cse_str)
+                for cse_name, cse_str in 
+                    getattr(self, "cse_name_list", [])]
 
 
 

@@ -8,8 +8,10 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
             cse_prefix="_cse", complex_constant_base_type="double"):
         SimplifyingSortingStringifyMapper.__init__(self, constant_mapper, reverse)
         self.cse_prefix = cse_prefix
-        self.cses = []
-        self.cse_to_index = {}
+
+        self.cse_to_name = {}
+        self.cse_names = set()
+        self.cse_name_list = []
 
         self.complex_constant_base_type = complex_constant_base_type
 
@@ -53,15 +55,34 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
 
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
-            cse_index = self.cse_to_index[expr]
+            cse_name = self.cse_to_name[expr]
         except KeyError:
             from pymbolic.mapper.stringifier import PREC_NONE
-            my_cse_str = self.rec(expr.child, PREC_NONE)
-            cse_index = len(self.cses)
-            self.cse_to_index[expr] = cse_index
-            self.cses.append(my_cse_str)
+            cse_str = self.rec(expr.child, PREC_NONE)
 
-        return self.cse_prefix + str(cse_index)
+            if expr.prefix is not None:
+                def generate_cse_names():
+                    yield self.cse_prefix+"_"+expr.prefix
+                    i = 2
+                    while True:
+                        yield self.cse_prefix+"_"+expr.prefix + "_%d" % i
+                        i += 1
+            else:
+                def generate_cse_names():
+                    i = 0
+                    while True:
+                        yield self.cse_prefix+str(i)
+                        i += 1
+
+            for cse_name in generate_cse_names():
+                if cse_name not in self.cse_names:
+                    break
+
+            self.cse_name_list.append((cse_name, cse_str))
+            self.cse_to_name[expr.child] = cse_name
+            self.cse_names.add(cse_name)
+
+        return cse_name
 
     def map_if_positive(self, expr, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_NONE

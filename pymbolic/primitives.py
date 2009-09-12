@@ -592,11 +592,12 @@ class Vector(Expression):
 
 
 class CommonSubexpression(Expression):
-    def __init__(self, child):
+    def __init__(self, child, prefix=None):
         self.child = child
+        self.prefix = prefix
 
     def __getinitargs__(self):
-        return (self.child,)
+        return (self.child, self.prefix)
 
     def get_hash(self):
         return hash((self.__class__, self.child))

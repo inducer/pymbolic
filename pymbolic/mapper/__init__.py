@@ -204,6 +204,7 @@ class IdentityMapperBase(object):
     def map_common_subexpression(self, expr, *args, **kwargs):
         return expr.__class__(
                 self.rec(expr.child, *args, **kwargs),
+                expr.prefix,
                 **expr.get_extra_properties())
 
     def map_if_positive(self, expr):
