@@ -79,8 +79,8 @@ def test_fft():
 
     code = [ccm(tfi, PREC_NONE) for tfi in traced_fft]
 
-    for i, cse in enumerate(ccm.cses):
-        print "_cse%d = %s" % (i, cse)
+    for cse_name, cse_str in enumerate(ccm.cse_name_list):
+        print "%s = %s" % (cse_name, cse_str)
 
     for i, line in enumerate(code):
         print "result[%d] = %s" % (i, line)
