@@ -15,10 +15,16 @@ except ImportError:
 
 
 
+class UnsupportedExpressionError(ValueError):
+    pass
+
+
+
 class Mapper(object):
     def handle_unsupported_expression(self, expr, *args):
-        raise ValueError, "%s cannot handle expressions of type %s" % (
-                self.__class__, expr.__class__)
+        raise UnsupportedExpressionError(
+                "%s cannot handle expressions of type %s" % (
+                    self.__class__, expr.__class__))
 
     def __call__(self, expr, *args):
         try:
@@ -79,14 +85,14 @@ class RecursiveMapper(Mapper):
 class CombineMapper(RecursiveMapper):
     def map_call(self, expr, *args):
         return self.combine(
-                (self.rec(expr.function, *args),) + 
+                (self.rec(expr.function, *args),) +
                 tuple(
                     self.rec(child, *args) for child in expr.parameters)
                 )
 
     def map_subscript(self, expr, *args):
         return self.combine(
-                [self.rec(expr.aggregate, *args), 
+                [self.rec(expr.aggregate, *args),
                     self.rec(expr.index, *args)])
 
     def map_lookup(self, expr, *args):
@@ -96,24 +102,24 @@ class CombineMapper(RecursiveMapper):
         return self.rec(expr.child, *args)
 
     def map_sum(self, expr, *args):
-        return self.combine(self.rec(child, *args) 
+        return self.combine(self.rec(child, *args)
                 for child in expr.children)
 
     map_product = map_sum
 
     def map_quotient(self, expr, *args):
         return self.combine((
-            self.rec(expr.numerator, *args), 
+            self.rec(expr.numerator, *args),
             self.rec(expr.denominator, *args)))
 
     def map_power(self, expr, *args):
         return self.combine((
-                self.rec(expr.base, *args), 
+                self.rec(expr.base, *args),
                 self.rec(expr.exponent, *args)))
 
     def map_polynomial(self, expr, *args):
         return self.combine(
-                (self.rec(expr.base, *args),) + 
+                (self.rec(expr.base, *args),) +
                 tuple(
                     self.rec(coeff, *args) for exp, coeff in expr.data)
                 )
@@ -156,12 +162,12 @@ class IdentityMapperBase(object):
 
     def map_subscript(self, expr, *args):
         return expr.__class__(
-                self.rec(expr.aggregate, *args), 
+                self.rec(expr.aggregate, *args),
                 self.rec(expr.index, *args))
 
     def map_lookup(self, expr, *args):
         return expr.__class__(
-                self.rec(expr.aggregate, *args), 
+                self.rec(expr.aggregate, *args),
                 expr.name)
 
     def map_negation(self, expr, *args):
@@ -171,12 +177,12 @@ class IdentityMapperBase(object):
         from pymbolic.primitives import flattened_sum
         return flattened_sum(tuple(
             self.rec(child, *args) for child in expr.children))
-    
+
     def map_product(self, expr, *args):
         from pymbolic.primitives import flattened_product
         return flattened_product(tuple(
             self.rec(child, *args) for child in expr.children))
-    
+
     def map_quotient(self, expr, *args):
         return expr.__class__(self.rec(expr.numerator, *args),
                               self.rec(expr.denominator, *args))
@@ -202,8 +208,13 @@ class IdentityMapperBase(object):
         return result
 
     def map_common_subexpression(self, expr, *args, **kwargs):
+        from pymbolic.primitives import is_zero
+        result = self.rec(expr.child, *args, **kwargs)
+        if is_zero(result):
+            return 0
+
         return expr.__class__(
-                self.rec(expr.child, *args, **kwargs),
+                result,
                 expr.prefix,
                 **expr.get_extra_properties())
 
@@ -228,6 +239,8 @@ class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
 
 class CSECachingMapperMixin(object):
     def map_common_subexpression(self, expr):
+        from pymbolic.primitives import is_zero
+
         try:
             ccd = self._cse_cache_dict
         except AttributeError:
