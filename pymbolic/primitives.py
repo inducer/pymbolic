@@ -86,6 +86,8 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
+        if is_zero(other):
+            return 0
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
