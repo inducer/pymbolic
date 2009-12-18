@@ -74,8 +74,8 @@ def parse(expr_str):
 
         if pstate.is_next(_minus):
             pstate.advance()
-            return -parse_expression(pstate, _PREC_UNARY_MINUS)
-        if pstate.is_next(_openpar):
+            left_exp = -parse_expression(pstate, _PREC_UNARY_MINUS)
+        elif pstate.is_next(_openpar):
             pstate.advance()
             left_exp = parse_expression(pstate)
             pstate.expect(_closepar)
@@ -88,7 +88,7 @@ def parse(expr_str):
             did_something = False
             if pstate.is_at_end():
                 return left_exp
-            
+
             next_tag = pstate.next_tag()
 
             if next_tag is _openpar and _PREC_CALL > min_precedence:
