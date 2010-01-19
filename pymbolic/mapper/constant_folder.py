@@ -40,26 +40,25 @@ class ConstantFoldingMapperBase(object):
                     nonconstants.append(child)
 
         if constants:
-            import operator
             constant = reduce(op, constants)
             return constructor(tuple([constant]+nonconstants))
         else:
             return constructor(tuple(nonconstants))
 
     def map_sum(self, expr):
-        from pymbolic.primitives import Sum
+        from pymbolic.primitives import Sum, flattened_sum
         import operator
 
-        return self.fold(expr, Sum, operator.add, Sum)
+        return self.fold(expr, Sum, operator.add, flattened_sum)
 
 
 
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
     def map_product(self, expr):
-        from pymbolic.primitives import Product
+        from pymbolic.primitives import Product, flattened_product
         import operator
 
-        return self.fold(expr, Product, operator.mul, Product)
+        return self.fold(expr, Product, operator.mul, flattened_product)
 
 
 
