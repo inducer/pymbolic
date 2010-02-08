@@ -199,7 +199,7 @@ class CSESplittingStringifyMapperMixin(object):
     def get_cse_strings(self):
         return [ "%s : %s" % (cse_name, cse_str)
                 for cse_name, cse_str in 
-                    getattr(self, "cse_name_list", [])]
+                    sorted(getattr(self, "cse_name_list", []))]
 
 
 
