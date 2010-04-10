@@ -49,6 +49,9 @@ class Mapper(object):
     def map_lookup(self, expr, *args):
         return self.map_algebraic_leaf(expr, *args)
 
+    def map_if_positive(self, expr, *args):
+        return self.map_algebraic_leaf(expr, *args)
+
     def map_rational(self, expr, *args):
         return self.map_quotient(expr, *args)
 
