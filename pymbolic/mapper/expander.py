@@ -12,6 +12,14 @@ class ExpandMapper(IdentityMapper):
     def __init__(self, collector=TermCollector()):
         self.collector = collector
     
+    def map_sum(self, expr):
+        from pymbolic.primitives import Sum
+        res = IdentityMapper.map_sum(self, expr)
+        if isinstance(res, Sum):
+            return self.collector(res)
+        else:
+            return res
+
     def map_product(self, expr):
         from pymbolic.primitives import Sum, Product
 
@@ -62,9 +70,9 @@ class ExpandMapper(IdentityMapper):
             if isinstance(newbase, Sum):
                 return self.map_product(pymbolic.flattened_product(expr.exponent*(newbase,)))
             else:
-                return IdentitityMapper.map_power(expr)
+                return IdentityMapper.map_power(self, expr)
         else:
-            return IdentitityMapper.map_power(expr)
+            return IdentityMapper.map_power(self, expr)
 
 
 
