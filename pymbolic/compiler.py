@@ -56,6 +56,17 @@ class CompileMapper(StringifyMapper):
         else:
             return result
 
+    def map_numpy_array(self, expr, enclosing_prec):
+        def stringify_leading_dimension(ary):
+            if len(ary.shape) == 1:
+                def rec(expr):
+                    return self.rec(expr, PREC_NONE)
+            else:
+                rec = stringify_leading_dimension
+
+            return "[%s]" % (", ".join(rec(x) for x in ary))
+
+        return "numpy.array(%s)" % stringify_leading_dimension(expr)
 
 
 
@@ -72,10 +83,17 @@ class CompiledExpression:
 
         self._Expression = expression
         self._Variables = [primi.make_variable(v) for v in variables]
-        self.__compile__()
+        self._compile()
 
-    def __compile__(self):
-        ctx = self.context()
+    def _compile(self):
+        ctx = self.context().copy()
+
+        try:
+            import numpy
+        except ImportError:
+            pass
+        else:
+            ctx["numpy"] = numpy
 
         from pymbolic.mapper.dependency import DependencyMapper
         used_variables = DependencyMapper(
@@ -86,9 +104,10 @@ class CompiledExpression:
         used_variables.sort()
         all_variables = self._Variables + used_variables
 
-        expr_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
-                                   CompileMapper()(self._Expression, PREC_NONE))
-        self.__call__ = eval(expr_s, ctx)
+        expr_s = CompileMapper()(self._Expression, PREC_NONE)
+        func_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
+                expr_s)
+        self.__call__ = eval(func_s, ctx)
     
     def __getinitargs__(self):
         return self._Expression, self._Variables
