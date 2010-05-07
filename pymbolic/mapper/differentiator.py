@@ -123,6 +123,14 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
                 Polynomial(expr.base, tuple(deriv_coeff), expr.unit) + \
                 Polynomial(expr.base, tuple(deriv_base), expr.unit)
   
+    def map_numpy_array(self, expr):
+        import numpy
+        result = numpy.empty(expr.shape, dtype=object)
+        from pytools import indices_in_shape
+        for i in indices_in_shape(expr.shape):
+            result[i] = self.rec(expr[i])
+        return result
+
 
 
 
