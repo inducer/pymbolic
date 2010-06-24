@@ -242,13 +242,10 @@ class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
 
 class CSECachingMapperMixin(object):
     def map_common_subexpression(self, expr):
-        from pymbolic.primitives import is_zero
-
         try:
             ccd = self._cse_cache_dict
         except AttributeError:
-            from weakref import WeakKeyDictionary
-            ccd = self._cse_cache_dict = WeakKeyDictionary()
+            ccd = self._cse_cache_dict = {}
 
         try:
             return ccd[expr]
