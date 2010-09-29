@@ -7,7 +7,7 @@ distribute_setup.use_setuptools()
 from setuptools import setup
 
 setup(name="pymbolic",
-      version="0.91",
+      version="2010.1",
       description="A package for symbolic computation",
       long_description="""
       Pymbolic is a small symbolic manipulation library. Two things set it apart
