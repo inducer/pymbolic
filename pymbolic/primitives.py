@@ -131,8 +131,11 @@ class Expression(object):
         return Call(self, pars)
 
     def __getitem__(self, subscript):
-        return Subscript(self, subscript)
-    
+        if subscript == ():
+            return self
+        else:
+            return Subscript(self, subscript)
+
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
