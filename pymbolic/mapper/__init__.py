@@ -71,14 +71,14 @@ class Mapper(object):
 
 
 class RecursiveMapper(Mapper):
-    def rec(self, expr, *args):
+    def rec(self, expr, *args, **kwargs):
         try:
             method = expr.get_mapper_method(self)
         except AttributeError:
             if isinstance(expr, primitives.Expression):
-                return self.handle_unsupported_expression(expr, *args)
+                return self.handle_unsupported_expression(expr, *args, **kwargs)
             else:
-                return self.map_foreign(expr, *args)
+                return self.map_foreign(expr, *args, **kwargs)
         else:
             return method(expr, *args)
 
