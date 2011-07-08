@@ -24,7 +24,7 @@ def _constant_mapper(c):
 
 class CompileMapper(StringifyMapper):
     def __init__(self):
-        StringifyMapper.__init__(self, 
+        StringifyMapper.__init__(self,
                 constant_mapper=_constant_mapper)
 
     def map_polynomial(self, expr, enclosing_prec):
@@ -46,7 +46,7 @@ class CompileMapper(StringifyMapper):
                 next_exp = rev_data[i+1][0]
             else:
                 next_exp = 0
-            result = "(%s+%s)%s" % (result, self(coeff, PREC_SUM), 
+            result = "(%s+%s)%s" % (result, self(coeff, PREC_SUM),
                     stringify_exp(exp-next_exp))
         #print "A", result
         #print "B", expr
@@ -68,16 +68,23 @@ class CompileMapper(StringifyMapper):
 
         return "numpy.array(%s)" % stringify_leading_dimension(expr)
 
+    def map_foreign(self, expr, enclosing_prec):
+        if isinstance(expr, tuple):
+            return "(%s)" % (", ".join(self.rec(child, PREC_NONE) for child in expr))
+        else:
+            return StringifyMapper.map_foreign(self, expr, enclosing_prec)
+
+
 
 
 
 class CompiledExpression:
     """This class encapsulates a compiled expression.
-    
+
     The main reason for its existence is the fact that a dynamically-constructed
     lambda function is not picklable.
     """
-  
+
     def __init__(self, expression, variables = []):
         import pymbolic.primitives as primi
 
@@ -105,13 +112,13 @@ class CompiledExpression:
         all_variables = self._Variables + used_variables
 
         expr_s = CompileMapper()(self._Expression, PREC_NONE)
-        func_s = "lambda %s:%s" % (",".join(str(v) for v in all_variables), 
+        func_s = "lambda %s: %s" % (",".join(str(v) for v in all_variables),
                 expr_s)
         self.__call__ = eval(func_s, ctx)
-    
+
     def __getinitargs__(self):
         return self._Expression, self._Variables
-        
+
     def __getstate__(self):
         return None
 

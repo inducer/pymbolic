@@ -142,6 +142,11 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.then),
             self.rec(expr.else_)])
 
+    def map_foreign(self, expr, *args):
+        if isinstance(expr, tuple):
+            return self.combine([self.rec(child) for child in expr])
+        else:
+            return RecursiveMapper.map_foreign(self, expr, *args)
 
 
 
