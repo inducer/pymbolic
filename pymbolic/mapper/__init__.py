@@ -121,6 +121,11 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.numerator, *args),
             self.rec(expr.denominator, *args)))
 
+    def map_floor_div(self, expr, *args):
+        return self.combine((
+            self.rec(expr.numerator, *args),
+            self.rec(expr.denominator, *args)))
+
     def map_power(self, expr, *args):
         return self.combine((
                 self.rec(expr.base, *args),

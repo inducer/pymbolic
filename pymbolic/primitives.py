@@ -91,6 +91,22 @@ class Expression(object):
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
+    def __floordiv__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
+        if is_zero(other-1):
+            return self
+        return FloorDiv(self, other)
+
+    def __rfloordiv__(self, other):
+        if not is_valid_operand(other):
+            return NotImplemented
+
+        if is_zero(self-1):
+            return other
+        return FloorDiv(other, self)
+
     def __mod__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
