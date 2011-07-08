@@ -28,14 +28,17 @@ class Mapper(object):
 
     def __call__(self, expr, *args):
         try:
-            method = expr.get_mapper_method(self)
+            method = getattr(self, expr.mapper_method)
         except AttributeError:
-            if isinstance(expr, primitives.Expression):
-                return self.handle_unsupported_expression(expr, *args)
-            else:
-                return self.map_foreign(expr, *args)
-        else:
-            return method(expr, *args)
+            try:
+                method = expr.get_mapper_method(self)
+            except AttributeError:
+                if isinstance(expr, primitives.Expression):
+                    return self.handle_unsupported_expression(expr, *args)
+                else:
+                    return self.map_foreign(expr, *args)
+
+        return method(expr, *args)
 
     def map_variable(self, expr, *args):
         return self.map_algebraic_leaf(expr, *args)
@@ -73,14 +76,17 @@ class Mapper(object):
 class RecursiveMapper(Mapper):
     def rec(self, expr, *args, **kwargs):
         try:
-            method = expr.get_mapper_method(self)
+            method = getattr(self, expr.mapper_method)
         except AttributeError:
-            if isinstance(expr, primitives.Expression):
-                return self.handle_unsupported_expression(expr, *args, **kwargs)
-            else:
-                return self.map_foreign(expr, *args, **kwargs)
-        else:
-            return method(expr, *args)
+            try:
+                method = expr.get_mapper_method(self)
+            except AttributeError:
+                if isinstance(expr, primitives.Expression):
+                    return self.handle_unsupported_expression(expr, *args, **kwargs)
+                else:
+                    return self.map_foreign(expr, *args, **kwargs)
+
+        return method(expr, *args)
 
 
 

@@ -254,8 +254,7 @@ class Polynomial(Expression):
     def __getinitargs__(self):
         return (self.Base, self.Data, self.Unit, self.VarLess)
         
-    def get_mapper_method(self, mapper):
-        return mapper.map_polynomial
+    mapper_method = intern("map_polynomial")
 
     def as_primitives(self):
         deps = pymbolic.get_dependencies(self)

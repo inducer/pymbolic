@@ -40,7 +40,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
     def handle_unsupported_expression(self, victim, enclosing_prec):
         strifier = victim.stringifier()
         if isinstance(self, strifier):
-            raise ValueError("stringifier '%s' can't handle '%s'" 
+            raise ValueError("stringifier '%s' can't handle '%s'"
                     % (self, victim.__class__))
         return strifier(self.constant_mapper)(victim, enclosing_prec)
 
@@ -68,15 +68,15 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_subscript(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s[%s]", 
-                    self.rec(expr.aggregate, PREC_CALL), 
+                self.format("%s[%s]",
+                    self.rec(expr.aggregate, PREC_CALL),
                     self.rec(expr.index, PREC_NONE)),
                 enclosing_prec, PREC_CALL)
 
     def map_lookup(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s.%s", 
-                    self.rec(expr.aggregate, PREC_CALL), 
+                self.format("%s.%s",
+                    self.rec(expr.aggregate, PREC_CALL),
                     expr.name),
                 enclosing_prec, PREC_CALL)
 
@@ -92,22 +92,29 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_quotient(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s/%s", 
-                    self.rec(expr.numerator, PREC_PRODUCT), 
+                self.format("%s/%s",
+                    self.rec(expr.numerator, PREC_PRODUCT),
+                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
+                enclosing_prec, PREC_PRODUCT)
+
+    def map_floor_div(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.format("%s//%s",
+                    self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
 
     def map_power(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s**%s", 
-                    self.rec(expr.base, PREC_POWER), 
+                self.format("%s**%s",
+                    self.rec(expr.base, PREC_POWER),
                     self.rec(expr.exponent, PREC_POWER)),
                 enclosing_prec, PREC_POWER)
 
     def map_remainder(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s %% %s", 
-                    self.rec(expr.numerator, PREC_PRODUCT), 
+                self.format("%s %% %s",
+                    self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
 
@@ -150,7 +157,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_if_positive(self, expr, enclosing_prec):
         return "If(%s > 0, %s, %s)" % (
-                self.rec(expr.criterion, PREC_NONE), 
+                self.rec(expr.criterion, PREC_NONE),
                 self.rec(expr.then, PREC_NONE),
                 self.rec(expr.else_, PREC_NONE))
 
@@ -171,7 +178,7 @@ class CSESplittingStringifyMapperMixin(object):
             cse_name = self.cse_to_name[expr.child]
         except KeyError:
             str_child = self.rec(expr.child, PREC_NONE)
-        
+
             if expr.prefix is not None:
                 def generate_cse_names():
                     yield expr.prefix
@@ -198,7 +205,7 @@ class CSESplittingStringifyMapperMixin(object):
 
     def get_cse_strings(self):
         return [ "%s : %s" % (cse_name, cse_str)
-                for cse_name, cse_str in 
+                for cse_name, cse_str in
                     sorted(getattr(self, "cse_name_list", []))]
 
 
@@ -258,7 +265,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         positives.sort(reverse=self.reverse)
         positives = " + ".join(positives)
         negatives.sort(reverse=self.reverse)
-        negatives = self.join("", 
+        negatives = self.join("",
                 [self.format(" - %s", entry) for entry in negatives])
 
         result = positives + negatives
@@ -273,7 +280,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         while i < len(expr.children):
             child = expr.children[i]
             if False and is_zero(child+1) and i+1 < len(expr.children):
-                # NOTE: That space needs to be there. 
+                # NOTE: That space needs to be there.
                 # Otherwise two unary minus signs merge into a pre-decrement.
                 entries.append(
                         self.format("- %s", self.rec(expr.children[i+1], PREC_UNARY)))

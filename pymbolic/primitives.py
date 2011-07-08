@@ -238,8 +238,7 @@ class Variable(Leaf):
     def get_hash(self):
         return hash((self.__class__, self.name))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_variable
+    mapper_method = intern("map_variable")
 
 
 
@@ -260,8 +259,7 @@ class FunctionSymbol(AlgebraicLeaf):
     def get_hash(self):
         return hash(self.__class__)
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_function_symbol
+    mapper_method = intern("map_function_symbol")
 
 
 
@@ -293,8 +291,7 @@ class Call(AlgebraicLeaf):
     def get_hash(self):
         return hash((self.__class__, self.function, self.parameters))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_call
+    mapper_method = intern("map_call")
 
 
 
@@ -315,9 +312,8 @@ class Subscript(AlgebraicLeaf):
     def get_hash(self):
         return hash((self.__class__, self.aggregate, self.index))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_subscript
-        
+    mapper_method = intern("map_subscript")
+
 
 
 
@@ -337,8 +333,7 @@ class Lookup(AlgebraicLeaf):
     def get_hash(self):
         return hash((self.__class__, self.aggregate, self.name))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_lookup
+    mapper_method = intern("map_lookup")
 
 
 
@@ -396,8 +391,7 @@ class Sum(Expression):
     def get_hash(self):
         return hash((self.__class__, self.children))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_sum
+    mapper_method = intern("map_sum")
 
 
 
@@ -445,8 +439,7 @@ class Product(Expression):
     def get_hash(self):
         return hash((self.__class__, self.children))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_product
+    mapper_method = intern("map_product")
 
 
 
@@ -483,8 +476,13 @@ class Quotient(QuotientBase):
                and (self.numerator == other.numerator) \
                and (self.denominator == other.denominator)
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_quotient
+    mapper_method = intern("map_quotient")
+
+
+
+
+class FloorDiv(QuotientBase):
+    mapper_method = intern("map_floor_div")
 
 
 
@@ -496,8 +494,7 @@ class Remainder(QuotientBase):
                and (self.numerator == other.numerator) \
                and (self.denominator == other.denominator)
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_remainder
+    mapper_method = intern("map_remainder")
 
 
 
@@ -518,8 +515,7 @@ class Power(Expression):
     def get_hash(self):
         return hash((self.__class__, self.base, self.exponent))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_power
+    mapper_method = intern("map_power")
 
 
 
@@ -590,8 +586,7 @@ class Vector(Expression):
     def get_hash(self):
         return hash((self.__class__, self.children))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_vector
+    mapper_method = intern("map_vector")
 
 
 
@@ -614,8 +609,7 @@ class CommonSubexpression(Expression):
     def get_extra_properties(self):
         return {}
 
-    def get_mapper_method(self, mapper): 
-        return mapper.map_common_subexpression
+    mapper_method = intern("map_common_subexpression")
 
 
 
@@ -643,8 +637,7 @@ class IfPositive(Expression):
                 self.then,
                 self.else_))
 
-    def get_mapper_method(self, mapper):
-        return mapper.map_if_positive
+    mapper_method = intern("map_if_positive")
 
 
 
