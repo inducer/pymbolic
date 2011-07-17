@@ -205,6 +205,8 @@ class IdentityMapperBase(object):
         return expr.__class__(self.rec(expr.numerator, *args),
                               self.rec(expr.denominator, *args))
 
+    map_floor_div = map_quotient
+
     def map_power(self, expr, *args):
         return expr.__class__(self.rec(expr.base, *args),
                               self.rec(expr.exponent, *args))
