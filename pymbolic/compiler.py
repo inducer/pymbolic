@@ -69,10 +69,7 @@ class CompileMapper(StringifyMapper):
         return "numpy.array(%s)" % stringify_leading_dimension(expr)
 
     def map_foreign(self, expr, enclosing_prec):
-        if isinstance(expr, tuple):
-            return "(%s)" % (", ".join(self.rec(child, PREC_NONE) for child in expr))
-        else:
-            return StringifyMapper.map_foreign(self, expr, enclosing_prec)
+        return StringifyMapper.map_foreign(self, expr, enclosing_prec)
 
 
 

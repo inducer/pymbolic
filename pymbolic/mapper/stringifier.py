@@ -129,6 +129,13 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     map_vector = map_list
 
+    def map_tuple(self, expr, enclosing_prec):
+        el_str = ", ".join(self.rec(child, PREC_NONE) for child in expr)
+        if len(expr) == 1:
+            el_str += ","
+
+        return "(%s)" % el_str
+
     def map_numpy_array(self, expr, enclosing_prec):
         import numpy
 
