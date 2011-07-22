@@ -102,7 +102,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                 self.format("%s//%s",
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
-                enclosing_prec, PREC_PRODUCT)
+                enclosing_prec, PREC_SUM)
 
     def map_power(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
