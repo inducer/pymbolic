@@ -115,12 +115,12 @@ class Expression(object):
             return self
         return Remainder(self, other)
 
-    def __rmod(self, other):
+    def __rmod__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
         return Remainder(other, self)
-    
+
     def __pow__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
@@ -654,6 +654,29 @@ class IfPositive(Expression):
                 self.else_))
 
     mapper_method = intern("map_if_positive")
+
+
+
+
+class _MinMaxBase(Expression):
+    def __init__(self, children):
+        self.children = children
+
+    def __getinitargs__(self):
+        return self.children
+
+    def is_equal(self, other):
+        return (isinstance(other, type(self))
+                and self.children == other.children)
+
+    def get_hash(self):
+        return hash((type(self), self.children))
+
+class Min(_MinMaxBase):
+    mapper_method = intern("map_min")
+
+class Max(_MinMaxBase):
+    mapper_method = intern("map_max")
 
 
 

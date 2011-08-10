@@ -24,6 +24,8 @@ class FlopCounter(CombineMapper):
     def map_quotient(self, expr, *args):
         return 1 + self.rec(expr.numerator) + self.rec(expr.denominator)
 
+    map_floor_div = map_quotient
+
     def map_power(self, expr, *args):
         return 1 + self.rec(expr.base) + self.rec(expr.exponent)
 

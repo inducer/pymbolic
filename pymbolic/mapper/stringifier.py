@@ -168,6 +168,12 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                 self.rec(expr.then, PREC_NONE),
                 self.rec(expr.else_, PREC_NONE))
 
+    def map_min(self, expr, enclosing_prec):
+        what = type(expr).__name__.lower()
+        return self.format("%s(%s)", what, self.join_rec(", ", expr.children, PREC_NONE))
+
+    map_max = map_min
+
 
 
 
