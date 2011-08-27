@@ -18,6 +18,8 @@ subscript = pymbolic.primitives.subscript
 flattened_product = pymbolic.primitives.flattened_product
 quotient = pymbolic.primitives.quotient
 linear_combination = pymbolic.primitives.linear_combination
+cse = pymbolic.primitives.make_common_subexpression
+make_sym_vector = pymbolic.primitives.make_sym_vector
 
 parse = pymbolic.parser.parse
 evaluate = pymbolic.mapper.evaluator.evaluate

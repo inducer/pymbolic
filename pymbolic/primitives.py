@@ -826,3 +826,53 @@ def is_zero(value):
 
 
 
+
+def make_common_subexpression(field, prefix=None):
+    try:
+        from pytools.obj_array import log_shape
+    except ImportError:
+        have_obj_array = False
+    else:
+        have_obj_array = True
+
+    if have_obj_array:
+        ls = log_shape(field)
+
+    if have_obj_array and ls != ():
+        from pytools import indices_in_shape
+        result = numpy.zeros(ls, dtype=object)
+
+        for i in indices_in_shape(ls):
+            if prefix is not None:
+                component_prefix = prefix+"_".join(str(i_i) for i_i in i)
+            else:
+                component_prefix = None
+
+            if is_constant(field[i]):
+                result[i] = field[i]
+            else:
+                result[i] = CommonSubexpression(field[i], component_prefix)
+
+        return result
+    else:
+        if is_constant(field):
+            return field
+        else:
+            return CommonSubexpression(field, prefix)
+
+
+
+
+def make_sym_vector(name, components):
+    """Return an object array of *components* subscripted
+    :class:`Field` instances.
+
+    :param components: The number of components in the vector.
+    """
+    if isinstance(components, int):
+        components = range(components)
+
+    from hedge.tools import join_fields
+    vfld = Variable(name)
+    return join_fields(*[vfld[i] for i in components])
+
