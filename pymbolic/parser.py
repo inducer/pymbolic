@@ -45,6 +45,7 @@ _PREC_TIMES = 20
 _PREC_POWER = 30
 _PREC_UNARY_MINUS = 40
 _PREC_CALL = 50
+_PREC_COMMA = 60
 
 def parse(expr_str):
     import pymbolic.primitives as primitives
@@ -136,10 +137,17 @@ def parse(expr_str):
                 pstate.advance()
                 left_exp **= parse_expression(pstate, _PREC_POWER)
                 did_something = True
+            elif next_tag is _comma and _PREC_COMMA > min_precedence:
+                pstate.advance()
+                new_el = parse_expression(pstate, _PREC_COMMA)
+                if isinstance(left_exp, tuple):
+                    left_exp = left_exp + (new_el,)
+                else:
+                    left_exp = (left_exp, new_el)
+                did_something = True
 
         return left_exp
 
-        
     pstate = pytools.lex.LexIterator(
         [(tag, s, idx) 
          for (tag, s, idx) in pytools.lex.lex(_LEX_TABLE, expr_str)
