@@ -139,6 +139,9 @@ def parse(expr_str):
                 did_something = True
             elif next_tag is _comma and _PREC_COMMA > min_precedence:
                 pstate.advance()
+                if pstate.is_at_end() or pstate.next_tag() is _closepar:
+                    return (left_exp,)
+
                 new_el = parse_expression(pstate, _PREC_COMMA)
                 if isinstance(left_exp, tuple):
                     left_exp = left_exp + (new_el,)
