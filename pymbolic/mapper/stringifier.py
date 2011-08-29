@@ -174,6 +174,9 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     map_max = map_min
 
+    def __call__(self, expr, prec=PREC_NONE):
+        return pymbolic.mapper.RecursiveMapper.__call__(self, expr, prec)
+
 
 
 
