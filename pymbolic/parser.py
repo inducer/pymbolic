@@ -63,13 +63,6 @@ def parse(expr_str):
         else:
             pstate.expected("terminal")
 
-    def parse_expr_list(pstate):
-        result = [parse_expression(pstate)]
-        while pstate.next_tag() is _comma:
-            pstate.advance()
-            result.append(parse_expression(pstate))
-        return result
-
     def parse_expression(pstate, min_precedence=0):
         pstate.expect_not_end()
 
@@ -99,8 +92,10 @@ def parse(expr_str):
                     pstate.advance()
                     left_exp = primitives.Call(left_exp, ())
                 else:
-                    left_exp = primitives.Call(left_exp, 
-                                             tuple(parse_expr_list(pstate)))
+                    args = parse_expression(pstate, _PREC_PLUS)
+                    if not isinstance(args, tuple):
+                        args = (args,)
+                    left_exp = primitives.Call(left_exp, args)
                     pstate.expect(_closepar)
                     pstate.advance()
                 did_something = True

@@ -115,5 +115,3 @@ def evaluate_kw(expression, **context):
 
 def evaluate_to_float(expression, context={}):
     return FloatEvaluationMapper(context)(expression)
-    
-    
