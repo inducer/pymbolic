@@ -40,12 +40,12 @@ _LEX_TABLE = [
     (_dot, pytools.lex.RE(".")),
     ]
 
+_PREC_COMMA = 5
 _PREC_PLUS = 10
 _PREC_TIMES = 20
 _PREC_POWER = 30
 _PREC_UNARY_MINUS = 40
 _PREC_CALL = 50
-_PREC_COMMA = 60
 
 def parse(expr_str):
     import pymbolic.primitives as primitives
@@ -92,7 +92,7 @@ def parse(expr_str):
                     pstate.advance()
                     left_exp = primitives.Call(left_exp, ())
                 else:
-                    args = parse_expression(pstate, _PREC_PLUS)
+                    args = parse_expression(pstate)
                     if not isinstance(args, tuple):
                         args = (args,)
                     left_exp = primitives.Call(left_exp, args)
@@ -133,6 +133,8 @@ def parse(expr_str):
                 left_exp **= parse_expression(pstate, _PREC_POWER)
                 did_something = True
             elif next_tag is _comma and _PREC_COMMA > min_precedence:
+                # The precedence makes the comma left-associative.
+
                 pstate.advance()
                 if pstate.is_at_end() or pstate.next_tag() is _closepar:
                     return (left_exp,)
