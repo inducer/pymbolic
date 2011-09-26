@@ -30,12 +30,9 @@ class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
 
 
 
-  
-def substitute(expression, variable_assignments={}, **kwargs):
-    import pymbolic.primitives as primitives
 
-    variable_assignments = variable_assignments.copy()
-    variable_assignments.update(kwargs)
+def make_subst_func(variable_assignments):
+    import pymbolic.primitives as primitives
 
     def subst_func(var):
         try:
@@ -49,4 +46,13 @@ def substitute(expression, variable_assignments={}, **kwargs):
             else:
                 return None
 
-    return SubstitutionMapper(subst_func)(expression)
+    return subst_func
+
+
+
+
+def substitute(expression, variable_assignments={}, **kwargs):
+    variable_assignments = variable_assignments.copy()
+    variable_assignments.update(kwargs)
+
+    return SubstitutionMapper(make_subst_func(variable_assignments))(expression)
