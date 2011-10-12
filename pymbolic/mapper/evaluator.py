@@ -94,6 +94,9 @@ class EvaluationMapper(RecursiveMapper):
     def map_max(self, expr):
         return min(self.rec(child) for child in expr.children)
 
+    def map_tuple(self, expr):
+        return tuple(self.rec(child) for child in expr)
+
 
 
 
