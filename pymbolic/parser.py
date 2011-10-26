@@ -107,7 +107,6 @@ def parse(expr_str):
                 pstate.advance()
                 did_something = True
             elif next_tag is _dot and _PREC_CALL > min_precedence:
-                1/0
                 pstate.advance()
                 pstate.expect(_identifier)
                 left_exp = primitives.Lookup(left_exp, pstate.next_str())
