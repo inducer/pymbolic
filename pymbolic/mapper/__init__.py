@@ -123,10 +123,8 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.numerator, *args),
             self.rec(expr.denominator, *args)))
 
-    def map_floor_div(self, expr, *args):
-        return self.combine((
-            self.rec(expr.numerator, *args),
-            self.rec(expr.denominator, *args)))
+    map_floor_div = map_quotient
+    map_remainder = map_quotient
 
     def map_power(self, expr, *args):
         return self.combine((
@@ -206,6 +204,7 @@ class IdentityMapperBase(object):
                               self.rec(expr.denominator, *args))
 
     map_floor_div = map_quotient
+    map_remainder = map_quotient
 
     def map_power(self, expr, *args):
         return expr.__class__(self.rec(expr.base, *args),
