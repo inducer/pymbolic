@@ -76,19 +76,7 @@ class Mapper(object):
 
 
 class RecursiveMapper(Mapper):
-    def rec(self, expr, *args, **kwargs):
-        try:
-            method = getattr(self, expr.mapper_method)
-        except AttributeError:
-            try:
-                method = expr.get_mapper_method(self)
-            except AttributeError:
-                if isinstance(expr, primitives.Expression):
-                    return self.handle_unsupported_expression(expr, *args, **kwargs)
-                else:
-                    return self.map_foreign(expr, *args, **kwargs)
-
-        return method(expr, *args)
+    rec = Mapper.__call__
 
 
 
