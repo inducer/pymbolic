@@ -67,12 +67,11 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         # Let's see how bad of an idea this is--sane people would only
         # apply this to integers, right?
 
-        from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_POWER
-        return self.parenthesize_if_needed(
-                self.format("%s/%s", 
-                    self.rec(expr.numerator, PREC_PRODUCT), 
-                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
-                enclosing_prec, PREC_PRODUCT)
+        from pymbolic.mapper.stringifier import (
+                PREC_PRODUCT, PREC_POWER)
+        return self.format("(%s/%s)",
+                    self.rec(expr.numerator, PREC_PRODUCT),
+                    self.rec(expr.denominator, PREC_POWER)) # analogous to ^{-1}
 
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
