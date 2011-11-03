@@ -73,21 +73,29 @@ def unify_many(unis1, uni2):
 
 class UnifierBase(RecursiveMapper):
     def __init__(self, lhs_mapping_candidates=None,
-            rhs_mapping_candidates=None):
+            rhs_mapping_candidates=None,
+            force_var_match=True):
         self.lhs_mapping_candidates = lhs_mapping_candidates
         self.rhs_mapping_candidates = rhs_mapping_candidates
+        self.force_var_match = force_var_match
 
     def unification_record_from_equation(self, lhs, rhs):
         if isinstance(lhs, (tuple, list)) or isinstance(rhs, (tuple, list)):
             # must match elementwise!
             return None
 
+        lhs_is_var = isinstance(lhs, Variable)
+        rhs_is_var = isinstance(rhs, Variable)
+
+        if self.force_var_match and not (lhs_is_var or rhs_is_var):
+            return None
+
         if (self.lhs_mapping_candidates is not None
-                and isinstance(lhs, Variable)
+                and lhs_is_var
                 and lhs.name not in self.lhs_mapping_candidates):
             return None
         if (self.rhs_mapping_candidates is not None
-                and isinstance(rhs, Variable)
+                and rhs_is_var
                 and rhs.name not in self.rhs_mapping_candidates):
             return None
 
@@ -122,61 +130,10 @@ class UnifierBase(RecursiveMapper):
     def map_lookup(self, expr, other, unis):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, unis)
-        if self.name != other.name:
+        if expr.name != other.name:
             return []
 
         return self.rec(expr.aggregate, other.aggregate, unis)
-
-    def map_negation(self, expr, other, unis):
-        if not isinstance(other, type(expr)):
-            return self.treat_mismatch(expr, other, unis)
-        return self.rec(expr.child, other.child, unis)
-
-
-    def map_quotient(self, expr, other, unis):
-        if not isinstance(other, type(expr)):
-            return self.treat_mismatch(expr, other, unis)
-
-        return self.rec(expr.numerator, other.numerator,
-                self.rec(expr.denominator, other.denominator, unis))
-
-    map_floor_div = map_quotient
-    map_remainder = map_quotient
-
-    def map_power(self, expr, other, unis):
-        if not isinstance(other, type(expr)):
-            return self.treat_mismatch(expr, other, unis)
-
-        return self.rec(expr.base, other.base,
-                self.rec(expr.exponent, other.exponent, unis))
-
-    def map_list(self, expr, other, unis):
-        if (not isinstance(other, type(expr))
-                or len(expr) != len(other)):
-            return []
-
-        for my_child, other_child in zip(expr, other):
-            unis = self.rec(my_child, other_child, unis)
-            if not unis:
-                break
-
-        return unis
-
-
-    map_tuple = map_list
-
-    def __call__(self, expr, other, unis=None):
-        if unis is None:
-            unis = [UnificationRecord([])]
-        return self.rec(expr, other, unis)
-
-
-
-
-class UnidirectionalUnifier(UnifierBase):
-    """Only assigns variables encountered in the first expression to
-    subexpression of the second.
-    """
 
     def map_sum(self, expr, other, unis):
         if (not isinstance(other, type(expr))
@@ -208,6 +165,55 @@ class UnidirectionalUnifier(UnifierBase):
 
     map_product = map_sum
 
+    def map_negation(self, expr, other, unis):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, unis)
+        return self.rec(expr.child, other.child, unis)
+
+    def map_quotient(self, expr, other, unis):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, unis)
+
+        return self.rec(expr.numerator, other.numerator,
+                self.rec(expr.denominator, other.denominator, unis))
+
+    map_floor_div = map_quotient
+    map_remainder = map_quotient
+
+    def map_power(self, expr, other, unis):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, unis)
+
+        return self.rec(expr.base, other.base,
+                self.rec(expr.exponent, other.exponent, unis))
+
+    def map_list(self, expr, other, unis):
+        if (not isinstance(other, type(expr))
+                or len(expr) != len(other)):
+            return []
+
+        for my_child, other_child in zip(expr, other):
+            unis = self.rec(my_child, other_child, unis)
+            if not unis:
+                break
+
+        return unis
+
+    map_tuple = map_list
+
+    def __call__(self, expr, other, unis=None):
+        if unis is None:
+            unis = [UnificationRecord([])]
+        return self.rec(expr, other, unis)
+
+
+
+
+class UnidirectionalUnifier(UnifierBase):
+    """Only assigns variables encountered in the first expression to
+    subexpression of the second.
+    """
+
     def treat_mismatch(self, expr, other, unis):
         return []
 
@@ -219,5 +225,3 @@ class BidirectionalUnifier(UnifierBase):
     """
 
     treat_mismatch = UnifierBase.map_variable
-    map_sum = UnifierBase.map_variable
-    map_product = UnifierBase.map_variable
