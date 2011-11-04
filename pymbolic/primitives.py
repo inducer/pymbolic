@@ -498,6 +498,11 @@ class Quotient(QuotientBase):
 
 
 class FloorDiv(QuotientBase):
+    def is_equal(self, other):
+        return isinstance(other, type(self)) \
+               and (self.numerator == other.numerator) \
+               and (self.denominator == other.denominator)
+
     mapper_method = intern("map_floor_div")
 
 
@@ -505,7 +510,6 @@ class FloorDiv(QuotientBase):
 
 class Remainder(QuotientBase):
     def is_equal(self, other):
-        from pymbolic.rational import Rational
         return self.__class__ == other.__class__ \
                and (self.numerator == other.numerator) \
                and (self.denominator == other.denominator)
