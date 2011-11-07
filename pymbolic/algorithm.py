@@ -27,6 +27,17 @@ def integer_power(x, n, one=1):
 def gcd(q, r):
     return extended_euclidean(q, r)[0]
 
+def gcd_many(*args):
+    if len(args) == 0:
+        return 1
+    elif len(args) == 1:
+        return args[0]
+    else:
+        return reduce(gcd, args)
+
+def lcm(q, r):
+    return abs(q*r)//gcd(q, r)
+
 
 
 

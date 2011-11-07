@@ -66,7 +66,10 @@ def parse(expr_str):
     def parse_expression(pstate, min_precedence=0):
         pstate.expect_not_end()
 
-        if pstate.is_next(_minus):
+        if pstate.is_next(_times):
+            pstate.advance()
+            left_exp = primitives.Wildcard()
+        elif pstate.is_next(_minus):
             pstate.advance()
             left_exp = -parse_expression(pstate, _PREC_UNARY_MINUS)
         elif pstate.is_next(_openpar):
