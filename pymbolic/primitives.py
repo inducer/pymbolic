@@ -259,6 +259,17 @@ class Variable(Leaf):
 
 
 
+class Wildcard(Leaf):
+    def is_equal(self, other):
+        return (other.__class__ == self.__class__
+                and self.name == other.name)
+
+    def get_hash(self):
+        return hash((self.__class__, self.name))
+
+    mapper_method = intern("map_wildcard")
+
+
 class FunctionSymbol(AlgebraicLeaf):
     """Represents the name of a function.
 
