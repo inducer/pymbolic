@@ -27,7 +27,7 @@ class Mapper(object):
                 "%s cannot handle expressions of type %s" % (
                     self.__class__, expr.__class__))
 
-    def __call__(self, expr, *args):
+    def __call__(self, expr, *args, **kwargs):
         try:
             method = getattr(self, expr.mapper_method)
         except AttributeError:
@@ -35,11 +35,11 @@ class Mapper(object):
                 method = expr.get_mapper_method(self)
             except AttributeError:
                 if isinstance(expr, primitives.Expression):
-                    return self.handle_unsupported_expression(expr, *args)
+                    return self.handle_unsupported_expression(expr, *args, **kwargs)
                 else:
-                    return self.map_foreign(expr, *args)
+                    return self.map_foreign(expr, *args, **kwargs)
 
-        return method(expr, *args)
+        return method(expr, *args, **kwargs)
 
     def map_variable(self, expr, *args):
         return self.map_algebraic_leaf(expr, *args)
