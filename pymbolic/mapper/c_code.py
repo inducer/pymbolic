@@ -27,6 +27,15 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         return self.copy(self.cse_name_list + cses_and_values)
 
     # mappings ----------------------------------------------------------------
+    def map_product(self, expr, enclosing_prec):
+        from pymbolic.mapper.stringifier import PREC_PRODUCT
+        return self.parenthesize_if_needed(
+                # Spaces prevent '**z' (times dereference z), which
+                # is hard to read.
+
+                self.join_rec(" * ", expr.children, PREC_PRODUCT),
+                enclosing_prec, PREC_PRODUCT)
+
     def map_constant(self, x, enclosing_prec):
         if isinstance(x, complex):
             return "std::complex<%s>(%s, %s)" % (
