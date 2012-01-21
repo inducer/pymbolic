@@ -3,11 +3,14 @@ import pymbolic.mapper
 
 
 
-PREC_CALL = 5
-PREC_POWER = 4
-PREC_UNARY = 3
-PREC_PRODUCT = 2
-PREC_SUM = 1
+PREC_CALL = 15
+PREC_POWER = 14
+PREC_UNARY = 13
+PREC_PRODUCT = 12
+PREC_SUM = 11
+PREC_COMPARISON = 10
+PREC_LOGICAL_AND = 9
+PREC_LOGICAL_OR = 8
 PREC_NONE = 0
 
 
@@ -92,17 +95,19 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     def map_quotient(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s/%s",
+                self.format("%s / %s",
+                    # space is necessary--otherwise '/*' becomes
+                    # start-of-comment in C.
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.format("%s//%s",
+                self.format("%s // %s",
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
-                enclosing_prec, PREC_SUM)
+                enclosing_prec, PREC_PRODUCT)
 
     def map_power(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
@@ -121,6 +126,29 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
         return self.rec(flattened_sum(
             [coeff*expr.base**exp for exp, coeff in expr.data[::-1]]),
             enclosing_prec)
+
+    def map_comparison(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.format("%s %s %s",
+                    self.rec(expr.left, PREC_COMPARISON),
+                    expr.operator,
+                    self.rec(expr.right, PREC_COMPARISON)),
+                enclosing_prec, PREC_COMPARISON)
+
+    def map_logical_not(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.rec(expr.child, PREC_UNARY),
+                enclosing_prec, PREC_UNARY)
+
+    def map_logical_and(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" && ", expr.children, PREC_LOGICAL_AND),
+                enclosing_prec, PREC_LOGICAL_AND)
+
+    def map_logical_or(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" || ", expr.children, PREC_LOGICAL_OR),
+                enclosing_prec, PREC_LOGICAL_OR)
 
     def map_list(self, expr, enclosing_prec):
         return self.format("[%s]", self.join_rec(", ", expr, PREC_NONE))

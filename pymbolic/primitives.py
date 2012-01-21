@@ -505,6 +505,7 @@ class ComparisonOperator(Expression):
         self.right = right
         if not operator in [">", ">=", "==", "<", "<="]:
             raise RuntimeError("invalid operator")
+        self.operator = operator
 
     def __getinitargs__(self):
         return self.left, self.operator, self.right
