@@ -17,7 +17,7 @@ _whitespace = intern("whitespace")
 _comma = intern("comma")
 _dot = intern("dot")
 
-_PREC_COMMA = 5 # must be > 0
+_PREC_COMMA = 5 # must be > 1 (1 is used by fortran-to-cl)
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
 _PREC_COMPARISON = 100
@@ -34,10 +34,10 @@ class Parser:
     lex_table = [
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
-                pytools.lex.RE(r"[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?"),
-                pytools.lex.RE(r"[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+"),
-                pytools.lex.RE(r"[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?"),
-                pytools.lex.RE(r"[0-9]*(\.[0-9]+)?[eEdD][+-]?[0-9]+"))),
+                pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?"),
+                pytools.lex.RE(r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+"),
+                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?"),
+                pytools.lex.RE(r"[+-]?[0-9]*(\.[0-9]+)?[eEdD][+-]?[0-9]+"))),
             (_int, pytools.lex.RE(r"[0-9]+")),
             (_plus, pytools.lex.RE(r"\+")),
             (_minus, pytools.lex.RE(r"-")),
