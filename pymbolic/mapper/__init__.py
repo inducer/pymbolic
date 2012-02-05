@@ -130,6 +130,18 @@ class CombineMapper(RecursiveMapper):
                     self.rec(coeff, *args) for exp, coeff in expr.data)
                 )
 
+    def map_logical_and(self, expr, *args):
+        return self.combine(self.rec(child, *args)
+                for child in expr.children)
+
+    map_logical_or = map_logical_and
+    map_logical_not = map_negation
+
+    def map_comparison(self, expr, *args):
+        return self.combine((
+            self.rec(expr.left, *args),
+            self.rec(expr.right, *args)))
+
     def map_list(self, expr, *args):
         return self.combine(self.rec(child, *args) for child in expr)
 
@@ -147,6 +159,11 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.then),
             self.rec(expr.else_)])
 
+    def map_if(self, expr):
+        return self.combine([
+            self.rec(expr.condition),
+            self.rec(expr.then),
+            self.rec(expr.else_)])
 
 # }}}
 
@@ -209,6 +226,23 @@ class IdentityMapperBase(object):
                               ((exp, self.rec(coeff, *args))
                                   for exp, coeff in expr.data))
 
+    def map_logical_and(self, expr, *args):
+        return type(expr)(tuple(
+            self.rec(child, *args) for child in expr.children))
+
+    map_logical_or = map_logical_and
+
+    def map_logical_not(self, expr, *args):
+        from pymbolic.primitives import LogicalNot
+        return LogicalNot(
+                self.rec(expr.child, *args))
+
+    def map_comparison(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.left, *args),
+                expr.operator,
+                self.rec(expr.right, *args))
+
     def map_list(self, expr, *args):
         return [self.rec(child, *args) for child in expr]
 
@@ -235,12 +269,16 @@ class IdentityMapperBase(object):
                 **expr.get_extra_properties())
 
     def map_if_positive(self, expr):
-        return expr.__class__(
+        return type(expr)(
                 self.rec(expr.criterion),
                 self.rec(expr.then),
-                self.rec(expr.else_),
-                )
+                self.rec(expr.else_))
 
+    def map_if(self, expr):
+        return type(expr)(
+                self.rec(expr.condition),
+                self.rec(expr.then),
+                self.rec(expr.else_))
 
 
 

@@ -17,6 +17,17 @@ _whitespace = intern("whitespace")
 _comma = intern("comma")
 _dot = intern("dot")
 
+_equal = intern("equal")
+_notequal = intern("notequal")
+_less = intern("less")
+_lessequal = intern("lessequal")
+_greater = intern("greater")
+_greaterequal = intern("greaterequal")
+
+_and = intern("and")
+_or = intern("or")
+_not = intern("not")
+
 _PREC_COMMA = 5 # must be > 1 (1 is used by fortran-to-cl)
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
@@ -32,6 +43,17 @@ _PREC_CALL = 150
 
 class Parser:
     lex_table = [
+            (_equal, pytools.lex.RE(r"==")),
+            (_notequal, pytools.lex.RE(r"!=")),
+            (_less, pytools.lex.RE(r"\<")),
+            (_lessequal, pytools.lex.RE(r"\<=")),
+            (_greater, pytools.lex.RE(r"\>")),
+            (_greaterequal, pytools.lex.RE(r"\>=")),
+
+            (_and, pytools.lex.RE(r"and")),
+            (_or, pytools.lex.RE(r"or")),
+            (_not, pytools.lex.RE(r"not")),
+
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
                 pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?"),
@@ -53,6 +75,15 @@ class Parser:
             (_comma, pytools.lex.RE(",")),
             (_dot, pytools.lex.RE(r"\.")),
             ]
+
+    _COMP_TABLE = {
+            _greater: ">",
+            _greaterequal: ">=",
+            _less: "<",
+            _lessequal: "<=",
+            _equal: "==",
+            _notequal: "!=",
+            }
 
     def parse_terminal(self, pstate):
         import pymbolic.primitives as primitives
@@ -83,6 +114,11 @@ class Parser:
         elif pstate.is_next(_minus):
             pstate.advance()
             left_exp = -self.parse_expression(pstate, _PREC_UNARY)
+        elif pstate.is_next(_not):
+            pstate.advance()
+            from pymbolic.primitives import LogicalNot
+            left_exp = LogicalNot(
+                    self.parse_expression(pstate, _PREC_UNARY))
         elif pstate.is_next(_openpar):
             pstate.advance()
             left_exp = self.parse_expression(pstate)
@@ -102,8 +138,9 @@ class Parser:
             if pstate.is_at_end():
                 return left_exp
 
-            left_exp, did_something = self.parse_postfix(
+            result = self.parse_postfix(
                     pstate, min_precedence, left_exp)
+            left_exp, did_something = result
 
         return left_exp
 
@@ -161,18 +198,41 @@ class Parser:
             pstate.advance()
             left_exp **= self.parse_expression(pstate, _PREC_POWER)
             did_something = True
+        elif next_tag is _and and _PREC_LOGICAL_AND > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import LogicalAnd
+            left_exp = LogicalAnd((
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_LOGICAL_AND)))
+            did_something = True
+        elif next_tag is _or and _PREC_LOGICAL_OR > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import LogicalOr
+            left_exp = LogicalOr((
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_LOGICAL_OR)))
+            did_something = True
+        elif next_tag in self._COMP_TABLE and _PREC_COMPARISON > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import ComparisonOperator
+            left_exp = ComparisonOperator(
+                    left_exp,
+                    self._COMP_TABLE[next_tag],
+                    self.parse_expression(pstate, _PREC_COMPARISON))
+            did_something = True
         elif next_tag is _comma and _PREC_COMMA > min_precedence:
             # The precedence makes the comma left-associative.
 
             pstate.advance()
             if pstate.is_at_end() or pstate.next_tag() is _closepar:
-                return (left_exp,)
-
-            new_el = self.parse_expression(pstate, _PREC_COMMA)
-            if isinstance(left_exp, tuple):
-                left_exp = left_exp + (new_el,)
+                left_exp = (left_exp,)
             else:
-                left_exp = (left_exp, new_el)
+                new_el = self.parse_expression(pstate, _PREC_COMMA)
+                if isinstance(left_exp, tuple):
+                    left_exp = left_exp + (new_el,)
+                else:
+                    left_exp = (left_exp, new_el)
+
             did_something = True
 
         return left_exp, did_something

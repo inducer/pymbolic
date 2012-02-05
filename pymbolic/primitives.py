@@ -503,7 +503,7 @@ class ComparisonOperator(Expression):
     def __init__(self, left, operator, right):
         self.left = left
         self.right = right
-        if not operator in [">", ">=", "==", "<", "<="]:
+        if not operator in [">", ">=", "==", "!=", "<", "<="]:
             raise RuntimeError("invalid operator")
         self.operator = operator
 
@@ -558,8 +558,26 @@ class LogicalAnd(BooleanExpression):
 
 
 
+class If(Expression):
+    def __init__(self, criterion, then, else_):
+        self.condition = criterion
+        self.then = then
+        self.else_ = else_
+
+    def __getinitargs__(self):
+        return self.condition, self.then, self.else_
+
+    mapper_method = intern("map_if")
+
+
+
+
 class IfPositive(Expression):
     def __init__(self, criterion, then, else_):
+        from warnings import warn
+        warn("IfPositive is deprecated, use If( ... >0)", DeprecationWarning,
+                stacklevel=2)
+
         self.criterion = criterion
         self.then = then
         self.else_ = else_
@@ -672,12 +690,12 @@ class CommonSubexpression(Expression):
 
     mapper_method = intern("map_common_subexpression")
 
+# }}}
 
 
 
 
-
-# intelligent makers ---------------------------------------------------------
+# intelligent factory functions ----------------------------------------------
 def make_variable(var_or_string):
     if not isinstance(var_or_string, Expression):
         return Variable(var_or_string)
