@@ -294,36 +294,54 @@ class NonrecursiveIdentityMapper(IdentityMapperBase, Mapper):
 
 class WalkMapper(RecursiveMapper):
     def map_constant(self, expr, *args):
-        pass
+        self.visit(expr)
 
     def map_variable(self, expr, *args):
-        pass
+        self.visit(expr)
 
     def map_function_symbol(self, expr, *args):
-        pass
+        self.visit(expr)
 
     def map_call(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.function, *args)
         for child in expr.parameters:
             self.rec(child, *args)
 
     def map_subscript(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.aggregate, *args)
         self.rec(expr.index, *args)
 
     def map_lookup(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.aggregate, *args)
 
     def map_negation(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.child, *args)
 
     def map_sum(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         for child in expr.children:
             self.rec(child, *args)
 
     map_product = map_sum
 
     def map_quotient(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.numerator, *args)
         self.rec(expr.denominator, *args)
 
@@ -331,32 +349,67 @@ class WalkMapper(RecursiveMapper):
     map_remainder = map_quotient
 
     def map_power(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.base, *args)
         self.rec(expr.exponent, *args)
 
     def map_polynomial(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.base, *args)
         for exp, coeff in expr.data:
             self.rec(coeff, *args)
 
     def map_list(self, expr, *args):
+        if not self.visit(expr):
+            return
+
         for child in expr:
             self.rec(child, *args)
 
     map_tuple = map_list
 
     def map_numpy_array(self, expr):
+        if not self.visit(expr):
+            return
+
         from pytools import indices_in_shape
         for i in indices_in_shape(expr.shape):
             self.rec(expr[i])
 
     def map_common_subexpression(self, expr, *args, **kwargs):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.child)
 
     def map_if_positive(self, expr):
+        if not self.visit(expr):
+            return
+
         self.rec(expr.criterion)
         self.rec(expr.then)
         self.rec(expr.else_)
+
+    def map_substitution(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.child)
+        for v in expr.values:
+            self.rec(v)
+
+    def map_derivative(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.child)
+
+    def visit(self, expr):
+        return True
 
 # }}}
 
