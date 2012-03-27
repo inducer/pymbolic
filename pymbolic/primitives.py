@@ -690,10 +690,37 @@ class CommonSubexpression(Expression):
 
     mapper_method = intern("map_common_subexpression")
 
+
+
+class Substitution(Expression):
+    """Work-alike of sympy's Subs."""
+
+    def __init__(self, child, variables, values):
+        self.child = child
+        self.variables = variables
+        self.values = values
+
+    def __getinitargs__(self):
+        return (self.child, self.variables, self.values)
+
+    mapper_method = intern("map_substitution")
+
+
+
+
+class Derivative(Expression):
+    """Work-alike of sympy's Derivative."""
+
+    def __init__(self, child, variables):
+        self.child = child
+        self.variables = variables
+
+    def __getinitargs__(self):
+        return (self.child, self.variables)
+
+    mapper_method = intern("map_derivative")
+
 # }}}
-
-
-
 
 # intelligent factory functions ----------------------------------------------
 def make_variable(var_or_string):

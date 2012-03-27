@@ -268,17 +268,28 @@ class IdentityMapperBase(object):
                 expr.prefix,
                 **expr.get_extra_properties())
 
-    def map_if_positive(self, expr):
+    def map_substitution(self, expr, *args):
         return type(expr)(
-                self.rec(expr.criterion),
-                self.rec(expr.then),
-                self.rec(expr.else_))
+                self.rec(expr.child, *args),
+                expr.variables,
+                tuple(self.rec(v, *args) for v in expr.values))
 
-    def map_if(self, expr):
+    def map_derivative(self, expr, *args):
         return type(expr)(
-                self.rec(expr.condition),
-                self.rec(expr.then),
-                self.rec(expr.else_))
+                self.rec(expr.child, *args),
+                expr.variables)
+
+    def map_if_positive(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.criterion, *args),
+                self.rec(expr.then, *args),
+                self.rec(expr.else_, *args))
+
+    def map_if(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.condition, *args),
+                self.rec(expr.then, *args),
+                self.rec(expr.else_, *args))
 
 
 

@@ -200,6 +200,21 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
     map_max = map_min
 
+    def map_derivative(self, expr, enclosing_prec):
+        derivs = " ".join(
+                "d/d%s" % v
+                for v in expr.variables)
+
+        return "%s %s" % (
+                derivs, self.rec(expr.child, PREC_PRODUCT))
+
+    def map_substitution(self, expr, enclosing_prec):
+        substs = ", ".join(
+                "%s=%s" % (name, self.rec(val, PREC_NONE))
+                for name, val in zip(expr.variables, expr.values))
+
+        return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE), substs)
+
     def __call__(self, expr, prec=PREC_NONE):
         return pymbolic.mapper.RecursiveMapper.__call__(self, expr, prec)
 
