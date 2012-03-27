@@ -868,6 +868,26 @@ def is_zero(value):
 
 
 
+def wrap_in_cse(expr, prefix=None):
+    if isinstance(expr, Variable):
+        return expr
+
+    if isinstance(expr, CommonSubexpression):
+        if prefix is None:
+            return expr
+        if expr.prefix is None:
+            return CommonSubexpression(expr.child, prefix)
+
+        # existing prefix wins
+        return expr
+
+    else:
+        return CommonSubexpression(expr, prefix)
+
+
+
+
+
 def make_common_subexpression(field, prefix=None):
     try:
         from pytools.obj_array import log_shape

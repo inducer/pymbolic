@@ -53,8 +53,6 @@ class ToPymbolicMapper(_SympyMapper):
 
         if prim.is_zero(denom-1):
             return num
-        if isinstance(num, int) and isinstance(denom, int):
-            return int(num) / int(denom)
         return prim.Quotient(num, denom)
 
     def map_Pow(self, expr):
