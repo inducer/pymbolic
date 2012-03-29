@@ -69,7 +69,10 @@ class CSEMapper(IdentityMapper):
 
     def map_common_subexpression(self, expr):
         # don't duplicate CSEs
-        return prim.wrap_in_cse(self.rec(expr.child), expr.prefix)
+        if type(expr) is prim.CommonSubexpression:
+            return prim.wrap_in_cse(self.rec(expr.child), expr.prefix)
+        else:
+            return IdentityMapper.map_common_subexpression(self, expr)
 
     def map_substitution(self, expr):
         return type(expr)(
