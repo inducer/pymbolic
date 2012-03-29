@@ -186,7 +186,14 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
                 return "array(\n%s)" % "".join(lines)
 
     def map_common_subexpression(self, expr, enclosing_prec):
-        return self.format("CSE(%s)", self.rec(expr.child, PREC_NONE))
+        from pymbolic.primitives import CommonSubexpression
+        if type(expr) is CommonSubexpression:
+            type_name = "CSE"
+        else:
+            type_name = type(expr).__name__
+
+        return self.format("%s(%s)",
+                type_name, self.rec(expr.child, PREC_NONE))
 
     def map_if_positive(self, expr, enclosing_prec):
         return "If(%s > 0, %s, %s)" % (

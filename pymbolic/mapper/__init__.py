@@ -263,7 +263,7 @@ class IdentityMapperBase(object):
         if is_zero(result):
             return 0
 
-        return expr.__class__(
+        return type(expr)(
                 result,
                 expr.prefix,
                 **expr.get_extra_properties())
