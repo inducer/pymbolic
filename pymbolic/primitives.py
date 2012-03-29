@@ -686,6 +686,13 @@ class CommonSubexpression(Expression):
         return (self.child, self.prefix)
 
     def get_extra_properties(self):
+        """Return a dictionary of extra kwargs to be passed to the
+        constructor from the identity mapper.
+
+        This allows derived classes to exist without having to
+        extend every mapper that processes them.
+        """
+
         return {}
 
     mapper_method = intern("map_common_subexpression")
@@ -875,7 +882,7 @@ def wrap_in_cse(expr, prefix=None):
     if isinstance(expr, CommonSubexpression):
         if prefix is None:
             return expr
-        if expr.prefix is None:
+        if expr.prefix is None and type(expr) is CommonSubexpression:
             return CommonSubexpression(expr.child, prefix)
 
         # existing prefix wins
