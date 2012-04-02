@@ -876,7 +876,7 @@ def is_zero(value):
 
 
 def wrap_in_cse(expr, prefix=None):
-    if isinstance(expr, Variable):
+    if isinstance(expr, (Variable, Subscript)):
         return expr
 
     if isinstance(expr, CommonSubexpression):
