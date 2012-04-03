@@ -26,7 +26,11 @@ class NormalizedKeyGetter(object):
     def __call__(self, expr):
         expr = self.remove_cses(expr)
         if isinstance(expr, COMMUTATIVE_CLASSES):
-            return type(expr), frozenset(expr.children)
+            kid_count = {}
+            for child in expr.children:
+                kid_count[child] = kid_count.get(child, 0) + 1
+
+            return type(expr), frozenset(kid_count.iteritems())
         else:
             return expr
 
