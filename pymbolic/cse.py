@@ -70,7 +70,7 @@ class UseCountMapper(WalkMapper):
 
 
 
-class CSEMapper(IdentityMapper, CSECachingMapperMixin):
+class CSEMapper(IdentityMapper):
     def __init__(self, to_eliminate, get_key):
         self.to_eliminate = to_eliminate
         self.get_key = get_key
@@ -104,7 +104,7 @@ class CSEMapper(IdentityMapper, CSECachingMapperMixin):
     map_floor_div = map_sum
     map_call = map_sum
 
-    def map_common_subexpression_uncached(self, expr):
+    def map_common_subexpression(self, expr):
         # Avoid creating CSE(CSE(...))
         #
         # NOTE: This is not equivalent to isinstance--it's more specific,
