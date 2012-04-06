@@ -1,30 +1,14 @@
 from __future__ import division
 import pymbolic.primitives as prim
-from pymbolic.mapper import IdentityMapper, WalkMapper, CSECachingMapperMixin
-from pytools import memoize_method
+from pymbolic.mapper import IdentityMapper, WalkMapper
 
 COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
 
 
 
 
-class CSERemover(IdentityMapper):
-    def map_common_subexpression(self, expr):
-        return self.rec(expr.child)
-
-
-
-
 class NormalizedKeyGetter(object):
-    def __init__(self):
-        self.cse_remover = CSERemover()
-
-    @memoize_method
-    def remove_cses(self, expr):
-        return self.cse_remover(expr)
-
     def __call__(self, expr):
-        expr = self.remove_cses(expr)
         if isinstance(expr, COMMUTATIVE_CLASSES):
             kid_count = {}
             for child in expr.children:
