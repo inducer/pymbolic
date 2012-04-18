@@ -7,7 +7,7 @@ distribute_setup.use_setuptools()
 from setuptools import setup
 
 setup(name="pymbolic",
-      version="2010.1",
+      version="2012.1",
       description="A package for symbolic computation",
       long_description="""
       Pymbolic is a small symbolic manipulation library. Two things set it apart
@@ -22,7 +22,7 @@ setup(name="pymbolic",
       sparse polynomials, fractions, term substitution, expansion. It automatically
       performs constant folding, and it can compile its expressions into Python 
       bytecode for fast(er) execution.
-      
+
       If you are looking for a full-blown Computer Algebra System, look at 
       `sympy <http://pypi.python.org/pypi/sympy>`_ or 
       `PyGinac <http://pyginac.sourceforge.net/>`_. If you are looking for a
