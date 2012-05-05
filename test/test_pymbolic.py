@@ -69,7 +69,6 @@ def test_fft():
     vars = numpy.array([var(chr(97+i)) for i in range(16)], dtype=object)
     print vars
 
-    nzk = NearZeroKiller()
     print fft(vars)
     traced_fft = sym_fft(vars)
 
@@ -93,7 +92,6 @@ def test_sparse_multiply():
     numpy = py.test.importorskip("numpy")
     py.test.importorskip("scipy")
     import scipy.sparse as ss
-    import scipy.sparse.linalg as sla
 
     la = numpy.linalg
 
@@ -128,3 +126,23 @@ def test_no_comparison():
     expect_typeerror(lambda: x <= y)
     expect_typeerror(lambda: x > y)
     expect_typeerror(lambda: x >= y)
+
+
+
+
+def test_parser():
+    from pymbolic import parse
+    parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
+            "-hankel_1(1,sqrt(a[1]**2+a[0]**2)*k))*k /(4*sqrt(a[1]**2+a[0]**2)) "
+            "+hankel_1(0,sqrt(a[1]**2+a[0]**2)*k)")
+
+
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        exec(sys.argv[1])
+    else:
+        from py.test.cmdline import main
+        main([__file__])

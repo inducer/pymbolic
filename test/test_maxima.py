@@ -50,7 +50,6 @@ def test_strict_round_trip(knl):
             print result
         assert round_trips_correctly
 
-
 def test_lax_round_trip(knl):
     from pymbolic.maxima import MaximaParser
     k_setup = [
@@ -63,6 +62,11 @@ def test_lax_round_trip(knl):
     assert knl.clean_eval_expr_with_setup(
             k_setup + [("result2", parsed)],
             "ratsimp(result-result2)") == 0
+
+def test_diff():
+    from pymbolic.maxima import diff
+    from pymbolic import parse
+    diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
 
 if __name__ == "__main__":
