@@ -139,6 +139,20 @@ class MaximaParser(ParserBase):
             pstate.advance()
             left_exp **= self.parse_expression(pstate, p._PREC_POWER)
             did_something = True
+        elif next_tag is p._comma and p._PREC_COMMA > min_precedence:
+            # The precedence makes the comma left-associative.
+
+            pstate.advance()
+            if pstate.is_at_end() or pstate.next_tag() is p._closepar:
+                left_exp = (left_exp,)
+            else:
+                new_el = self.parse_expression(pstate, p._PREC_COMMA)
+                if isinstance(left_exp, tuple):
+                    left_exp = left_exp + (new_el,)
+                else:
+                    left_exp = (left_exp, new_el)
+
+            did_something = True
 
         return left_exp, did_something
 
