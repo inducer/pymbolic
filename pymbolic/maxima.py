@@ -163,6 +163,36 @@ class MaximaParser(ParserBase):
 
 # {{{ pexpect-based driver
 
+_DEBUG = False
+
+def set_debug(level):
+    global _DEBUG
+    _DEBUG = level
+
+    if _kernel_instance is not None:
+        if level & 8:
+            import sys
+            _kernel_instance.child.logfile = sys.stdout
+        else:
+            _kernel_instance.child.logfile = None
+
+def _strify_assignments_and_expr(assignments, expr):
+    strify = MaximaStringifyMapper()
+
+    if isinstance(expr, str):
+        expr_str = expr
+    else:
+        expr_str = strify(expr)
+
+    def make_setup(assignment):
+        if isinstance(assignment, str):
+            return assignment
+        else:
+            name, value = assignment
+            return"%s: %s" % (name, strify(value))
+
+    return tuple(make_setup(assignment) for assignment in assignments), expr_str
+
 class MaximaKernel:
     def __init__(self, executable="maxima", timeout=30):
         self.executable = executable
@@ -176,13 +206,12 @@ class MaximaKernel:
         self.child = pexpect.spawn(self.executable,
                 ["--disable-readline", "-q"],
                 timeout=self.timeout)
-        #import sys
-        #self.child.logfile = sys.stdout
         self.current_prompt = 0
         self._expect_prompt(IN_PROMPT_RE)
 
         self.exec_str("display2d:false")
         self.exec_str("keepfloat:true")
+        self.exec_str("linel:16384")
 
     def _expect_prompt(self, prompt_re):
         if prompt_re is IN_PROMPT_RE:
@@ -224,11 +253,18 @@ class MaximaKernel:
     # {{{ string interface
 
     def exec_str(self, s):
+        cmd = s+";"
+        if _DEBUG & 1:
+            print "[MAXIMA INPUT]", cmd
+
         self.child.sendline(s+";")
         self._expect_prompt(IN_PROMPT_RE)
 
     def eval_str(self, s):
         cmd = s+";"
+        if _DEBUG & 1:
+            print "[MAXIMA INPUT]", cmd
+
         self.child.sendline(cmd)
         s_echo = self.child.readline()
         assert s_echo.strip() == cmd.strip()
@@ -237,6 +273,9 @@ class MaximaKernel:
         self._expect_prompt(IN_PROMPT_RE)
 
         result, _ = MULTI_WHITESPACE.subn(" ", self.child.before)
+
+        if _DEBUG & 1:
+            print "[MAXIMA RESPONSE]", result
         return result
 
     def reset(self):
@@ -257,30 +296,58 @@ class MaximaKernel:
     def eval_expr(self, expr):
         input_str = MaximaStringifyMapper()(expr)
         result_str = self.eval_str(input_str)
-        return MaximaParser()(result_str)
+        parsed = MaximaParser()(result_str)
+        if _DEBUG & 2:
+            print "[MAXIMA PARSED]", parsed
+        return parsed
 
     def clean_eval_expr_with_setup(self, assignments, expr):
-        strify = MaximaStringifyMapper()
-
-        if isinstance(expr, str):
-            input_str = expr
-        else:
-            input_str = strify(expr)
-
-        def make_setup(assignment):
-            if isinstance(assignment, str):
-                return assignment
-            else:
-                name, value = assignment
-                return"%s: %s" % (name, strify(value))
-
         result_str = self.clean_eval_str_with_setup(
-                [make_setup(assignment) for assignment in assignments],
-                input_str)
-        return MaximaParser()(result_str)
+                *_strify_assignments_and_expr(assignments, expr))
+
+        parsed = MaximaParser()(result_str)
+        if _DEBUG & 2:
+            print "[MAXIMA PARSED  ]", parsed
+        return parsed
 
     # }}}
 
 # }}}
+
+
+
+
+
+
+
+# {{{ global kernel instance
+
+_kernel_instance = None
+
+@pytools.memoize
+def _cached_eval_expr_with_setup(assignments, expr):
+    global _kernel_instance
+    if _kernel_instance is None:
+        _kernel_instance = MaximaKernel()
+
+    return _kernel_instance.clean_eval_expr_with_setup(assignments, expr)
+
+def eval_expr_with_setup(assignments, expr):
+    assignments, expr = _strify_assignments_and_expr(assignments, expr)
+    return _cached_eval_expr_with_setup(assignments, expr)
+
+# }}}
+
+# {{{ "classic" CAS functionality
+
+def diff(expr, var, count=1, assignments=()):
+    from pymbolic import var as sym
+    return eval_expr_with_setup(assignments, sym("diff")(expr, var, count))
+
+# }}}
+
+
+
+
 
 # vim: fdm=marker
