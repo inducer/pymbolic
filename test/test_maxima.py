@@ -68,6 +68,10 @@ def test_diff():
     from pymbolic import parse
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
+def test_long_command(knl):
+    from pymbolic.maxima import set_debug
+    set_debug(4)
+    knl.eval_str("+".join(["1"]*16384))
 
 if __name__ == "__main__":
     import sys

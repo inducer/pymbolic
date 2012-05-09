@@ -169,13 +169,6 @@ def set_debug(level):
     global _DEBUG
     _DEBUG = level
 
-    if _kernel_instance is not None:
-        if level & 8:
-            import sys
-            _kernel_instance.child.logfile = sys.stdout
-        else:
-            _kernel_instance.child.logfile = None
-
 def _strify_assignments_and_expr(assignments, expr):
     strify = MaximaStringifyMapper()
 
@@ -187,9 +180,11 @@ def _strify_assignments_and_expr(assignments, expr):
     def make_setup(assignment):
         if isinstance(assignment, str):
             return assignment
-        else:
+        if isinstance(assignment, tuple):
             name, value = assignment
             return"%s: %s" % (name, strify(value))
+        else:
+            return strify(assignment)
 
     return tuple(make_setup(assignment) for assignment in assignments), expr_str
 
@@ -245,28 +240,45 @@ class MaximaKernel:
         self._initialize()
 
     def shutdown(self):
-        self.child.sendline("quit();")
+        self._sendline("quit();")
         self.child.wait()
 
     # }}}
 
     # {{{ string interface
 
+    def _check_debug(self):
+        if _DEBUG & 4:
+            import sys
+            self.child.logfile = sys.stdout
+
+    def _sendline(self, l):
+        self._check_debug()
+
+        if len(l) > 2048:
+            raise RuntimeError("input lines longer than 2048 characters "
+                    "don't work, refusing")
+
+        self.child.sendline(l)
+
     def exec_str(self, s):
         cmd = s+";"
         if _DEBUG & 1:
             print "[MAXIMA INPUT]", cmd
 
-        self.child.sendline(s+";")
+        self._sendline(s+";")
         self._expect_prompt(IN_PROMPT_RE)
 
     def eval_str(self, s):
+        self._check_debug()
+
         cmd = s+";"
         if _DEBUG & 1:
             print "[MAXIMA INPUT]", cmd
 
-        self.child.sendline(cmd)
+        self._sendline(cmd)
         s_echo = self.child.readline()
+
         assert s_echo.strip() == cmd.strip()
 
         self._expect_prompt(OUT_PROMPT_RE)
@@ -342,6 +354,8 @@ def eval_expr_with_setup(assignments, expr):
 
 def diff(expr, var, count=1, assignments=()):
     from pymbolic import var as sym
+    if isinstance(var, str):
+        var = sym(var)
     return eval_expr_with_setup(assignments, sym("diff")(expr, var, count))
 
 # }}}
