@@ -135,6 +135,9 @@ def test_parser():
     parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
             "-hankel_1(1,sqrt(a[1]**2+a[0]**2)*k))*k /(4*sqrt(a[1]**2+a[0]**2)) "
             "+hankel_1(0,sqrt(a[1]**2+a[0]**2)*k)")
+    print repr(parse("d4knl0"))
+    print repr(parse("0."))
+    print repr(parse("0.e1"))
 
 
 
