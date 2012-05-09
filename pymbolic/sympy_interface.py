@@ -1,5 +1,6 @@
 from __future__ import division
 import pymbolic.primitives as prim
+from pymbolic.mapper.evaluator import EvaluationMapper
 import sympy as sp
 
 
@@ -99,3 +100,29 @@ class SympyToPymbolicMapper(_SympyMapper):
                     *tuple(self.rec(arg) for arg in expr.args))
         else:
             return _SympyMapper.not_supported(self, expr)
+
+
+
+
+class PymbolicToSympyMapper(EvaluationMapper):
+    def map_variable(self, expr):
+        return sp.Symbol(expr.name)
+
+    def map_call(self, expr):
+        if isinstance(expr.function, prim.Variable):
+            func_name = expr.function.name
+            try:
+                func = getattr(sp.functions, func_name)
+            except AttributeError:
+                func = sp.Function(func_name)
+            return func(*[self.rec(par) for par in expr.parameters])
+        else:
+            raise RuntimeError("do not know how to translate '%s' to sympy"
+                    % expr)
+
+    def map_subscript(self, expr):
+        if isinstance(expr.aggregate, prim.Variable) and isinstance(expr.index, int):
+            return sp.Symbol("%s_%d" % (expr.aggregate.name, expr.index))
+        else:
+            raise RuntimeError("do not know how to translate '%s' to sympy"
+                    % expr)
