@@ -45,10 +45,12 @@ class Parser:
     lex_table = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
-            (_less, pytools.lex.RE(r"\<")),
+
             (_lessequal, pytools.lex.RE(r"\<=")),
-            (_greater, pytools.lex.RE(r"\>")),
             (_greaterequal, pytools.lex.RE(r"\>=")),
+            # must be before
+            (_less, pytools.lex.RE(r"\<")),
+            (_greater, pytools.lex.RE(r"\>")),
 
             (_and, pytools.lex.RE(r"and")),
             (_or, pytools.lex.RE(r"or")),
