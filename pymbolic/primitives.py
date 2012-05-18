@@ -940,7 +940,7 @@ def make_sym_vector(name, components):
     if isinstance(components, int):
         components = range(components)
 
-    from hedge.tools import join_fields
+    from pytools.obj_array import join_fields
     vfld = Variable(name)
     return join_fields(*[vfld[i] for i in components])
 
