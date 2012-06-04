@@ -195,6 +195,12 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
         return self.format("%s(%s)",
                 type_name, self.rec(expr.child, PREC_NONE))
 
+    def map_if(self, expr, enclosing_prec):
+        return "If(%s, %s, %s)" % (
+                self.rec(expr.condition, PREC_NONE),
+                self.rec(expr.then, PREC_NONE),
+                self.rec(expr.else_, PREC_NONE))
+
     def map_if_positive(self, expr, enclosing_prec):
         return "If(%s > 0, %s, %s)" % (
                 self.rec(expr.criterion, PREC_NONE),
