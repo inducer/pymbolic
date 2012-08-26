@@ -142,6 +142,18 @@ def test_parser():
     print repr(parse("a >= 1"))
     print repr(parse("a <= 1"))
 
+    print repr(parse(":"))
+    print repr(parse("1:"))
+    print repr(parse(":2"))
+    print repr(parse("1:2"))
+    print repr(parse("::"))
+    print repr(parse("1::"))
+    print repr(parse(":1:"))
+    print repr(parse("::1"))
+    print repr(parse("3::1"))
+    print repr(parse(":5:1"))
+    print repr(parse("3:5:1"))
+
 
 
 

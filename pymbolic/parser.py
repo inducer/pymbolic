@@ -16,6 +16,7 @@ _identifier = intern("identifier")
 _whitespace = intern("whitespace")
 _comma = intern("comma")
 _dot = intern("dot")
+_colon = intern("colon")
 
 _equal = intern("equal")
 _notequal = intern("notequal")
@@ -29,6 +30,7 @@ _or = intern("or")
 _not = intern("not")
 
 _PREC_COMMA = 5 # must be > 1 (1 is used by fortran-to-cl)
+_PREC_SLICE = 10
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
 _PREC_COMPARISON = 100
@@ -40,6 +42,13 @@ _PREC_CALL = 150
 
 
 
+
+def _join_to_slice(left, right):
+    from pymbolic.primitives import Slice
+    if isinstance(right, Slice):
+        return Slice((left,) + right.children)
+    else:
+        return Slice((left, right))
 
 class Parser:
     lex_table = [
@@ -76,6 +85,7 @@ class Parser:
             (_whitespace, pytools.lex.RE("[ \n\t]*")),
             (_comma, pytools.lex.RE(",")),
             (_dot, pytools.lex.RE(r"\.")),
+            (_colon, pytools.lex.RE(r"\:")),
             ]
 
     _COMP_TABLE = {
@@ -107,7 +117,20 @@ class Parser:
         import pymbolic.primitives as primitives
         pstate.expect_not_end()
 
-        if pstate.is_next(_times):
+        if pstate.is_next(_colon):
+            pstate.advance()
+
+            expr_pstate = pstate.copy()
+            from pytools.lex import ParseError
+            try:
+                next_expr = self.parse_expression(expr_pstate, _PREC_SLICE)
+            except ParseError:
+                # no expression follows, too bad.
+                left_exp = primitives.Slice((None,))
+            else:
+                left_exp = _join_to_slice(None, next_expr)
+                pstate.assign(expr_pstate)
+        elif pstate.is_next(_times):
             pstate.advance()
             left_exp = primitives.Wildcard()
         elif pstate.is_next(_plus):
@@ -222,6 +245,22 @@ class Parser:
                     self._COMP_TABLE[next_tag],
                     self.parse_expression(pstate, _PREC_COMPARISON))
             did_something = True
+        elif next_tag is _colon and _PREC_SLICE >= min_precedence:
+            pstate.advance()
+            expr_pstate = pstate.copy()
+
+            assert not isinstance(left_exp, primitives.Slice)
+
+            from pytools.lex import ParseError
+            try:
+                next_expr = self.parse_expression(expr_pstate, _PREC_SLICE)
+            except ParseError:
+                # no expression follows, too bad.
+                left_exp = primitives.Slice((left_exp, None,))
+            else:
+                left_exp = _join_to_slice(left_exp, next_expr)
+                pstate.assign(expr_pstate)
+
         elif next_tag is _comma and _PREC_COMMA > min_precedence:
             # The precedence makes the comma left-associative.
 

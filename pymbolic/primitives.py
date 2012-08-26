@@ -727,6 +727,50 @@ class Derivative(Expression):
 
     mapper_method = intern("map_derivative")
 
+
+
+
+class Slice(Expression):
+    """A slice expression as in a[1:7]."""
+
+    def __init__(self, children):
+        assert isinstance(children, tuple)
+        self.children = children
+
+        if len(children) > 3:
+            raise ValueError("slice with more than three arguments")
+
+    def __getinitargs__(self):
+        return (self.children,)
+
+    def __nonzero__(self):
+        return True
+
+    @property
+    def start(self):
+        if len(self.children) > 1:
+            return self.children[0]
+        else:
+            return None
+
+    @property
+    def stop(self):
+        if len(self.children) == 1:
+            return self.children[0]
+        elif len(self.children) > 1:
+            return self.children[1]
+        else:
+            return None
+
+    @property
+    def step(self):
+        if len(self.children) == 3:
+            return self.children[2]
+        else:
+            return None
+
+    mapper_method = intern("map_slice")
+
 # }}}
 
 # intelligent factory functions ----------------------------------------------
