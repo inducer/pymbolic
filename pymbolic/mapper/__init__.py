@@ -407,6 +407,30 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.child)
 
+    def map_comparison(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.left)
+        self.rec(expr.right)
+
+    def map_logical_not(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.child)
+
+    map_logical_and = map_sum
+    map_logical_or = map_sum
+
+    def map_if(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.condition)
+        self.rec(expr.then)
+        self.rec(expr.else_)
+
     def map_if_positive(self, expr):
         if not self.visit(expr):
             return
