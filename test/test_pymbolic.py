@@ -154,6 +154,8 @@ def test_parser():
     print repr(parse(":5:1"))
     print repr(parse("3:5:1"))
 
+    print parse("3::1")
+
 
 
 

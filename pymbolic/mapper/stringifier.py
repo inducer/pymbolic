@@ -228,6 +228,19 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
         return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE), substs)
 
+    def map_slice(self, expr, enclosing_prec):
+        children = []
+        for child in expr.children:
+            if child is None:
+                children.append("")
+            else:
+                children.append(self.rec(child, PREC_NONE))
+
+        return self.parenthesize_if_needed(
+                self.join(":", children),
+                enclosing_prec, PREC_NONE)
+
+
     def __call__(self, expr, prec=PREC_NONE):
         return pymbolic.mapper.RecursiveMapper.__call__(self, expr, prec)
 
