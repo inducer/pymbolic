@@ -1,4 +1,5 @@
 from __future__ import division
+import pymbolic.primitives as prim
 
 
 
@@ -155,6 +156,9 @@ def test_parser():
     print repr(parse("3:5:1"))
 
     print parse("3::1")
+
+    assert parse("e1") == prim.Variable("e1")
+    assert parse("d1") == prim.Variable("d1")
 
 
 
