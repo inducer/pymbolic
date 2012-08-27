@@ -70,7 +70,7 @@ class Parser:
                 pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?"),
                 pytools.lex.RE(r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+\b"),
                 pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?"),
-                pytools.lex.RE(r"[+-]?[0-9]*(\.[0-9]+)?[eEdD][+-]?[0-9]+\b"))),
+                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+\b"))),
             (_int, pytools.lex.RE(r"[0-9]+")),
             (_plus, pytools.lex.RE(r"\+")),
             (_minus, pytools.lex.RE(r"-")),
