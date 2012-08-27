@@ -279,6 +279,16 @@ class IdentityMapperBase(object):
                 self.rec(expr.child, *args),
                 expr.variables)
 
+    def map_slice(self, expr, *args):
+        def do_map(expr):
+            if expr is None:
+                return expr
+            else:
+                return self.rec(ch, *args)
+
+        return type(expr)(
+                tuple(do_map(ch) for ch in expr.children))
+
     def map_if_positive(self, expr, *args):
         return type(expr)(
                 self.rec(expr.criterion, *args),

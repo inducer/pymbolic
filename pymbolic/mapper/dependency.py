@@ -67,3 +67,8 @@ class DependencyMapper(CSECachingMapperMixin, CombineMapper):
             return set([expr])
         else:
             return CombineMapper.map_common_subexpression(self, expr)
+
+    def map_slice(self, expr):
+        return self.combine(
+                [self.rec(child) for child in expr.children
+                    if child is not None])
