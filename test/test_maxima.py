@@ -1,6 +1,9 @@
-from pymbolic.maxima import MaximaKernel, MaximaError
+import pytest
 
 def test_kernel():
+    pytest.importorskip("pexpect")
+
+    from pymbolic.maxima import MaximaKernel
     knl = MaximaKernel()
     knl.exec_str("k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))")
     knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
@@ -8,16 +11,22 @@ def test_kernel():
     knl.shutdown()
 
 def pytest_funcarg__knl(request):
+    pytest.importorskip("pexpect")
+
+    from pymbolic.maxima import MaximaKernel
     knl = MaximaKernel()
     request.addfinalizer(knl.shutdown)
     return knl
 
 def test_setup(knl):
+    pytest.importorskip("pexpect")
+
     knl.clean_eval_str_with_setup(
             ["k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))"],
             "sum(diff(k, t,deg)*t^deg,deg,0,6)")
 
 def test_error(knl):
+    from pymbolic.maxima import MaximaError
     try:
         knl.eval_str("))(!")
     except MaximaError:
@@ -64,6 +73,8 @@ def test_lax_round_trip(knl):
             "ratsimp(result-result2)") == 0
 
 def test_diff():
+    pytest.importorskip("pexpect")
+
     from pymbolic.maxima import diff
     from pymbolic import parse
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
