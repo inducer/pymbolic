@@ -97,7 +97,7 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
         return self.parenthesize_if_needed(
                 self.format("%s / %s",
                     # space is necessary--otherwise '/*' becomes
-                    # start-of-comment in C.
+                    # start-of-comment in C. ('*' from dereference)
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
