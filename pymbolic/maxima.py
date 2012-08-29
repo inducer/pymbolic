@@ -1,7 +1,6 @@
 # Inspired by similar code in Sage at:
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
-import pexpect
 import re
 import pytools
 
@@ -198,6 +197,8 @@ class MaximaKernel:
     # {{{ internal
 
     def _initialize(self):
+
+        import pexpect
         self.child = pexpect.spawn(self.executable,
                 ["--disable-readline", "-q"],
                 timeout=self.timeout)
