@@ -46,6 +46,9 @@ class EvaluationMapper(RecursiveMapper):
     def map_floor_div(self, expr):
         return self.rec(expr.numerator) // self.rec(expr.denominator)
 
+    def map_remainder(self, expr):
+        return self.rec(expr.numerator) % self.rec(expr.denominator)
+
     def map_power(self, expr):
         return self.rec(expr.base) ** self.rec(expr.exponent)
 
