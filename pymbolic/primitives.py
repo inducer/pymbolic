@@ -790,15 +790,27 @@ def subscript(expression, index):
 
 
 def flattened_sum(components):
-    it = components.__iter__()
-    try:
-        result = it.next()
-    except StopIteration:
-        return 0
+    # flatten any potential sub-sums
+    queue = list(components)
+    done = []
 
-    for i in it:
-        result = result + i
-    return result
+    while queue:
+        item = queue.pop(0)
+
+        if is_zero(item):
+            continue
+
+        if isinstance(item, Sum):
+            queue += item.children
+        else:
+            done.append(item)
+
+    if len(done) == 0:
+        return 0
+    elif len(done) == 1:
+        return done[0]
+    else:
+        return Sum(tuple(done))
 
 
 

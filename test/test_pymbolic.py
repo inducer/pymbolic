@@ -163,6 +163,17 @@ def test_parser():
 
 
 
+def test_structure_preservation():
+    x = prim.Sum((5, 7))
+    from pymbolic.mapper import IdentityMapper
+    x2 = IdentityMapper()(x)
+    assert x == x2
+
+
+
+
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
