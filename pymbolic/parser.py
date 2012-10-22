@@ -67,10 +67,14 @@ class Parser:
 
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
-                pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?"),
-                pytools.lex.RE(r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+\b"),
-                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?"),
-                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+\b"))),
+                # has a letter tag
+                pytools.lex.RE(r"[+-]?[0-9]+([a-zA-Z]+)"),
+                # has digits before the dot (after optional)
+                pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
+                pytools.lex.RE(r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"),
+                # has digits after the dot (before optional)
+                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
+                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"))),
             (_int, pytools.lex.RE(r"[0-9]+")),
             (_plus, pytools.lex.RE(r"\+")),
             (_minus, pytools.lex.RE(r"-")),
@@ -97,6 +101,9 @@ class Parser:
             _notequal: "!=",
             }
 
+    def parse_float(self, s):
+        return float(s.replace("d", "e").replace("D", "e"))
+
     def parse_terminal(self, pstate):
         import pymbolic.primitives as primitives
 
@@ -104,8 +111,7 @@ class Parser:
         if next_tag is _int:
             return int(pstate.next_str_and_advance())
         elif next_tag is _float:
-            return float(pstate.next_str_and_advance()
-                    .replace("d", "e").replace("D", "e"))
+            return self.parse_float(pstate.next_str_and_advance())
         elif next_tag is _imaginary:
             return complex(pstate.next_str_and_advance())
         elif next_tag is _identifier:
