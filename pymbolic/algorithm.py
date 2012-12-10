@@ -92,7 +92,7 @@ def find_factors(N):
 def fft(x, sign=1, wrap_intermediate=lambda x: x):
     """Computes the Fourier transform of x:
 
-    F[x]_i = \sum_{j=0}^{n-1} z^{ij} x_j
+    F[x]_k = \sum_{j=0}^{n-1} z^{kj} x_j
 
     where z = exp(sign*-2j*pi/n) and n = len(x).
     """
