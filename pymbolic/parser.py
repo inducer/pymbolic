@@ -50,6 +50,14 @@ def _join_to_slice(left, right):
     else:
         return Slice((left, right))
 
+
+
+
+class FinalizedTuple(tuple):
+    """A tuple that may not have elements appended to it, because it was
+    terminated by a close-paren.
+    """
+
 class Parser:
     lex_table = [
             (_equal, pytools.lex.RE(r"==")),
@@ -155,6 +163,8 @@ class Parser:
             left_exp = self.parse_expression(pstate)
             pstate.expect(_closepar)
             pstate.advance()
+            if isinstance(left_exp, tuple):
+                left_exp = FinalizedTuple(left_exp)
         else:
             left_exp = self.parse_terminal(pstate)
 
@@ -172,6 +182,9 @@ class Parser:
             result = self.parse_postfix(
                     pstate, min_precedence, left_exp)
             left_exp, did_something = result
+
+        if isinstance(left_exp, FinalizedTuple):
+            return tuple(left_exp)
 
         return left_exp
 
@@ -275,7 +288,7 @@ class Parser:
                 left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
-                if isinstance(left_exp, tuple):
+                if isinstance(left_exp, tuple) and not isinstance(left_exp, FinalizedTuple):
                     left_exp = left_exp + (new_el,)
                 else:
                     left_exp = (left_exp, new_el)

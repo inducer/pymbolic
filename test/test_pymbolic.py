@@ -160,6 +160,12 @@ def test_parser():
     assert parse("e1") == prim.Variable("e1")
     assert parse("d1") == prim.Variable("d1")
 
+    from pymbolic import variables
+    f, x, y, z = variables("f x y z")
+    assert parse("f((x,y),z)") == f((x,y),z)
+    assert parse("f((x,),z)") == f((x,),z)
+    assert parse("f(x,(y,z),z)") == f(x,(y,z),z)
+
 
 
 
