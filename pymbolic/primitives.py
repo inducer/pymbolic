@@ -880,7 +880,7 @@ def quotient(numerator, denominator):
 
 
 
-# tool functions --------------------------------------------------------------
+# {{{ tool functions --------------------------------------------------------------
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
@@ -999,6 +999,14 @@ def make_sym_vector(name, components):
     from pytools.obj_array import join_fields
     vfld = Variable(name)
     return join_fields(*[vfld[i] for i in components])
+
+
+
+
+def variables(s):
+    return [Variable(s_i) for s_i in s.split() if s_i]
+
+# }}}
 
 
 

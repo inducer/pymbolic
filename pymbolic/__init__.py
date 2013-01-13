@@ -13,6 +13,7 @@ import pymbolic.primitives
 from pymbolic.polynomial import Polynomial
 
 var = pymbolic.primitives.Variable
+variables = pymbolic.primitives.variables
 flattened_sum = pymbolic.primitives.flattened_sum
 subscript = pymbolic.primitives.subscript
 flattened_product = pymbolic.primitives.flattened_product
