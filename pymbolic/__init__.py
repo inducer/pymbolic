@@ -43,7 +43,7 @@ def grad(expression, variables):
 
 def jacobian(expression_list, variables):
     return [grad(expr, variables) for expr in expression_list]
-    
+
 def laplace(expression, variables):
     return sum(differentiate(differentiate(expression,var), var) for var in variables)
 
@@ -52,7 +52,7 @@ def laplace(expression, variables):
 
 class VectorFunction:
     def __init__(self, function_list, variables=[]):
-        self.FunctionList = [pymbolic.compile(expr, variables=variables) 
+        self.FunctionList = [pymbolic.compile(expr, variables=variables)
                              for expr in function_list]
 
     def __call__(self, x):
