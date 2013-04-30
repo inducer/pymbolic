@@ -56,9 +56,6 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
     map_subscript = map_variable
 
-    def map_negation(self, expr):
-        return -self.rec(expr.child)
-
     def map_sum(self, expr):
         return pymbolic.flattened_sum(self.rec(child) for child in expr.children)
 

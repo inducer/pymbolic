@@ -101,9 +101,6 @@ class CombineMapper(RecursiveMapper):
     def map_lookup(self, expr, *args):
         return self.rec(expr.aggregate, *args)
 
-    def map_negation(self, expr, *args):
-        return self.rec(expr.child, *args)
-
     def map_sum(self, expr, *args):
         return self.combine(self.rec(child, *args)
                 for child in expr.children)
@@ -135,7 +132,9 @@ class CombineMapper(RecursiveMapper):
                 for child in expr.children)
 
     map_logical_or = map_logical_and
-    map_logical_not = map_negation
+
+    def map_logical_not(self, expr, *args):
+        return self.rec(expr.child, *args)
 
     def map_comparison(self, expr, *args):
         return self.combine((
@@ -196,9 +195,6 @@ class IdentityMapperBase(object):
         return expr.__class__(
                 self.rec(expr.aggregate, *args),
                 expr.name)
-
-    def map_negation(self, expr, *args):
-        return expr.__class__(self.rec(expr.child, *args))
 
     def map_sum(self, expr, *args):
         from pymbolic.primitives import flattened_sum
@@ -344,12 +340,6 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.aggregate, *args)
 
-    def map_negation(self, expr, *args):
-        if not self.visit(expr):
-            return
-
-        self.rec(expr.child, *args)
-
     def map_sum(self, expr, *args):
         if not self.visit(expr):
             return
@@ -474,7 +464,6 @@ class CallbackMapper(RecursiveMapper):
     map_call = map_constant
     map_subscript = map_constant
     map_lookup = map_constant
-    map_negation = map_constant
     map_sum = map_constant
     map_product = map_constant
     map_quotient = map_constant

@@ -187,11 +187,6 @@ class UnifierBase(RecursiveMapper):
 
     map_product = map_sum
 
-    def map_negation(self, expr, other, urecs):
-        if not isinstance(other, type(expr)):
-            return self.treat_mismatch(expr, other, urecs)
-        return self.rec(expr.child, other.child, urecs)
-
     def map_quotient(self, expr, other, urecs):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
