@@ -1,4 +1,27 @@
 from __future__ import division
+
+__copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
+
+__license__ = """
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+
 import pymbolic
 from pymbolic.primitives import Expression
 import pymbolic.algorithm as algorithm
@@ -10,7 +33,7 @@ from pymbolic.traits import traits, EuclideanRingTraits, FieldTraits
 def _sort_uniq(data):
     def sortkey((exp, coeff)): return exp
     data.sort(key=sortkey)
-    
+
     uniq_result = []
     i = 0
     last_exp = None
@@ -60,7 +83,7 @@ class Polynomial(Expression):
             self.Data = ((1, unit),)
         else:
             self.Data = tuple(data)
-        
+
         # Remember the Zen, Luke: Sparse is better than dense.
 
     def coefficients(self):
@@ -124,7 +147,7 @@ class Polynomial(Expression):
             exp_self = self.Data[iself][0]
             result.append((exp_self, self.Data[iself][1]))
             iself += 1
-                
+
         while iother < len(other.Data):
             exp_other = other.Data[iother][0]
             result.append((exp_other, other.Data[iother][1]))
@@ -158,7 +181,7 @@ class Polynomial(Expression):
             else:
                 return other.__mul__(self)
 
-        result = [] 
+        result = []
         for s_exp, s_coeff in self.Data:
             for o_exp, o_coeff in other.Data:
                 result.append((s_exp+o_exp, s_coeff*o_coeff))
@@ -199,7 +222,7 @@ class Polynomial(Expression):
         other_lead_coeff = other.Data[-1][1]
         other_lead_exp = other.Data[-1][0]
 
-        
+
         coeffs_are_field = isinstance(traits(self.Unit), FieldTraits)
         from pymbolic.primitives import quotient
         while rem.degree >= other.degree:
@@ -253,7 +276,7 @@ class Polynomial(Expression):
 
     def __getinitargs__(self):
         return (self.Base, self.Data, self.Unit, self.VarLess)
-        
+
     mapper_method = intern("map_polynomial")
 
     def as_primitives(self):
@@ -321,7 +344,7 @@ def leading_coefficient(poly):
 
 
 def general_polynomial(base, coefflist, degree):
-    return Polynomial(base, 
+    return Polynomial(base,
             ((i, coefflist[i]) for i in range(degree+1)))
 
 
@@ -331,7 +354,7 @@ class PolynomialTraits(EuclideanRingTraits):
     @staticmethod
     def norm(x):
         return x.degree
-    
+
     @staticmethod
     def get_unit(x):
         lc = leading_coefficient(x)
@@ -339,7 +362,7 @@ class PolynomialTraits(EuclideanRingTraits):
 
 
 
-   
+
 if __name__ == "__main__":
     x = Polynomial(pymbolic.var("x"))
     y = Polynomial(pymbolic.var("y"))
@@ -357,7 +380,7 @@ if __name__ == "__main__":
         #v = 3*x+1
         q, r = divmod(u, v)
         print q, "R", r
-        print q*v 
+        print q*v
         print "REASSEMBLY:", q*v + r
 
 
