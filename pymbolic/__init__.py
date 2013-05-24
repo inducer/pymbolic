@@ -79,6 +79,8 @@ products:
     ...     def map_sum(self, expr):
     ...         return pmbl.primitives.Product(expr.children)
     ...
+    >>> print u
+    (x + 1)**5
     >>> print MyMapper()(u)
     (x*1)**5
 
@@ -99,6 +101,8 @@ You can also easily define your own objects to use inside an expression:
     ...
     ...     mapper_method = "map_fancy_operator"
     ...
+    >>> u
+    Power(Sum(Variable('x'), 1), 5)
     >>> 17*FancyOperator(u)
     Product(17, FancyOperator(Power(Sum(Variable('x'), 1), 5)))
 

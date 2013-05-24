@@ -29,6 +29,8 @@ import numpy as np
 
 
 __doc__ = """
+See `Wikipedia <https://en.wikipedia.org/wiki/Geometric_algebra>`_ for an idea
+of what this is.
 
 .. versionadded:: 2013.2
 """
