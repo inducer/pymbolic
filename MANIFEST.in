@@ -1,3 +1,14 @@
 include LITERATURE
 include TODO
 include distribute_setup.py
+
+include README.rst
+
+include doc/*.rst
+include doc/Makefile
+include doc/*.py
+include doc/conf.py
+include doc/_static/*.css
+include doc/_templates/*.html
+
+include test/*.py

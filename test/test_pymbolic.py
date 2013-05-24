@@ -201,8 +201,11 @@ def test_structure_preservation():
 
 
 @pytest.mark.parametrize("dims", [2,3,4,5])
+# START_GA_TEST
 def test_geometric_algebra(dims):
-    np = pytest.importorskip("numpy")
+    pytest.importorskip("numpy")
+
+    import numpy as np
     from pymbolic.geometric_algebra import MultiVector as MV
 
     vec1 = MV(np.random.randn(dims))
@@ -242,8 +245,8 @@ def test_geometric_algebra(dims):
                 a*(b*c))
         assert ((a^b)^c).close_to(
                 a^(b^c))
-        assert ((a*b)*c).close_to(
-                a*(b*c))
+        #assert ((a|b)|c).close_to(
+                #a|(b|c))
 
         # scalar product
         assert ( (c*b).project(0) ) .close_to( b.scalar_product(c) )
@@ -277,7 +280,7 @@ def test_geometric_algebra(dims):
         assert (b^c).rev() .close_to( (c.rev() ^ b.rev()) )
 
         # dual properties
-        # (2.26) in [HS]
+        # (1.2.26) in [HS]
         assert c.dual() .close_to( c|c.I.rev() )
         assert c.dual() .close_to( c*c.I.rev() )
 
@@ -287,10 +290,11 @@ def test_geometric_algebra(dims):
 
         # commutator properties
 
-        # Jacobi identity (1.56c) in [HS]
+        # Jacobi identity (1.1.56c) in [HS]
         assert ( a.x(b.x(c)) + b.x(c.x(a)) + c.x(a.x(b)) ).close_to(0)
         # (1.57) in [HS]
         assert a.x(b*c) .close_to( a.x(b)*c + b*a.x(c))
+# END_GA_TEST
 
 
 

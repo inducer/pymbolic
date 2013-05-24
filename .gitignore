@@ -9,3 +9,4 @@ MANIFEST
 dist
 setuptools*egg
 setuptools.pth
+_build

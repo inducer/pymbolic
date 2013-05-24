@@ -29,11 +29,15 @@ from pytools import memoize
 
 
 def integer_power(x, n, one=1):
-    # http://c2.com/cgi/wiki?IntegerPowerAlgorithm
+    """Compute :math:`x^n` using only multiplications.
+
+    See also the `C2 wiki <http://c2.com/cgi/wiki?IntegerPowerAlgorithm>`_.
+    """
+
     assert isinstance(n, int)
 
     if n < 0:
-        raise RuntimeError, "the integer power algorithm does not work for negative numbers"
+        raise RuntimeError("the integer power algorithm does not work for negative numbers")
 
     aux = one
 
@@ -65,8 +69,10 @@ def lcm(q, r):
 
 
 def extended_euclidean(q, r):
-    """Return a tuple (p, a, b) such that p = aq + br,
-    where p is the greatest common divisor.
+    """Return a tuple *(p, a, b)* such that :math:`p = aq + br`,
+    where *p* is the greatest common divisor of *q* and *r*.
+
+    See also `Wikipedia <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
     """
     import pymbolic.traits as traits
 
@@ -113,14 +119,18 @@ def find_factors(N):
 
 
 def fft(x, sign=1, wrap_intermediate=lambda x: x):
-    """Computes the Fourier transform of x:
+    r"""Computes the Fourier transform of x:
 
-    F[x]_k = \sum_{j=0}^{n-1} z^{kj} x_j
+    .. math::
 
-    where z = exp(sign*-2j*pi/n) and n = len(x).
+        F[x]_k = \sum_{j=0}^{n-1} z^{kj} x_j
+
+    where :math:`z = \exp(-2i\pi\operatorname{sign}/n)` and ``n == len(x)``.
+    Works for all positive *n*.
+
+    See also `Wikipedia <http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm>`_.
     """
 
-    # http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm
     # revision 293076305, http://is.gd/1c7PI
 
     from math import pi
@@ -157,10 +167,11 @@ def ifft(x, wrap_intermediate=lambda x:x):
 
 
 def sym_fft(x, sign=1):
-    """Perform an FFT on the numpy object array x.
+    """Perform a (symbolic) FFT on the :mod:`numpy` object array x.
 
     Remove near-zero floating point constants, insert
-    CommonSubexpression wrappers at opportune points.
+    :class:`pymbolic.primitives.CommonSubexpression` 
+    wrappers at opportune points.
     """
 
     from pymbolic.mapper import IdentityMapper, CSECachingMapperMixin
@@ -204,7 +215,7 @@ def sym_fft(x, sign=1):
 
 
 def csr_matrix_multiply(S, x):
-    """Multiplies a scipy.sparse.csr_matrix S by an object-array vector x.
+    """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
     h, w = S.shape
 

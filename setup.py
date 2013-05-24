@@ -6,29 +6,19 @@ distribute_setup.use_setuptools()
 
 from setuptools import setup
 
+ver_dic = {}
+version_file = open("pymbolic/version.py")
+try:
+    version_file_contents = version_file.read()
+finally:
+    version_file.close()
+
+exec(compile(version_file_contents, "pyopencl/version.py", 'exec'), ver_dic)
+
 setup(name="pymbolic",
-      version="2013.2",
+      version=ver_dic["VERSION_TEXT"],
       description="A package for symbolic computation",
-      long_description="""
-      Pymbolic is a small symbolic manipulation library. Two things set it apart
-      from other libraries of its kind:
-
-      * Users can easily write their own symbolic operations, simply by deriving
-        from the builtin visitor classes.
-      * Users can easily add their own symbolic entities to do calculations
-        with.
-
-      Pymbolic currently understands regular arithmetic expressions, derivatives,
-      sparse polynomials, fractions, term substitution, expansion. It automatically
-      performs constant folding, and it can compile its expressions into Python 
-      bytecode for fast(er) execution.
-
-      If you are looking for a full-blown Computer Algebra System, look at 
-      `sympy <http://pypi.python.org/pypi/sympy>`_ or 
-      `PyGinac <http://pyginac.sourceforge.net/>`_. If you are looking for a
-      basic, small and extensible set of symbolic operations, pymbolic may
-      well be for you.
-      """,
+      long_description=open("README.rst").read(),
       classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

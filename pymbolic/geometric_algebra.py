@@ -28,6 +28,13 @@ import numpy as np
 
 
 
+__doc__ = """
+
+.. versionadded:: 2013.2
+"""
+
+
+
 
 # {{{ helpers
 
@@ -158,13 +165,22 @@ class Space(object):
     @property
     @memoize_method
     def is_euclidean(self):
-        return (self.metric_matrix == np.eye(self.mmat.shape[0])).all()
+        return (self.metric_matrix == np.eye(self.metric_matrix.shape[0])).all()
 
     def blade_bits_to_str(self, bits):
         return "^".join( 
                     name
                     for bit_num, name in enumerate(self.basis_names)
                     if bits & (1 << bit_num))
+
+    def __repr__(self):
+        if self is get_euclidean_space(self.dimensions):
+            return "Space(%d)" % self.dimensions
+        elif self.is_euclidean:
+            return "Space(%r)" % self.basis_names
+        else:
+            return "Space(%r, %r)" % (self.basis_names, self.metric_matrix)
+
 
 @memoize
 def get_euclidean_space(n):
@@ -278,17 +294,29 @@ class _ScalarProduct(_GAProduct):
 # {{{ multivector
 
 class MultiVector(object):
-    """An immutable multivector type. Implementation follows [DFM].
+    r"""An immutable multivector type. Its implementation follows [DFM].
+    It is pickleable, and not picky about what data is used as coefficients.
+    It supports :class:`pymbolic.primitives.Expression` objects of course,
+    but it can take just about any other scalar-ish coefficients.
 
     .. attribute:: data
 
-        A mapping from a basis vector bitmap indicating blades to coefficients.
-        (see [DFM], Chapter 19 for the idea and rationale)
+        A mapping from a basis vector bitmap (indicating blades) to coefficients.
+        (see [DFM], Chapter 19 for idea and rationale)
 
-    The object behaves much like :class:`sympy.galgebra.GA.MV`, especially
-    with respect to the supported operators.
+    .. attribute:: space
 
-    .. _ops_table:
+    See the following literature:
+
+        [DFM] L. Dorst, D. Fontijne, and S. Mann, `Geometric Algebra for Computer
+        Science: An Object-Oriented Approach to Geometry <https://books.google.com?isbn=0080553109>`_. Morgan Kaufmann, 2010.
+
+        [HS] D. Hestenes and G. Sobczyk, `Clifford Algebra to Geometric Calculus: A
+        Unified Language for Mathematics and Physics <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
+
+    The object behaves much like the corresponding
+    :class:`sympy.galgebra.GA.MV` object in :mod:`sympy`, especially with
+    respect to the supported operators:
 
     .. csv-table::
         :header: Operation, Result
@@ -296,13 +324,11 @@ class MultiVector(object):
 
         ``A+B``,             Sum of multivectors
         ``A-B``,             Difference of multivectors
-        ``A*B``,             Geometric product
-        ``A^B``,             Outer product of multivectors
-        ``A|B``,             Inner product of multivectors
-        `A<<B``,             Left contraction of multivectors
-        `A>>B``,             Right contraction of multivectors
-
-        Table :ref:`1 <ops_table>`. :class:`Multi operations
+        ``A*B``,             Geometric product :math:`AB`
+        ``A^B``,             Outer product :math:`A\wedge B` of multivectors
+        ``A|B``,             Inner product :math:`A\cdot B` of multivectors
+        ``A<<B``,            Left contraction of multivectors
+        ``A>>B``,            Right contraction of multivectors
 
     .. warning ::
 
@@ -312,12 +338,6 @@ class MultiVector(object):
         and then geometric.
 
         In other words: Use parentheses everywhere.
-
-    [DFM] L. Dorst, D. Fontijne, and S. Mann, Geometric Algebra for Computer
-    Science: An Object-Oriented Approach to Geometry. Morgan Kaufmann, 2010.
-
-    [HS] D. Hestenes and G. Sobczyk, Clifford Algebra to Geometric Calculus: A
-    Unified Language for Mathematics and Physics. Springer, 1987.
     """
 
     # {{{ construction
@@ -325,16 +345,17 @@ class MultiVector(object):
     def __init__(self, data, space=None):
         """
         :arg data: This may be one of the following:
-            1) a :class:`numpy.ndarray`, which will be turned into a grade-1 multivector,
-            2) a mapping from tuples of basis indices (together indicating a blade,
-            order matters and will be mapped to 'normalized' blades) to coefficients,
-            3) an array as described in :attr:`data`,
-            4) a scalar--where everything that doesn't fall into the above cases
-               is viewed as a scalar.
+
+            * a :class:`numpy.ndarray`, which will be turned into a grade-1 multivector,
+            * a mapping from tuples of basis indices (together indicating a blade,
+              order matters and will be mapped to 'normalized' blades) to coefficients,
+            * an array as described in :attr:`data`,
+            * a scalar--where everything that doesn't fall into the above cases
+              is viewed as a scalar.
         :arg space: A :class:`Space` instance. If *None* or an integer,
             :func:`get_euclidean_space` is called to obtain a default space with
             the right number of dimensions for *data*. Note: dimension guessing only
-            works when :class:`numpy.ndarrays` are being passed for *data*.
+            works when a :class:`numpy.ndarray` is being passed for *data*.
         """
 
         dimensions = None
@@ -411,6 +432,9 @@ class MultiVector(object):
                 terms.append("%s*%s" % (coeff_str, blade_str))
 
         return " + ".join(terms)
+
+    def __repr__(self):
+        return "MultiVector(%s, %r)" % (self.data, self.space)
 
     # }}}
 
@@ -534,17 +558,32 @@ class MultiVector(object):
                 ._generic_product(self, _RightContractionProduct)
 
     def scalar_product(self, other):
+        r"""Return the scalar product, as a scalar, not a :class:`MultiVector`.
+
+        Often written :math:`A*B`.
+        """
+
         if not isinstance(other, MultiVector):
             other = MultiVector(other, self.space)
 
         return self._generic_product(other, _ScalarProduct).as_scalar()
 
     def x(self, other):
-        """Return the commutator product.
+        r"""Return the commutator product.
 
-        See (1.55) in [HS].
+        See (1.1.55) in [HS].
+
+        Often written :math:`A\times B`.
         """
         return (self*other - other*self)/2
+
+    def __pow__(self, other):
+        """Return *self* to the integer power *other*."""
+
+        other = int(other)
+
+        from pymbolic.algorithm import integer_power
+        return integer_power(self, other, one=MultiVector({0:1}, self.space))
 
     def __truediv__(self, other):
         """Return ``self*(1/other)``.
@@ -561,10 +600,16 @@ class MultiVector(object):
 
         return other * self.inv()
 
+    __div__ = __truediv__
+
     # }}}
+
+    # {{{ unary operations
 
     def inv(self):
         """Return the *multiplicative inverse* of the blade *self*.
+
+        Often written :math:`A^{-1}`.
         """
 
         nsqr = self.norm_squared()
@@ -581,7 +626,7 @@ class MultiVector(object):
 
         (bits, coeff), = self.data.iteritems()
 
-        # (1.54) in [HS]
+        # (1.1.54) in [HS]
         grade = bit_count(bits)
         if grade*(grade-1)//2 % 2:
             coeff = -coeff
@@ -591,8 +636,10 @@ class MultiVector(object):
         return MultiVector({bits: coeff}, self.space)
 
     def rev(self):
-        """Return the *reverse* of *self*, i.e. the multivector obtained by reversing
+        r"""Return the *reverse* of *self*, i.e. the multivector obtained by reversing
         the order of all component blades.
+
+        Often written :math:`A^\dagger`.
         """
         new_data = {}
         for bits, coeff in self.data.iteritems():
@@ -605,8 +652,10 @@ class MultiVector(object):
         return MultiVector(new_data, self.space)
 
     def invol(self):
-        """Return the grade involution (see Section 2.9.5 of [DFM]), i.e.
+        r"""Return the grade involution (see Section 2.9.5 of [DFM]), i.e.
         all odd-grade blades have their signs flipped.
+
+        Often written :math:`\widehat A`.
         """
         new_data = {}
         for bits, coeff in self.data.iteritems():
@@ -619,7 +668,10 @@ class MultiVector(object):
         return MultiVector(new_data, self.space)
 
     def dual(self):
-        """Return the dual of *self*, see (2.26) in [HS]."""
+        r"""Return the dual of *self*, see (1.2.26) in [HS].
+
+        Often written :math:`\widetilde A`.
+        """
 
         return self | self.I.rev()
 
@@ -631,7 +683,11 @@ class MultiVector(object):
 
     @property
     def I(self):
+        """Return the pseudoscalar associated with this object's :class:`Space`.
+        """
         return MultiVector({2**self.space.dimensions-1: 1}, self.space)
+
+    # }}}
 
     # {{{ comparisons
 
@@ -648,7 +704,9 @@ class MultiVector(object):
         return not self.__eq__(other)
 
     def zap_near_zeros(self, tol=None):
-        # FIXME: Should use norm (or something) of self for tol.
+        """Remove blades whose coefficient is close to zero
+        relative to the norm of *self*.
+        """
 
         if tol is None:
             tol = 1e-13
@@ -668,6 +726,9 @@ class MultiVector(object):
     # {{{ grade manipulation
 
     def gen_blades(self, grade=None):
+        """Generate all blades in *self*, optionally only those of a specific *grade*.
+        """
+
         if grade is None:
             for bits, coeff in self.data.iteritems():
                 yield MultiVector({bits: coeff}, self.space)
@@ -676,13 +737,22 @@ class MultiVector(object):
                 if bit_count(bits) == grade:
                     yield MultiVector({bits: coeff}, self.space)
 
-    def project(self, grade):
+    def project(self, r):
+        r"""Return a new multivector containing only the blades of grade *r*.
+
+        Often written :math:`\langle A\rangle_r`.
+        """
         new_data = {}
         for bits, coeff in self.data.iteritems():
-            if bit_count(bits) == grade:
+            if bit_count(bits) == r:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
+
+    def all_grades(self):
+        """Return a :class:`set` of grades occurring in *self*."""
+
+        return set(bit_count(bits) for bits, coeff in self.data.iteritems())
 
     def get_pure_grade(self):
         """If *self* only has components of a single grade, return
@@ -731,8 +801,18 @@ class MultiVector(object):
 
         return result
 
-    def as_vector(self):
-        result = [0] * self.space.dimensions
+    def as_vector(self, dtype=None):
+        """Return a :mod:`numpy` vector corresponding to the grade-1
+        :class:`MultiVector` *self*.
+
+        If *self* is not grade-1, :exc:`ValueError` is raised.
+        """
+
+        if dtype is not None:
+            result = np.zeros(self.space.dimensions, dtype=dtype)
+        else:
+            result = [0] * self.space.dimensions
+
         log_table = dict((2**i, i) for i in xrange(self.space.dimensions))
         try:
             for bits, coeff in self.data.iteritems():
@@ -740,7 +820,10 @@ class MultiVector(object):
         except KeyError:
             raise ValueError("multivector is not a purely grade-1")
 
-        return np.array(result)
+        if dtype is not None:
+            return result
+        else:
+            return np.array(result)
 
     # }}}
 

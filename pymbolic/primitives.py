@@ -28,7 +28,8 @@ import traits
 
 
 class Expression(object):
-    """An evaluatable part of a mathematical expression.
+    """Superclass for parts of a mathematical expression. Overrides operators
+    to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
     Expression objects are immutable.
     """
@@ -185,6 +186,10 @@ class Expression(object):
         return evaluate_to_float(self)
 
     def stringifier(self):
+        """Return a :class:`pymbolic.mapper.Mapper` class used to yield
+        a human-readable representation of *self*. Usually a subclass
+        of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
+        """
         from pymbolic.mapper.stringifier import StringifyMapper
         return StringifyMapper
 
@@ -193,6 +198,9 @@ class Expression(object):
         return self.stringifier()()(self, PREC_NONE)
 
     def __repr__(self):
+        """Provides a default :func:`repr` based on 
+        the Python pickling interface :meth:`__getinitargs__`.
+        """
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
 
         return "%s(%s)" % (self.__class__.__name__, initargs_str)
@@ -201,10 +209,10 @@ class Expression(object):
 
     def __eq__(self, other):
         """Provides equality testing with quick positive and negative paths
-        based on L{id} and L{__hash__}().
+        based on :func:`id` and :meth:`__hash__`.
 
         Subclasses should generally not override this method, but instead 
-        provide an implementation of L{is_equal}.
+        provide an implementation of :meth:`is_equal`.
         """
         if self is other:
             return True
@@ -220,7 +228,7 @@ class Expression(object):
         """Provides caching for hash values.
 
         Subclasses should generally not override this method, but instead 
-        provide an implementation of L{get_hash}.
+        provide an implementation of :meth:`get_hash`.
         """
         try:
             return self.hash_value
@@ -275,6 +283,9 @@ class Leaf(AlgebraicLeaf):
 
 
 class Variable(Leaf):
+    """
+    .. attribute:: name
+    """
     def __init__(self, name):
         self.name = name
 
@@ -318,7 +329,18 @@ class FunctionSymbol(AlgebraicLeaf):
 # {{{ structural primitives
 
 class Call(AlgebraicLeaf):
+    """A function invocation.
+
+    .. attribute:: function
+    .. attribute:: parameters
+    """
+
     def __init__(self, function, parameters):
+        """
+        :arg function: A :class:`Expression` that evaluates to a function.
+        :arg parameters: A :class:`tuple` of positional paramters.
+        """
+
         self.function = function
         self.parameters = parameters
 
@@ -341,6 +363,11 @@ class Call(AlgebraicLeaf):
 
 
 class Subscript(AlgebraicLeaf):
+    """An array subscript.
+
+    .. attribute:: aggregate
+    .. attribute:: index
+    """
     def __init__(self, aggregate, index):
         self.aggregate = aggregate
         self.index = index
@@ -354,6 +381,10 @@ class Subscript(AlgebraicLeaf):
 
 
 class Lookup(AlgebraicLeaf):
+    """Access to an attribute of an *aggregate*, such as an
+    attribute of a class.
+    """
+
     def __init__(self, aggregate, name):
         self.aggregate = aggregate
         self.name = name
@@ -368,6 +399,12 @@ class Lookup(AlgebraicLeaf):
 # {{{ arithmetic primitives
 
 class Sum(Expression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
     def __init__(self, children):
         assert isinstance(children, tuple)
 
@@ -419,6 +456,12 @@ class Sum(Expression):
 
 
 class Product(Expression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
     def __init__(self, children):
         assert isinstance(children, tuple)
         self.children = children
@@ -482,6 +525,11 @@ class QuotientBase(Expression):
 
 
 class Quotient(QuotientBase):
+    """
+    .. attribute:: numerator
+    .. attribute:: denominator
+    """
+
     def is_equal(self, other):
         from pymbolic.rational import Rational
         return isinstance(other, (Rational, Quotient)) \
@@ -494,18 +542,33 @@ class Quotient(QuotientBase):
 
 
 class FloorDiv(QuotientBase):
+    """
+    .. attribute:: numerator
+    .. attribute:: denominator
+    """
+
     mapper_method = intern("map_floor_div")
 
 
 
 
 class Remainder(QuotientBase):
+    """
+    .. attribute:: numerator
+    .. attribute:: denominator
+    """
+
     mapper_method = intern("map_remainder")
 
 
 
 
 class Power(Expression):
+    """
+    .. attribute:: base
+    .. attribute:: exponent
+    """
+
     def __init__(self, base, exponent):
         self.base = base
         self.exponent = exponent
@@ -520,11 +583,22 @@ class Power(Expression):
 # {{{ comparisons, logic, conditionals
 
 class ComparisonOperator(Expression):
-    """Note: comparisons are not implicitly constructed by comparing
-    Expression objects.
+    """
+    .. attribute:: left
+    .. attribute:: operator
+    .. attribute:: right
+
+    .. note::
+
+        Unlike other expressions, comparisons are not implicitly constructed by
+        comparing :class:`Expression` objects.
     """
 
     def __init__(self, left, operator, right):
+        """
+        :arg operator: One of ``[">", ">=", "==", "!=", "<", "<="]``.
+        """
+
         self.left = left
         self.right = right
         if not operator in [">", ">=", "==", "!=", "<", "<="]:
@@ -542,7 +616,11 @@ class ComparisonOperator(Expression):
 class BooleanExpression(Expression):
     pass
 
-class LogcialNot(BooleanExpression):
+class LogicalNot(BooleanExpression):
+    """
+    .. attribute:: child
+    """
+
     def __init__(self, child):
         self.child = child
 
@@ -555,6 +633,12 @@ class LogcialNot(BooleanExpression):
 
 
 class LogicalOr(BooleanExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
     def __init__(self, children):
         assert isinstance(children, tuple)
 
@@ -569,6 +653,12 @@ class LogicalOr(BooleanExpression):
 
 
 class LogicalAnd(BooleanExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
     def __init__(self, children):
         assert isinstance(children, tuple)
 
@@ -583,6 +673,11 @@ class LogicalAnd(BooleanExpression):
 
 
 class If(Expression):
+    """
+    .. attribute:: condition
+    .. attribute:: then
+    .. attribute:: else_
+    """
     def __init__(self, criterion, then, else_):
         self.condition = criterion
         self.then = then
@@ -702,6 +797,14 @@ class Vector(Expression):
 
 
 class CommonSubexpression(Expression):
+    """A helper for code generation and caching. Denotes a subexpression that
+    should only be evaluated once. If, in code generation, it is assigned to
+    a variable, a name starting with :attr:`prefix` should be used.
+
+    .. attribute:: child
+    .. attribute:: prefix
+    """
+
     def __init__(self, child, prefix=None):
         self.child = child
         self.prefix = prefix
@@ -1013,7 +1116,7 @@ def make_common_subexpression(field, prefix=None):
 
 def make_sym_vector(name, components):
     """Return an object array of *components* subscripted
-    :class:`Field` instances.
+    :class:`Variable` instances.
 
     :param components: The number of components in the vector.
     """

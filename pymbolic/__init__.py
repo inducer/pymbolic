@@ -24,9 +24,101 @@ THE SOFTWARE.
 
 
 
+__doc__ = """
+Pymbolic is a simple and extensible package for precise manipulation of
+symbolic expressions in Python. It doesn't try to compete with :mod:`sympy` as
+a computer algebra system. Pymbolic emphasizes providing an extensible
+expression tree and a flexible, extensible way to manipulate it.
 
-import parser
-import compiler
+A taste of :mod:`pymbolic`
+--------------------------
+
+Follow along on a simple example. Let's import :mod:`pymbolic` and create a symbol,
+*x* in this case.
+
+.. doctest::
+
+    >>> import pymbolic as pmbl
+
+    >>> x = pmbl.var("x")
+    >>> x
+    Variable('x')
+
+Next, let's create an expression using *x*:
+
+.. doctest::
+
+    >>> u = (x+1)**5
+    >>> u
+    Power(Sum(Variable('x'), 1), 5)
+    >>> print u
+    (x + 1)**5
+
+Note the two ways an expression can be printed, namely :func:`repr` and :func:`str`.
+:mod:`pymbolic` purposefully distinguishes the two.
+
+:mod:`pymbolic` does not perform any algebraic manipulations on expressions
+you put in. It has a few of those built in, but that's not really the point:
+
+.. doctest::
+
+    >>> print pmbl.differentiate(u, 'x')
+    5*(x + 1)**4
+
+Manipulating expressions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The point is for you to be able to easily write so-called *mappers* to
+manipulate expressions. Suppose we would like all sums replaced by
+products:
+
+.. doctest::
+
+    >>> from pymbolic.mapper import IdentityMapper
+    >>> class MyMapper(IdentityMapper):
+    ...     def map_sum(self, expr):
+    ...         return pmbl.primitives.Product(expr.children)
+    ...
+    >>> print MyMapper()(u)
+    (x*1)**5
+
+Custom Objects
+^^^^^^^^^^^^^^
+
+You can also easily define your own objects to use inside an expression:
+
+.. doctest::
+
+    >>> from pymbolic.primitives import Expression
+    >>> class FancyOperator(Expression):
+    ...     def __init__(self, operand):
+    ...         self.operand = operand
+    ...
+    ...     def __getinitargs__(self):
+    ...         return (self.operand,)
+    ...
+    ...     mapper_method = "map_fancy_operator"
+    ...
+    >>> 17*FancyOperator(u)
+    Product(17, FancyOperator(Power(Sum(Variable('x'), 1), 5)))
+
+As a final example, we can now derive from *MyMapper* to multiply all
+*FancyOperator* instances by 2.
+
+.. doctest::
+
+    >>> class MyMapper2(MyMapper):
+    ...     def map_fancy_operator(self, expr):
+    ...         return 2*FancyOperator(self.rec(expr.operand))
+    ...
+    >>> MyMapper2()(FancyOperator(u))
+    Product(2, FancyOperator(Power(Product(Variable('x'), 1), 5)))
+"""
+
+from pymbolic.version import VERSION_TEXT as __version__
+
+import pymbolic.parser
+import pymbolic.compiler
 
 import pymbolic.mapper.evaluator
 import pymbolic.mapper.stringifier
@@ -54,7 +146,7 @@ evaluate = pymbolic.mapper.evaluator.evaluate
 evaluate_kw = pymbolic.mapper.evaluator.evaluate_kw
 compile = pymbolic.compiler.compile
 substitute = pymbolic.mapper.substitutor.substitute
-differentiate = pymbolic.mapper.differentiator.differentiate
+diff = differentiate = pymbolic.mapper.differentiator.differentiate
 expand = pymbolic.mapper.expander.expand
 flatten = pymbolic.mapper.flattener.flatten
 
@@ -62,7 +154,7 @@ flatten = pymbolic.mapper.flattener.flatten
 
 
 def simplify(x):
-    # FIXME: Not yet implemented
+    # FIXME: Not implemented
     return x
 
 def grad(expression, variables):
@@ -98,31 +190,3 @@ class MatrixFunction:
     def __call__(self, x):
         import pylinear.array as num
         return num.array([[func(x) for func in flist ] for flist in self.FunctionList])
-
-
-
-
-if __name__ == "__main__":
-    import math
-    #ex = parse("0 + 4.3e3j * alpha * math.cos(x+math.pi)") + 5
-
-    #print ex
-    #print repr(parse("x+y"))
-    #print evaluate(ex, {"alpha":5, "math":math, "x":-math.pi})
-    #compiled = compile(substitute(ex, {var("alpha"): 5}))
-    #print compiled(-math.pi)
-    #import cPickle as pickle
-    #pickle.dumps(compiled)
-
-    #print hash(ex)
-    #print is_constant(ex)
-    #print substitute(ex, {"alpha": ex})
-    #ex2 = parse("math.cos(x**2/x)")
-    #print ex2
-    #print differentiate(ex2, parse("x"))
-
-    x0 = parse("x[0]")
-    ex = parse("1-x[0]")
-    print differentiate(ex, x0)
-    #print expand(ex)
-
