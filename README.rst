@@ -5,9 +5,9 @@ Pymbolic is a small expression tree and symbolic manipulation library. Two
 things set it apart from other libraries of its kind:
 
 * Users can easily write their own symbolic operations, simply by deriving
-from the builtin visitor classes.
+  from the builtin visitor classes.
 * Users can easily add their own symbolic entities to do calculations
-with.
+  with.
 
 Pymbolic currently understands regular arithmetic expressions, derivatives,
 sparse polynomials, fractions, term substitution, expansion. It automatically
