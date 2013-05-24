@@ -240,7 +240,7 @@ class _LeftContractionProduct(_GAProduct):
     def orthogonal_blade_product_weight(a_bits, b_bits, space):
         shared_bits = a_bits & b_bits
 
-        if shared_bits == b_bits:
+        if shared_bits == a_bits:
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -255,7 +255,7 @@ class _RightContractionProduct(_GAProduct):
     def orthogonal_blade_product_weight(a_bits, b_bits, space):
         shared_bits = a_bits & b_bits
 
-        if shared_bits == a_bits:
+        if shared_bits == b_bits:
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -450,7 +450,7 @@ class MultiVector(object):
 
     # }}}
 
-    # {{{ products
+    # {{{ multiplicative operators
 
     def _generic_product(self, other, product_class):
         """
@@ -472,7 +472,6 @@ class MultiVector(object):
                 new_bits = sbits ^ obits
                 weight = bpw(sbits, obits, self.space)
 
-                print self.space.blade_bits_to_str(sbits), self.space.blade_bits_to_str(obits)
                 if not is_zero(weight):
                     # These are nonzero by definition.
                     coeff = weight * canonical_reordering_sign(sbits, obits) * scoeff * ocoeff
@@ -540,7 +539,56 @@ class MultiVector(object):
 
         return self._generic_product(other, _ScalarProduct).as_scalar()
 
+    def x(self, other):
+        """Return the commutator product.
+
+        See (1.55) in [HS].
+        """
+        return (self*other - other*self)/2
+
+    def __truediv__(self, other):
+        """Return ``self*(1/other)``.
+        """
+        if not isinstance(other, MultiVector):
+            other = MultiVector(other, self.space)
+
+        return self*other.inv()
+
+    def __rtruediv__(self, other):
+        """Return ``other * (1/self)``.
+        """
+        other = MultiVector(other, self.space)
+
+        return other * self.inv()
+
     # }}}
+
+    def inv(self):
+        """Return the *multiplicative inverse* of the blade *self*.
+        """
+
+        nsqr = self.norm_squared()
+        if len(self.data) == 0:
+            raise ZeroDivisionError
+        if len(self.data) > 1:
+            if self.get_pure_grade() in [0, 1, self.space.dimensions]:
+                return MultiVector(dict(
+                    (bits, coeff/nsqr) for bits, coeff in self.data.iteritems()),
+                    self.space)
+
+            else:
+                raise NotImplementedError("division by non-blades")
+
+        (bits, coeff), = self.data.iteritems()
+
+        # (1.54) in [HS]
+        grade = bit_count(bits)
+        if grade*(grade-1)//2 % 2:
+            coeff = -coeff
+
+        coeff = coeff/nsqr
+
+        return MultiVector({bits: coeff}, self.space)
 
     def rev(self):
         """Return the *reverse* of *self*, i.e. the multivector obtained by reversing
@@ -569,6 +617,11 @@ class MultiVector(object):
                 new_data[bits] = -coeff
 
         return MultiVector(new_data, self.space)
+
+    def dual(self):
+        """Return the dual of *self*, see (2.26) in [HS]."""
+
+        return self | self.I.rev()
 
     def norm_squared(self):
         return self.rev().scalar_product(self)
@@ -614,6 +667,15 @@ class MultiVector(object):
 
     # {{{ grade manipulation
 
+    def gen_blades(self, grade=None):
+        if grade is None:
+            for bits, coeff in self.data.iteritems():
+                yield MultiVector({bits: coeff}, self.space)
+        else:
+            for bits, coeff in self.data.iteritems():
+                if bit_count(bits) == grade:
+                    yield MultiVector({bits: coeff}, self.space)
+
     def project(self, grade):
         new_data = {}
         for bits, coeff in self.data.iteritems():
@@ -641,6 +703,24 @@ class MultiVector(object):
                 return None
 
         return result
+
+    def odd(self):
+        """Extract the odd-grade blades."""
+        new_data = {}
+        for bits, coeff in self.data.iteritems():
+            if bit_count(bits) % 2:
+                new_data[bits] = coeff
+
+        return MultiVector(new_data, self.space)
+
+    def even(self):
+        """Extract the even-grade blades."""
+        new_data = {}
+        for bits, coeff in self.data.iteritems():
+            if bit_count(bits) % 2 == 0:
+                new_data[bits] = coeff
+
+        return MultiVector(new_data, self.space)
 
     def as_scalar(self):
         result = 0

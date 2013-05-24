@@ -223,7 +223,12 @@ def test_geometric_algebra(dims):
         from operator import xor as outer
         assert reduce(outer, vecs).close_to(0)
 
-    for obj1, obj2, obj3 in [
+    assert ( vec1.inv()*vec1 ).close_to( 1 )
+    assert ( vec1*vec1.inv() ).close_to( 1 )
+    assert ( (1/vec1)*vec1 ).close_to( 1 )
+    assert ( vec1/vec1 ).close_to( 1 )
+
+    for a, b, c in [
             (vec1, vec2, vec3),
             (vec1*vec2, vec3, vec4),
             (vec1, vec2*vec3, vec4),
@@ -232,32 +237,62 @@ def test_geometric_algebra(dims):
             (vec1, vec2*vec1, vec3*vec4*vec5),
             ]:
 
-        # scalar product
-        assert ( (obj3*obj2).project(0) ) .close_to( obj2.scalar_product(obj3) )
-        assert ( (obj3.rev()*obj2).project(0) ) .close_to( obj2.rev().scalar_product(obj3) )
-        assert ( (obj2.rev()*obj2).project(0) ) .close_to( obj2.norm_squared() )
+        # Associativity
+        assert ((a*b)*c).close_to(
+                a*(b*c))
+        assert ((a^b)^c).close_to(
+                a^(b^c))
+        assert ((a*b)*c).close_to(
+                a*(b*c))
 
-        assert obj2.norm_squared() >= 0
-        assert obj3.norm_squared() >= 0
+        # scalar product
+        assert ( (c*b).project(0) ) .close_to( b.scalar_product(c) )
+        assert ( (c.rev()*b).project(0) ) .close_to( b.rev().scalar_product(c) )
+        assert ( (b.rev()*b).project(0) ) .close_to( b.norm_squared() )
+
+        assert b.norm_squared() >= 0
+        assert c.norm_squared() >= 0
 
         # Cauchy's inequality
-        assert obj2.scalar_product(obj3) <= abs(obj2)*abs(obj3) + 1e-13
+        assert b.scalar_product(c) <= abs(b)*abs(c) + 1e-13
 
-        # reverse/dual properties (Sec 2.9.5 DFW)
-        assert obj3.rev().rev() == obj3
-        assert (obj2^obj3).rev() .close_to( (obj3.rev() ^ obj2.rev()) )
+        # contractions
+
+        # (3.18) in [DFM]
+        assert abs(b.scalar_product(a ^ c) - (b >> a).scalar_product(c)) < 1e-13
+        # duality, (3.20) in [DFM]
+        assert ((a ^ b) << c) .close_to( a << (b << c) )
+
+        # inverse
+        for div in list(b.gen_blades()) + [vec1, vec1.I]:
+            assert ( div.inv()*div ).close_to( 1 )
+            assert ( div*div.inv() ).close_to( 1 )
+            assert ( (1/div)*div ).close_to( 1 )
+            assert ( div/div ).close_to( 1 )
+            assert ((c/div)*div ).close_to( c )
+            assert ((c*div)/div).close_to( c )
+
+        # reverse properties (Sec 2.9.5 [DFM])
+        assert c.rev().rev() == c
+        assert (b^c).rev() .close_to( (c.rev() ^ b.rev()) )
+
+        # dual properties
+        # (2.26) in [HS]
+        assert c.dual() .close_to( c|c.I.rev() )
+        assert c.dual() .close_to( c*c.I.rev() )
 
         # involution properties (Sec 2.9.5 DFW)
-        assert obj3.invol().invol() == obj3
-        assert (obj2^obj3).invol() .close_to( (obj2.invol() ^ obj3.invol()) )
+        assert c.invol().invol() == c
+        assert (b^c).invol() .close_to( (b.invol() ^ c.invol()) )
 
-        # Associativity
-        assert ((obj1*obj2)*obj3).close_to(
-                obj1*(obj2*obj3))
-        assert ((obj1^obj2)^obj3).close_to(
-                obj1^(obj2^obj3))
-        assert ((obj1*obj2)*obj3).close_to(
-                obj1*(obj2*obj3))
+        # commutator properties
+
+        # Jacobi identity (1.56c) in [HS]
+        assert ( a.x(b.x(c)) + b.x(c.x(a)) + c.x(a.x(b)) ).close_to(0)
+        # (1.57) in [HS]
+        assert a.x(b*c) .close_to( a.x(b)*c + b*a.x(c))
+
+
 
 
 
