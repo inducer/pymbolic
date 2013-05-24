@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 import pymbolic.primitives as prim
+import pytest
 
 
 
@@ -47,8 +48,7 @@ def test_substitute():
 
 
 def test_fft_with_floats():
-    import py.test
-    numpy = py.test.importorskip("numpy")
+    numpy = pytest.importorskip("numpy")
     import numpy.linalg as la
 
     from pymbolic.algorithm import fft, ifft
@@ -84,8 +84,7 @@ class NearZeroKiller(IdentityMapper):
 
 
 def test_fft():
-    import py.test
-    numpy = py.test.importorskip("numpy")
+    numpy = pytest.importorskip("numpy")
 
     from pymbolic import var
     from pymbolic.algorithm import fft, sym_fft
@@ -112,9 +111,8 @@ def test_fft():
 
 
 def test_sparse_multiply():
-    import py.test
-    numpy = py.test.importorskip("numpy")
-    py.test.importorskip("scipy")
+    numpy = pytest.importorskip("numpy")
+    pytest.importorskip("scipy")
     import scipy.sparse as ss
 
     la = numpy.linalg
@@ -198,6 +196,85 @@ def test_structure_preservation():
     x2 = IdentityMapper()(x)
     assert x == x2
 
+
+
+
+
+@pytest.mark.parametrize("dims", [2,3,4,5])
+def test_geometric_algebra(dims):
+    np = pytest.importorskip("numpy")
+    from pymbolic.geometric_algebra import MultiVector as MV
+
+    vec1 = MV(np.random.randn(dims))
+    vec2 = MV(np.random.randn(dims))
+    vec3 = MV(np.random.randn(dims))
+    vec4 = MV(np.random.randn(dims))
+    vec5 = MV(np.random.randn(dims))
+
+    # Fundamental identity
+    assert ((vec1 ^ vec2) + (vec1|vec2)).close_to(vec1*vec2)
+
+    # Antisymmetry
+    assert (vec1^vec2^vec3).close_to(-vec2^vec1^vec3)
+
+    vecs = [vec1, vec2, vec3, vec4, vec5]
+
+    if len(vecs) > dims:
+        from operator import xor as outer
+        assert reduce(outer, vecs).close_to(0)
+
+    for obj1, obj2, obj3 in [
+            (vec1, vec2, vec3),
+            (vec1*vec2, vec3, vec4),
+            (vec1, vec2*vec3, vec4),
+            (vec1, vec2, vec3*vec4),
+            (vec1, vec2, vec3*vec4),
+            (vec1, vec2, vec3*vec4*vec5),
+            (vec1, vec2*vec1, vec3*vec4*vec5),
+            ]:
+
+        # scalar product
+        assert ( (obj3*obj2).project(0) ) .close_to( obj2.scalar_product(obj3) )
+
+        # FIXME: still broken
+        #assert obj2.norm_squared() >= 0
+        #assert obj3.norm_squared() >= 0
+
+        # Cauchy's inequality
+        # FIXME: still broken
+        #assert obj2.scalar_product(obj3) <= abs(obj2)*abs(obj3) + 1e-13
+
+        # reverse/dual properties (Sec 2.9.5 DFW)
+        assert obj3.rev().rev() == obj3
+        assert (obj2^obj3).rev() .close_to( (obj3.rev() ^ obj2.rev()) )
+
+        # involution properties (Sec 2.9.5 DFW)
+        assert obj3.invol().invol() == obj3
+        assert (obj2^obj3).invol() .close_to( (obj2.invol() ^ obj3.invol()) )
+
+        # Associativity
+        assert ((obj1*obj2)*obj3).close_to(
+                obj1*(obj2*obj3))
+        assert ((obj1^obj2)^obj3).close_to(
+                obj1^(obj2^obj3))
+        assert ((obj1*obj2)*obj3).close_to(
+                obj1*(obj2*obj3))
+
+
+
+
+def playground():
+    import numpy as np
+    from pymbolic.geometric_algebra import MultiVector as MV
+
+    dims = 3
+    vec1 = MV(np.random.randn(dims))
+    vec2 = MV(np.random.randn(dims))
+    vec3 = MV(np.random.randn(dims))
+    vec4 = MV(np.random.randn(dims))
+    vec5 = MV(np.random.randn(dims))
+
+    print (vec3*vec4).norm_squared()
 
 
 

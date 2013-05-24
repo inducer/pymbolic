@@ -49,7 +49,8 @@ setup(name="pymbolic",
 
       packages=["pymbolic", "pymbolic.mapper"],
       install_requires=[
-          'pytools>=2'
+          'pytools>=2',
+          'pytest>=2.3',
           ],
 
      )
