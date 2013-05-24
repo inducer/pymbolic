@@ -22,6 +22,6 @@ well be for you.
 
 Resources:
 
-* `download <http://pypi.python.org/pypi/pymbolic>`_ (via the package index)
 * `documentation <http://documen.tician.de/pymbolic>`_
-* `source code via git <http://github.com/inducer/pymbolic>`_
+* `download <http://pypi.python.org/pypi/pymbolic>`_ (via the package index)
+* `source code via git <http://github.com/inducer/pymbolic>`_ (also bug tracker)
