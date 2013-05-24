@@ -196,10 +196,7 @@ class _GAProduct(object):
 class _OuterProduct(_GAProduct):
     @staticmethod
     def generic_blade_product_weight(a_bits, b_bits, space):
-        if a_bits & b_bits:
-            return 0
-        else:
-            return canonical_reordering_sign(a_bits, b_bits)
+        return int(not a_bits & b_bits)
 
     orthogonal_blade_product_weight = generic_blade_product_weight
 
@@ -211,13 +208,12 @@ class _GeometricProduct(_GAProduct):
 
     @staticmethod
     def orthogonal_blade_product_weight(a_bits, b_bits, space):
-        result = canonical_reordering_sign(a_bits, b_bits)
         shared_bits = a_bits & b_bits
 
         if shared_bits:
-            result *= _shared_metric_coeff(shared_bits, space)
-
-        return result
+            return _shared_metric_coeff(shared_bits, space)
+        else:
+            return 1
 
 class _InnerProduct(_GAProduct):
     @staticmethod
@@ -230,9 +226,6 @@ class _InnerProduct(_GAProduct):
         shared_bits = a_bits & b_bits
 
         if shared_bits == a_bits or shared_bits == b_bits:
-            # No reordering (and hence no sign computation) needs to be
-            # performed, since all the inner product does is zap basis
-            # elements out of a blade.
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -248,9 +241,6 @@ class _LeftContractionProduct(_GAProduct):
         shared_bits = a_bits & b_bits
 
         if shared_bits == b_bits:
-            # No reordering (and hence no sign computation) needs to be
-            # performed, since all the contraction product does is zap basis
-            # elements out of a blade.
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -266,9 +256,6 @@ class _RightContractionProduct(_GAProduct):
         shared_bits = a_bits & b_bits
 
         if shared_bits == a_bits:
-            # No reordering (and hence no sign computation) needs to be
-            # performed, since all the contraction product does is zap basis
-            # elements out of a blade.
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -282,9 +269,6 @@ class _ScalarProduct(_GAProduct):
     @staticmethod
     def orthogonal_blade_product_weight(a_bits, b_bits, space):
         if a_bits == b_bits:
-            # No reordering (and hence no sign computation) needs to be
-            # performed, since all the contraction product does is zap basis
-            # elements out of a blade.
             return _shared_metric_coeff(a_bits, space)
         else:
             return 0
@@ -486,12 +470,12 @@ class MultiVector(object):
         for sbits, scoeff in self.data.iteritems():
             for obits, ocoeff in other.data.iteritems():
                 new_bits = sbits ^ obits
-
                 weight = bpw(sbits, obits, self.space)
 
+                print self.space.blade_bits_to_str(sbits), self.space.blade_bits_to_str(obits)
                 if not is_zero(weight):
                     # These are nonzero by definition.
-                    coeff = weight * scoeff * ocoeff
+                    coeff = weight * canonical_reordering_sign(sbits, obits) * scoeff * ocoeff
                     new_coeff = new_data.setdefault(new_bits, 0) + coeff
                     if is_zero(new_coeff):
                         del new_data[new_bits]

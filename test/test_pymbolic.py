@@ -228,21 +228,20 @@ def test_geometric_algebra(dims):
             (vec1*vec2, vec3, vec4),
             (vec1, vec2*vec3, vec4),
             (vec1, vec2, vec3*vec4),
-            (vec1, vec2, vec3*vec4),
             (vec1, vec2, vec3*vec4*vec5),
             (vec1, vec2*vec1, vec3*vec4*vec5),
             ]:
 
         # scalar product
         assert ( (obj3*obj2).project(0) ) .close_to( obj2.scalar_product(obj3) )
+        assert ( (obj3.rev()*obj2).project(0) ) .close_to( obj2.rev().scalar_product(obj3) )
+        assert ( (obj2.rev()*obj2).project(0) ) .close_to( obj2.norm_squared() )
 
-        # FIXME: still broken
-        #assert obj2.norm_squared() >= 0
-        #assert obj3.norm_squared() >= 0
+        assert obj2.norm_squared() >= 0
+        assert obj3.norm_squared() >= 0
 
         # Cauchy's inequality
-        # FIXME: still broken
-        #assert obj2.scalar_product(obj3) <= abs(obj2)*abs(obj3) + 1e-13
+        assert obj2.scalar_product(obj3) <= abs(obj2)*abs(obj3) + 1e-13
 
         # reverse/dual properties (Sec 2.9.5 DFW)
         assert obj3.rev().rev() == obj3
@@ -267,14 +266,20 @@ def playground():
     import numpy as np
     from pymbolic.geometric_algebra import MultiVector as MV
 
-    dims = 3
+    dims = 2
     vec1 = MV(np.random.randn(dims))
     vec2 = MV(np.random.randn(dims))
     vec3 = MV(np.random.randn(dims))
     vec4 = MV(np.random.randn(dims))
     vec5 = MV(np.random.randn(dims))
 
-    print (vec3*vec4).norm_squared()
+    a = vec3^vec4
+    print (a.rev()*a).project(0)
+    print a.scalar_product(a.rev())
+
+    #print a.norm_squared()
+    #print ((a.rev()*a).project(0) ).close_to( a.norm_squared() )
+
 
 
 
