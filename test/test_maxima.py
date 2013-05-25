@@ -75,13 +75,13 @@ def test_strict_round_trip(knl):
         result = knl.eval_expr(expr)
         round_trips_correctly = result == expr
         if not round_trips_correctly:
-            print "ORIGINAL:"
-            print
-            print expr
-            print
-            print "POST-MAXIMA:"
-            print
-            print result
+            print("ORIGINAL:")
+            print("")
+            print(expr)
+            print("")
+            print("POST-MAXIMA:")
+            print("")
+            print(result)
         assert round_trips_correctly
 
 def test_lax_round_trip(knl):

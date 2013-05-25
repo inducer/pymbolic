@@ -90,9 +90,9 @@ def test_fft():
     from pymbolic.algorithm import fft, sym_fft
 
     vars = numpy.array([var(chr(97+i)) for i in range(16)], dtype=object)
-    print vars
+    print(vars)
 
-    print fft(vars)
+    print(fft(vars))
     traced_fft = sym_fft(vars)
 
     from pymbolic.mapper.stringifier import PREC_NONE
@@ -102,10 +102,10 @@ def test_fft():
     code = [ccm(tfi, PREC_NONE) for tfi in traced_fft]
 
     for cse_name, cse_str in enumerate(ccm.cse_name_list):
-        print "%s = %s" % (cse_name, cse_str)
+        print("%s = %s" % (cse_name, cse_str))
 
     for i, line in enumerate(code):
-        print "result[%d] = %s" % (i, line)
+        print("result[%d] = %s" % (i, line))
 
 
 
@@ -157,26 +157,26 @@ def test_parser():
     parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
             "-hankel_1(1,sqrt(a[1]**2+a[0]**2)*k))*k /(4*sqrt(a[1]**2+a[0]**2)) "
             "+hankel_1(0,sqrt(a[1]**2+a[0]**2)*k)")
-    print repr(parse("d4knl0"))
-    print repr(parse("0."))
-    print repr(parse("0.e1"))
-    print repr(parse("0.e1"))
-    print repr(parse("a >= 1"))
-    print repr(parse("a <= 1"))
+    print(repr(parse("d4knl0")))
+    print(repr(parse("0.")))
+    print(repr(parse("0.e1")))
+    print(repr(parse("0.e1")))
+    print(repr(parse("a >= 1")))
+    print(repr(parse("a <= 1")))
 
-    print repr(parse(":"))
-    print repr(parse("1:"))
-    print repr(parse(":2"))
-    print repr(parse("1:2"))
-    print repr(parse("::"))
-    print repr(parse("1::"))
-    print repr(parse(":1:"))
-    print repr(parse("::1"))
-    print repr(parse("3::1"))
-    print repr(parse(":5:1"))
-    print repr(parse("3:5:1"))
+    print(repr(parse(":")))
+    print(repr(parse("1:")))
+    print(repr(parse(":2")))
+    print(repr(parse("1:2")))
+    print(repr(parse("::")))
+    print(repr(parse("1::")))
+    print(repr(parse(":1:")))
+    print(repr(parse("::1")))
+    print(repr(parse("3::1")))
+    print(repr(parse(":5:1")))
+    print(repr(parse("3:5:1")))
 
-    print parse("3::1")
+    print(parse("3::1"))
 
     assert parse("e1") == prim.Variable("e1")
     assert parse("d1") == prim.Variable("d1")
@@ -312,11 +312,11 @@ def playground():
     vec5 = MV(np.random.randn(dims))
 
     a = vec3^vec4
-    print (a.rev()*a).project(0)
-    print a.scalar_product(a.rev())
+    print((a.rev()*a).project(0))
+    print(a.scalar_product(a.rev()))
 
-    #print a.norm_squared()
-    #print ((a.rev()*a).project(0) ).close_to( a.norm_squared() )
+    #print(a.norm_squared())
+    #print(((a.rev()*a).project(0) ).close_to( a.norm_squared() ))
 
 
 
