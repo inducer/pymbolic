@@ -829,6 +829,20 @@ class MultiVector(object):
 
     # }}}
 
+    # {{{ helper functions
+
+    def map(self, f):
+        """Return a new :class:`MultiVector` with coefficients mapped by function
+        *f*, which takes a single coefficient as input and returns the new coefficient.
+        """
+        new_data = {}
+        for bits, coeff in self.data.iteritems():
+            new_data[bits] = f(coeff)
+
+        return MultiVector(new_data, self.space)
+
+    # }}}
+
 # }}}
 
 # vim: foldmethod=marker

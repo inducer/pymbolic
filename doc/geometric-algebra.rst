@@ -59,6 +59,10 @@ Multivectors
     .. automethod:: as_scalar
     .. automethod:: as_vector
 
+    .. rubric:: Helper functions
+
+    .. automethod:: map
+
 .. _ga-examples:
 
 Example usage
