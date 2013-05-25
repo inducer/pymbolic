@@ -99,13 +99,18 @@ class CompileMapper(StringifyMapper):
 
 
 class CompiledExpression:
-    """This class encapsulates a compiled expression.
+    """This class encapsulates an expression compiled into Python bytecode
+    for faster evaluation.
 
-    The main reason for its existence is the fact that a dynamically-constructed
-    lambda function is not picklable.
+    Its instances (unlike plain lambdas) are pickleable.
     """
 
     def __init__(self, expression, variables = []):
+        """
+        :arg variables: The first arguments to be used for the compiled function.
+            All variables used by the expression and not present here are added
+            in alphabetical order.
+        """
         import pymbolic.primitives as primi
 
         self._Expression = expression

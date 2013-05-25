@@ -17,9 +17,9 @@ Contents
    :maxdepth: 2
 
    primitives
+   mappers
    utilities
    algorithms
-   mappers
    geometric-algebra
    misc
 

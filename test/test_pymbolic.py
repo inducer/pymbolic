@@ -245,8 +245,7 @@ def test_geometric_algebra(dims):
                 a*(b*c))
         assert ((a^b)^c).close_to(
                 a^(b^c))
-        #assert ((a|b)|c).close_to(
-                #a|(b|c))
+        # The inner product is not associative.
 
         # scalar product
         assert ( (c*b).project(0) ) .close_to( b.scalar_product(c) )

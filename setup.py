@@ -6,6 +6,12 @@ distribute_setup.use_setuptools()
 
 from setuptools import setup
 
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    # 2.x
+    from distutils.command.build_py import build_py
+
 ver_dic = {}
 version_file = open("pymbolic/version.py")
 try:
@@ -27,6 +33,13 @@ setup(name="pymbolic",
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        # We use conditional expressions, so 2.5 is the bare minimum.
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Software Development :: Libraries',
@@ -43,4 +56,5 @@ setup(name="pymbolic",
           'pytest>=2.3',
           ],
 
-     )
+      # 2to3 invocation
+      cmdclass={'build_py': build_py})
