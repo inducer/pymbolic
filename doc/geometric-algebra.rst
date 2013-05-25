@@ -3,6 +3,8 @@ Geometric Algebra
 
 .. automodule:: pymbolic.geometric_algebra
 
+Also see :ref:`ga-examples`.
+
 Spaces
 ------
 
@@ -56,6 +58,8 @@ Multivectors
     .. automethod:: even
     .. automethod:: as_scalar
     .. automethod:: as_vector
+
+.. _ga-examples:
 
 Example usage
 -------------

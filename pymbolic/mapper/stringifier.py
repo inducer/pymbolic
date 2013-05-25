@@ -39,8 +39,22 @@ PREC_NONE = 0
 
 
 
-class StringifyMapper(pymbolic.mapper.RecursiveMapper):
+class StringifyMapper(pymbolic.mapper.Mapper):
+    """A mapper to turn an expression tree into a string.
+
+    :class:`pymbolic.primitives.Expression.__str__` is often implemented using
+    this mapper.
+
+    When it encounters an unsupported :class:`pymbolic.primitives.Expression`
+    subclass, it calls its :meth:`pymbolic.primitives.Expression.stringifier`
+    method to get a :class:`StringifyMapper` that potentially does.
+    """
+
     def __init__(self, constant_mapper=str):
+        """
+        :arg constant_mapper: A function of a single *expr* argument being used
+            to map constants into strings.
+        """
         self.constant_mapper = constant_mapper
 
     # replaceable string composition interface --------------------------------
@@ -266,13 +280,41 @@ class StringifyMapper(pymbolic.mapper.RecursiveMapper):
 
 
     def __call__(self, expr, prec=PREC_NONE):
-        return pymbolic.mapper.RecursiveMapper.__call__(self, expr, prec)
+        """Return a string corresponding to *expr*. If the enclosing
+        precedence level *prec* is higher than *prec* (see :ref:`prec-constants`),
+        parenthesize the result.
+        """
+
+        return pymbolic.mapper.Mapper.__call__(self, expr, prec)
 
 
 
 
 
 class CSESplittingStringifyMapperMixin(object):
+    """A :term:`mix-in` for subclasses of
+    :class:`StringifyMapper` that collects
+    "variable assignments" for
+    :class:`pymbolic.primitives.CommonSubexpression` objects.
+
+    .. attribute:: cse_to_name
+
+        A :class:`dict` mapping expressions to CSE variable names.
+
+    .. attribute:: cse_names
+
+        A :class:`set` of names already assigned.
+
+    .. attribute:: cse_name_list
+
+        A :class:`list` of tuples of names and their string representations,
+        in order of their dependencies. When generating code, walk down these names
+        in order, and the generated code will never reference
+        an undefined variable.
+
+    See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example
+    of the use of this mix-in.
+    """
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
             self.cse_to_name

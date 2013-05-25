@@ -194,6 +194,10 @@ class Expression(object):
         return StringifyMapper
 
     def __str__(self):
+        """Use the :meth:`stringifier` to return a human-readable
+        string representation of *self*.
+        """
+
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.stringifier()()(self, PREC_NONE)
 
@@ -803,6 +807,8 @@ class CommonSubexpression(Expression):
 
     .. attribute:: child
     .. attribute:: prefix
+
+    See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example.
     """
 
     def __init__(self, child, prefix=None):
@@ -1079,6 +1085,11 @@ def wrap_in_cse(expr, prefix=None):
 
 
 def make_common_subexpression(field, prefix=None):
+    """Wrap *field* in a :class:`CommonSubexpression` with
+    *prefix*. If *field* is a :mod:`numpy` object array,
+    each individual entry is instead wrapped.
+    """
+
     try:
         from pytools.obj_array import log_shape
     except ImportError:
@@ -1131,6 +1142,9 @@ def make_sym_vector(name, components):
 
 
 def variables(s):
+    """Return a list of variables for each (space-delimited) identifier
+    in *s*.
+    """
     return [Variable(s_i) for s_i in s.split() if s_i]
 
 # }}}

@@ -329,8 +329,8 @@ class MultiVector(object):
         ``A*B``,             Geometric product :math:`AB`
         ``A^B``,             Outer product :math:`A\wedge B` of multivectors
         ``A|B``,             Inner product :math:`A\cdot B` of multivectors
-        ``A<<B``,            Left contraction of multivectors
-        ``A>>B``,            Right contraction of multivectors
+        ``A<<B``,            Left contraction :math:`A\lrcorner B` of multivectors
+        ``A>>B``,            Right contraction :math:`A\llcorner B` of multivectors
 
     .. warning ::
 

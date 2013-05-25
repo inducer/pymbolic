@@ -58,7 +58,27 @@ def map_math_functions_by_name(i, func, pars):
 
 
 class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
+    """Example usage:
+
+    .. doctest::
+
+        >>> import pymbolic.primitives as p
+        >>> x = p.Variable("x")
+        >>> expr = x*(x+5)**3/(x-1)**2
+
+        >>> from pymbolic.mapper.differentiator import DifferentiationMapper as DM
+        >>> print DM(x)(expr)
+        (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) / (x + -1)**2**2
+    """
+
     def __init__(self, variable, func_map=map_math_functions_by_name):
+        """
+        :arg variable: A :class:`pymbolic.primitives.Variable` instance
+            by which to differentiate.
+        :arg func_map: A function for computing derivatives of function
+            calls, signature ``(arg_index, function_variable, parameters)``.
+        """
+
         self.variable = variable
         self.function_map = func_map
 
@@ -86,7 +106,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     def map_product(self, expr):
         return pymbolic.flattened_sum(
             pymbolic.flattened_product(
-                expr.children[0:i] + 
+                expr.children[0:i] +
                 (self.rec(child),) +
                 expr.children[i+1:])
             for i, child in enumerate(expr.children))
@@ -143,7 +163,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         return \
                 Polynomial(expr.base, tuple(deriv_coeff), expr.unit) + \
                 Polynomial(expr.base, tuple(deriv_base), expr.unit)
-  
+
     def map_numpy_array(self, expr):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
@@ -155,8 +175,8 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
 
 
-def differentiate(expression, 
-                  variable, 
+def differentiate(expression,
+                  variable,
                   func_mapper=map_math_functions_by_name):
     if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
         variable = primitives.make_variable(variable)

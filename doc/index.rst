@@ -1,5 +1,5 @@
-Welcome to pymbolic's documentation!
-====================================
+Welcome to pymbolic!
+====================
 
 .. automodule:: pymbolic
 

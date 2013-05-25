@@ -17,6 +17,7 @@ Expression base class
 
     .. automethod:: __eq__
     .. automethod:: __hash__
+    .. automethod:: __str__
     .. automethod:: __repr__
 
 Sums, products and such
@@ -92,13 +93,15 @@ Code generation helpers
     :undoc-members:
     :members: mapper_method
 
-Predicates, Constants
----------------------
+Helper functions
+----------------
 
 .. autofunction:: is_zero
 .. autofunction:: is_constant
 .. autofunction:: register_constant_class
 .. autofunction:: unregister_constant_class
+.. autofunction:: variables
+.. autofunction:: make_common_subexpression
 
 Interaction with :mod:`numpy` arrays
 ------------------------------------

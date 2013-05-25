@@ -30,6 +30,10 @@ from pymbolic.mapper import IdentityMapper
 
 class TermCollector(IdentityMapper):
     """A term collector that assumes that multiplication is commutative.
+
+    Allows specifying *parameters* (a set of
+    :class:`pymbolic.primitive.Variable` instances) that are viewed as being
+    coefficients and are not used for term collection.
     """
 
     def __init__(self, parameters=set()):
@@ -43,7 +47,7 @@ class TermCollector(IdentityMapper):
         """Returns  a pair consisting of:
         - a frozenset of (base, exponent) pairs
         - a product of coefficients (i.e. constants and parameters)
-        
+
         The set takes care of order-invariant comparison for us and is hashable.
 
         The argument `product' has to be fully expanded already.
@@ -102,6 +106,6 @@ class TermCollector(IdentityMapper):
         def rep2term(rep):
             return pymbolic.flattened_product(base**exp for base, exp in rep)
 
-        result = pymbolic.flattened_sum(coeff*rep2term(termrep) 
+        result = pymbolic.flattened_sum(coeff*rep2term(termrep)
                 for termrep, coeff in term2coeff.iteritems())
         return result

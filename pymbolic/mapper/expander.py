@@ -33,6 +33,18 @@ from pymbolic.primitives import \
 
 
 class ExpandMapper(IdentityMapper):
+    """Example usage:
+
+    .. doctest::
+
+        >>> import pymbolic.primitives as p
+        >>> x = p.Variable("x")
+        >>> expr = (x+1)**7
+        >>> from pymbolic.mapper.expander import ExpandMapper as EM
+        >>> print EM()(expr) # doctest: +SKIP
+        7*x**6 + 21*x**5 + 21*x**2 + 35*x**3 + 1 + 35*x**4 + 7*x + x**7
+    """
+
     def __init__(self, collector=TermCollector()):
         self.collector = collector
 

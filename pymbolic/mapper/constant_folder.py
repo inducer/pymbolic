@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 from pymbolic.mapper import \
         IdentityMapper, \
-        NonrecursiveIdentityMapper, \
         CSECachingMapperMixin
 
 
@@ -95,14 +94,6 @@ class ConstantFoldingMapper(
     map_common_subexpression_uncached = \
             IdentityMapper.map_common_subexpression
 
-class NonrecursiveConstantFoldingMapper(
-        CSECachingMapperMixin,
-        NonrecursiveIdentityMapper, 
-        ConstantFoldingMapperBase):
-
-    map_common_subexpression_uncached = \
-            NonrecursiveIdentityMapper.map_common_subexpression
-
 class CommutativeConstantFoldingMapper(
         CSECachingMapperMixin,
         CommutativeConstantFoldingMapperBase,
@@ -110,12 +101,3 @@ class CommutativeConstantFoldingMapper(
 
     map_common_subexpression_uncached = \
             IdentityMapper.map_common_subexpression
-
-class NonrecursiveCommutativeConstantFoldingMapper(
-        CSECachingMapperMixin,
-        CommutativeConstantFoldingMapperBase,
-        NonrecursiveIdentityMapper,):
-
-    map_common_subexpression_uncached = \
-            NonrecursiveIdentityMapper.map_common_subexpression
-

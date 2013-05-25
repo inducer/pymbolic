@@ -28,6 +28,41 @@ from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 
 
 class CCodeMapper(SimplifyingSortingStringifyMapper):
+    """Generate C code for expressions, while extracting 
+    :class:`pymbolic.primitives.CommonSubexpression` instances.
+
+    As an example, define a fairly simple expression *expr*:
+
+    .. doctest::
+
+        >>> import pymbolic.primitives as p
+        >>> x = p.Variable("x")
+        >>> CSE = p.CommonSubexpression
+        >>> u = CSE(3*x**2-5, "u")
+        >>> expr = u/(u+3)*(u+5)
+        >>> print expr
+        CSE(3*x**2 + -5) / (CSE(3*x**2 + -5) + 3)*(CSE(3*x**2 + -5) + 5)
+
+    Notice that if we were to directly generate code from this, the
+    subexpression *u* would be evaluated multiple times.
+
+    .. doctest::
+
+        >>> from pymbolic.mapper.c_code import CCodeMapper as CCM
+        >>> ccm = CCM()
+        >>> result = ccm(expr)
+
+        >>> for name, value in ccm.cse_name_list:
+        ...     print "%s = %s;" % (name, value)
+        ...
+        _cse_u = 3 * x * x + -5;
+        >>> print result
+        _cse_u / (_cse_u + 3) * (_cse_u + 5)
+
+    See :class:`pymbolic.mapper.stringifier.CSESplittingStringifyMapperMixin`
+    for the ``cse_*`` attributes.
+    """
+
     def __init__(self, constant_mapper=repr, reverse=True, 
             cse_prefix="_cse", complex_constant_base_type="double",
             cse_name_list=[]):

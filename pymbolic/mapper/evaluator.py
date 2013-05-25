@@ -34,7 +34,26 @@ class UnknownVariableError(Exception):
 
 
 class EvaluationMapper(RecursiveMapper):
+    """Example usage:
+
+    .. doctest::
+
+        >>> import pymbolic.primitives as p
+        >>> x = p.Variable("x")
+
+        >>> u = 5*x**2 - 3*x
+        >>> print u
+        5*x**2 + (-1)*3*x
+
+        >>> from pymbolic.mapper.evaluator import EvaluationMapper as EM
+        >>> EM(context={"x": 5})(u)
+        110
+    """
+
     def __init__(self, context={}):
+        """
+        :arg context: a mapping from variable names to values
+        """
         self.context = context
         self.common_subexp_cache = {}
 

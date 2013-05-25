@@ -65,6 +65,8 @@ you put in. It has a few of those built in, but that's not really the point:
     >>> print pmbl.differentiate(u, 'x')
     5*(x + 1)**4
 
+.. _custom-manipulation:
+
 Manipulating expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

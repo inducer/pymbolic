@@ -28,12 +28,23 @@ from pymbolic.mapper import CombineMapper, CSECachingMapperMixin
 
 
 class DependencyMapper(CSECachingMapperMixin, CombineMapper):
-    def __init__(self, 
-            include_subscripts=True, 
+    """Maps an expression to the :class:`set` of expressions it
+    is based on. The ``include_*`` arguments to the constructor
+    determine which types of objects occur in this output set.
+    If all are *False*, only :class:`pymbolic.primitives.Variable`
+    instances are included.
+    """
+
+    def __init__(self,
+            include_subscripts=True,
             include_lookups=True,
             include_calls=True,
             include_cses=False,
             composite_leaves=None):
+        """
+        :arg composite_leaves: Setting this is equivalent to setting
+            all preceding ``include_*`` flags.
+        """
 
         if composite_leaves == False:
             include_subscripts = False

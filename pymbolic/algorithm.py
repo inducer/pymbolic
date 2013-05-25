@@ -72,7 +72,7 @@ def extended_euclidean(q, r):
     """Return a tuple *(p, a, b)* such that :math:`p = aq + br`,
     where *p* is the greatest common divisor of *q* and *r*.
 
-    See also `Wikipedia <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
+    See also the `Wikipedia article on the Euclidean algorithm <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
     """
     import pymbolic.traits as traits
 
