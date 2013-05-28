@@ -207,7 +207,7 @@ class Expression(object):
         return self.stringifier()()(self, PREC_NONE)
 
     def __repr__(self):
-        """Provides a default :func:`repr` based on 
+        """Provides a default :func:`repr` based on
         the Python pickling interface :meth:`__getinitargs__`.
         """
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
@@ -220,7 +220,7 @@ class Expression(object):
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
 
-        Subclasses should generally not override this method, but instead 
+        Subclasses should generally not override this method, but instead
         provide an implementation of :meth:`is_equal`.
         """
         if self is other:
@@ -236,7 +236,7 @@ class Expression(object):
     def __hash__(self):
         """Provides caching for hash values.
 
-        Subclasses should generally not override this method, but instead 
+        Subclasses should generally not override this method, but instead
         provide an implementation of :meth:`get_hash`.
         """
         try:
@@ -284,7 +284,7 @@ class AlgebraicLeaf(Expression):
 
 
 class Leaf(AlgebraicLeaf):
-    """An expression that is irreducible, i.e. has no Expression-type parts 
+    """An expression that is irreducible, i.e. has no Expression-type parts
     whatsoever."""
     pass
 
@@ -805,6 +805,29 @@ class Vector(Expression):
 
 
 
+class cse_scope:
+    """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
+
+    .. attribute:: EVALUATION
+
+        The evaluated result lives for the duration of the evaluation of the
+        current expression and is discarded thereafter.
+
+    .. attribute:: EXPRESSION
+
+        The evaluated result lives for the lifetime of the current expression
+        (across multiple evaluations with multiple parameters) and is discarded
+        when the expression is.
+
+    .. attribute:: GLOBAL
+
+        The evaluated result lives until the execution context dies.
+    """
+
+    EVALUATION = 0
+    EXPRESSION = 1
+    GLOBAL = 2
+
 class CommonSubexpression(Expression):
     """A helper for code generation and caching. Denotes a subexpression that
     should only be evaluated once. If, in code generation, it is assigned to
@@ -812,16 +835,26 @@ class CommonSubexpression(Expression):
 
     .. attribute:: child
     .. attribute:: prefix
+    .. attribute:: scope
+
+        One of the values in :class:`cse_scope`. See there for meaning.
 
     See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example.
     """
 
-    def __init__(self, child, prefix=None):
+    def __init__(self, child, prefix=None, scope=None):
+        """
+        :arg scope: Defaults to :attr:`cse_scope.EVALUATION` if given as *None*.
+        """
+        if scope is None:
+            scope = cse_scope.EVALUATION
+
         self.child = child
         self.prefix = prefix
+        self.scope = scope
 
     def __getinitargs__(self):
-        return (self.child, self.prefix)
+        return (self.child, self.prefix, self.scope)
 
     def get_extra_properties(self):
         """Return a dictionary of extra kwargs to be passed to the
@@ -1089,10 +1122,15 @@ def wrap_in_cse(expr, prefix=None):
 
 
 
-def make_common_subexpression(field, prefix=None):
+def make_common_subexpression(field, prefix=None, scope=None):
     """Wrap *field* in a :class:`CommonSubexpression` with
     *prefix*. If *field* is a :mod:`numpy` object array,
-    each individual entry is instead wrapped.
+    each individual entry is instead wrapped. If *field* is a
+    :class:`pymbolic.geometric_algebra.MultiVector`, each
+    coefficient is individually wrapped.
+
+    See :class:`CommonSubexpression` for the meaning of *prefix*
+    and *scope*.
     """
 
     try:
@@ -1105,7 +1143,21 @@ def make_common_subexpression(field, prefix=None):
     if have_obj_array:
         ls = log_shape(field)
 
-    if have_obj_array and ls != ():
+    from pymbolic.geometric_algebra import MultiVector
+    if isinstance(field, MultiVector):
+        new_data = {}
+        for bits, coeff in field.data.iteritems():
+            if prefix is not None:
+                blade_str = field.space.blade_bits_to_str(bits, "")
+                component_prefix = prefix+blade_str
+            else:
+                component_prefix = None
+
+            new_data[bits] = CommonSubexpression(coeff, component_prefix, scope)
+
+        return MultiVector(new_data, self.space)
+
+    elif have_obj_array and ls != ():
         from pytools import indices_in_shape
         result = numpy.zeros(ls, dtype=object)
 
@@ -1118,14 +1170,14 @@ def make_common_subexpression(field, prefix=None):
             if is_constant(field[i]):
                 result[i] = field[i]
             else:
-                result[i] = CommonSubexpression(field[i], component_prefix)
+                result[i] = CommonSubexpression(field[i], component_prefix, scope)
 
         return result
     else:
         if is_constant(field):
             return field
         else:
-            return CommonSubexpression(field, prefix)
+            return CommonSubexpression(field, prefix, scope)
 
 
 

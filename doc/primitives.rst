@@ -95,6 +95,9 @@ Code generation helpers
     :undoc-members:
     :members: mapper_method
 
+.. autoclass:: cse_scope
+.. autofunction:: make_common_subexpression
+
 Helper functions
 ----------------
 
@@ -103,7 +106,6 @@ Helper functions
 .. autofunction:: register_constant_class
 .. autofunction:: unregister_constant_class
 .. autofunction:: variables
-.. autofunction:: make_common_subexpression
 
 Interaction with :mod:`numpy` arrays
 ------------------------------------

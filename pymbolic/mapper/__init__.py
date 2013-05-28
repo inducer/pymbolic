@@ -329,6 +329,7 @@ class IdentityMapper(Mapper):
         return type(expr)(
                 result,
                 expr.prefix,
+                expr.scope,
                 **expr.get_extra_properties())
 
     def map_substitution(self, expr, *args):
