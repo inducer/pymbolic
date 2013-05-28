@@ -8,6 +8,8 @@ Expression base class
 
 .. autoclass:: Expression
 
+    .. attribute:: attr
+
     .. attribute:: mapper_method
 
         The :class:`pymbolic.mapper.Mapper` method called for objects of

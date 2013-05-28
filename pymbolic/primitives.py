@@ -181,6 +181,11 @@ class Expression(object):
         else:
             return Subscript(self, subscript)
 
+    def attr(self, name):
+        """Return a :class:`Lookup` for *name* in *self*.
+        """
+        return Lookup(self, name)
+
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
