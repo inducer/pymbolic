@@ -169,8 +169,8 @@ class Space(object):
     def is_euclidean(self):
         return (self.metric_matrix == np.eye(self.metric_matrix.shape[0])).all()
 
-    def blade_bits_to_str(self, bits):
-        return "^".join( 
+    def blade_bits_to_str(self, bits, outer_operator="^"):
+        return outer_operator.join(
                     name
                     for bit_num, name in enumerate(self.basis_names)
                     if bits & (1 << bit_num))
