@@ -107,9 +107,10 @@ class CompiledExpression:
 
     def __init__(self, expression, variables = []):
         """
-        :arg variables: The first arguments to be used for the compiled function.
-            All variables used by the expression and not present here are added
-            in alphabetical order.
+        :arg variables: The first arguments (as strings or
+            :class:`pymbolic.primitives.Variable` instances) to be used for the
+            compiled function.  All variables used by the expression and not
+            present here are added in alphabetical order.
         """
         import pymbolic.primitives as primi
 
