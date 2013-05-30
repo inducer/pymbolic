@@ -25,8 +25,6 @@ THE SOFTWARE.
 import pymbolic.primitives as primitives
 
 
-
-
 try:
     import numpy
 
@@ -35,8 +33,6 @@ try:
 except ImportError:
     def is_numpy_array(ary):
         return False
-
-
 
 
 class UnsupportedExpressionError(ValueError):
@@ -63,8 +59,8 @@ class Mapper(object):
                     type(self), type(expr)))
 
     def __call__(self, expr, *args, **kwargs):
-        """Dispatch *expr* to its corresponding mapper method. Pass on ``*args``
-        and ``**kwargs`` unmodified.
+        """Dispatch *expr* to its corresponding mapper method. Pass on
+        ``*args`` and ``**kwargs`` unmodified.
 
         This method is intended as the top-level dispatch entry point and may
         be overridden by subclasses to present a different/more convenient
@@ -80,7 +76,8 @@ class Mapper(object):
                 method = expr.get_mapper_method(self)
             except AttributeError:
                 if isinstance(expr, primitives.Expression):
-                    return self.handle_unsupported_expression(expr, *args, **kwargs)
+                    return self.handle_unsupported_expression(
+                            expr, *args, **kwargs)
                 else:
                     return self.map_foreign(expr, *args, **kwargs)
 
@@ -118,33 +115,34 @@ class Mapper(object):
         elif is_numpy_array(expr):
             return self.map_numpy_array(expr, *args)
         else:
-            raise ValueError, "%s encountered invalid foreign object: %s" % (
-                    self.__class__, repr(expr))
+            raise ValueError(
+                    "%s encountered invalid foreign object: %s" % (
+                    self.__class__, repr(expr)))
 
 # }}}
 
 
-
-
-
 RecursiveMapper = Mapper
+
 
 # {{{ combine mapper
 
 class CombineMapper(RecursiveMapper):
-    """A mapper whose goal it is to *combine* all branches of the expression tree
-    into one final result. The default implementation of all mapper methods simply
-    recurse (:meth:`Mapper.rec`) on all branches emanating from the current expression,
-    and then call :meth:`combine` on a tuple of results.
+    """A mapper whose goal it is to *combine* all branches of the expression
+    tree into one final result. The default implementation of all mapper
+    methods simply recurse (:meth:`Mapper.rec`) on all branches emanating from
+    the current expression, and then call :meth:`combine` on a tuple of
+    results.
 
     .. method:: combine(values)
 
         Combine the mapped results of multiple expressions (given in *values*)
         into a single result, often by summing or taking set unions.
 
-    The :class:`pymbolic.mapper.flop_counter.FlopCounter` is a very simple example.
-    (Look at its source for an idea of how to derive from :class:`CombineMapper`.)
-    The :class:`pymbolic.mapper.dependency.DependencyMapper` is another example.
+    The :class:`pymbolic.mapper.flop_counter.FlopCounter` is a very simple
+    example.  (Look at its source for an idea of how to derive from
+    :class:`CombineMapper`.) The
+    :class:`pymbolic.mapper.dependency.DependencyMapper` is another example.
     """
 
     def map_call(self, expr, *args):
@@ -226,6 +224,7 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.else_)])
 
 # }}}
+
 
 # {{{ identity mapper
 
@@ -348,7 +347,7 @@ class IdentityMapper(Mapper):
             if expr is None:
                 return expr
             else:
-                return self.rec(ch, *args)
+                return self.rec(expr, *args)
 
         return type(expr)(
                 tuple(do_map(ch) for ch in expr.children))
@@ -366,6 +365,7 @@ class IdentityMapper(Mapper):
                 self.rec(expr.else_, *args))
 
 # }}}
+
 
 # {{{ walk mapper
 
@@ -514,6 +514,7 @@ class WalkMapper(RecursiveMapper):
 
 # }}}
 
+
 # {{{ callback mapper
 
 class CallbackMapper(RecursiveMapper):
@@ -545,22 +546,23 @@ class CallbackMapper(RecursiveMapper):
 
 # }}}
 
+
 # {{{ cse caching mixin
 
 class CSECachingMapperMixin(object):
     """A :term:`mix-in` that helps
-    subclassed mappers implement caching for 
+    subclassed mappers implement caching for
     :class:`pymbolic.primitives.CommonSubexpression`
     instances.
 
-    Instead of the common mapper method for 
+    Instead of the common mapper method for
     :class:`pymbolic.primitives.CommonSubexpression`,
     subclasses should implement the following method:
 
     .. method:: map_common_subexpression_uncached(expr)
 
-    This method deliberately does not support extra arguments in mapper dispatch,
-    to avoid spurious dependencies of the cache on these arguments.
+    This method deliberately does not support extra arguments in mapper
+    dispatch, to avoid spurious dependencies of the cache on these arguments.
     """
 
     def map_common_subexpression(self, expr):
