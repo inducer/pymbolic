@@ -30,9 +30,13 @@ PREC_POWER = 14
 PREC_UNARY = 13
 PREC_PRODUCT = 12
 PREC_SUM = 11
-PREC_COMPARISON = 10
-PREC_LOGICAL_AND = 9
-PREC_LOGICAL_OR = 8
+PREC_SHIFT = 10
+PREC_BITWISE_AND = 9
+PREC_BITWISE_XOR = 8
+PREC_BITWISE_OR = 7
+PREC_COMPARISON = 6
+PREC_LOGICAL_AND = 5
+PREC_LOGICAL_OR = 4
 PREC_NONE = 0
 
 
@@ -167,6 +171,40 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             [coeff*expr.base**exp for exp, coeff in expr.data[::-1]]),
             enclosing_prec)
 
+    def map_left_shift(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.format("%s << %s",
+                    self.rec(expr.shiftee, PREC_SHIFT),
+                    self.rec(expr.shift, PREC_SHIFT)),
+                enclosing_prec, PREC_SHIFT)
+
+    def map_right_shift(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.format("%s >> %s",
+                    self.rec(expr.shiftee, PREC_SHIFT),
+                    self.rec(expr.shift, PREC_SHIFT)),
+                enclosing_prec, PREC_SHIFT)
+
+    def map_bitwise_not(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                "~" + self.rec(expr.child, PREC_UNARY),
+                enclosing_prec, PREC_UNARY)
+
+    def map_bitwise_or(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" | ", expr.children, PREC_BITWISE_OR),
+                enclosing_prec, PREC_BITWISE_OR)
+
+    def map_bitwise_xor(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" ^ ", expr.children, PREC_BITWISE_XOR),
+                enclosing_prec, PREC_BITWISE_XOR)
+
+    def map_bitwise_and(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" ^ ", expr.children, PREC_BITWISE_AND),
+                enclosing_prec, PREC_BITWISE_AND)
+
     def map_comparison(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
                 self.format("%s %s %s",
@@ -177,18 +215,18 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_logical_not(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.rec(expr.child, PREC_UNARY),
+                "not " + self.rec(expr.child, PREC_UNARY),
                 enclosing_prec, PREC_UNARY)
-
-    def map_logical_and(self, expr, enclosing_prec):
-        return self.parenthesize_if_needed(
-                self.join_rec(" && ", expr.children, PREC_LOGICAL_AND),
-                enclosing_prec, PREC_LOGICAL_AND)
 
     def map_logical_or(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
-                self.join_rec(" || ", expr.children, PREC_LOGICAL_OR),
+                self.join_rec(" or ", expr.children, PREC_LOGICAL_OR),
                 enclosing_prec, PREC_LOGICAL_OR)
+
+    def map_logical_and(self, expr, enclosing_prec):
+        return self.parenthesize_if_needed(
+                self.join_rec(" and ", expr.children, PREC_LOGICAL_AND),
+                enclosing_prec, PREC_LOGICAL_AND)
 
     def map_list(self, expr, enclosing_prec):
         return self.format("[%s]", self.join_rec(", ", expr, PREC_NONE))

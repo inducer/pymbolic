@@ -65,6 +65,36 @@ Sums, products and such
     :undoc-members:
     :members: mapper_method
 
+Shift operators
+---------------
+
+.. autoclass:: LeftShift
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: RightShift
+    :undoc-members:
+    :members: mapper_method
+
+Bitwise operators
+-----------------
+
+.. autoclass:: BitwiseNot
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: BitwiseOr
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: BitwiseXor
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: BitwiseAnd
+    :undoc-members:
+    :members: mapper_method
+
 Comparisons and logic
 ---------------------
 

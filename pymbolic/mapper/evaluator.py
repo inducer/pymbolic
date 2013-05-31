@@ -22,7 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+
 from pymbolic.mapper import RecursiveMapper
+import operator as op
 
 
 class UnknownVariableError(Exception):
@@ -89,6 +91,35 @@ class EvaluationMapper(RecursiveMapper):
 
     def map_power(self, expr):
         return self.rec(expr.base) ** self.rec(expr.exponent)
+
+    def map_left_shift(self, expr):
+        return self.rec(expr.shiftee) << self.rec(expr.shift)
+
+    def map_right_shift(self, expr):
+        return self.rec(expr.shiftee) >> self.rec(expr.shift)
+
+    def map_bitwise_not(self, expr):
+        return ~self.rec(expr.child)
+
+    def map_bitwise_or(self, expr):
+        return reduce(op.or_, (self.rec(ch) for ch in expr.children))
+
+    def map_bitwise_xor(self, expr):
+        return reduce(op.xor, (self.rec(ch) for ch in expr.children))
+
+    def map_bitwise_and(self, expr):
+        return reduce(op.and_, (self.rec(ch) for ch in expr.children))
+
+    def map_logical_not(self, expr):
+        return not self.rec(expr.child)
+
+    def map_logical_or(self, expr):
+        from pytools import any
+        return any(self.rec(ch) for ch in expr.children)
+
+    def map_logical_and(self, expr):
+        from pytools import all
+        return all(self.rec(ch) for ch in expr.children)
 
     def map_polynomial(self, expr):
         # evaluate using Horner's scheme

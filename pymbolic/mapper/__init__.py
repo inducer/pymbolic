@@ -186,14 +186,22 @@ class CombineMapper(RecursiveMapper):
                     self.rec(coeff, *args) for exp, coeff in expr.data)
                 )
 
-    def map_logical_and(self, expr, *args):
-        return self.combine(self.rec(child, *args)
-                for child in expr.children)
+    def map_left_shift(self, expr, *args):
+        return self.combine(
+                self.rec(expr.shiftee, *args),
+                self.rec(expr.shift, *args))
 
-    map_logical_or = map_logical_and
+    map_right_shift = map_left_shift
 
-    def map_logical_not(self, expr, *args):
+    def map_bitwise_not(self, expr, *args):
         return self.rec(expr.child, *args)
+    map_bitwise_or = map_sum
+    map_bitwise_xor = map_sum
+    map_bitwise_and = map_sum
+
+    map_logical_not = map_bitwise_not
+    map_logical_and = map_sum
+    map_logical_or = map_sum
 
     def map_comparison(self, expr, *args):
         return self.combine((
@@ -288,16 +296,27 @@ class IdentityMapper(Mapper):
                               ((exp, self.rec(coeff, *args))
                                   for exp, coeff in expr.data))
 
-    def map_logical_and(self, expr, *args):
+    def map_left_shift(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.shiftee, *args),
+                self.rec(expr.shift, *args))
+
+    map_right_shift = map_left_shift
+
+    def map_bitwise_not(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.child, *args))
+
+    def map_bitwise_or(self, expr, *args):
         return type(expr)(tuple(
             self.rec(child, *args) for child in expr.children))
 
-    map_logical_or = map_logical_and
+    map_bitwise_xor = map_bitwise_or
+    map_bitwise_and = map_bitwise_or
 
-    def map_logical_not(self, expr, *args):
-        from pymbolic.primitives import LogicalNot
-        return LogicalNot(
-                self.rec(expr.child, *args))
+    map_logical_not = map_bitwise_not
+    map_logical_or = map_bitwise_or
+    map_logical_and = map_bitwise_or
 
     def map_comparison(self, expr, *args):
         return type(expr)(
@@ -463,6 +482,25 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.child)
 
+    def map_left_shift(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.shift)
+        self.rec(expr.shiftee)
+
+    mrs = map_left_shift
+
+    def map_bitwise_not(self, expr):
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.child)
+
+    map_bitwise_or = map_sum
+    map_bitwise_xor = map_sum
+    map_bitwise_and = map_sum
+
     def map_comparison(self, expr):
         if not self.visit(expr):
             return
@@ -470,12 +508,7 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.left)
         self.rec(expr.right)
 
-    def map_logical_not(self, expr):
-        if not self.visit(expr):
-            return
-
-        self.rec(expr.child)
-
+    map_logical_not = map_bitwise_not
     map_logical_and = map_sum
     map_logical_or = map_sum
 
@@ -537,6 +570,19 @@ class CallbackMapper(RecursiveMapper):
     map_floor_div = map_constant
     map_remainder = map_constant
     map_power = map_constant
+
+    map_left_shift = map_constant
+    map_right_shift = map_constant
+
+    map_bitwise_not = map_constant
+    map_bitwise_or = map_constant
+    map_bitwise_xor = map_constant
+    map_bitwise_and = map_constant
+
+    map_logical_not = map_constant
+    map_logical_or = map_constant
+    map_logical_and = map_constant
+
     map_polynomial = map_constant
     map_list = map_constant
     map_tuple = map_constant

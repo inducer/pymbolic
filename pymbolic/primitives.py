@@ -167,6 +167,49 @@ class Expression(object):
 
     # }}}
 
+    # {{{ shifts
+
+    def __lshift__(self, other):
+        return LeftShift(self, other)
+
+    def __rlshift__(self, other):
+        return LeftShift(other, self)
+
+    def __rshift__(self, other):
+        return RightShift(self, other)
+
+    def __rrshift__(self, other):
+        return RightShift(other, self)
+
+    # }}}
+
+    # {{{ bitwise operators
+
+    def __inv__(self):
+        return BitwiseNot(self)
+
+    def __or__(self, other):
+        return BitwiseOr(self, other)
+
+    def __ror__(self, other):
+        return BitwiseOr(other, self)
+
+    def __xor__(self, other):
+        return BitwiseXor(self, other)
+
+    def __rxor__(self, other):
+        return BitwiseXor(other, self)
+
+    def __and__(self, other):
+        return BitwiseAnd(self, other)
+
+    def __rand__(self, other):
+        return BitwiseAnd(other, self)
+
+    # }}}
+
+    # {{{
+
     def __neg__(self):
         return -1*self
 
@@ -211,6 +254,7 @@ class Expression(object):
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
 
         return "%s(%s)" % (self.__class__.__name__, initargs_str)
+    # }}}
 
     # {{{ hashable interface
 
@@ -396,13 +440,7 @@ class Lookup(AlgebraicLeaf):
 
 # {{{ arithmetic primitives
 
-class Sum(Expression):
-    """
-    .. attribute:: children
-
-        A :class:`tuple`.
-    """
-
+class _MultiChildExpression(Expression):
     def __init__(self, children):
         assert isinstance(children, tuple)
 
@@ -410,6 +448,14 @@ class Sum(Expression):
 
     def __getinitargs__(self):
         return self.children
+
+
+class Sum(_MultiChildExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
 
     def __add__(self, other):
         if not is_valid_operand(other):
@@ -451,19 +497,12 @@ class Sum(Expression):
     mapper_method = intern("map_sum")
 
 
-class Product(Expression):
+class Product(_MultiChildExpression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self.children = children
-
-    def __getinitargs__(self):
-        return self.children
 
     def __mul__(self, other):
         if not is_valid_operand(other):
@@ -567,6 +606,85 @@ class Power(Expression):
 # }}}
 
 
+# {{{ shift operators
+
+class _ShiftOperator(Expression):
+    def __init__(self, shiftee, shift):
+        self.shiftee = shiftee
+        self.shift = shift
+
+    def __getinitargs__(self):
+        return self.base, self.exponent
+
+
+class LeftShift(Expression):
+    """
+    .. attribute:: shiftee
+    .. attribute:: shift
+    """
+
+    mapper_method = intern("map_left_shift")
+
+
+class RightShift(Expression):
+    """
+    .. attribute:: shiftee
+    .. attribute:: shift
+    """
+
+    mapper_method = intern("map_right_shift")
+
+# }}}
+
+
+# {{{ bitwise operators
+
+class BitwiseNot(Expression):
+    """
+    .. attribute:: child
+    """
+
+    def __init__(self, child):
+        self.child = child
+
+    def __getinitargs__(self):
+        return (self.child,)
+
+    mapper_method = intern("map_bitwise_not")
+
+
+class BitwiseOr(_MultiChildExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
+    mapper_method = intern("map_bitwise_or")
+
+
+class BitwiseXor(_MultiChildExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
+    mapper_method = intern("map_bitwise_xor")
+
+
+class BitwiseAnd(_MultiChildExpression):
+    """
+    .. attribute:: children
+
+        A :class:`tuple`.
+    """
+
+    mapper_method = intern("map_bitwise_and")
+
+# }}}
+
+
 # {{{ comparisons, logic, conditionals
 
 class ComparisonOperator(Expression):
@@ -598,11 +716,7 @@ class ComparisonOperator(Expression):
     mapper_method = intern("map_comparison")
 
 
-class BooleanExpression(Expression):
-    pass
-
-
-class LogicalNot(BooleanExpression):
+class LogicalNot(Expression):
     """
     .. attribute:: child
     """
@@ -611,43 +725,27 @@ class LogicalNot(BooleanExpression):
         self.child = child
 
     def __getinitargs__(self):
-        return (self.child, self.prefix)
+        return (self.child,)
 
     mapper_method = intern("map_logical_not")
 
 
-class LogicalOr(BooleanExpression):
+class LogicalOr(_MultiChildExpression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-
-        self.children = children
-
-    def __getinitargs__(self):
-        return self.children
 
     mapper_method = intern("map_logical_or")
 
 
-class LogicalAnd(BooleanExpression):
+class LogicalAnd(_MultiChildExpression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-
-        self.children = children
-
-    def __getinitargs__(self):
-        return self.children
 
     mapper_method = intern("map_logical_and")
 
