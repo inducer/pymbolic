@@ -25,8 +25,6 @@ THE SOFTWARE.
 import pymbolic.mapper
 
 
-
-
 PREC_CALL = 15
 PREC_POWER = 14
 PREC_UNARY = 13
@@ -38,6 +36,7 @@ PREC_LOGICAL_OR = 8
 PREC_NONE = 0
 
 
+# {{{ stringifier
 
 class StringifyMapper(pymbolic.mapper.Mapper):
     """A mapper to turn an expression tree into a string.
@@ -57,7 +56,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         """
         self.constant_mapper = constant_mapper
 
-    # replaceable string composition interface --------------------------------
+    # {{{ replaceable string composition interface
+
     def format(self, s, *args):
         return s % args
 
@@ -77,7 +77,10 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         else:
             return s
 
-    # mappings ----------------------------------------------------------------
+    # }}}
+
+    # {{{ mappings
+
     def handle_unsupported_expression(self, victim, enclosing_prec):
         strifier = victim.stringifier()
         if isinstance(self, strifier):
@@ -94,7 +97,6 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             return self.parenthesize(result)
         else:
             return result
-
 
     def map_variable(self, expr, enclosing_prec):
         return expr.name
@@ -137,14 +139,14 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                     # space is necessary--otherwise '/*' becomes
                     # start-of-comment in C. ('*' from dereference)
                     self.rec(expr.numerator, PREC_PRODUCT),
-                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
+                    self.rec(expr.denominator, PREC_POWER)),  # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
                 self.format("%s // %s",
                     self.rec(expr.numerator, PREC_PRODUCT),
-                    self.rec(expr.denominator, PREC_POWER)), # analogous to ^{-1}
+                    self.rec(expr.denominator, PREC_POWER)),  # analogous to ^{-1}
                 enclosing_prec, PREC_PRODUCT)
 
     def map_power(self, expr, enclosing_prec):
@@ -157,7 +159,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def map_remainder(self, expr, enclosing_prec):
         return self.format("(%s %% %s)",
                     self.rec(expr.numerator, PREC_PRODUCT),
-                    self.rec(expr.denominator, PREC_POWER)) # analogous to ^{-1}
+                    self.rec(expr.denominator, PREC_POWER))  # analogous to ^{-1}
 
     def map_polynomial(self, expr, enclosing_prec):
         from pymbolic.primitives import flattened_sum
@@ -247,7 +249,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_min(self, expr, enclosing_prec):
         what = type(expr).__name__.lower()
-        return self.format("%s(%s)", what, self.join_rec(", ", expr.children, PREC_NONE))
+        return self.format("%s(%s)",
+                what, self.join_rec(", ", expr.children, PREC_NONE))
 
     map_max = map_min
 
@@ -278,6 +281,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 self.join(":", children),
                 enclosing_prec, PREC_NONE)
 
+    # }}}
 
     def __call__(self, expr, prec=PREC_NONE):
         """Return a string corresponding to *expr*. If the enclosing
@@ -287,9 +291,10 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
         return pymbolic.mapper.Mapper.__call__(self, expr, prec)
 
+# }}}
 
 
-
+# {{{ cse-splitting stringifier
 
 class CSESplittingStringifyMapperMixin(object):
     """A :term:`mix-in` for subclasses of
@@ -353,12 +358,14 @@ class CSESplittingStringifyMapperMixin(object):
         return cse_name
 
     def get_cse_strings(self):
-        return [ "%s : %s" % (cse_name, cse_str)
+        return ["%s : %s" % (cse_name, cse_str)
                 for cse_name, cse_str in
                     sorted(getattr(self, "cse_name_list", []))]
 
+# }}}
 
 
+# {{{ sorting stringifier
 
 class SortingStringifyMapper(StringifyMapper):
     def __init__(self, constant_mapper=str, reverse=True):
@@ -379,8 +386,10 @@ class SortingStringifyMapper(StringifyMapper):
                 self.join("*", entries),
                 enclosing_prec, PREC_PRODUCT)
 
+# }}}
 
 
+# {{{ simplifying, sorting stringifier
 
 class SimplifyingSortingStringifyMapper(StringifyMapper):
     def __init__(self, constant_mapper=str, reverse=True):
@@ -432,7 +441,8 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
                 # NOTE: That space needs to be there.
                 # Otherwise two unary minus signs merge into a pre-decrement.
                 entries.append(
-                        self.format("- %s", self.rec(expr.children[i+1], PREC_UNARY)))
+                        self.format(
+                            "- %s", self.rec(expr.children[i+1], PREC_UNARY)))
                 i += 2
             else:
                 entries.append(self.rec(child, PREC_PRODUCT))
@@ -442,3 +452,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
         result = "*".join(entries)
 
         return self.parenthesize_if_needed(result, enclosing_prec, PREC_PRODUCT)
+
+# }}}
+
+# vim: fdm=marker
