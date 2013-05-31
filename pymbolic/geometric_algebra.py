@@ -27,15 +27,12 @@ from pymbolic.primitives import is_zero
 import numpy as np
 
 
-
 __doc__ = """
 See `Wikipedia <https://en.wikipedia.org/wiki/Geometric_algebra>`_ for an idea
 of what this is.
 
 .. versionadded:: 2013.2
 """
-
-
 
 
 # {{{ helpers
@@ -58,6 +55,7 @@ def permutation_sign(p):
 
     return s
 
+
 def bit_count(i):
     """Count the number of set bits in *i*."""
 
@@ -68,6 +66,7 @@ def bit_count(i):
         i &= i - 1
         count += 1
     return count
+
 
 def canonical_reordering_sign(a_bits, b_bits):
     """Count the number of basis vector swaps required to
@@ -83,7 +82,7 @@ def canonical_reordering_sign(a_bits, b_bits):
     s = 0
     while a_bits:
         s = s + bit_count(a_bits & b_bits)
-        a_bits = a_bits >> 1;
+        a_bits = a_bits >> 1
 
     if s & 1:
         return -1
@@ -91,6 +90,7 @@ def canonical_reordering_sign(a_bits, b_bits):
         return 1
 
 # }}}
+
 
 # {{{ space
 
@@ -115,7 +115,8 @@ class Space(object):
         """
 
         if basis is None and metric_matrix is None:
-            raise TypeError("at least one of 'basis' and 'metric_matrix' must be passed")
+            raise TypeError("at least one of 'basis' and 'metric_matrix' "
+                    "must be passed")
 
         if basis is None:
             basis = int(metric_matrix.shape[0])
@@ -192,6 +193,7 @@ def get_euclidean_space(n):
 
 # }}}
 
+
 # {{{ blade product weights
 
 def _shared_metric_coeff(shared_bits, space):
@@ -208,8 +210,10 @@ def _shared_metric_coeff(shared_bits, space):
 
     return result
 
+
 class _GAProduct(object):
     pass
+
 
 class _OuterProduct(_GAProduct):
     @staticmethod
@@ -217,6 +221,7 @@ class _OuterProduct(_GAProduct):
         return int(not a_bits & b_bits)
 
     orthogonal_blade_product_weight = generic_blade_product_weight
+
 
 class _GeometricProduct(_GAProduct):
     @staticmethod
@@ -233,6 +238,7 @@ class _GeometricProduct(_GAProduct):
         else:
             return 1
 
+
 class _InnerProduct(_GAProduct):
     @staticmethod
     def generic_blade_product_weight(a_bits, b_bits, space):
@@ -247,6 +253,7 @@ class _InnerProduct(_GAProduct):
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
+
 
 class _LeftContractionProduct(_GAProduct):
     @staticmethod
@@ -263,6 +270,7 @@ class _LeftContractionProduct(_GAProduct):
         else:
             return 0
 
+
 class _RightContractionProduct(_GAProduct):
     @staticmethod
     def generic_blade_product_weight(a_bits, b_bits, space):
@@ -278,6 +286,7 @@ class _RightContractionProduct(_GAProduct):
         else:
             return 0
 
+
 class _ScalarProduct(_GAProduct):
     @staticmethod
     def generic_blade_product_weight(a_bits, b_bits, space):
@@ -292,6 +301,7 @@ class _ScalarProduct(_GAProduct):
             return 0
 
 # }}}
+
 
 # {{{ multivector
 
@@ -311,10 +321,12 @@ class MultiVector(object):
     See the following literature:
 
         [DFM] L. Dorst, D. Fontijne, and S. Mann, `Geometric Algebra for Computer
-        Science: An Object-Oriented Approach to Geometry <https://books.google.com?isbn=0080553109>`_. Morgan Kaufmann, 2010.
+        Science: An Object-Oriented Approach to Geometry
+        <https://books.google.com?isbn=0080553109>`_. Morgan Kaufmann, 2010.
 
         [HS] D. Hestenes and G. Sobczyk, `Clifford Algebra to Geometric Calculus: A
-        Unified Language for Mathematics and Physics <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
+        Unified Language for Mathematics and Physics
+        <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
 
     The object behaves much like the corresponding
     :class:`sympy.galgebra.GA.MV` object in :mod:`sympy`, especially with
@@ -348,9 +360,11 @@ class MultiVector(object):
         """
         :arg data: This may be one of the following:
 
-            * a :class:`numpy.ndarray`, which will be turned into a grade-1 multivector,
+            * a :class:`numpy.ndarray`, which will be turned into a grade-1
+              multivector,
             * a mapping from tuples of basis indices (together indicating a blade,
-              order matters and will be mapped to 'normalized' blades) to coefficients,
+              order matters and will be mapped to 'normalized' blades) to
+              coefficients,
             * an array as described in :attr:`data`,
             * a scalar--where everything that doesn't fall into the above cases
               is viewed as a scalar.
@@ -500,7 +514,9 @@ class MultiVector(object):
 
                 if not is_zero(weight):
                     # These are nonzero by definition.
-                    coeff = weight * canonical_reordering_sign(sbits, obits) * scoeff * ocoeff
+                    coeff = (weight
+                            * canonical_reordering_sign(sbits, obits)
+                            * scoeff * ocoeff)
                     new_coeff = new_data.setdefault(new_bits, 0) + coeff
                     if is_zero(new_coeff):
                         del new_data[new_bits]
@@ -585,7 +601,7 @@ class MultiVector(object):
         other = int(other)
 
         from pymbolic.algorithm import integer_power
-        return integer_power(self, other, one=MultiVector({0:1}, self.space))
+        return integer_power(self, other, one=MultiVector({0: 1}, self.space))
 
     def __truediv__(self, other):
         """Return ``self*(1/other)``.
@@ -638,8 +654,8 @@ class MultiVector(object):
         return MultiVector({bits: coeff}, self.space)
 
     def rev(self):
-        r"""Return the *reverse* of *self*, i.e. the multivector obtained by reversing
-        the order of all component blades.
+        r"""Return the *reverse* of *self*, i.e. the multivector obtained by
+        reversing the order of all component blades.
 
         Often written :math:`A^\dagger`.
         """
@@ -728,7 +744,8 @@ class MultiVector(object):
     # {{{ grade manipulation
 
     def gen_blades(self, grade=None):
-        """Generate all blades in *self*, optionally only those of a specific *grade*.
+        """Generate all blades in *self*, optionally only those of a specific
+        *grade*.
         """
 
         if grade is None:
@@ -832,8 +849,9 @@ class MultiVector(object):
     # {{{ helper functions
 
     def map(self, f):
-        """Return a new :class:`MultiVector` with coefficients mapped by function
-        *f*, which takes a single coefficient as input and returns the new coefficient.
+        """Return a new :class:`MultiVector` with coefficients mapped by
+        function *f*, which takes a single coefficient as input and returns the
+        new coefficient.
         """
         new_data = {}
         for bits, coeff in self.data.iteritems():
