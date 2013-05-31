@@ -25,10 +25,8 @@ THE SOFTWARE.
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 
 
-
-
 class CCodeMapper(SimplifyingSortingStringifyMapper):
-    """Generate C code for expressions, while extracting 
+    """Generate C code for expressions, while extracting
     :class:`pymbolic.primitives.CommonSubexpression` instances.
 
     As an example, define a fairly simple expression *expr*:
@@ -63,7 +61,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
     for the ``cse_*`` attributes.
     """
 
-    def __init__(self, constant_mapper=repr, reverse=True, 
+    def __init__(self, constant_mapper=repr, reverse=True,
             cse_prefix="_cse", complex_constant_base_type="double",
             cse_name_list=[]):
         SimplifyingSortingStringifyMapper.__init__(self, constant_mapper, reverse)
@@ -99,7 +97,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         if isinstance(x, complex):
             return "std::complex<%s>(%s, %s)" % (
                     self.complex_constant_base_type,
-                    self.constant_mapper(x.real), 
+                    self.constant_mapper(x.real),
                     self.constant_mapper(x.imag))
         else:
             return SimplifyingSortingStringifyMapper.map_constant(
@@ -128,7 +126,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                 return self.rec(expr.base*expr.base, enclosing_prec)
 
         return self.format("pow(%s, %s)",
-                self.rec(expr.base, PREC_NONE), 
+                self.rec(expr.base, PREC_NONE),
                 self.rec(expr.exponent, PREC_NONE))
 
     def map_floor_div(self, expr, enclosing_prec):
@@ -139,7 +137,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                 PREC_PRODUCT, PREC_POWER)
         return self.format("(%s/%s)",
                     self.rec(expr.numerator, PREC_PRODUCT),
-                    self.rec(expr.denominator, PREC_POWER)) # analogous to ^{-1}
+                    self.rec(expr.denominator, PREC_POWER))  # analogous to ^{-1}
 
     def map_common_subexpression(self, expr, enclosing_prec):
         try:
@@ -189,4 +187,3 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                 self.rec(expr.then, PREC_NONE),
                 self.rec(expr.else_, PREC_NONE),
                 )
-
