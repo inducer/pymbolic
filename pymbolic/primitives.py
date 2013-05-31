@@ -25,8 +25,6 @@ THE SOFTWARE.
 import traits
 
 
-
-
 class Expression(object):
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
@@ -152,18 +150,18 @@ class Expression(object):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other): # exponent zero
+        if is_zero(other):  # exponent zero
             return 1
-        elif is_zero(other-1): # exponent one
+        elif is_zero(other-1):  # exponent one
             return self
         return Power(self, other)
 
     def __rpow__(self, other):
         assert is_constant(other)
 
-        if is_zero(other): # base zero
+        if is_zero(other):  # base zero
             return 0
-        elif is_zero(other-1): # base one
+        elif is_zero(other-1):  # base one
             return 1
         return Power(other, self)
 
@@ -254,7 +252,7 @@ class Expression(object):
                 and self.__getinitargs__() == other.__getinitargs__())
 
     def get_hash(self):
-        return hash((type(self),)+ self.__getinitargs__())
+        return hash((type(self),) + self.__getinitargs__())
 
     # }}}
 
@@ -262,16 +260,19 @@ class Expression(object):
 
     # /!\ Don't be tempted to resolve these to ComparisonOperator.
 
-    def __le__(self, other): raise TypeError("expressions don't have an order")
-    def __lt__(self, other): raise TypeError("expressions don't have an order")
-    def __ge__(self, other): raise TypeError("expressions don't have an order")
-    def __gt__(self, other): raise TypeError("expressions don't have an order")
+    def __le__(self, other):
+        raise TypeError("expressions don't have an order")
+
+    def __lt__(self, other):
+        raise TypeError("expressions don't have an order")
+
+    def __ge__(self, other):
+        raise TypeError("expressions don't have an order")
+
+    def __gt__(self, other):
+        raise TypeError("expressions don't have an order")
 
     # }}}
-
-
-
-
 
 
 class AlgebraicLeaf(Expression):
@@ -281,14 +282,10 @@ class AlgebraicLeaf(Expression):
     pass
 
 
-
-
 class Leaf(AlgebraicLeaf):
     """An expression that is irreducible, i.e. has no Expression-type parts
     whatsoever."""
     pass
-
-
 
 
 class Variable(Leaf):
@@ -310,8 +307,6 @@ class Variable(Leaf):
     mapper_method = intern("map_variable")
 
 
-
-
 class Wildcard(Leaf):
     def __getinitargs__(self):
         return ()
@@ -330,9 +325,6 @@ class FunctionSymbol(AlgebraicLeaf):
         return ()
 
     mapper_method = intern("map_function_symbol")
-
-
-
 
 
 # {{{ structural primitives
@@ -369,8 +361,6 @@ class Call(AlgebraicLeaf):
     mapper_method = intern("map_call")
 
 
-
-
 class Subscript(AlgebraicLeaf):
     """An array subscript.
 
@@ -385,8 +375,6 @@ class Subscript(AlgebraicLeaf):
         return self.aggregate, self.index
 
     mapper_method = intern("map_subscript")
-
-
 
 
 class Lookup(AlgebraicLeaf):
@@ -404,6 +392,7 @@ class Lookup(AlgebraicLeaf):
     mapper_method = intern("map_lookup")
 
 # }}}
+
 
 # {{{ arithmetic primitives
 
@@ -462,8 +451,6 @@ class Sum(Expression):
     mapper_method = intern("map_sum")
 
 
-
-
 class Product(Expression):
     """
     .. attribute:: children
@@ -509,8 +496,6 @@ class Product(Expression):
     mapper_method = intern("map_product")
 
 
-
-
 class QuotientBase(Expression):
     def __init__(self, numerator, denominator=1):
         self.numerator = numerator
@@ -531,8 +516,6 @@ class QuotientBase(Expression):
         return bool(self.numerator)
 
 
-
-
 class Quotient(QuotientBase):
     """
     .. attribute:: numerator
@@ -548,8 +531,6 @@ class Quotient(QuotientBase):
     mapper_method = intern("map_quotient")
 
 
-
-
 class FloorDiv(QuotientBase):
     """
     .. attribute:: numerator
@@ -559,8 +540,6 @@ class FloorDiv(QuotientBase):
     mapper_method = intern("map_floor_div")
 
 
-
-
 class Remainder(QuotientBase):
     """
     .. attribute:: numerator
@@ -568,8 +547,6 @@ class Remainder(QuotientBase):
     """
 
     mapper_method = intern("map_remainder")
-
-
 
 
 class Power(Expression):
@@ -588,6 +565,7 @@ class Power(Expression):
     mapper_method = intern("map_power")
 
 # }}}
+
 
 # {{{ comparisons, logic, conditionals
 
@@ -620,10 +598,9 @@ class ComparisonOperator(Expression):
     mapper_method = intern("map_comparison")
 
 
-
-
 class BooleanExpression(Expression):
     pass
+
 
 class LogicalNot(BooleanExpression):
     """
@@ -637,8 +614,6 @@ class LogicalNot(BooleanExpression):
         return (self.child, self.prefix)
 
     mapper_method = intern("map_logical_not")
-
-
 
 
 class LogicalOr(BooleanExpression):
@@ -659,8 +634,6 @@ class LogicalOr(BooleanExpression):
     mapper_method = intern("map_logical_or")
 
 
-
-
 class LogicalAnd(BooleanExpression):
     """
     .. attribute:: children
@@ -677,8 +650,6 @@ class LogicalAnd(BooleanExpression):
         return self.children
 
     mapper_method = intern("map_logical_and")
-
-
 
 
 class If(Expression):
@@ -698,8 +669,6 @@ class If(Expression):
     mapper_method = intern("map_if")
 
 
-
-
 class IfPositive(Expression):
     def __init__(self, criterion, then, else_):
         from warnings import warn
@@ -716,8 +685,6 @@ class IfPositive(Expression):
     mapper_method = intern("map_if_positive")
 
 
-
-
 class _MinMaxBase(Expression):
     def __init__(self, children):
         self.children = children
@@ -725,13 +692,16 @@ class _MinMaxBase(Expression):
     def __getinitargs__(self):
         return self.children
 
+
 class Min(_MinMaxBase):
     mapper_method = intern("map_min")
+
 
 class Max(_MinMaxBase):
     mapper_method = intern("map_max")
 
 # }}}
+
 
 # {{{
 
@@ -762,22 +732,22 @@ class Vector(Expression):
 
     def __add__(self, other):
         if len(other) != len(self):
-            raise ValueError, "can't add values of differing lengths"
+            raise ValueError("can't add values of differing lengths")
         return Vector(tuple(x+y for x, y in zip(self, other)))
 
     def __radd__(self, other):
         if len(other) != len(self):
-            raise ValueError, "can't add values of differing lengths"
+            raise ValueError("can't add values of differing lengths")
         return Vector(tuple(y+x for x, y in zip(self, other)))
 
     def __sub__(self, other):
         if len(other) != len(self):
-            raise ValueError, "can't subtract values of differing lengths"
+            raise ValueError("can't subtract values of differing lengths")
         return Vector(tuple(x-y for x, y in zip(self, other)))
 
     def __rsub__(self, other):
         if len(other) != len(self):
-            raise ValueError, "can't subtract values of differing lengths"
+            raise ValueError("can't subtract values of differing lengths")
         return Vector(tuple(y-x for x, y in zip(self, other)))
 
     def __mul__(self, other):
@@ -803,8 +773,6 @@ class Vector(Expression):
     mapper_method = intern("map_vector")
 
 
-
-
 class cse_scope:
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
 
@@ -824,9 +792,10 @@ class cse_scope:
         The evaluated result lives until the execution context dies.
     """
 
-    EVALUATION = 0
-    EXPRESSION = 1
-    GLOBAL = 2
+    EVALUATION = "pymbolic_eval"
+    EXPRESSION = "pymbolic_expr"
+    GLOBAL = "pymbolic_global"
+
 
 class CommonSubexpression(Expression):
     """A helper for code generation and caching. Denotes a subexpression that
@@ -869,7 +838,6 @@ class CommonSubexpression(Expression):
     mapper_method = intern("map_common_subexpression")
 
 
-
 class Substitution(Expression):
     """Work-alike of sympy's Subs."""
 
@@ -884,8 +852,6 @@ class Substitution(Expression):
     mapper_method = intern("map_substitution")
 
 
-
-
 class Derivative(Expression):
     """Work-alike of sympy's Derivative."""
 
@@ -897,8 +863,6 @@ class Derivative(Expression):
         return (self.child, self.variables)
 
     mapper_method = intern("map_derivative")
-
-
 
 
 class Slice(Expression):
@@ -944,7 +908,9 @@ class Slice(Expression):
 
 # }}}
 
-# intelligent factory functions ----------------------------------------------
+
+# {{{ intelligent factory functions
+
 def make_variable(var_or_string):
     if not isinstance(var_or_string, Expression):
         return Variable(var_or_string)
@@ -952,12 +918,8 @@ def make_variable(var_or_string):
         return var_or_string
 
 
-
-
 def subscript(expression, index):
     return Subscript(expression, index)
-
-
 
 
 def flattened_sum(components):
@@ -984,14 +946,10 @@ def flattened_sum(components):
         return Sum(tuple(done))
 
 
-
-
 def linear_combination(coefficients, expressions):
     return sum(coefficient * expression
                  for coefficient, expression in zip(coefficients, expressions)
                  if coefficient and expression)
-
-
 
 
 def flattened_product(components):
@@ -1020,14 +978,6 @@ def flattened_product(components):
         return Product(tuple(done))
 
 
-
-
-def polynomial_from_expression(expression):
-    pass
-
-
-
-
 def quotient(numerator, denominator):
     if not (denominator-1):
         return numerator
@@ -1048,10 +998,11 @@ def quotient(numerator, denominator):
 
     return Quotient(numerator, denominator)
 
+# }}}
 
 
+# {{{ tool functions
 
-# {{{ tool functions --------------------------------------------------------------
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
@@ -1064,21 +1015,19 @@ except ImportError:
     pass
 
 
-
-
 def is_constant(value):
     return isinstance(value, VALID_CONSTANT_CLASSES)
 
+
 def is_valid_operand(value):
     return isinstance(value, VALID_OPERANDS) or is_constant(value)
-
-
 
 
 def register_constant_class(class_):
     global VALID_CONSTANT_CLASSES
 
     VALID_CONSTANT_CLASSES += (class_,)
+
 
 def unregister_constant_class(class_):
     global VALID_CONSTANT_CLASSES
@@ -1088,18 +1037,15 @@ def unregister_constant_class(class_):
     VALID_CONSTANT_CLASSES = tuple(tmp)
 
 
-
-
 def is_nonzero(value):
     try:
         return bool(value)
     except ValueError:
         return True
 
+
 def is_zero(value):
     return not is_nonzero(value)
-
-
 
 
 def wrap_in_cse(expr, prefix=None):
@@ -1117,9 +1063,6 @@ def wrap_in_cse(expr, prefix=None):
 
     else:
         return CommonSubexpression(expr, prefix)
-
-
-
 
 
 def make_common_subexpression(field, prefix=None, scope=None):
@@ -1155,7 +1098,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
 
             new_data[bits] = CommonSubexpression(coeff, component_prefix, scope)
 
-        return MultiVector(new_data, self.space)
+        return MultiVector(new_data, field.space)
 
     elif have_obj_array and ls != ():
         from pytools import indices_in_shape
@@ -1180,8 +1123,6 @@ def make_common_subexpression(field, prefix=None, scope=None):
             return CommonSubexpression(field, prefix, scope)
 
 
-
-
 def make_sym_vector(name, components):
     """Return an object array of *components* subscripted
     :class:`Variable` instances.
@@ -1196,8 +1137,6 @@ def make_sym_vector(name, components):
     return join_fields(*[vfld[i] for i in components])
 
 
-
-
 def variables(s):
     """Return a list of variables for each (space-delimited) identifier
     in *s*.
@@ -1205,8 +1144,6 @@ def variables(s):
     return [Variable(s_i) for s_i in s.split() if s_i]
 
 # }}}
-
-
 
 
 # vim: foldmethod=marker
