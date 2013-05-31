@@ -23,7 +23,6 @@ THE SOFTWARE.
 """
 
 
-
 __doc__ = """
 Pymbolic is a simple and extensible package for precise manipulation of
 symbolic expressions in Python. It doesn't try to compete with :mod:`sympy` as
@@ -33,8 +32,8 @@ expression tree and a flexible, extensible way to manipulate it.
 A taste of :mod:`pymbolic`
 --------------------------
 
-Follow along on a simple example. Let's import :mod:`pymbolic` and create a symbol,
-*x* in this case.
+Follow along on a simple example. Let's import :mod:`pymbolic` and create a
+symbol, *x* in this case.
 
 .. doctest::
 
@@ -54,10 +53,10 @@ Next, let's create an expression using *x*:
     >>> print u
     (x + 1)**5
 
-Note the two ways an expression can be printed, namely :func:`repr` and :func:`str`.
-:mod:`pymbolic` purposefully distinguishes the two.
+Note the two ways an expression can be printed, namely :func:`repr` and
+:func:`str`.  :mod:`pymbolic` purposefully distinguishes the two.
 
-:mod:`pymbolic` does not perform any algebraic manipulations on expressions
+:mod:`pymbolic` does not perform any manipulations on expressions
 you put in. It has a few of those built in, but that's not really the point:
 
 .. doctest::
@@ -155,44 +154,3 @@ substitute = pymbolic.mapper.substitutor.substitute
 diff = differentiate = pymbolic.mapper.differentiator.differentiate
 expand = pymbolic.mapper.expander.expand
 flatten = pymbolic.mapper.flattener.flatten
-
-
-
-
-def simplify(x):
-    # FIXME: Not implemented
-    return x
-
-def grad(expression, variables):
-    return [differentiate(expression, var) for var in variables]
-
-def jacobian(expression_list, variables):
-    return [grad(expr, variables) for expr in expression_list]
-
-def laplace(expression, variables):
-    return sum(differentiate(differentiate(expression,var), var) for var in variables)
-
-
-
-
-class VectorFunction:
-    def __init__(self, function_list, variables=[]):
-        self.FunctionList = [pymbolic.compile(expr, variables=variables)
-                             for expr in function_list]
-
-    def __call__(self, x):
-        import pylinear.array as num
-        return num.array([ func(x) for func in self.FunctionList ])
-
-
-
-
-class MatrixFunction:
-    def __init__(self, function_list, variables=[]):
-        self. FunctionList = [[pymbolic.compile(expr, variables=variables)
-                               for expr in outer]
-                              for outer in function_list]
-
-    def __call__(self, x):
-        import pylinear.array as num
-        return num.array([[func(x) for func in flist ] for flist in self.FunctionList])
