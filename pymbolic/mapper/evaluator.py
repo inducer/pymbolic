@@ -25,12 +25,8 @@ THE SOFTWARE.
 from pymbolic.mapper import RecursiveMapper
 
 
-
-
 class UnknownVariableError(Exception):
     pass
-
-
 
 
 class EvaluationMapper(RecursiveMapper):
@@ -64,7 +60,7 @@ class EvaluationMapper(RecursiveMapper):
         try:
             return self.context[expr.name]
         except KeyError:
-            raise UnknownVariableError, expr.name
+            raise UnknownVariableError(expr.name)
 
     def map_call(self, expr):
         return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])
@@ -143,8 +139,6 @@ class EvaluationMapper(RecursiveMapper):
         return tuple(self.rec(child) for child in expr)
 
 
-
-
 class FloatEvaluationMapper(EvaluationMapper):
     def map_constant(self, expr):
         return float(expr)
@@ -153,13 +147,13 @@ class FloatEvaluationMapper(EvaluationMapper):
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-
-
 def evaluate(expression, context={}):
     return EvaluationMapper(context)(expression)
 
+
 def evaluate_kw(expression, **context):
     return EvaluationMapper(context)(expression)
+
 
 def evaluate_to_float(expression, context={}):
     return FloatEvaluationMapper(context)(expression)
