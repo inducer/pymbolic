@@ -216,6 +216,9 @@ class CombineMapper(RecursiveMapper):
     def map_numpy_array(self, expr, *args):
         return self.combine(self.rec(el) for el in expr.flat)
 
+    def map_multivector(self, expr, *args):
+        return self.combine(self.rec(coeff) for bits, coeff in expr.data.iteritems())
+
     def map_common_subexpression(self, expr, *args):
         return self.rec(expr.child, *args)
 
@@ -337,6 +340,9 @@ class IdentityMapper(Mapper):
         for i in indices_in_shape(expr.shape):
             result[i] = self.rec(expr[i])
         return result
+
+    def map_multivector(self, expr, *args):
+        return expr.map(lambda ch: self.rec(ch, *args))
 
     def map_common_subexpression(self, expr, *args, **kwargs):
         from pymbolic.primitives import is_zero

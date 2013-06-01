@@ -35,6 +35,7 @@ Multivectors
     .. automethod:: rev
     .. automethod:: invol
     .. automethod:: dual
+    .. automethod:: __inv__
     .. automethod:: norm_squared
     .. automethod:: __abs__
     .. autoattribute:: I

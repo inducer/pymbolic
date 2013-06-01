@@ -147,6 +147,9 @@ class EvaluationMapper(RecursiveMapper):
             result[i] = self.rec(expr[i])
         return result
 
+    def map_multivector(self, expr, *args):
+        return expr.map(lambda ch: self.rec(ch, *args))
+
     def map_common_subexpression(self, expr):
         try:
             return self.common_subexp_cache[expr.child]

@@ -421,7 +421,7 @@ class MultiVector(object):
     def __getinitargs__(self):
         return (self.data, self.space)
 
-    mapper_method = "map_multi_vector"
+    mapper_method = "map_multivector"
 
     # {{{ stringification
 
@@ -438,8 +438,8 @@ class MultiVector(object):
             except AttributeError:
                 coeff_str = str(coeff)
             else:
-                from pymbolic.mapper.stringifier import PREC_TIMES
-                coeff_str = strifier(coeff, PREC_TIMES)
+                from pymbolic.mapper.stringifier import PREC_PRODUCT
+                coeff_str = strifier()(coeff, PREC_PRODUCT)
 
             blade_str = self.space.blade_bits_to_str(bits)
             if not blade_str:
@@ -688,10 +688,14 @@ class MultiVector(object):
     def dual(self):
         r"""Return the dual of *self*, see (1.2.26) in [HS].
 
-        Often written :math:`\widetilde A`.
+        Written :math:`\widetilde A` by [HS] and :math:`A^\ast` by [DFW].
         """
 
         return self | self.I.rev()
+
+    def __inv__(self):
+        """Return the dual of *self*, see :meth:`dual`."""
+        return self.dual()
 
     def norm_squared(self):
         return self.rev().scalar_product(self)
@@ -708,6 +712,14 @@ class MultiVector(object):
     # }}}
 
     # {{{ comparisons
+
+    @memoize_method
+    def __hash__(self):
+        result = hash(self.space)
+        for bits, coeff in self.data.iteritems():
+            result ^= hash(bits) ^ hash(coeff)
+
+        return result
 
     def __nonzero__(self):
         return bool(self.data)
@@ -862,5 +874,18 @@ class MultiVector(object):
     # }}}
 
 # }}}
+
+
+def componentwise(f, expr):
+    """Apply function *f* componentwise to object arrays and
+    :class:`MultiVector` instances. *expr* is also allowed to
+    be a scalar.
+    """
+
+    if isinstance(expr, MultiVector):
+        return expr.map(f)
+
+    from pytools.obj_array import with_object_array_or_scalar
+    return with_object_array_or_scalar(f, expr)
 
 # vim: foldmethod=marker
