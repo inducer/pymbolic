@@ -425,7 +425,9 @@ class MultiVector(object):
 
     # {{{ stringification
 
-    def __str__(self):
+    def stringify(self, coeff_stringifier, enclosing_prec):
+        from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_SUM
+
         if not self.data:
             return "0"
 
@@ -433,21 +435,44 @@ class MultiVector(object):
         for bits in sorted(self.data.iterkeys(),
                 key=lambda bits: (bit_count(bits), bits)):
             coeff = self.data[bits]
-            try:
-                strifier = coeff.stringifier()
-            except AttributeError:
-                coeff_str = str(coeff)
+
+            # {{{ try to find a stringifier
+
+            strifier = None
+            if coeff_stringifier is None:
+                try:
+                    strifier = coeff.stringifier()()
+                except AttributeError:
+                    pass
             else:
-                from pymbolic.mapper.stringifier import PREC_PRODUCT
-                coeff_str = strifier()(coeff, PREC_PRODUCT)
+                strifier = coeff_stringifier
+
+            # }}}
+
+            if strifier is not None:
+                if bits:
+                    coeff_str = strifier(coeff, PREC_PRODUCT)
+                else:
+                    coeff_str = strifier(coeff, PREC_SUM)
+            else:
+                coeff_str = str(coeff)
 
             blade_str = self.space.blade_bits_to_str(bits)
-            if not blade_str:
-                terms.append(coeff_str)
-            else:
+            if bits:
                 terms.append("%s*%s" % (coeff_str, blade_str))
+            else:
+                terms.append(coeff_str)
 
-        return " + ".join(terms)
+        result = " + ".join(terms)
+
+        if enclosing_prec > PREC_SUM:
+            return "(%s)" % result
+        else:
+            return result
+
+    def __str__(self):
+        from pymbolic.mapper.stringifier import PREC_NONE
+        return self.stringify(None, PREC_NONE)
 
     def __repr__(self):
         return "MultiVector(%s, %r)" % (self.data, self.space)

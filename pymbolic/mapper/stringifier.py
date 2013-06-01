@@ -263,6 +263,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             else:
                 return "array(\n%s)" % "".join(lines)
 
+    def map_multivector(self, expr, enclosing_prec):
+        return expr.stringify(self.rec, enclosing_prec)
+
     def map_common_subexpression(self, expr, enclosing_prec):
         from pymbolic.primitives import CommonSubexpression
         if type(expr) is CommonSubexpression:
