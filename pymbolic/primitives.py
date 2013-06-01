@@ -189,22 +189,22 @@ class Expression(object):
         return BitwiseNot(self)
 
     def __or__(self, other):
-        return BitwiseOr(self, other)
+        return BitwiseOr((self, other))
 
     def __ror__(self, other):
-        return BitwiseOr(other, self)
+        return BitwiseOr((other, self))
 
     def __xor__(self, other):
-        return BitwiseXor(self, other)
+        return BitwiseXor((self, other))
 
     def __rxor__(self, other):
-        return BitwiseXor(other, self)
+        return BitwiseXor((other, self))
 
     def __and__(self, other):
-        return BitwiseAnd(self, other)
+        return BitwiseAnd((self, other))
 
     def __rand__(self, other):
-        return BitwiseAnd(other, self)
+        return BitwiseAnd((other, self))
 
     # }}}
 
