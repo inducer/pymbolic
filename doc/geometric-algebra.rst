@@ -53,6 +53,7 @@ Multivectors
 
     .. automethod:: gen_blades
     .. automethod:: project
+    .. automethod:: xproject
     .. automethod:: all_grades
     .. automethod:: get_pure_grade
     .. automethod:: odd

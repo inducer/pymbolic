@@ -802,6 +802,18 @@ class MultiVector(object):
 
         return MultiVector(new_data, self.space)
 
+    def xproject(self, r, dtype=None):
+        r"""If ``r == 0``, return ``self.project(0).as_scalar()``.
+        If ``r == 1``, return ``self.project(1).as_vector(dtype)``.
+        Otherwise, return ``self.project(r)``.
+        """
+        if r == 0:
+            return self.project(0).as_scalar()
+        elif r == 1:
+            return self.project(1).as_vector(dtype)
+        else:
+            return self.project(r)
+
     def all_grades(self):
         """Return a :class:`set` of grades occurring in *self*."""
 
