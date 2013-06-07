@@ -66,12 +66,17 @@ def make_cse(arg, prefix=None):
     return result
 
 
+# {{{ sympy -> pymbolic
+
 class SympyToPymbolicMapper(SympyMapper):
     def map_Symbol(self, expr):
         return prim.Variable(expr.name)
 
     def map_ImaginaryUnit(self, expr):
         return 1j
+
+    def map_Float(self, expr):
+        return float(expr)
 
     def map_Pi(self, expr):
         return float(expr)
@@ -116,10 +121,17 @@ class SympyToPymbolicMapper(SympyMapper):
         else:
             return SympyMapper.not_supported(self, expr)
 
+# }}}
+
+
+# {{{ pymbolic -> sympy
 
 class PymbolicToSympyMapper(EvaluationMapper):
     def map_variable(self, expr):
         return sp.Symbol(expr.name)
+
+    def map_constant(self, expr):
+        return sp.sympify(expr)
 
     def map_call(self, expr):
         if isinstance(expr.function, prim.Variable):
@@ -139,3 +151,17 @@ class PymbolicToSympyMapper(EvaluationMapper):
         else:
             raise RuntimeError("do not know how to translate '%s' to sympy"
                     % expr)
+
+    def map_substitution(self, expr):
+        return sp.Subs(self.rec(expr.child),
+                tuple(sp.Symbol(v) for v in expr.variables),
+                tuple(self.rec(v) for v in expr.values),
+                )
+
+    def map_derivative(self, expr):
+        return sp.Derivative(self.rec(expr.child),
+                *[sp.Symbol(v) for v in expr.variables])
+
+# }}}
+
+# vim: fdm=marker

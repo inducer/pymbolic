@@ -43,6 +43,60 @@ def test_substitute():
     assert evaluate(substitute(u, {xmin: 25})) == 630
 
 
+def test_no_comparison():
+    from pymbolic import parse
+
+    x = parse("17+3*x")
+    y = parse("12-5*y")
+
+    def expect_typeerror(f):
+        try:
+            f()
+        except TypeError:
+            pass
+        else:
+            assert False
+
+    expect_typeerror(lambda: x < y)
+    expect_typeerror(lambda: x <= y)
+    expect_typeerror(lambda: x > y)
+    expect_typeerror(lambda: x >= y)
+
+
+def test_structure_preservation():
+    x = prim.Sum((5, 7))
+    from pymbolic.mapper import IdentityMapper
+    x2 = IdentityMapper()(x)
+    assert x == x2
+
+
+def test_sympy_interaction():
+    pytest.importorskip("sympy")
+
+    import sympy as sp
+
+    x, y = sp.symbols("x y")
+    f = sp.symbols("f")
+
+    s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)
+
+    from pymbolic.sympy_interface import (
+            SympyToPymbolicMapper,
+            PymbolicToSympyMapper)
+    s2p = SympyToPymbolicMapper()
+    p2s = PymbolicToSympyMapper()
+
+    p1_expr = s2p(s1_expr)
+
+    s2_expr = p2s(p1_expr)
+    assert s1_expr == s2_expr
+
+    p2_expr = s2p(s2_expr)
+    assert p1_expr == p2_expr
+
+
+# {{{ fft
+
 def test_fft_with_floats():
     numpy = pytest.importorskip("numpy")
     import numpy.linalg as la
@@ -97,6 +151,8 @@ def test_fft():
     for i, line in enumerate(code):
         print("result[%d] = %s" % (i, line))
 
+# }}}
+
 
 def test_sparse_multiply():
     numpy = pytest.importorskip("numpy")
@@ -117,25 +173,7 @@ def test_sparse_multiply():
     assert la.norm(mat_vec-mat_vec_2) < 1e-14
 
 
-def test_no_comparison():
-    from pymbolic import parse
-
-    x = parse("17+3*x")
-    y = parse("12-5*y")
-
-    def expect_typeerror(f):
-        try:
-            f()
-        except TypeError:
-            pass
-        else:
-            assert False
-
-    expect_typeerror(lambda: x < y)
-    expect_typeerror(lambda: x <= y)
-    expect_typeerror(lambda: x > y)
-    expect_typeerror(lambda: x >= y)
-
+# {{{ parser
 
 def test_parser():
     from pymbolic import parse
@@ -172,13 +210,10 @@ def test_parser():
     assert parse("f((x,),z)") == f((x,), z)
     assert parse("f(x,(y,z),z)") == f(x, (y, z), z)
 
+# }}}
 
-def test_structure_preservation():
-    x = prim.Sum((5, 7))
-    from pymbolic.mapper import IdentityMapper
-    x2 = IdentityMapper()(x)
-    assert x == x2
 
+# {{{ geometric algebra
 
 @pytest.mark.parametrize("dims", [2, 3, 4, 5])
 # START_GA_TEST
@@ -279,6 +314,8 @@ def test_geometric_algebra(dims):
         assert a.x(b*c) .close_to(a.x(b)*c + b*a.x(c))
 # END_GA_TEST
 
+# }}}
+
 
 if __name__ == "__main__":
     import sys
@@ -287,3 +324,5 @@ if __name__ == "__main__":
     else:
         from py.test.cmdline import main
         main([__file__])
+
+# vim: fdm=marker
