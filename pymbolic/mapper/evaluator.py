@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 
-from pymbolic.mapper import RecursiveMapper
+from pymbolic.mapper import RecursiveMapper, CSECachingMapperMixin
 import operator as op
 
 
@@ -31,7 +31,7 @@ class UnknownVariableError(Exception):
     pass
 
 
-class EvaluationMapper(RecursiveMapper):
+class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
     """Example usage:
 
     .. doctest::
@@ -150,12 +150,8 @@ class EvaluationMapper(RecursiveMapper):
     def map_multivector(self, expr, *args):
         return expr.map(lambda ch: self.rec(ch, *args))
 
-    def map_common_subexpression(self, expr):
-        try:
-            return self.common_subexp_cache[expr.child]
-        except KeyError:
-            self.common_subexp_cache[expr.child] = value = self.rec(expr.child)
-            return value
+    def map_common_subexpression_uncached(self, expr):
+        return self.rec(expr.child)
 
     def map_if_positive(self, expr):
         if self.rec(expr.criterion) > 0:
