@@ -256,7 +256,7 @@ class Expression(object):
         return "%s(%s)" % (self.__class__.__name__, initargs_str)
     # }}}
 
-    # {{{ hashable interface
+    # {{{ hash/equality interface
 
     def __eq__(self, other):
         """Provides equality testing with quick positive and negative paths
@@ -289,7 +289,7 @@ class Expression(object):
 
     # }}}
 
-    # {{{ hashable backend
+    # {{{ hash/equality backend
 
     def is_equal(self, other):
         return (type(other) == type(self)
@@ -300,7 +300,7 @@ class Expression(object):
 
     # }}}
 
-    # {{{ comparison interface
+    # {{{ prevent less / greater comparisons
 
     # /!\ Don't be tempted to resolve these to ComparisonOperator.
 
@@ -1174,6 +1174,12 @@ def make_common_subexpression(field, prefix=None, scope=None):
     and *scope*.
     """
 
+    if isinstance(field, CommonSubexpression) and (
+            scope is None or scope == cse_scope.EVALUATION
+            or field.scope == scope):
+        # Don't re-wrap
+        return field
+
     try:
         from pytools.obj_array import log_shape
     except ImportError:
@@ -1190,11 +1196,12 @@ def make_common_subexpression(field, prefix=None, scope=None):
         for bits, coeff in field.data.iteritems():
             if prefix is not None:
                 blade_str = field.space.blade_bits_to_str(bits, "")
-                component_prefix = prefix+blade_str
+                component_prefix = prefix+"_"+blade_str
             else:
                 component_prefix = None
 
-            new_data[bits] = CommonSubexpression(coeff, component_prefix, scope)
+            new_data[bits] = make_common_subexpression(
+                    coeff, component_prefix, scope)
 
         return MultiVector(new_data, field.space)
 
@@ -1211,7 +1218,8 @@ def make_common_subexpression(field, prefix=None, scope=None):
             if is_constant(field[i]):
                 result[i] = field[i]
             else:
-                result[i] = CommonSubexpression(field[i], component_prefix, scope)
+                result[i] = make_common_subexpression(
+                        field[i], component_prefix, scope)
 
         return result
     else:
