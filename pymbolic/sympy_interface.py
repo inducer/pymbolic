@@ -27,9 +27,7 @@ from pymbolic.mapper.evaluator import EvaluationMapper
 import sympy as sp
 
 
-
-
-class _SympyMapper(object):
+class SympyMapper(object):
     def __call__(self, expr, *args, **kwargs):
         return self.rec(expr, *args, **kwargs)
 
@@ -56,14 +54,10 @@ class _SympyMapper(object):
                     type(expr).__name__))
 
 
-
-
 class CSE(sp.Function):
     """A function to translate to a Pymbolic CSE."""
 
     nargs = 1
-
-
 
 
 def make_cse(arg, prefix=None):
@@ -72,9 +66,7 @@ def make_cse(arg, prefix=None):
     return result
 
 
-
-
-class SympyToPymbolicMapper(_SympyMapper):
+class SympyToPymbolicMapper(SympyMapper):
     def map_Symbol(self, expr):
         return prim.Variable(expr.name)
 
@@ -122,9 +114,7 @@ class SympyToPymbolicMapper(_SympyMapper):
             return prim.Variable(type(expr).__name__)(
                     *tuple(self.rec(arg) for arg in expr.args))
         else:
-            return _SympyMapper.not_supported(self, expr)
-
-
+            return SympyMapper.not_supported(self, expr)
 
 
 class PymbolicToSympyMapper(EvaluationMapper):
