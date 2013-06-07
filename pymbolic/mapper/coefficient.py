@@ -23,13 +23,13 @@ THE SOFTWARE.
 """
 
 
-
 from pymbolic.mapper import Mapper
 
 
-
-
 class CoefficientCollector(Mapper):
+    def __init__(self, target_names=None):
+        self.target_names = target_names
+
     def map_sum(self, expr):
         stride_dicts = [self.rec(ch) for ch in expr.children]
 
@@ -51,7 +51,7 @@ class CoefficientCollector(Mapper):
         idx_of_child_with_vars = None
         for i, child_coeffs in enumerate(children_coeffs):
             for k in child_coeffs:
-                if isinstance(k, str):
+                if k != 1:
                     if (idx_of_child_with_vars is not None
                             and idx_of_child_with_vars != i):
                         raise RuntimeError(
@@ -78,4 +78,7 @@ class CoefficientCollector(Mapper):
         return {1: expr}
 
     def map_variable(self, expr):
-        return {expr.name: 1}
+        if self.target_names is None or expr.name in self.target_names:
+            return {expr.name: 1}
+        else:
+            return {1: expr}
