@@ -296,7 +296,7 @@ class Expression(object):
                 and self.__getinitargs__() == other.__getinitargs__())
 
     def get_hash(self):
-        return hash((type(self),) + self.__getinitargs__())
+        return hash((type(self).__name__,) + self.__getinitargs__())
 
     # }}}
 
@@ -801,7 +801,7 @@ class Max(_MinMaxBase):
 # }}}
 
 
-# {{{
+# {{{ misc stuff
 
 class Vector(Expression):
     """An immutable sequence that you can compute with."""
