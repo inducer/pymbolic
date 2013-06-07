@@ -428,9 +428,6 @@ class MultiVector(object):
     def stringify(self, coeff_stringifier, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_SUM
 
-        if not self.data:
-            return "0"
-
         terms = []
         for bits in sorted(self.data.iterkeys(),
                 key=lambda bits: (bit_count(bits), bits)):
@@ -463,12 +460,12 @@ class MultiVector(object):
             else:
                 terms.append(coeff_str)
 
-        result = " + ".join(terms)
-
-        if enclosing_prec > PREC_SUM:
-            return "(%s)" % result
+        if terms:
+            result = " + ".join(terms)
         else:
-            return result
+            result = "0"
+
+        return "MV(%s)" % result
 
     def __str__(self):
         from pymbolic.mapper.stringifier import PREC_NONE
