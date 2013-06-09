@@ -1,6 +1,6 @@
 include LITERATURE
 include TODO
-include distribute_setup.py
+include ez_setup.py
 
 include README.rst
 
