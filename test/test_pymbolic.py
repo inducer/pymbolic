@@ -27,6 +27,11 @@ import pytest
 
 from pymbolic.mapper import IdentityMapper
 
+try:
+    reduce
+except NameError:
+    from functools import reduce
+
 
 def test_expand():
     from pymbolic import var, expand
