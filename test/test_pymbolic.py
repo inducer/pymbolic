@@ -92,12 +92,14 @@ def test_sympy_interaction():
     p2s = PymbolicToSympyMapper()
 
     p1_expr = s2p(s1_expr)
-
     s2_expr = p2s(p1_expr)
-    assert s1_expr == s2_expr
+
+    assert sp.ratsimp(s1_expr - s2_expr) == 0
 
     p2_expr = s2p(s2_expr)
-    assert p1_expr == p2_expr
+    s3_expr = p2s(p2_expr)
+
+    assert sp.ratsimp(s1_expr - s3_expr) == 0
 
 
 # {{{ fft
