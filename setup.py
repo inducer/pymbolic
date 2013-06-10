@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 
-import ez_setup
-ez_setup.use_setuptools()
-
 from setuptools import setup
 
 try:
@@ -26,27 +23,27 @@ setup(name="pymbolic",
       description="A package for symbolic computation",
       long_description=open("README.rst").read(),
       classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Other Audience',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 2.5',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Scientific/Engineering :: Mathematics',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Utilities',
-        ],
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Developers',
+          'Intended Audience :: Other Audience',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: MIT License',
+          'Natural Language :: English',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 2.5',
+          'Programming Language :: Python :: 2.6',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.2',
+          'Programming Language :: Python :: 3.3',
+          'Topic :: Scientific/Engineering',
+          'Topic :: Scientific/Engineering :: Mathematics',
+          'Topic :: Software Development :: Libraries',
+          'Topic :: Utilities',
+          ],
       author="Andreas Kloeckner",
       author_email="inform@tiker.net",
-      license = "MIT",
+      license="MIT",
       url="http://mathema.tician.de/software/pymbolic",
 
       packages=["pymbolic", "pymbolic.mapper"],
