@@ -26,8 +26,6 @@ import cmath
 from pytools import memoize
 
 
-
-
 # {{{ integer powers
 
 def integer_power(x, n, one=1):
@@ -39,7 +37,8 @@ def integer_power(x, n, one=1):
     assert isinstance(n, int)
 
     if n < 0:
-        raise RuntimeError("the integer power algorithm does not work for negative numbers")
+        raise RuntimeError("the integer power algorithm does not "
+                "work for negative numbers")
 
     aux = one
 
@@ -53,13 +52,16 @@ def integer_power(x, n, one=1):
 
 # }}}
 
+
 # {{{ euclidean algorithm
 
 def extended_euclidean(q, r):
     """Return a tuple *(p, a, b)* such that :math:`p = aq + br`,
     where *p* is the greatest common divisor of *q* and *r*.
 
-    See also the `Wikipedia article on the Euclidean algorithm <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
+    See also the
+    `Wikipedia article on the Euclidean algorithm
+    <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
     """
     import pymbolic.traits as traits
 
@@ -86,6 +88,7 @@ def extended_euclidean(q, r):
 def gcd(q, r):
     return extended_euclidean(q, r)[0]
 
+
 def gcd_many(*args):
     if len(args) == 0:
         return 1
@@ -94,10 +97,12 @@ def gcd_many(*args):
     else:
         return reduce(gcd, args)
 
+
 def lcm(q, r):
     return abs(q*r)//gcd(q, r)
 
 # }}}
+
 
 # {{{ fft
 
@@ -116,8 +121,6 @@ def find_factors(N):
     N2 = N // N1
 
     return N1, N2
-
-
 
 
 def fft(x, sign=1, wrap_intermediate=lambda x: x):
@@ -159,24 +162,20 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
         ])
 
 
-
-
-def ifft(x, wrap_intermediate=lambda x:x):
+def ifft(x, wrap_intermediate=lambda x: x):
     return (1/len(x))*fft(x, -1, wrap_intermediate)
-
-
-
 
 
 def sym_fft(x, sign=1):
     """Perform a (symbolic) FFT on the :mod:`numpy` object array x.
 
     Remove near-zero floating point constants, insert
-    :class:`pymbolic.primitives.CommonSubexpression` 
+    :class:`pymbolic.primitives.CommonSubexpression`
     wrappers at opportune points.
     """
 
     from pymbolic.mapper import IdentityMapper, CSECachingMapperMixin
+
     class NearZeroKiller(CSECachingMapperMixin, IdentityMapper):
         map_common_subexpression_uncached = \
                 IdentityMapper.map_common_subexpression
@@ -209,11 +208,10 @@ def sym_fft(x, sign=1):
             return x
 
     return NearZeroKiller()(
-            fft(wrap_intermediate(x), sign=sign, wrap_intermediate=wrap_intermediate))
+            fft(wrap_intermediate(x), sign=sign,
+                wrap_intermediate=wrap_intermediate))
 
 # }}}
-
-
 
 
 def csr_matrix_multiply(S, x):
@@ -225,12 +223,10 @@ def csr_matrix_multiply(S, x):
     result = numpy.empty_like(x)
 
     for i in xrange(h):
-        result[i] = sum(S.data[idx]*x[S.indices[idx]] 
+        result[i] = sum(S.data[idx]*x[S.indices[idx]]
                 for idx in range(S.indptr[i], S.indptr[i+1]))
 
     return result
-
-
 
 
 # {{{ gaussian elimination
@@ -245,7 +241,7 @@ def gaussian_elimination(mat, rhs):
 
         nonz_row = None
         for k in range(i, m):
-            if mat[k,j]:
+            if mat[k, j]:
                 nonz_row = k
                 break
 
@@ -290,6 +286,7 @@ def gaussian_elimination(mat, rhs):
     return mat, rhs
 
 # }}}
+
 
 # {{{ symbolic (linear) equation solving
 
@@ -380,15 +377,5 @@ def solve_affine_equations_for(targets, equations):
 
 # }}}
 
-
-
-
-if __name__ == "__main__":
-    import integer
-    q = integer.Integer(14)
-    r = integer.Integer(22)
-    gcd, a, b = extended_euclidean(q, r)
-    print gcd, "=", a, "*", q, "+", b, "*", r
-    print a*q + b*r
 
 # vim: foldmethod=marker
