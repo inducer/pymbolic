@@ -413,6 +413,11 @@ class MultiVector(object):
 
         # }}}
 
+        # assert that multivectors don't get nested
+        from pytools import any
+        assert not any(isinstance(coeff, MultiVector)
+                for coeff in data.itervalues())
+
         self.space = space
         self.data = data
 
