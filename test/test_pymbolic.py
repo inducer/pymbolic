@@ -33,6 +33,18 @@ except NameError:
     from functools import reduce
 
 
+def test_integer_power():
+    from pymbolic.algorithm import integer_power
+
+    for base, expn in [
+            (17, 5),
+            (17, 2**10),
+            (13, 20),
+            (13, 1343),
+            ]:
+        assert base**expn == integer_power(base, expn)
+
+
 def test_expand():
     from pymbolic import var, expand
 

@@ -50,6 +50,8 @@ def integer_power(x, n, one=1):
         x = x * x
         n //= 2
 
+    return aux
+
 # }}}
 
 
