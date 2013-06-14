@@ -53,7 +53,7 @@ _and = intern("and")
 _or = intern("or")
 _not = intern("not")
 
-_PREC_COMMA = 5 # must be > 1 (1 is used by fortran-to-cl)
+_PREC_COMMA = 5  # must be > 1 (1 is used by fortran-to-cl)
 _PREC_SLICE = 10
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
@@ -65,8 +65,6 @@ _PREC_UNARY = 140
 _PREC_CALL = 150
 
 
-
-
 def _join_to_slice(left, right):
     from pymbolic.primitives import Slice
     if isinstance(right, Slice):
@@ -75,12 +73,11 @@ def _join_to_slice(left, right):
         return Slice((left, right))
 
 
-
-
 class FinalizedTuple(tuple):
     """A tuple that may not have elements appended to it, because it was
     terminated by a close-paren.
     """
+
 
 class Parser:
     lex_table = [
@@ -102,11 +99,15 @@ class Parser:
                 # has a letter tag
                 pytools.lex.RE(r"[+-]?[0-9]+([a-zA-Z]+)"),
                 # has digits before the dot (after optional)
-                pytools.lex.RE(r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
-                pytools.lex.RE(r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"),
+                pytools.lex.RE(
+                    r"[+-]?[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
+                pytools.lex.RE(
+                    r"[+-]?[0-9]+(\.[0-9]*)?[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"),
                 # has digits after the dot (before optional)
-                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
-                pytools.lex.RE(r"[+-]?[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"))),
+                pytools.lex.RE(
+                    r"[+-]?[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
+                pytools.lex.RE(
+                    r"[+-]?[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"))),
             (_int, pytools.lex.RE(r"[0-9]+")),
             (_plus, pytools.lex.RE(r"\+")),
             (_minus, pytools.lex.RE(r"-")),
@@ -312,7 +313,8 @@ class Parser:
                 left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
-                if isinstance(left_exp, tuple) and not isinstance(left_exp, FinalizedTuple):
+                if isinstance(left_exp, tuple) \
+                        and not isinstance(left_exp, FinalizedTuple):
                     left_exp = left_exp + (new_el,)
                 else:
                     left_exp = (left_exp, new_el)
