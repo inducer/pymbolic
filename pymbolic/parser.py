@@ -324,10 +324,10 @@ class Parser:
         return left_exp, did_something
 
     def __call__(self, expr_str):
-        pstate = pytools.lex.LexIterator(
-            [(tag, s, idx)
-             for (tag, s, idx) in pytools.lex.lex(self.lex_table, expr_str)
-             if tag is not _whitespace], expr_str)
+        lex_result = [(tag, s, idx)
+                for (tag, s, idx) in pytools.lex.lex(self.lex_table, expr_str)
+                if tag is not _whitespace]
+        pstate = pytools.lex.LexIterator(lex_result, expr_str)
 
         result = self. parse_expression(pstate)
         if not pstate.is_at_end():
