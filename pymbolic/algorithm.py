@@ -292,50 +292,50 @@ def gaussian_elimination(mat, rhs):
 
 # {{{ symbolic (linear) equation solving
 
-def solve_affine_equations_for(targets, equations):
+def solve_affine_equations_for(unknowns, equations):
     """
-    :arg targets: A list of variable names for which to solve.
+    :arg unknowns: A list of variable names for which to solve.
     :arg equations: A list of tuples ``(lhs, rhs)``.
-    :return: a dict mapping target names to their values.
+    :return: a dict mapping unknown names to their values.
     """
     import numpy as np
 
     from pymbolic.mapper.dependency import DependencyMapper
-    dep_map = DependencyMapper(composite_leaves=False)
+    dep_map = DependencyMapper(composite_leaves=True)
 
-    # fix an order for targets
-    targets_set = set(targets)
-    target_idx_lut = dict((tgt_name, idx)
-            for idx, tgt_name in enumerate(targets))
+    # fix an order for unknowns
+    from pymbolic import var
+    unknowns = [var(u) for u in unknowns]
+    unknowns_set = set(unknowns)
+    unknown_idx_lut = dict((tgt_name, idx)
+            for idx, tgt_name in enumerate(unknowns))
 
-    def get_deps(expr):
-        return set(var.name for var in dep_map(expr))
-
-    # Find non-target variables, fix order for them
-    # Last non-target is constant.
-    nontargets = set()
+    # Find non-unknown variables, fix order for them
+    # Last non-unknown is constant.
+    parameters = set()
     for lhs, rhs in equations:
-        nontargets.update(get_deps(lhs) - targets_set)
-        nontargets.update(get_deps(rhs) - targets_set)
-    nontargets_list = list(nontargets)
-    nontarget_idx_lut = dict((var_name, idx)
-            for idx, var_name in enumerate(nontargets_list))
+        parameters.update(dep_map(lhs) - unknowns_set)
+        parameters.update(dep_map(rhs) - unknowns_set)
+
+    parameters_list = list(parameters)
+    parameter_idx_lut = dict((var_name, idx)
+            for idx, var_name in enumerate(parameters_list))
 
     from pymbolic.mapper.coefficient import CoefficientCollector
     coeff_coll = CoefficientCollector()
 
     # {{{ build matrix and rhs
 
-    mat = np.zeros((len(equations), len(targets_set)), dtype=object)
-    rhs_mat = np.zeros((len(equations), len(nontargets)+1), dtype=object)
+    mat = np.zeros((len(equations), len(unknowns_set)), dtype=object)
+    rhs_mat = np.zeros((len(equations), len(parameters)+1), dtype=object)
 
     for i_eqn, (lhs, rhs) in enumerate(equations):
         for lhs_factor, coeffs in [(1, coeff_coll(lhs)), (-1, coeff_coll(rhs))]:
             for key, coeff in coeffs.iteritems():
-                if key in targets:
-                    mat[i_eqn, target_idx_lut[key]] = lhs_factor*coeff
-                elif key in nontargets:
-                    rhs_mat[i_eqn, nontarget_idx_lut[key]] = -lhs_factor*coeff
+                if key in unknowns_set:
+                    mat[i_eqn, unknown_idx_lut[key]] = lhs_factor*coeff
+                elif key in parameters:
+                    rhs_mat[i_eqn, parameter_idx_lut[key]] = -lhs_factor*coeff
                 elif key == 1:
                     rhs_mat[i_eqn, -1] = -lhs_factor*coeff
                 else:
@@ -350,23 +350,23 @@ def solve_affine_equations_for(targets, equations):
     from pymbolic import var
 
     result = {}
-    for j, target in enumerate(targets):
+    for j, unknown in enumerate(unknowns):
         nonz_row = np.where(mat[:, j])
         if len(nonz_row) != 1:
-            raise RuntimeError("cannot uniquely solve for '%s'" % target)
+            raise RuntimeError("cannot uniquely solve for '%s'" % unknown)
 
         (nonz_row,), = nonz_row
 
         if abs(mat[nonz_row, j]) != 1:
             raise RuntimeError("division with remainder in linear solve for '%s'"
-                    % target)
+                    % unknown)
         div = mat[nonz_row, j]
 
-        target_val = int(rhs_mat[nonz_row, -1]) // div
-        for nontarget, coeff in zip(nontargets_list, rhs_mat[nonz_row]):
-            target_val += (int(coeff) // div) * var(nontarget)
+        unknown_val = int(rhs_mat[nonz_row, -1]) // div
+        for parameter, coeff in zip(parameters_list, rhs_mat[nonz_row]):
+            unknown_val += (int(coeff) // div) * var(parameter)
 
-        result[target] = target_val
+        result[unknown] = unknown_val
 
     if 0:
         for lhs, rhs in equations:
