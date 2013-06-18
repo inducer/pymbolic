@@ -25,8 +25,6 @@ THE SOFTWARE.
 from pymbolic.mapper import CombineMapper, CSECachingMapperMixin
 
 
-
-
 class DependencyMapper(CSECachingMapperMixin, CombineMapper):
     """Maps an expression to the :class:`set` of expressions it
     is based on. The ``include_*`` arguments to the constructor
@@ -46,11 +44,11 @@ class DependencyMapper(CSECachingMapperMixin, CombineMapper):
             all preceding ``include_*`` flags.
         """
 
-        if composite_leaves == False:
+        if composite_leaves is False:
             include_subscripts = False
             include_lookups = False
             include_calls = False
-        if composite_leaves == True:
+        if composite_leaves is True:
             include_subscripts = True
             include_lookups = True
             include_calls = True
