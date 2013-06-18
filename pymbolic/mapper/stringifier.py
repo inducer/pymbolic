@@ -147,11 +147,18 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec):
-        return self.parenthesize_if_needed(
-                self.format("%s // %s",
-                    self.rec(expr.numerator, PREC_PRODUCT),
-                    self.rec(expr.denominator, PREC_POWER)),  # analogous to ^{-1}
-                enclosing_prec, PREC_PRODUCT)
+        # (-1) * ((-1)*x // 5) should not reassociate. Therefore raise precedence
+        # on the numerator and shield against surrounding products.
+
+        result = self.format("%s // %s",
+                    self.rec(expr.numerator, PREC_POWER),
+                    self.rec(expr.denominator, PREC_POWER))  # analogous to ^{-1}
+
+        # Note ">=", not ">" as in parenthesize_if_needed().
+        if enclosing_prec >= PREC_PRODUCT:
+            return "(%s)" % result
+        else:
+            return result
 
     def map_power(self, expr, enclosing_prec):
         return self.parenthesize_if_needed(
