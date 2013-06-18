@@ -24,9 +24,8 @@ THE SOFTWARE.
 
 import math
 import pymbolic
-from pymbolic.mapper.stringifier import StringifyMapper, PREC_NONE, PREC_SUM, PREC_POWER
-
-
+from pymbolic.mapper.stringifier import (StringifyMapper, PREC_NONE,
+        PREC_SUM, PREC_POWER)
 
 
 def _constant_mapper(c):
@@ -54,6 +53,7 @@ class CompileMapper(StringifyMapper):
         # Use Horner's scheme to evaluate the polynomial
 
         sbase = self(expr.base, PREC_POWER)
+
         def stringify_exp(exp):
             if exp == 0:
                 return ""
@@ -95,9 +95,6 @@ class CompileMapper(StringifyMapper):
         return StringifyMapper.map_foreign(self, expr, enclosing_prec)
 
 
-
-
-
 class CompiledExpression:
     """This class encapsulates an expression compiled into Python bytecode
     for faster evaluation.
@@ -105,7 +102,7 @@ class CompiledExpression:
     Its instances (unlike plain lambdas) are pickleable.
     """
 
-    def __init__(self, expression, variables = []):
+    def __init__(self, expression, variables=[]):
         """
         :arg variables: The first arguments (as strings or
             :class:`pymbolic.primitives.Variable` instances) to be used for the
@@ -153,8 +150,6 @@ class CompiledExpression:
 
     def context(self):
         return {"math": math}
-
-
 
 
 compile = CompiledExpression
