@@ -77,8 +77,8 @@ class CoefficientCollector(Mapper):
     def map_constant(self, expr):
         return {1: expr}
 
-    def map_variable(self, expr):
+    def map_algebraic_leaf(self, expr):
         if self.target_names is None or expr.name in self.target_names:
-            return {expr.name: 1}
+            return {expr: 1}
         else:
             return {1: expr}
