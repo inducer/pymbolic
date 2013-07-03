@@ -98,7 +98,7 @@ Bitwise operators
 Comparisons and logic
 ---------------------
 
-.. autoclass:: ComparisonOperator
+.. autoclass:: Comparison
     :undoc-members:
     :members: mapper_method
 

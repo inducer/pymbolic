@@ -302,7 +302,7 @@ class Expression(object):
 
     # {{{ prevent less / greater comparisons
 
-    # /!\ Don't be tempted to resolve these to ComparisonOperator.
+    # /!\ Don't be tempted to resolve these to Comparison.
 
     def __le__(self, other):
         raise TypeError("expressions don't have an order")
@@ -687,7 +687,7 @@ class BitwiseAnd(_MultiChildExpression):
 
 # {{{ comparisons, logic, conditionals
 
-class ComparisonOperator(Expression):
+class Comparison(Expression):
     """
     .. attribute:: left
     .. attribute:: operator

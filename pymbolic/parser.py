@@ -283,8 +283,8 @@ class Parser:
             did_something = True
         elif next_tag in self._COMP_TABLE and _PREC_COMPARISON > min_precedence:
             pstate.advance()
-            from pymbolic.primitives import ComparisonOperator
-            left_exp = ComparisonOperator(
+            from pymbolic.primitives import Comparison
+            left_exp = Comparison(
                     left_exp,
                     self._COMP_TABLE[next_tag],
                     self.parse_expression(pstate, _PREC_COMPARISON))
