@@ -31,7 +31,9 @@ _power = intern("exp")
 _plus = intern("plus")
 _minus = intern("minus")
 _times = intern("times")
+_floordiv = intern("floordiv")
 _over = intern("over")
+_modulo = intern("modulo")
 _openpar = intern("openpar")
 _closepar = intern("closepar")
 _openbracket = intern("openbracket")
@@ -113,7 +115,9 @@ class Parser:
             (_minus, pytools.lex.RE(r"-")),
             (_power, pytools.lex.RE(r"\*\*")),
             (_times, pytools.lex.RE(r"\*")),
+            (_floordiv, pytools.lex.RE(r"//")),
             (_over, pytools.lex.RE(r"/")),
+            (_modulo, pytools.lex.RE(r"%")),
             (_openpar, pytools.lex.RE(r"\(")),
             (_closepar, pytools.lex.RE(r"\)")),
             (_openbracket, pytools.lex.RE(r"\[")),
@@ -259,9 +263,17 @@ class Parser:
             pstate.advance()
             left_exp *= self.parse_expression(pstate, _PREC_TIMES)
             did_something = True
+        elif next_tag is _floordiv and _PREC_TIMES > min_precedence:
+            pstate.advance()
+            left_exp //= self.parse_expression(pstate, _PREC_TIMES)
+            did_something = True
         elif next_tag is _over and _PREC_TIMES > min_precedence:
             pstate.advance()
             left_exp /= self.parse_expression(pstate, _PREC_TIMES)
+            did_something = True
+        elif next_tag is _modulo and _PREC_TIMES > min_precedence:
+            pstate.advance()
+            left_exp %= self.parse_expression(pstate, _PREC_TIMES)
             did_something = True
         elif next_tag is _power and _PREC_POWER > min_precedence:
             pstate.advance()
