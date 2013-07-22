@@ -31,12 +31,11 @@ import pymbolic.mapper
 import pymbolic.mapper.evaluator
 
 
-
 def map_math_functions_by_name(i, func, pars):
     try:
         f = pymbolic.evaluate(func, {"math": math, "cmath": cmath})
     except pymbolic.mapper.evaluator.UnknownVariableError:
-        raise RuntimeError, "No derivative of non-constant function "+str(func)
+        raise RuntimeError("No derivative of non-constant function "+str(func))
 
     def make_f(name):
         return primitives.Lookup(primitives.Variable("math"), name)
@@ -52,15 +51,14 @@ def map_math_functions_by_name(i, func, pars):
     elif f is math.exp and len(pars) == 1:
         return make_f("exp")(*pars)
     else:
-        raise RuntimeError, "unrecognized function, cannot differentiate"
-
-
+        raise RuntimeError("unrecognized function, cannot differentiate")
 
 
 class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     """Example usage:
 
     .. doctest::
+        :options: +NORMALIZE_WHITESPACE
 
         >>> import pymbolic.primitives as p
         >>> x = p.Variable("x")
@@ -68,7 +66,8 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
         >>> from pymbolic.mapper.differentiator import DifferentiationMapper as DM
         >>> print DM(x)(expr)
-        (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) / (x + -1)**2**2
+        (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) \
+                / (x + -1)**2**2
     """
 
     def __init__(self, variable, func_map=map_math_functions_by_name):
@@ -142,7 +141,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
             return g * f**(g-1) * self.rec(f)
         else:
             return log(f) * f**g * self.rec(g) + \
-                   g * f**(g-1) * self.rec(f)
+                    g * f**(g-1) * self.rec(f)
 
     def map_polynomial(self, expr):
         # (a(x)*f(x))^n)' = a'(x)f(x)^n + a(x)f'(x)*n*f(x)^(n-1)
@@ -171,8 +170,6 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         for i in indices_in_shape(expr.shape):
             result[i] = self.rec(expr[i])
         return result
-
-
 
 
 def differentiate(expression,
