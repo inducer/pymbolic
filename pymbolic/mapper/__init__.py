@@ -495,7 +495,7 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.shift)
         self.rec(expr.shiftee)
 
-    mrs = map_left_shift
+    map_right_shift = map_left_shift
 
     def map_bitwise_not(self, expr):
         if not self.visit(expr):
