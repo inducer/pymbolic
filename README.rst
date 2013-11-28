@@ -20,6 +20,9 @@ If you are looking for a full-blown Computer Algebra System, look at
 basic, small and extensible set of symbolic operations, pymbolic may
 well be for you.
 
+.. image:: https://badge.fury.io/py/pymbolic.png
+    :target: http://pypi.python.org/pypi/pymbolic
+
 Resources:
 
 * `documentation <http://documen.tician.de/pymbolic>`_
