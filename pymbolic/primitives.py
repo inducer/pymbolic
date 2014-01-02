@@ -1103,7 +1103,7 @@ def quotient(numerator, denominator):
 
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
-VALID_CONSTANT_CLASSES = (int, float, complex)
+VALID_CONSTANT_CLASSES = (int, long, float, complex)
 VALID_OPERANDS = (Expression,)
 
 try:
