@@ -16,7 +16,7 @@ try:
 finally:
     version_file.close()
 
-exec(compile(version_file_contents, "pyopencl/version.py", 'exec'), ver_dic)
+exec(compile(version_file_contents, "pymbolic/version.py", 'exec'), ver_dic)
 
 setup(name="pymbolic",
       version=ver_dic["VERSION_TEXT"],
