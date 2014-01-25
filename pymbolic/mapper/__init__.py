@@ -208,6 +208,9 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.left, *args),
             self.rec(expr.right, *args)))
 
+    map_max = map_sum
+    map_min = map_sum
+
     def map_list(self, expr, *args):
         return self.combine(self.rec(child, *args) for child in expr)
 
