@@ -934,10 +934,10 @@ class If(Expression):
     .. attribute:: else_
     """
 
-    init_arg_names = ("criterion", "then", "else_")
+    init_arg_names = ("condition", "then", "else_")
 
-    def __init__(self, criterion, then, else_):
-        self.condition = criterion
+    def __init__(self, condition, then, else_):
+        self.condition = condition
         self.then = then
         self.else_ = else_
 
