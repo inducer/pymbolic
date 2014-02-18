@@ -432,6 +432,15 @@ class Expression(object):
             self.hash_value = self.get_hash()
             return self.hash_value
 
+    def __getstate__(self):
+        return self.__getinitargs__()
+
+    def __setstate__(self, state):
+        # Can't use trivial pickling: hash_value cache must stay unset
+        assert len(self.init_arg_names) == len(state)
+        for name, value in zip(self.init_arg_names, state):
+            setattr(self, name, value)
+
     # }}}
 
     # {{{ hash/equality backend
@@ -481,6 +490,8 @@ class Variable(Leaf):
     """
     .. attribute:: name
     """
+    init_arg_names = ("name",)
+
     def __init__(self, name):
         self.name = name
 
@@ -525,6 +536,8 @@ class Call(AlgebraicLeaf):
     .. attribute:: parameters
     """
 
+    init_arg_names = ("function", "parameters",)
+
     def __init__(self, function, parameters):
         """
         :arg function: A :class:`Expression` that evaluates to a function.
@@ -556,6 +569,9 @@ class Subscript(AlgebraicLeaf):
     .. attribute:: aggregate
     .. attribute:: index
     """
+
+    init_arg_names = ("aggregate", "index",)
+
     def __init__(self, aggregate, index):
         self.aggregate = aggregate
         self.index = index
@@ -570,6 +586,8 @@ class Lookup(AlgebraicLeaf):
     """Access to an attribute of an *aggregate*, such as an
     attribute of a class.
     """
+
+    init_arg_names = ("aggregate", "name",)
 
     def __init__(self, aggregate, name):
         self.aggregate = aggregate
@@ -586,13 +604,15 @@ class Lookup(AlgebraicLeaf):
 # {{{ arithmetic primitives
 
 class _MultiChildExpression(Expression):
+    init_arg_names = ("children",)
+
     def __init__(self, children):
         assert isinstance(children, tuple)
 
         self.children = children
 
     def __getinitargs__(self):
-        return self.children
+        return self.children,
 
 
 class Sum(_MultiChildExpression):
@@ -681,6 +701,8 @@ class Product(_MultiChildExpression):
 
 
 class QuotientBase(Expression):
+    init_arg_names = ("numerator", "denominator",)
+
     def __init__(self, numerator, denominator=1):
         self.numerator = numerator
         self.denominator = denominator
@@ -739,6 +761,8 @@ class Power(Expression):
     .. attribute:: exponent
     """
 
+    init_arg_names = ("base", "exponent",)
+
     def __init__(self, base, exponent):
         self.base = base
         self.exponent = exponent
@@ -754,6 +778,8 @@ class Power(Expression):
 # {{{ shift operators
 
 class _ShiftOperator(Expression):
+    init_arg_names = ("shiftee", "shift",)
+
     def __init__(self, shiftee, shift):
         self.shiftee = shiftee
         self.shift = shift
@@ -788,6 +814,8 @@ class BitwiseNot(Expression):
     """
     .. attribute:: child
     """
+
+    init_arg_names = ("child",)
 
     def __init__(self, child):
         self.child = child
@@ -844,6 +872,8 @@ class Comparison(Expression):
         comparing :class:`Expression` objects.
     """
 
+    init_arg_names = ("left", "operator", "right")
+
     def __init__(self, left, operator, right):
         """
         :arg operator: One of ``[">", ">=", "==", "!=", "<", "<="]``.
@@ -865,6 +895,8 @@ class LogicalNot(Expression):
     """
     .. attribute:: child
     """
+
+    init_arg_names = ("child",)
 
     def __init__(self, child):
         self.child = child
@@ -901,6 +933,9 @@ class If(Expression):
     .. attribute:: then
     .. attribute:: else_
     """
+
+    init_arg_names = ("criterion", "then", "else_")
+
     def __init__(self, criterion, then, else_):
         self.condition = criterion
         self.then = then
@@ -913,6 +948,8 @@ class If(Expression):
 
 
 class IfPositive(Expression):
+    init_arg_names = ("criterion", "then", "else_")
+
     def __init__(self, criterion, then, else_):
         from warnings import warn
         warn("IfPositive is deprecated, use If( ... >0)", DeprecationWarning,
@@ -929,6 +966,8 @@ class IfPositive(Expression):
 
 
 class _MinMaxBase(Expression):
+    init_arg_names = ("children",)
+
     def __init__(self, children):
         self.children = children
 
@@ -950,6 +989,8 @@ class Max(_MinMaxBase):
 
 class Vector(Expression):
     """An immutable sequence that you can compute with."""
+
+    init_arg_names = ("children",)
 
     def __init__(self, children):
         assert isinstance(children, tuple)
@@ -1054,6 +1095,8 @@ class CommonSubexpression(Expression):
     See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example.
     """
 
+    init_arg_names = ("child", "prefix", "scope")
+
     def __init__(self, child, prefix=None, scope=None):
         """
         :arg scope: Defaults to :attr:`cse_scope.EVALUATION` if given as *None*.
@@ -1084,6 +1127,8 @@ class CommonSubexpression(Expression):
 class Substitution(Expression):
     """Work-alike of sympy's Subs."""
 
+    init_arg_names = ("child", "variables", "values")
+
     def __init__(self, child, variables, values):
         self.child = child
         self.variables = variables
@@ -1098,6 +1143,8 @@ class Substitution(Expression):
 class Derivative(Expression):
     """Work-alike of sympy's Derivative."""
 
+    init_arg_names = ("child", "variables")
+
     def __init__(self, child, variables):
         self.child = child
         self.variables = variables
@@ -1110,6 +1157,8 @@ class Derivative(Expression):
 
 class Slice(Expression):
     """A slice expression as in a[1:7]."""
+
+    init_arg_names = ("children",)
 
     def __init__(self, children):
         assert isinstance(children, tuple)
