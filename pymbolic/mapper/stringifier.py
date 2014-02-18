@@ -24,6 +24,27 @@ THE SOFTWARE.
 
 import pymbolic.mapper
 
+__doc__ = """
+.. _prec-constants:
+
+Precedence constants
+********************
+
+.. data:: PREC_CALL
+.. data:: PREC_POWER
+.. data:: PREC_UNARY
+.. data:: PREC_PRODUCT
+.. data:: PREC_SUM
+.. data:: PREC_SHIFT
+.. data:: PREC_BITWISE_AND
+.. data:: PREC_BITWISE_XOR
+.. data:: PREC_BITWISE_OR
+.. data:: PREC_COMPARISON
+.. data:: PREC_LOGICAL_AND
+.. data:: PREC_LOGICAL_OR
+.. data:: PREC_NONE
+"""
+
 
 PREC_CALL = 15
 PREC_POWER = 14

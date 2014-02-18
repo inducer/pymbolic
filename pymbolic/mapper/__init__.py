@@ -24,6 +24,54 @@ THE SOFTWARE.
 
 import pymbolic.primitives as primitives
 
+__doc__ = """
+Basic dispatch
+--------------
+
+.. autoclass:: Mapper
+
+    .. automethod:: __call__
+
+    .. method:: rec(expr, *args, **kwargs)
+
+        Identical to :meth:`__call__`, but intended for use in recursive dispatch
+        in mapper methods.
+
+    .. automethod:: handle_unsupported_expression
+
+    .. rubric:: Handling objects that don't declare mapper methods
+
+    In particular, this includes many non-subclasses of
+    :class:`pymbolic.primitives.Expression`.
+
+    .. automethod:: map_foreign
+
+    These are abstract methods for foreign objects that should be overridden
+    in subclasses:
+
+    .. method:: map_constant(expr, *args, **kwargs)
+
+        Mapper method for constants.
+        See :func:`pymbolic.primitives.register_constant_class`.
+
+    .. method:: map_list(expr, *args, **kwargs)
+
+    .. method:: map_tuple(expr, *args, **kwargs)
+
+    .. method:: map_numpy_array(expr, *args, **kwargs)
+
+Base classes for new mappers
+----------------------------
+
+.. autoclass:: CombineMapper
+
+.. autoclass:: IdentityMapper
+
+.. autoclass:: WalkMapper
+
+.. autoclass:: CSECachingMapperMixin
+"""
+
 
 try:
     import numpy
@@ -117,7 +165,7 @@ class Mapper(object):
         else:
             raise ValueError(
                     "%s encountered invalid foreign object: %s" % (
-                    self.__class__, repr(expr)))
+                        self.__class__, repr(expr)))
 
 # }}}
 
