@@ -30,8 +30,6 @@ class PersistentHashWalkMapper(WalkMapper):
     """A subclass of :class:`loopy.symbolic.WalkMapper` for constructing
     persistent hash keys for use with
     :class:`pytools.persistent_dict.PersistentDict`.
-
-    See also :meth:`LoopyKeyBuilder.update_for_pymbolic_expression`.
     """
 
     def __init__(self, key_hash):
