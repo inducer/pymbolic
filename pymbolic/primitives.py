@@ -996,6 +996,13 @@ class Vector(Expression):
         assert isinstance(children, tuple)
         self.children = children
 
+        from warnings import warn
+        warn("pymbolic vectors are deprecated in favor of either "
+                "(a) numpy object arrays and "
+                "(b) pymbolic.geometric_algebra.MultiVector "
+                "(depending on the required semantics)",
+                DeprecationWarning)
+
     def __nonzero__(self):
         for i in self.children:
             if is_nonzero(i):
