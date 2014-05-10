@@ -40,11 +40,12 @@ def traits(x):
     try:
         return x.traits()
     except AttributeError:
-        if isinstance(x, (complex, float)): return FieldTraits()
-        if isinstance(x, int): return IntegerTraits()
-        raise NoTraitsError
-
-
+        if isinstance(x, (complex, float)):
+            return FieldTraits()
+        elif isinstance(x, (int, long)):
+            return IntegerTraits()
+        else:
+            raise NoTraitsError
 
 
 def common_traits(*args):
