@@ -352,6 +352,54 @@ class MultiVector(object):
         and then geometric.
 
         In other words: Use parentheses everywhere.
+
+    .. autoattribute:: mapper_method
+
+    .. rubric:: More products
+
+    .. automethod:: scalar_product
+    .. automethod:: x
+    .. automethod:: __pow__
+
+    .. rubric:: Unary operators
+
+    .. automethod:: inv
+    .. automethod:: rev
+    .. automethod:: invol
+    .. automethod:: dual
+    .. automethod:: __inv__
+    .. automethod:: norm_squared
+    .. automethod:: __abs__
+    .. autoattribute:: I
+
+    .. rubric:: Comparisons
+
+    :class:`MultiVector` objects have a truth value corresponding to whether
+    they have any blades with non-zero coefficients. They support testing
+    for (exact) equality.
+
+    .. automethod:: zap_near_zeros
+    .. automethod:: close_to
+
+    .. rubric:: Grade manipulation
+
+    .. automethod:: gen_blades
+    .. automethod:: project
+    .. automethod:: xproject
+    .. automethod:: all_grades
+    .. automethod:: get_pure_grade
+    .. automethod:: odd
+    .. automethod:: even
+    .. automethod:: project_min_grade
+    .. automethod:: project_max_grade
+
+    .. automethod:: as_scalar
+    .. automethod:: as_vector
+
+    .. rubric:: Helper functions
+
+    .. automethod:: map
+
     """
 
     # {{{ construction
@@ -861,6 +909,20 @@ class MultiVector(object):
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
+
+    def project_min_grade(self):
+        """
+        .. versionadded:: 2014.2
+        """
+
+        return self.project(min(self.all_grades()))
+
+    def project_max_grade(self):
+        """
+        .. versionadded:: 2014.2
+        """
+
+        return self.project(max(self.all_grades()))
 
     def as_scalar(self):
         result = 0

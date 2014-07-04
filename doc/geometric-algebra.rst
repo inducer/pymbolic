@@ -21,50 +21,6 @@ Multivectors
 
 .. autoclass:: MultiVector
 
-    .. autoattribute:: mapper_method
-
-    .. rubric:: More products
-
-    .. automethod:: scalar_product
-    .. automethod:: x
-    .. automethod:: __pow__
-
-    .. rubric:: Unary operators
-
-    .. automethod:: inv
-    .. automethod:: rev
-    .. automethod:: invol
-    .. automethod:: dual
-    .. automethod:: __inv__
-    .. automethod:: norm_squared
-    .. automethod:: __abs__
-    .. autoattribute:: I
-
-    .. rubric:: Comparisons
-
-    :class:`MultiVector` objects have a truth value corresponding to whether
-    they have any blades with non-zero coefficients. They support testing
-    for (exact) equality.
-
-    .. automethod:: zap_near_zeros
-    .. automethod:: close_to
-
-    .. rubric:: Grade manipulation
-
-    .. automethod:: gen_blades
-    .. automethod:: project
-    .. automethod:: xproject
-    .. automethod:: all_grades
-    .. automethod:: get_pure_grade
-    .. automethod:: odd
-    .. automethod:: even
-    .. automethod:: as_scalar
-    .. automethod:: as_vector
-
-    .. rubric:: Helper functions
-
-    .. automethod:: map
-
 .. _ga-examples:
 
 Example usage
