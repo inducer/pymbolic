@@ -23,7 +23,6 @@ THE SOFTWARE.
 """
 
 from pytools import memoize, memoize_method
-from pymbolic.primitives import is_zero
 import numpy as np
 
 
@@ -383,6 +382,13 @@ class _ScalarProduct(_GAProduct):
 
 # {{{ multivector
 
+def _cast_or_ni(obj, space):
+    if isinstance(obj, MultiVector):
+        return obj
+    else:
+        return MultiVector(obj, space)
+
+
 class MultiVector(object):
     r"""An immutable multivector type. Its implementation follows [DFM].
     It is pickleable, and not picky about what data is used as coefficients.
@@ -524,12 +530,14 @@ class MultiVector(object):
         # {{{ normalize data to bitmaps, if needed
 
         from pytools import single_valued
+        from pymbolic.primitives import is_zero
         if data and single_valued(isinstance(k, tuple) for k in data.iterkeys()):
             # data is in non-normalized non-bits tuple form
             new_data = {}
             for basis_indices, coeff in data.iteritems():
                 bits, sign = space.bits_and_sign(basis_indices)
                 new_coeff = new_data.setdefault(bits, 0) + sign*coeff
+
                 if is_zero(new_coeff):
                     del new_data[bits]
                 else:
@@ -616,17 +624,20 @@ class MultiVector(object):
                 self.space)
 
     def __add__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         if self.space is not other.space:
             raise ValueError("can only add multivectors from identical spaces")
 
         all_bits = set(self.data.iterkeys()) | set(other.data.iterkeys())
 
+        from pymbolic.primitives import is_zero
         new_data = {}
         for bits in all_bits:
             new_coeff = self.data.get(bits, 0) + other.data.get(bits, 0)
+
             if not is_zero(new_coeff):
                 new_data[bits] = new_coeff
 
@@ -659,6 +670,7 @@ class MultiVector(object):
             raise ValueError("can only compute products of multivectors "
                     "from identical spaces")
 
+        from pymbolic.primitives import is_zero
         new_data = {}
         for sbits, scoeff in self.data.iteritems():
             for obits, ocoeff in other.data.iteritems():
@@ -679,8 +691,9 @@ class MultiVector(object):
         return MultiVector(new_data, self.space)
 
     def __mul__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self._generic_product(other, _GeometricProduct)
 
@@ -689,8 +702,9 @@ class MultiVector(object):
                 ._generic_product(self, _GeometricProduct)
 
     def __xor__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self._generic_product(other, _OuterProduct)
 
@@ -699,8 +713,9 @@ class MultiVector(object):
                 ._generic_product(self, _OuterProduct)
 
     def __or__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self._generic_product(other, _InnerProduct)
 
@@ -709,8 +724,9 @@ class MultiVector(object):
                 ._generic_product(self, _InnerProduct)
 
     def __lshift__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self._generic_product(other, _LeftContractionProduct)
 
@@ -719,8 +735,9 @@ class MultiVector(object):
                 ._generic_product(self, _LeftContractionProduct)
 
     def __rshift__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self._generic_product(other, _RightContractionProduct)
 
@@ -734,10 +751,12 @@ class MultiVector(object):
         Often written :math:`A*B`.
         """
 
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other_new = _cast_or_ni(other, self.space)
+        if other_new is NotImplemented:
+            raise NotImplementedError("scalar product between multivector and '%s'"
+                    % type(other))
 
-        return self._generic_product(other, _ScalarProduct).as_scalar()
+        return self._generic_product(other_new, _ScalarProduct).as_scalar()
 
     def x(self, other):
         r"""Return the commutator product.
@@ -759,8 +778,9 @@ class MultiVector(object):
     def __truediv__(self, other):
         """Return ``self*(1/other)``.
         """
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self*other.inv()
 
@@ -878,8 +898,9 @@ class MultiVector(object):
         return bool(self.data)
 
     def __eq__(self, other):
-        if not isinstance(other, MultiVector):
-            other = MultiVector(other, self.space)
+        other = _cast_or_ni(other, self.space)
+        if other is NotImplemented:
+            return NotImplemented
 
         return self.data == other.data
 
