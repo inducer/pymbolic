@@ -49,7 +49,7 @@ Next, let's create an expression using *x*:
 
     >>> u = (x+1)**5
     >>> u
-    Power(Sum(Variable('x'), 1), 5)
+    Power(Sum((Variable('x'), 1)), 5)
     >>> print u
     (x + 1)**5
 
@@ -103,9 +103,9 @@ You can also easily define your own objects to use inside an expression:
     ...     mapper_method = "map_fancy_operator"
     ...
     >>> u
-    Power(Sum(Variable('x'), 1), 5)
+    Power(Sum((Variable('x'), 1)), 5)
     >>> 17*FancyOperator(u)
-    Product(17, FancyOperator(Power(Sum(Variable('x'), 1), 5)))
+    Product((17, FancyOperator(Power(Sum((Variable('x'), 1)), 5))))
 
 As a final example, we can now derive from *MyMapper* to multiply all
 *FancyOperator* instances by 2.
@@ -117,10 +117,10 @@ As a final example, we can now derive from *MyMapper* to multiply all
     ...         return 2*FancyOperator(self.rec(expr.operand))
     ...
     >>> MyMapper2()(FancyOperator(u))
-    Product(2, FancyOperator(Power(Product(Variable('x'), 1), 5)))
+    Product((2, FancyOperator(Power(Product((Variable('x'), 1)), 5))))
 """
 
-from pymbolic.version import VERSION_TEXT as __version__
+from pymbolic.version import VERSION_TEXT as __version__  # noqa
 
 import pymbolic.parser
 import pymbolic.compiler
