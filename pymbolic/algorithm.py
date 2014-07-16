@@ -351,11 +351,11 @@ def solve_affine_equations_for(unknowns, equations):
 
     result = {}
     for j, unknown in enumerate(unknowns):
-        nonz_row = np.where(mat[:, j])
+        (nonz_row,) = np.where(mat[:, j])
         if len(nonz_row) != 1:
             raise RuntimeError("cannot uniquely solve for '%s'" % unknown)
 
-        (nonz_row,), = nonz_row
+        (nonz_row,) = nonz_row
 
         if abs(mat[nonz_row, j]) != 1:
             raise RuntimeError("division with remainder in linear solve for '%s'"
