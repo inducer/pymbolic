@@ -138,6 +138,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         return self.parenthesize_if_needed(
                 self.format("%s[%s]",
                     self.rec(expr.aggregate, PREC_CALL),
+                    self.join_rec(", ", expr.index, PREC_NONE) if
+                    isinstance(expr.index, tuple) else
                     self.rec(expr.index, PREC_NONE)),
                 enclosing_prec, PREC_CALL)
 
