@@ -135,12 +135,15 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 self.join_rec(", ", expr.parameters, PREC_NONE))
 
     def map_subscript(self, expr, enclosing_prec):
+        if isinstance(expr.index, tuple):
+            index_str = self.join_rec(", ", expr.index, PREC_NONE)
+        else:
+            index_str = self.rec(expr.index, PREC_NONE)
+
         return self.parenthesize_if_needed(
                 self.format("%s[%s]",
                     self.rec(expr.aggregate, PREC_CALL),
-                    self.join_rec(", ", expr.index, PREC_NONE) if
-                    isinstance(expr.index, tuple) else
-                    self.rec(expr.index, PREC_NONE)),
+                    index_str),
                 enclosing_prec, PREC_CALL)
 
     def map_lookup(self, expr, enclosing_prec):
