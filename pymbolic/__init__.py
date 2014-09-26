@@ -130,7 +130,7 @@ import pymbolic.mapper.stringifier
 import pymbolic.mapper.dependency
 import pymbolic.mapper.substitutor
 import pymbolic.mapper.differentiator
-import pymbolic.mapper.expander
+import pymbolic.mapper.distributor
 import pymbolic.mapper.flattener
 import pymbolic.primitives
 
@@ -152,5 +152,6 @@ evaluate_kw = pymbolic.mapper.evaluator.evaluate_kw
 compile = pymbolic.compiler.compile
 substitute = pymbolic.mapper.substitutor.substitute
 diff = differentiate = pymbolic.mapper.differentiator.differentiate
-expand = pymbolic.mapper.expander.expand
+expand = pymbolic.mapper.distributor.distribute
+distribute = pymbolic.mapper.distributor.distribute
 flatten = pymbolic.mapper.flattener.flatten

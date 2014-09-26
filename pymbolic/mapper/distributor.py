@@ -25,14 +25,10 @@ THE SOFTWARE.
 import pymbolic
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
-from pymbolic.primitives import \
-        Sum, Product, Power, AlgebraicLeaf, \
-        is_constant
+from pymbolic.primitives import Sum, Product
 
 
-
-
-class ExpandMapper(IdentityMapper):
+class DistributeMapper(IdentityMapper):
     """Example usage:
 
     .. doctest::
@@ -40,8 +36,8 @@ class ExpandMapper(IdentityMapper):
         >>> import pymbolic.primitives as p
         >>> x = p.Variable("x")
         >>> expr = (x+1)**7
-        >>> from pymbolic.mapper.expander import ExpandMapper as EM
-        >>> print EM()(expr) # doctest: +SKIP
+        >>> from pymbolic.mapper.distributor import DistributeMapper as DM
+        >>> print DM()(expr) # doctest: +SKIP
         7*x**6 + 21*x**5 + 21*x**2 + 35*x**3 + 1 + 35*x**4 + 7*x + x**7
     """
 
@@ -56,7 +52,7 @@ class ExpandMapper(IdentityMapper):
             return res
 
     def map_product(self, expr):
-        def expand(prod):
+        def dist(prod):
             if not isinstance(prod, Product):
                 return prod
 
@@ -76,23 +72,23 @@ class ExpandMapper(IdentityMapper):
                 assert isinstance(sum, Sum)
                 rest = prod.children[len(leading)+1:]
                 if rest:
-                    rest = expand(Product(rest))
+                    rest = dist(Product(rest))
                 else:
                     rest = 1
 
                 result = self.collector(pymbolic.flattened_sum(
-                       pymbolic.flattened_product(leading) * expand(sumchild*rest)
+                       pymbolic.flattened_product(leading) * dist(sumchild*rest)
                        for sumchild in sum.children
                        ))
                 return result
 
-        return expand(IdentityMapper.map_product(self, expr))
+        return dist(IdentityMapper.map_product(self, expr))
 
     def map_quotient(self, expr):
         raise NotImplementedError
 
     def map_power(self, expr):
-        from pymbolic.primitives import Expression, Sum
+        from pymbolic.primitives import Sum
 
         if isinstance(expr.base, Product):
             return self.rec(pymbolic.flattened_product(
@@ -101,17 +97,17 @@ class ExpandMapper(IdentityMapper):
         if isinstance(expr.exponent, int):
             newbase = self.rec(expr.base)
             if isinstance(newbase, Sum):
-                return self.map_product(pymbolic.flattened_product(expr.exponent*(newbase,)))
+                return self.map_product(
+                        pymbolic.flattened_product(
+                            expr.exponent*(newbase,)))
             else:
                 return IdentityMapper.map_power(self, expr)
         else:
             return IdentityMapper.map_power(self, expr)
 
 
-
-
-def expand(expr, parameters=set(), commutative=True):
+def distribute(expr, parameters=set(), commutative=True):
     if commutative:
-        return ExpandMapper(TermCollector(parameters))(expr)
+        return DistributeMapper(TermCollector(parameters))(expr)
     else:
-        return ExpandMapper(lambda x: x)(expr)
+        return DistributeMapper(lambda x: x)(expr)

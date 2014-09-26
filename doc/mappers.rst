@@ -36,9 +36,9 @@ Some minimal mathematics
 
 .. autoclass:: DifferentiationMapper
 
-.. automodule:: pymbolic.mapper.expander
+.. automodule:: pymbolic.mapper.distributor
 
-.. autoclass:: ExpandMapper
+.. autoclass:: DistributeMapper
 
 .. automodule:: pymbolic.mapper.collector
 
