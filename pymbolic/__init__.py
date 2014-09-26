@@ -146,6 +146,8 @@ linear_combination = pymbolic.primitives.linear_combination
 cse = pymbolic.primitives.make_common_subexpression
 make_sym_vector = pymbolic.primitives.make_sym_vector
 
+disable_subscript_by_getitem = pymbolic.primitives.disable_subscript_by_getitem
+
 parse = pymbolic.parser.parse
 evaluate = pymbolic.mapper.evaluator.evaluate
 evaluate_kw = pymbolic.mapper.evaluator.evaluate_kw

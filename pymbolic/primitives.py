@@ -170,6 +170,16 @@ vectors and matrices of :mod:`pymbolic` objects.
 """
 
 
+_SUBSCRIPT_BY_GETITEM = True
+
+
+def disable_subscript_by_getitem():
+    global _SUBSCRIPT_BY_GETITEM
+    _SUBSCRIPT_BY_GETITEM = False
+
+    del Expression.__getitem__
+
+
 class Expression(object):
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
@@ -362,6 +372,22 @@ class Expression(object):
         return Call(self, pars)
 
     def __getitem__(self, subscript):
+        if _SUBSCRIPT_BY_GETITEM:
+            from warning import warn
+
+            warn("creating subscripts using x[i] syntax is deprecated "
+                    "and will be removed in Pymbolic 2016.x. "
+                    "Use x.index(i) instead.",
+                    DeprecationWarning)
+
+            if subscript == ():
+                return self
+            else:
+                return Subscript(self, subscript)
+        else:
+            return NotImplemented
+
+    def index(self, subscript):
         if subscript == ():
             return self
         else:
@@ -881,7 +907,7 @@ class Comparison(Expression):
 
         self.left = left
         self.right = right
-        if not operator in [">", ">=", "==", "!=", "<", "<="]:
+        if operator not in [">", ">=", "==", "!=", "<", "<="]:
             raise RuntimeError("invalid operator")
         self.operator = operator
 
