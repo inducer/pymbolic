@@ -373,7 +373,7 @@ class Expression(object):
 
     def __getitem__(self, subscript):
         if _SUBSCRIPT_BY_GETITEM:
-            from warning import warn
+            from warnings import warn
 
             warn("creating subscripts using x[i] syntax is deprecated "
                     "and will be removed in Pymbolic 2016.x. "
