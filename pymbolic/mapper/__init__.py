@@ -193,15 +193,22 @@ class CombineMapper(RecursiveMapper):
     :class:`pymbolic.mapper.dependency.DependencyMapper` is another example.
     """
 
+    def combine_at_expr(self, expr, values):
+        from warnings import warn
+        warn("CombineMapper subclass '%s' overrode deprecated "
+                "combine() rather than combine_at_expr()",
+                type(self).__name__)
+        return self.combine(values)
+
     def map_call(self, expr, *args):
-        return self.combine(
+        return self.combine_at_expr(expr,
                 (self.rec(expr.function, *args),) +
                 tuple(
                     self.rec(child, *args) for child in expr.parameters)
                 )
 
     def map_subscript(self, expr, *args):
-        return self.combine(
+        return self.combine_at_expr(expr,
                 [self.rec(expr.aggregate, *args),
                     self.rec(expr.index, *args)])
 
@@ -209,13 +216,15 @@ class CombineMapper(RecursiveMapper):
         return self.rec(expr.aggregate, *args)
 
     def map_sum(self, expr, *args):
-        return self.combine(self.rec(child, *args)
-                for child in expr.children)
+        return self.combine_at_expr(
+                expr,
+                (self.rec(child, *args)
+                for child in expr.children))
 
     map_product = map_sum
 
     def map_quotient(self, expr, *args):
-        return self.combine((
+        return self.combine_at_expr(expr, (
             self.rec(expr.numerator, *args),
             self.rec(expr.denominator, *args)))
 
@@ -223,19 +232,22 @@ class CombineMapper(RecursiveMapper):
     map_remainder = map_quotient
 
     def map_power(self, expr, *args):
-        return self.combine((
-                self.rec(expr.base, *args),
-                self.rec(expr.exponent, *args)))
+        return self.combine_at_expr(
+                expr, (
+                    self.rec(expr.base, *args),
+                    self.rec(expr.exponent, *args)))
 
     def map_polynomial(self, expr, *args):
-        return self.combine(
+        return self.combine_at_expr(
+                expr,
                 (self.rec(expr.base, *args),) +
                 tuple(
                     self.rec(coeff, *args) for exp, coeff in expr.data)
                 )
 
     def map_left_shift(self, expr, *args):
-        return self.combine(
+        return self.combine_at_expr(
+                expr,
                 self.rec(expr.shiftee, *args),
                 self.rec(expr.shift, *args))
 
@@ -252,15 +264,18 @@ class CombineMapper(RecursiveMapper):
     map_logical_or = map_sum
 
     def map_comparison(self, expr, *args):
-        return self.combine((
-            self.rec(expr.left, *args),
-            self.rec(expr.right, *args)))
+        return self.combine_at_expr(
+                expr, (
+                    self.rec(expr.left, *args),
+                    self.rec(expr.right, *args)))
 
     map_max = map_sum
     map_min = map_sum
 
     def map_list(self, expr, *args):
-        return self.combine(self.rec(child, *args) for child in expr)
+        return self.combine_at_expr(
+                expr,
+                self.rec(child, *args) for child in expr)
 
     map_tuple = map_list
 
