@@ -378,7 +378,7 @@ class Expression(object):
             warn("creating subscripts using x[i] syntax is deprecated "
                     "and will be removed in Pymbolic 2016.x. "
                     "Use x.index(i) instead.",
-                    DeprecationWarning)
+                    DeprecationWarning, stacklevel=2)
 
             if subscript == ():
                 return self
