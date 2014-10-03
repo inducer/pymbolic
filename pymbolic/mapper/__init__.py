@@ -200,6 +200,15 @@ class CombineMapper(RecursiveMapper):
                     self.rec(child, *args) for child in expr.parameters)
                 )
 
+    def map_call_with_kwargs(self, expr, *args):
+        return self.combine(
+                (self.rec(expr.function, *args),)
+                + tuple(
+                    self.rec(child, *args) for child in expr.parameters)
+                + tuple(
+                    self.rec(child, *args) for child in expr.kw_parameters.values())
+                )
+
     def map_subscript(self, expr, *args):
         return self.combine(
                 [self.rec(expr.aggregate, *args),
@@ -309,10 +318,20 @@ class IdentityMapper(Mapper):
         return expr
 
     def map_call(self, expr, *args):
-        return expr.__class__(
+        return type(expr)(
                 self.rec(expr.function, *args),
                 tuple(self.rec(child, *args)
                     for child in expr.parameters))
+
+    def map_call_with_kwargs(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.function, *args),
+                tuple(self.rec(child, *args)
+                    for child in expr.parameters),
+                dict(
+                    (key, self.rec(val, *args))
+                    for key, val in expr.kw_parameters.iteritems())
+                    )
 
     def map_subscript(self, expr, *args):
         return expr.__class__(
@@ -320,7 +339,7 @@ class IdentityMapper(Mapper):
                 self.rec(expr.index, *args))
 
     def map_lookup(self, expr, *args):
-        return expr.__class__(
+        return type(expr)(
                 self.rec(expr.aggregate, *args),
                 expr.name)
 
@@ -467,6 +486,17 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.function, *args)
         for child in expr.parameters:
+            self.rec(child, *args)
+
+    def map_call_with_kwargs(self, expr, *args):
+        if not self.visit(expr, *args):
+            return
+
+        self.rec(expr.function, *args)
+        for child in expr.parameters:
+            self.rec(child, *args)
+
+        for child in expr.kw_parameters.values():
             self.rec(child, *args)
 
     def map_subscript(self, expr, *args):

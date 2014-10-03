@@ -229,8 +229,26 @@ def test_parser():
     assert parse("f((x,),z)") == f((x,), z)
     assert parse("f(x,(y,z),z)") == f(x, (y, z), z)
 
+    assert parse("f(x,(y,z),z, name=15)") == f(x, (y, z), z, name=15)
+    assert parse("f(x,(y,z),z, name=15, name2=17)") == f(
+            x, (y, z), z, name=15, name2=17)
+
 # }}}
 
+
+def test_mappers():
+    from pymbolic import variables
+    f, x, y, z = variables("f x y z")
+
+    for expr in [
+            f(x, (y, z), name=z**2)
+            ]:
+        from pymbolic.mapper import WalkMapper
+        from pymbolic.mapper.dependency import DependencyMapper
+        str(expr)
+        IdentityMapper()(expr)
+        WalkMapper()(expr)
+        DependencyMapper()(expr)
 
 # {{{ geometric algebra
 

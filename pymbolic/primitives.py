@@ -55,6 +55,10 @@ Sums, products and such
     :undoc-members:
     :members: mapper_method
 
+.. autoclass:: CallWithKwargs
+    :undoc-members:
+    :members: mapper_method
+
 .. autoclass:: Subscript
     :undoc-members:
     :members: mapper_method
@@ -368,8 +372,11 @@ class Expression(object):
     def __neg__(self):
         return -1*self
 
-    def __call__(self, *pars):
-        return Call(self, pars)
+    def __call__(self, *args, **kwargs):
+        if kwargs:
+            return CallWithKwargs(self, args, kwargs)
+        else:
+            return Call(self, args)
 
     def __getitem__(self, subscript):
         if _SUBSCRIPT_BY_GETITEM:
@@ -559,17 +566,19 @@ class Call(AlgebraicLeaf):
     """A function invocation.
 
     .. attribute:: function
+
+        A :class:`Expression` that evaluates to a function.
+
     .. attribute:: parameters
+
+        A :class:`tuple` of positional paramters, each element
+        of which is a :class:`Expression` or a constant.
+
     """
 
     init_arg_names = ("function", "parameters",)
 
     def __init__(self, function, parameters):
-        """
-        :arg function: A :class:`Expression` that evaluates to a function.
-        :arg parameters: A :class:`tuple` of positional paramters.
-        """
-
         self.function = function
         self.parameters = parameters
 
@@ -587,6 +596,55 @@ class Call(AlgebraicLeaf):
         return self.function, self.parameters
 
     mapper_method = intern("map_call")
+
+
+class CallWithKwargs(AlgebraicLeaf):
+    """A function invocation with keyword arguments.
+
+    .. attribute:: function
+
+        A :class:`Expression` that evaluates to a function.
+
+    .. attribute:: parameters
+
+        A :class:`tuple` of positional paramters, each element
+        of which is a :class:`Expression` or a constant.
+
+    .. attribute:: kw_parameters
+
+        A dictionary mapping names to arguments, , each
+        of which is a :class:`Expression` or a constant,
+        or an equivalent value accepted by the :class:`dict`
+        constructor.
+    """
+
+    init_arg_names = ("function", "parameters", "kw_parameters")
+
+    def __init__(self, function, parameters, kw_parameters):
+        self.function = function
+        self.parameters = parameters
+
+        if isinstance(kw_parameters, dict):
+            self.kw_parameters = kw_parameters
+        else:
+            self.kw_parameters = dict(kw_parameters)
+
+        try:
+            arg_count = self.function.arg_count
+        except AttributeError:
+            pass
+        else:
+            if len(self.parameters) != arg_count:
+                raise TypeError("%s called with wrong number of arguments "
+                        "(need %d, got %d)" % (
+                            self.function, arg_count, len(parameters)))
+
+    def __getinitargs__(self):
+        return (self.function,
+                self.parameters,
+                tuple(sorted(self.kw_parameters.values())))
+
+    mapper_method = intern("map_call_with_kwargs")
 
 
 class Subscript(AlgebraicLeaf):

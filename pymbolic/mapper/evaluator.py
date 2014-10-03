@@ -67,6 +67,14 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
     def map_call(self, expr):
         return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])
 
+    def map_call_with_kwargs(self, expr):
+        args = [self.rec(par) for par in expr.parameters]
+        kwargs = dict(
+                (k, self.rec(v))
+                for k, v in expr.kw_parameters.items())
+
+        return self.rec(expr.function)(*args, **kwargs)
+
     def map_subscript(self, expr):
         return self.rec(expr.aggregate)[self.rec(expr.index)]
 

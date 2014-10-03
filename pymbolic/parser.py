@@ -44,6 +44,8 @@ _comma = intern("comma")
 _dot = intern("dot")
 _colon = intern("colon")
 
+_assign = intern("assign")
+
 _equal = intern("equal")
 _notequal = intern("notequal")
 _less = intern("less")
@@ -85,12 +87,15 @@ class Parser:
     lex_table = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
+            (_equal, pytools.lex.RE(r"==")),
 
             (_lessequal, pytools.lex.RE(r"\<=")),
             (_greaterequal, pytools.lex.RE(r"\>=")),
             # must be before
             (_less, pytools.lex.RE(r"\<")),
             (_greater, pytools.lex.RE(r"\>")),
+
+            (_assign, pytools.lex.RE(r"=")),
 
             (_and, pytools.lex.RE(r"and")),
             (_or, pytools.lex.RE(r"or")),
@@ -226,17 +231,13 @@ class Parser:
 
         if next_tag is _openpar and _PREC_CALL > min_precedence:
             pstate.advance()
-            pstate.expect_not_end()
-            if next_tag is _closepar:
-                pstate.advance()
-                left_exp = primitives.Call(left_exp, ())
+            args, kwargs = self.parse_arglist(pstate)
+
+            if kwargs:
+                left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
             else:
-                args = self.parse_expression(pstate)
-                if not isinstance(args, tuple):
-                    args = (args,)
                 left_exp = primitives.Call(left_exp, args)
-                pstate.expect(_closepar)
-                pstate.advance()
+
             did_something = True
         elif next_tag is _openbracket and _PREC_CALL > min_precedence:
             pstate.advance()
@@ -334,6 +335,49 @@ class Parser:
             did_something = True
 
         return left_exp, did_something
+
+    def parse_arglist(self, pstate):
+        pstate.expect_not_end()
+
+        args = []
+        kwargs = {}
+
+        comma_allowed = False
+        while True:
+            pstate.expect_not_end()
+
+            saw_comma = False
+            if pstate.next_tag() is _comma:
+                saw_comma = True
+                if not comma_allowed:
+                    pstate.raise_parse_error("comma not expected")
+                pstate.advance()
+                pstate.expect_not_end()
+
+            if pstate.next_tag() is _closepar:
+                pstate.advance()
+                return tuple(args), kwargs
+
+            if not saw_comma and comma_allowed:
+                pstate.raise_parse_error("comma expected")
+
+            if (pstate.next_tag() is _identifier
+                    and not pstate.is_at_end(1)
+                    and pstate.next_tag(1) == _assign):
+                kw = pstate.next_str()
+                pstate.advance()
+                pstate.advance()
+
+                kwargs[kw] = self.parse_expression(pstate, _PREC_COMMA)
+            else:
+                if kwargs:
+                    pstate.raise_parse_error(
+                            "positional argument after keyword "
+                            "argument not allowed")
+
+                args.append(self.parse_expression(pstate, _PREC_COMMA))
+
+            comma_allowed = True
 
     def __call__(self, expr_str):
         lex_result = [(tag, s, idx)
