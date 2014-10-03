@@ -334,7 +334,7 @@ class IdentityMapper(Mapper):
                     )
 
     def map_subscript(self, expr, *args):
-        return expr.__class__(
+        return type(expr)(
                 self.rec(expr.aggregate, *args),
                 self.rec(expr.index, *args))
 

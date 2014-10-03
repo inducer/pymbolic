@@ -134,7 +134,7 @@ import pymbolic.mapper.distributor
 import pymbolic.mapper.flattener
 import pymbolic.primitives
 
-from pymbolic.polynomial import Polynomial
+from pymbolic.polynomial import Polynomial  # noqa
 
 var = pymbolic.primitives.Variable
 variables = pymbolic.primitives.variables

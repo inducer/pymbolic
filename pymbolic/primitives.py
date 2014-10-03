@@ -25,6 +25,8 @@ THE SOFTWARE.
 import pymbolic.traits as traits
 
 __doc__ = """
+.. autofunction:: disable_subscript_by_getitem
+
 Expression base class
 ---------------------
 
@@ -36,6 +38,13 @@ Expression base class
 
         The :class:`pymbolic.mapper.Mapper` method called for objects of
         this type.
+
+    .. method:: __getitem__
+
+        Deprecated, see :func:`disable_subscript_by_getitem`. Use :meth:`index`
+        instead.
+
+    .. automethod:: index
 
     .. automethod:: stringifier
 
@@ -178,10 +187,32 @@ _SUBSCRIPT_BY_GETITEM = True
 
 
 def disable_subscript_by_getitem():
+    """In prior versions of :mod:`pymbolic`, directly subscripting an :class:`Expression`
+    subclass generated a :class:`Subscript`. For various reasons, this was a
+    very bad idea.  For example, the following code snippet would result in an
+    infinite loop::
+
+        for el in expr:
+            print(el)
+
+    :mod:`numpy` does similar things under the hodd, leading to hard-to-debug
+    infinite loops. As a result, this behavior is being deprecated. In Pymbolic
+    2016.x, it will disappear entirely.  It can also be disabled by this
+    function. Once disabled, it cannot be reenabled.
+
+    See also :meth:`Expression.index`.
+
+    .. versionadded:: 2014.3
+    """
+
     global _SUBSCRIPT_BY_GETITEM
     _SUBSCRIPT_BY_GETITEM = False
 
-    del Expression.__getitem__
+    try:
+        del Expression.__getitem__
+    except AttributeError:
+        # Yay, somebody did the sane thing before us.
+        pass
 
 
 class Expression(object):
@@ -395,6 +426,11 @@ class Expression(object):
             return NotImplemented
 
     def index(self, subscript):
+        """Return an expression representing ``self[subscript]``.
+
+        .. versionadded:: 2014.3
+        """
+
         if subscript == ():
             return self
         else:

@@ -22,8 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import pymbolic
 import pymbolic.primitives as prim
 import pytest
+
 
 from pymbolic.mapper import IdentityMapper
 
@@ -32,6 +34,8 @@ try:
 except NameError:
     from functools import reduce
 
+
+pymbolic.disable_subscript_by_getitem()
 
 def test_integer_power():
     from pymbolic.algorithm import integer_power
@@ -249,6 +253,7 @@ def test_mappers():
         IdentityMapper()(expr)
         WalkMapper()(expr)
         DependencyMapper()(expr)
+
 
 # {{{ geometric algebra
 
