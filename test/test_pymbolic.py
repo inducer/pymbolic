@@ -255,6 +255,16 @@ def test_mappers():
         DependencyMapper()(expr)
 
 
+def test_func_dep_consistency():
+    from pymbolic import var
+    from pymbolic.mapper.dependency import DependencyMapper
+    f = var('f')
+    x = var('x')
+    dep_map = DependencyMapper(include_calls="descend_args")
+    assert dep_map(f(x)) == set([x])
+    assert dep_map(f(x=x)) == set([x])
+
+
 # {{{ geometric algebra
 
 @pytest.mark.parametrize("dims", [2, 3, 4, 5])

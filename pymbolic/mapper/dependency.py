@@ -83,6 +83,17 @@ class DependencyMapper(CSECachingMapperMixin, CombineMapper):
         else:
             return CombineMapper.map_call(self, expr)
 
+    def map_call_with_kwargs(self, expr):
+        if self.include_calls == "descend_args":
+                return self.combine(
+                        [self.rec(child) for child in expr.parameters]
+                        + [self.rec(val) for name, val in expr.kw_parameters.items()]
+                        )
+        elif self.include_calls:
+            return set([expr])
+        else:
+            return CombineMapper.map_call(self, expr)
+
     def map_lookup(self, expr):
         if self.include_lookups:
             return set([expr])
