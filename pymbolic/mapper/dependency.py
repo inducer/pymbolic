@@ -92,7 +92,7 @@ class DependencyMapper(CSECachingMapperMixin, CombineMapper):
         elif self.include_calls:
             return set([expr])
         else:
-            return CombineMapper.map_call(self, expr)
+            return CombineMapper.map_call_with_kwargs(self, expr)
 
     def map_lookup(self, expr):
         if self.include_lookups:
