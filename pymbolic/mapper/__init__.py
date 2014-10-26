@@ -588,6 +588,13 @@ class WalkMapper(RecursiveMapper):
         for i in indices_in_shape(expr.shape):
             self.rec(expr[i], *args)
 
+    def map_multivector(self, expr, *args):
+        if not self.visit(expr, *args):
+            return
+
+        for bits, coeff in expr.data.iteritems():
+            self.rec(coeff)
+
     def map_common_subexpression(self, expr, *args, **kwargs):
         if not self.visit(expr, *args):
             return
