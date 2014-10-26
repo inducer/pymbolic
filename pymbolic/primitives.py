@@ -1563,7 +1563,7 @@ def make_sym_vector(name, components):
 
     from pytools.obj_array import join_fields
     vfld = Variable(name)
-    return join_fields(*[vfld[i] for i in components])
+    return join_fields(*[vfld.index(i) for i in components])
 
 
 def make_sym_array(name, shape):
@@ -1575,7 +1575,7 @@ def make_sym_array(name, shape):
     result = np.zeros(shape, dtype=object)
     from pytools import indices_in_shape
     for i in indices_in_shape(shape):
-        result[i] = vfld[i]
+        result[i] = vfld.index(i)
 
     return result
 
