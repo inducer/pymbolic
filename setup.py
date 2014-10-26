@@ -46,7 +46,11 @@ setup(name="pymbolic",
       license="MIT",
       url="http://mathema.tician.de/software/pymbolic",
 
-      packages=["pymbolic", "pymbolic.mapper"],
+      packages=[
+          "pymbolic",
+          "pymbolic.mapper",
+          "pymbolic.geometric_algebra",
+          ],
       install_requires=[
           'pytools>=2',
           'pytest>=2.3',
