@@ -307,6 +307,8 @@ class Collector(CombineMapper):
     across children at each non-leaf node in the expression tree.
 
     By default, nothing is collected. All leaves return empty sets.
+
+    .. versionadded:: 2014.3
     """
 
     def combine(self, values):
