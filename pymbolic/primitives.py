@@ -678,7 +678,9 @@ class CallWithKwargs(AlgebraicLeaf):
     def __getinitargs__(self):
         return (self.function,
                 self.parameters,
-                tuple(sorted(self.kw_parameters.values())))
+                tuple(sorted(
+                    self.kw_parameters.items(),
+                    key=lambda item: item[0])))
 
     mapper_method = intern("map_call_with_kwargs")
 
