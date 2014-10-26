@@ -65,6 +65,8 @@ Base classes for new mappers
 
 .. autoclass:: CombineMapper
 
+.. autoclass:: Collector
+
 .. autoclass:: IdentityMapper
 
 .. autoclass:: WalkMapper
@@ -293,6 +295,29 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.condition),
             self.rec(expr.then),
             self.rec(expr.else_)])
+
+# }}}
+
+
+# {{{ collector
+
+class Collector(CombineMapper):
+    """A subclass of :class:`CombineMapper` for the common purpose of
+    collecting data derived from an expression in a set that gets 'unioned'
+    across children at each non-leaf node in the expression tree.
+
+    By default, nothing is collected. All leaves return empty sets.
+    """
+
+    def combine(self, values):
+        import operator
+        return reduce(operator.or_, values, set())
+
+    def map_constant(self, expr):
+        return set()
+
+    map_variable = map_constant
+    map_function_symbol = map_constant
 
 # }}}
 
