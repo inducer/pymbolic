@@ -100,7 +100,7 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
         if self.include_cses:
             return set([expr])
         else:
-            return super(DependencyMapper, self).map_common_subexpression(expr)
+            return Collector.map_common_subexpression(self, expr)
 
     def map_slice(self, expr):
         return self.combine(
