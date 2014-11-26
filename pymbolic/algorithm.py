@@ -347,8 +347,6 @@ def solve_affine_equations_for(unknowns, equations):
 
     # FIXME /!\ Does not check for overdetermined system.
 
-    from pymbolic import var
-
     result = {}
     for j, unknown in enumerate(unknowns):
         (nonz_row,) = np.where(mat[:, j])
@@ -364,7 +362,7 @@ def solve_affine_equations_for(unknowns, equations):
 
         unknown_val = int(rhs_mat[nonz_row, -1]) // div
         for parameter, coeff in zip(parameters_list, rhs_mat[nonz_row]):
-            unknown_val += (int(coeff) // div) * var(parameter)
+            unknown_val += (int(coeff) // div) * parameter
 
         result[unknown] = unknown_val
 
