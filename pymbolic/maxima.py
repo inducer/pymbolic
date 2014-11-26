@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -289,7 +291,7 @@ class MaximaKernel:
     def exec_str(self, s):
         cmd = s+";"
         if _DEBUG & 1:
-            print "[MAXIMA INPUT]", cmd
+            print("[MAXIMA INPUT]", cmd)
 
         self._sendline(s+";")
         self._expect_prompt(IN_PROMPT_RE)
@@ -299,7 +301,7 @@ class MaximaKernel:
 
         cmd = s+";"
         if _DEBUG & 1:
-            print "[MAXIMA INPUT]", cmd
+            print("[MAXIMA INPUT]", cmd)
 
         self._sendline(cmd)
         s_echo = self.child.readline()
@@ -312,7 +314,7 @@ class MaximaKernel:
         result, _ = MULTI_WHITESPACE.subn(" ", self.child.before)
 
         if _DEBUG & 1:
-            print "[MAXIMA RESPONSE]", result
+            print("[MAXIMA RESPONSE]", result)
         return result
 
     def reset(self):
@@ -335,7 +337,7 @@ class MaximaKernel:
         result_str = self.eval_str(input_str)
         parsed = MaximaParser()(result_str)
         if _DEBUG & 2:
-            print "[MAXIMA PARSED]", parsed
+            print("[MAXIMA PARSED]", parsed)
         return parsed
 
     def clean_eval_expr_with_setup(self, assignments, expr):
@@ -344,7 +346,7 @@ class MaximaKernel:
 
         parsed = MaximaParser()(result_str)
         if _DEBUG & 2:
-            print "[MAXIMA PARSED  ]", parsed
+            print("[MAXIMA PARSED  ]", parsed)
         return parsed
 
     # }}}

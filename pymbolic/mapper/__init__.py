@@ -1,4 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
+from functools import reduce
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -281,7 +284,7 @@ class CombineMapper(RecursiveMapper):
         return self.combine(self.rec(el) for el in expr.flat)
 
     def map_multivector(self, expr, *args, **kwargs):
-        return self.combine(self.rec(coeff) for bits, coeff in expr.data.iteritems())
+        return self.combine(self.rec(coeff) for bits, coeff in six.iteritems(expr.data))
 
     def map_common_subexpression(self, expr, *args, **kwargs):
         return self.rec(expr.child, *args, **kwargs)
@@ -359,7 +362,7 @@ class IdentityMapper(Mapper):
                     for child in expr.parameters),
                 dict(
                     (key, self.rec(val, *args, **kwargs))
-                    for key, val in expr.kw_parameters.iteritems())
+                    for key, val in six.iteritems(expr.kw_parameters))
                     )
 
     def map_subscript(self, expr, *args, **kwargs):
@@ -525,7 +528,7 @@ class WalkMapper(RecursiveMapper):
         for child in expr.parameters:
             self.rec(child, *args, **kwargs)
 
-        for child in expr.kw_parameters.values():
+        for child in list(expr.kw_parameters.values()):
             self.rec(child, *args, **kwargs)
 
     def map_subscript(self, expr, *args, **kwargs):
@@ -596,7 +599,7 @@ class WalkMapper(RecursiveMapper):
         if not self.visit(expr, *args):
             return
 
-        for bits, coeff in expr.data.iteritems():
+        for bits, coeff in six.iteritems(expr.data):
             self.rec(coeff)
 
     def map_common_subexpression(self, expr, *args, **kwargs):

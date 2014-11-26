@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -23,6 +24,10 @@ THE SOFTWARE.
 """
 
 import pymbolic.traits as traits
+
+import six
+from six.moves import range
+from six.moves import zip
 
 __doc__ = """
 .. autofunction:: disable_subscript_by_getitem
@@ -679,7 +684,7 @@ class CallWithKwargs(AlgebraicLeaf):
         return (self.function,
                 self.parameters,
                 tuple(sorted(
-                    self.kw_parameters.items(),
+                    list(self.kw_parameters.items()),
                     key=lambda item: item[0])))
 
     mapper_method = intern("map_call_with_kwargs")
@@ -1426,7 +1431,10 @@ def quotient(numerator, denominator):
 
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
-VALID_CONSTANT_CLASSES = (int, long, float, complex)
+VALID_CONSTANT_CLASSES = (int, float, complex)
+if six.PY2:
+    VALID_CONSTANT_CLASSES += (long,)
+
 VALID_OPERANDS = (Expression,)
 
 try:
@@ -1516,7 +1524,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
     from pymbolic.geometric_algebra import MultiVector
     if isinstance(field, MultiVector):
         new_data = {}
-        for bits, coeff in field.data.iteritems():
+        for bits, coeff in six.iteritems(field.data):
             if prefix is not None:
                 blade_str = field.space.blade_bits_to_str(bits, "")
                 component_prefix = prefix+"_"+blade_str
@@ -1559,7 +1567,7 @@ def make_sym_vector(name, components):
     :param components: The number of components in the vector.
     """
     if isinstance(components, int):
-        components = range(components)
+        components = list(range(components))
 
     from pytools.obj_array import join_fields
     vfld = Variable(name)

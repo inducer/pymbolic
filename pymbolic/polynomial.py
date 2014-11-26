@@ -1,4 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -31,7 +34,7 @@ from pymbolic.traits import traits, EuclideanRingTraits, FieldTraits
 
 
 def _sort_uniq(data):
-    def sortkey((exp, coeff)): return exp
+    def sortkey(xxx_todo_changeme): (exp, coeff) = xxx_todo_changeme; return exp
     data.sort(key=sortkey)
 
     uniq_result = []
@@ -244,7 +247,7 @@ class Polynomial(Expression):
             return 1/other * self
         q, r = divmod(self, other)
         if r.degree != -1:
-            raise ValueError, "division yielded a remainder"
+            raise ValueError("division yielded a remainder")
         return q
 
     __truediv__ = __div__
@@ -369,8 +372,8 @@ if __name__ == "__main__":
 
     u = (x+1)**5
     v = pymbolic.evaluate_kw(u, x=x)
-    print u
-    print v
+    print(u)
+    print(v)
 
     if False:
         # NOT WORKING INTRODUCE TESTS
@@ -379,8 +382,8 @@ if __name__ == "__main__":
         #u = x+1
         #v = 3*x+1
         q, r = divmod(u, v)
-        print q, "R", r
-        print q*v
-        print "REASSEMBLY:", q*v + r
+        print(q, "R", r)
+        print(q*v)
+        print("REASSEMBLY:", q*v + r)
 
 

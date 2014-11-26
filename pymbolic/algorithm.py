@@ -1,4 +1,10 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+import six
+from six.moves import range
+from six.moves import zip
+from functools import reduce
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -224,7 +230,7 @@ def csr_matrix_multiply(S, x):
     import numpy
     result = numpy.empty_like(x)
 
-    for i in xrange(h):
+    for i in range(h):
         result[i] = sum(S.data[idx]*x[S.indices[idx]]
                 for idx in range(S.indptr[i], S.indptr[i+1]))
 
@@ -331,7 +337,7 @@ def solve_affine_equations_for(unknowns, equations):
 
     for i_eqn, (lhs, rhs) in enumerate(equations):
         for lhs_factor, coeffs in [(1, coeff_coll(lhs)), (-1, coeff_coll(rhs))]:
-            for key, coeff in coeffs.iteritems():
+            for key, coeff in six.iteritems(coeffs):
                 if key in unknowns_set:
                     mat[i_eqn, unknown_idx_lut[key]] = lhs_factor*coeff
                 elif key in parameters:
@@ -368,10 +374,10 @@ def solve_affine_equations_for(unknowns, equations):
 
     if 0:
         for lhs, rhs in equations:
-            print lhs, '=', rhs
-        print "-------------------"
-        for lhs, rhs in result.iteritems():
-            print lhs, '=', rhs
+            print(lhs, '=', rhs)
+        print("-------------------")
+        for lhs, rhs in six.iteritems(result):
+            print(lhs, '=', rhs)
 
     return result
 

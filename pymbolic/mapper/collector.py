@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -73,7 +75,7 @@ class TermCollector(IdentityMapper):
         elif not bool(self.get_dependencies(mul_term)):
             terms = [mul_term]
         else:
-            raise RuntimeError, "split_term expects a multiplicative term"
+            raise RuntimeError("split_term expects a multiplicative term")
 
         base2exp = {}
         for term in terms:
@@ -87,14 +89,14 @@ class TermCollector(IdentityMapper):
 
         coefficients = []
         cleaned_base2exp = {}
-        for base, exp in base2exp.iteritems():
+        for base, exp in six.iteritems(base2exp):
             term = base**exp
             if  self.get_dependencies(term) <= self.parameters:
                 coefficients.append(term)
             else:
                 cleaned_base2exp[base] = exp
 
-        term = frozenset((base,exp) for base, exp in cleaned_base2exp.iteritems())
+        term = frozenset((base,exp) for base, exp in six.iteritems(cleaned_base2exp))
         return term, pymbolic.flattened_product(coefficients)
 
     def map_sum(self, mysum):
@@ -107,5 +109,5 @@ class TermCollector(IdentityMapper):
             return pymbolic.flattened_product(base**exp for base, exp in rep)
 
         result = pymbolic.flattened_sum(coeff*rep2term(termrep)
-                for termrep, coeff in term2coeff.iteritems())
+                for termrep, coeff in six.iteritems(term2coeff))
         return result

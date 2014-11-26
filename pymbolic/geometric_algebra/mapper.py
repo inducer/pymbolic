@@ -1,4 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
+from six.moves import range
+from six.moves import zip
 
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
@@ -117,7 +120,7 @@ class Dimensionalizer(EvaluationMapper):
         from pytools.obj_array import make_obj_array
         return MultiVector(make_obj_array(
             [prim.NablaComponent(axis, expr.nabla_id)
-                for axis in xrange(self.ambient_dim)]))
+                for axis in range(self.ambient_dim)]))
 
     def map_derivative_source(self, expr):
         rec_op = self.rec(expr.operand)
@@ -242,7 +245,7 @@ class DerivativeBinder(IdentityMapper):
 
             new_result = []
             for prod_term_list in result:
-                for axis in xrange(n_axes):
+                for axis in range(n_axes):
                     new_ptl = prod_term_list[:]
                     dsfinder = self.derivative_source_finder(nabla_id, self, axis)
 

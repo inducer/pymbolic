@@ -1,4 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
+from six.moves import range
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -118,7 +121,7 @@ def permutation_sign(p):
     p = list(p)
     s = +1
 
-    for i in xrange(len(p)):
+    for i in range(len(p)):
         # j is the current position of item I.
         j = i
 
@@ -199,7 +202,7 @@ class Space(object):
             basis = int(metric_matrix.shape[0])
 
         if isinstance(basis, int):
-            basis = ["e%d" % i for i in xrange(basis)]
+            basis = ["e%d" % i for i in range(basis)]
 
         if metric_matrix is None:
             metric_matrix = np.eye(len(basis), dtype=np.object)
@@ -531,10 +534,10 @@ class MultiVector(object):
 
         from pytools import single_valued
         from pymbolic.primitives import is_zero
-        if data and single_valued(isinstance(k, tuple) for k in data.iterkeys()):
+        if data and single_valued(isinstance(k, tuple) for k in six.iterkeys(data)):
             # data is in non-normalized non-bits tuple form
             new_data = {}
-            for basis_indices, coeff in data.iteritems():
+            for basis_indices, coeff in six.iteritems(data):
                 bits, sign = space.bits_and_sign(basis_indices)
                 new_coeff = new_data.setdefault(bits, 0) + sign*coeff
 
@@ -550,7 +553,7 @@ class MultiVector(object):
         # assert that multivectors don't get nested
         from pytools import any
         assert not any(isinstance(coeff, MultiVector)
-                for coeff in data.itervalues())
+                for coeff in six.itervalues(data))
 
         self.space = space
         self.data = data
@@ -568,7 +571,7 @@ class MultiVector(object):
         from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_SUM
 
         terms = []
-        for bits in sorted(self.data.iterkeys(),
+        for bits in sorted(six.iterkeys(self.data),
                 key=lambda bits: (bit_count(bits), bits)):
             coeff = self.data[bits]
 
@@ -620,7 +623,7 @@ class MultiVector(object):
     def __neg__(self):
         return MultiVector(
                 dict((bits, -coeff)
-                    for bits, coeff in self.data.iteritems()),
+                    for bits, coeff in six.iteritems(self.data)),
                 self.space)
 
     def __add__(self, other):
@@ -631,7 +634,7 @@ class MultiVector(object):
         if self.space is not other.space:
             raise ValueError("can only add multivectors from identical spaces")
 
-        all_bits = set(self.data.iterkeys()) | set(other.data.iterkeys())
+        all_bits = set(six.iterkeys(self.data)) | set(six.iterkeys(other.data))
 
         from pymbolic.primitives import is_zero
         new_data = {}
@@ -672,8 +675,8 @@ class MultiVector(object):
 
         from pymbolic.primitives import is_zero
         new_data = {}
-        for sbits, scoeff in self.data.iteritems():
-            for obits, ocoeff in other.data.iteritems():
+        for sbits, scoeff in six.iteritems(self.data):
+            for obits, ocoeff in six.iteritems(other.data):
                 new_bits = sbits ^ obits
                 weight = bpw(sbits, obits, self.space)
 
@@ -809,13 +812,13 @@ class MultiVector(object):
         if len(self.data) > 1:
             if self.get_pure_grade() in [0, 1, self.space.dimensions]:
                 return MultiVector(dict(
-                    (bits, coeff/nsqr) for bits, coeff in self.data.iteritems()),
+                    (bits, coeff/nsqr) for bits, coeff in six.iteritems(self.data)),
                     self.space)
 
             else:
                 raise NotImplementedError("division by non-blades")
 
-        (bits, coeff), = self.data.iteritems()
+        (bits, coeff), = six.iteritems(self.data)
 
         # (1.1.54) in [HS]
         grade = bit_count(bits)
@@ -833,7 +836,7 @@ class MultiVector(object):
         Often written :math:`A^\dagger`.
         """
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             grade = bit_count(bits)
             if grade*(grade-1)//2 % 2 == 0:
                 new_data[bits] = coeff
@@ -849,7 +852,7 @@ class MultiVector(object):
         Often written :math:`\widehat A`.
         """
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             grade = bit_count(bits)
             if grade % 2 == 0:
                 new_data[bits] = coeff
@@ -889,7 +892,7 @@ class MultiVector(object):
     @memoize_method
     def __hash__(self):
         result = hash(self.space)
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             result ^= hash(bits) ^ hash(coeff)
 
         return result
@@ -916,7 +919,7 @@ class MultiVector(object):
             tol = 1e-13
 
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             if abs(coeff) > tol:
                 new_data[bits] = coeff
 
@@ -935,10 +938,10 @@ class MultiVector(object):
         """
 
         if grade is None:
-            for bits, coeff in self.data.iteritems():
+            for bits, coeff in six.iteritems(self.data):
                 yield MultiVector({bits: coeff}, self.space)
         else:
-            for bits, coeff in self.data.iteritems():
+            for bits, coeff in six.iteritems(self.data):
                 if bit_count(bits) == grade:
                     yield MultiVector({bits: coeff}, self.space)
 
@@ -948,7 +951,7 @@ class MultiVector(object):
         Often written :math:`\langle A\rangle_r`.
         """
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             if bit_count(bits) == r:
                 new_data[bits] = coeff
 
@@ -969,7 +972,7 @@ class MultiVector(object):
     def all_grades(self):
         """Return a :class:`set` of grades occurring in *self*."""
 
-        return set(bit_count(bits) for bits, coeff in self.data.iteritems())
+        return set(bit_count(bits) for bits, coeff in six.iteritems(self.data))
 
     def get_pure_grade(self):
         """If *self* only has components of a single grade, return
@@ -980,7 +983,7 @@ class MultiVector(object):
 
         result = None
 
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             grade = bit_count(bits)
             if result is None:
                 result = grade
@@ -994,7 +997,7 @@ class MultiVector(object):
     def odd(self):
         """Extract the odd-grade blades."""
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             if bit_count(bits) % 2:
                 new_data[bits] = coeff
 
@@ -1003,7 +1006,7 @@ class MultiVector(object):
     def even(self):
         """Extract the even-grade blades."""
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             if bit_count(bits) % 2 == 0:
                 new_data[bits] = coeff
 
@@ -1025,7 +1028,7 @@ class MultiVector(object):
 
     def as_scalar(self):
         result = 0
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             if bits != 0:
                 raise ValueError("multivector is not a scalar")
             result = coeff
@@ -1044,9 +1047,9 @@ class MultiVector(object):
         else:
             result = [0] * self.space.dimensions
 
-        log_table = dict((2**i, i) for i in xrange(self.space.dimensions))
+        log_table = dict((2**i, i) for i in range(self.space.dimensions))
         try:
-            for bits, coeff in self.data.iteritems():
+            for bits, coeff in six.iteritems(self.data):
                 result[log_table[bits]] = coeff
         except KeyError:
             raise ValueError("multivector is not a purely grade-1")
@@ -1066,7 +1069,7 @@ class MultiVector(object):
         new coefficient.
         """
         new_data = {}
-        for bits, coeff in self.data.iteritems():
+        for bits, coeff in six.iteritems(self.data):
             new_data[bits] = f(coeff)
 
         return MultiVector(new_data, self.space)

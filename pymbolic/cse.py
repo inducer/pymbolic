@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -37,7 +39,7 @@ class NormalizedKeyGetter(object):
             for child in expr.children:
                 kid_count[child] = kid_count.get(child, 0) + 1
 
-            return type(expr), frozenset(kid_count.iteritems())
+            return type(expr), frozenset(six.iteritems(kid_count))
         else:
             return expr
 
@@ -147,7 +149,7 @@ def tag_common_subexpressions(exprs):
         ucm(expr)
 
     to_eliminate = set([subexpr_key
-        for subexpr_key, count in ucm.subexpr_counts.iteritems()
+        for subexpr_key, count in six.iteritems(ucm.subexpr_counts)
         if count > 1])
 
     cse_mapper = CSEMapper(to_eliminate, get_key)
