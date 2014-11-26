@@ -52,8 +52,9 @@ setup(name="pymbolic",
           "pymbolic.geometric_algebra",
           ],
       install_requires=[
-          'pytools>=2',
-          'pytest>=2.3',
+          "pytools>=2",
+          "pytest>=2.3",
+          "six",
           ],
 
       # 2to3 invocation
