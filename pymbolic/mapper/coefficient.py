@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
 
 __copyright__ = "Copyright (C) 2013 Andreas Kloeckner"
 
@@ -35,7 +37,7 @@ class CoefficientCollector(Mapper):
 
         result = {}
         for stride_dict in stride_dicts:
-            for var, stride in stride_dict.iteritems():
+            for var, stride in six.iteritems(stride_dict):
                 if var in result:
                     result[var] += stride
                 else:
@@ -70,7 +72,7 @@ class CoefficientCollector(Mapper):
             return dict(
                     (var, other_coeffs*coeff)
                     for var, coeff in
-                    children_coeffs[idx_of_child_with_vars].iteritems())
+                    six.iteritems(children_coeffs[idx_of_child_with_vars]))
 
         return result
 

@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -135,6 +137,6 @@ class Rational(primitives.Expression):
 
 if __name__ == "__main__":
     one = Rational(1)
-    print 3 + 1/(1 - 3/(one + 17))
-    print one/3 + 2*one/3
-    print one/3 + 2*one/3 + 0*one/1771
+    print(3 + 1/(1 - 3/(one + 17)))
+    print(one/3 + 2*one/3)
+    print(one/3 + 2*one/3 + 0*one/1771)

@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -129,7 +130,7 @@ class CompiledExpression:
         used_variables = DependencyMapper(
                 composite_leaves=False)(self._Expression)
         used_variables -= set(self._Variables)
-        used_variables -= set(pymbolic.var(key) for key in ctx.keys())
+        used_variables -= set(pymbolic.var(key) for key in list(ctx.keys()))
         used_variables = list(used_variables)
         used_variables.sort()
         all_variables = self._Variables + used_variables

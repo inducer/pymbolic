@@ -1,4 +1,8 @@
 from __future__ import division
+from __future__ import absolute_import
+import six
+from six.moves import range
+from six.moves import zip
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -30,7 +34,7 @@ from pymbolic.primitives import Variable
 
 def unify_map(map1, map2):
     result = map1.copy()
-    for name, value in map2.iteritems():
+    for name, value in six.iteritems(map2):
         if name in map1:
             if map1[name] != value:
                 return None
