@@ -1,7 +1,7 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-from six.moves import range
+from six.moves import range, intern
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 

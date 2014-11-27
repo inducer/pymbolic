@@ -1,5 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -24,6 +23,7 @@ THE SOFTWARE.
 """
 
 import pytools.lex
+from six.moves import intern
 
 _imaginary = intern("imaginary")
 _float = intern("float")

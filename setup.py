@@ -3,12 +3,6 @@
 
 from setuptools import setup
 
-try:
-    from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError:
-    # 2.x
-    from distutils.command.build_py import build_py
-
 ver_dic = {}
 version_file = open("pymbolic/version.py")
 try:
@@ -55,7 +49,4 @@ setup(name="pymbolic",
           "pytools>=2",
           "pytest>=2.3",
           "six",
-          ],
-
-      # 2to3 invocation
-      cmdclass={'build_py': build_py})
+          ])

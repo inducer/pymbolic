@@ -1,6 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import division, absolute_import, print_function
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -24,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from six.moves import intern
 import pymbolic.primitives as primitives
 import pymbolic.traits as traits
 
