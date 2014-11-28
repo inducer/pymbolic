@@ -129,7 +129,9 @@ class Dimensionalizer(EvaluationMapper):
 
     def map_multivector_variable(self, expr):
         from pymbolic.primitives import make_sym_vector
-        return MultiVector(make_sym_vector(expr.name, self.ambient_dim))
+        return MultiVector(
+                make_sym_vector(expr.name, self.ambient_dim,
+                    var_class=type(expr)))
 
     def map_nabla(self, expr):
         from pytools.obj_array import make_obj_array
