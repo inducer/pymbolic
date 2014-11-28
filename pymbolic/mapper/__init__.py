@@ -284,7 +284,9 @@ class CombineMapper(RecursiveMapper):
         return self.combine(self.rec(el) for el in expr.flat)
 
     def map_multivector(self, expr, *args, **kwargs):
-        return self.combine(self.rec(coeff) for bits, coeff in six.iteritems(expr.data))
+        return self.combine(
+                self.rec(coeff)
+                for bits, coeff in six.iteritems(expr.data))
 
     def map_common_subexpression(self, expr, *args, **kwargs):
         return self.rec(expr.child, *args, **kwargs)
