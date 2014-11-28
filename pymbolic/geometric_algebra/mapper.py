@@ -1,3 +1,4 @@
+# * encoding: utf-8 *
 from __future__ import division
 from __future__ import absolute_import
 from six.moves import range
@@ -93,11 +94,25 @@ class EvaluationMapper(EvaluationMapperBase):
 
 
 class StringifyMapper(StringifyMapperBase):
+    AXES = {0: "x", 1: "y", 2: "z"}
+
     def map_nabla(self, expr, enclosing_prec):
-        return r"\/[%s]" % expr.nabla_id
+        import sys
+        if sys.version_info >= (3,):
+            return u"∇[%s]" % expr.nabla_id
+        else:
+            return r"\/[%s]" % expr.nabla_id
 
     def map_nabla_component(self, expr, enclosing_prec):
-        return r"d/dx%d[%s]" % (expr.ambient_axis, expr.nabla_id)
+        import sys
+        if sys.version_info >= (3,):
+            return u"∇%s[%s]" % (
+                    self.AXES.get(expr.ambient_axis, expr.ambient_axis),
+                    expr.nabla_id)
+        else:
+            return r"\/%s[%s]" % (
+                    self.AXES.get(expr.ambient_axis, expr.ambient_axis),
+                    expr.nabla_id)
 
     def map_derivative_source(self, expr, enclosing_prec):
         return r"D[%s](%s)" % (expr.nabla_id, self.rec(expr.operand, PREC_NONE))
