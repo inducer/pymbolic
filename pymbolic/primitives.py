@@ -778,7 +778,7 @@ class Sum(_MultiChildExpression):
             return self
         return Sum(self.children + (-other,))
 
-    def __nonzero__(self):
+    def __bool__(self):
         if len(self.children) == 0:
             return True
         elif len(self.children) == 1:
@@ -786,6 +786,8 @@ class Sum(_MultiChildExpression):
         else:
             # FIXME: Right semantics?
             return True
+
+    __nonzero__ = __bool__
 
     mapper_method = intern("map_sum")
 
@@ -819,11 +821,13 @@ class Product(_MultiChildExpression):
             return self
         return Product((other,) + self.children)
 
-    def __nonzero__(self):
+    def __bool__(self):
         for i in self.children:
             if is_zero(i):
                 return False
         return True
+
+    __nonzero__ = __bool__
 
     mapper_method = intern("map_product")
 
@@ -846,8 +850,10 @@ class QuotientBase(Expression):
     def den(self):
         return self.denominator
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.numerator)
+
+    __nonzero__ = __bool__
 
 
 class Quotient(QuotientBase):
@@ -1131,11 +1137,13 @@ class Vector(Expression):
                 "(depending on the required semantics)",
                 DeprecationWarning)
 
-    def __nonzero__(self):
+    def __bool__(self):
         for i in self.children:
             if is_nonzero(i):
                 return False
         return True
+
+    __nonzero__ = __bool__
 
     def __len__(self):
         return len(self.children)
@@ -1305,8 +1313,10 @@ class Slice(Expression):
     def __getinitargs__(self):
         return (self.children,)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    __nonzero__ = __bool__
 
     @property
     def start(self):

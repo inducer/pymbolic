@@ -27,8 +27,6 @@ import pymbolic.primitives as primitives
 import pymbolic.traits as traits
 
 
-
-
 class Rational(primitives.Expression):
     def __init__(self, numerator, denominator=1):
         d_unit = traits.traits(denominator).get_unit(denominator)
@@ -45,8 +43,10 @@ class Rational(primitives.Expression):
         return self.Denominator
     denominator = property(_den)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.Numerator)
+
+    __nonzero__ = __bool__
 
     def __neg__(self):
         return Rational(-self.Numerator, self.Denominator)
@@ -130,8 +130,6 @@ class Rational(primitives.Expression):
         return Rational(self.Denominator, self.Numerator)
 
     mapper_method = intern("map_rational")
-
-
 
 
 if __name__ == "__main__":
