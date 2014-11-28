@@ -90,12 +90,12 @@ class DistributeMapper(IdentityMapper):
     def map_power(self, expr):
         from pymbolic.primitives import Sum
 
+        newbase = self.rec(expr.base)
         if isinstance(expr.base, Product):
             return self.rec(pymbolic.flattened_product(
                 child**expr.exponent for child in newbase))
 
         if isinstance(expr.exponent, int):
-            newbase = self.rec(expr.base)
             if isinstance(newbase, Sum):
                 return self.map_product(
                         pymbolic.flattened_product(
