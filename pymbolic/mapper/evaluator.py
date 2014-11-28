@@ -76,7 +76,13 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         return self.rec(expr.function)(*args, **kwargs)
 
     def map_subscript(self, expr):
-        return self.rec(expr.aggregate)[self.rec(expr.index)]
+        rec_result = self.rec(expr.aggregate)
+
+        from pymbolic.primitives import Expression
+        if isinstance(rec_result, Expression):
+            return rec_result.index(self.rec(expr.index))
+        else:
+            return rec_result[self.rec(expr.index)]
 
     def map_lookup(self, expr):
         return getattr(self.rec(expr.aggregate), expr.name)
