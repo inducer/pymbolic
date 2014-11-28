@@ -25,7 +25,7 @@ THE SOFTWARE.
 import pymbolic
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
-from pymbolic.primitives import Sum, Product
+from pymbolic.primitives import Sum, Product, is_zero
 
 
 class DistributeMapper(IdentityMapper):
@@ -85,7 +85,14 @@ class DistributeMapper(IdentityMapper):
         return dist(IdentityMapper.map_product(self, expr))
 
     def map_quotient(self, expr):
-        raise NotImplementedError
+        if is_zero(expr.numerator - 1):
+            return expr
+        else:
+            # not the smartest thing we can do, but at least *something*
+            return self.rec(
+                    type(expr)(1, expr.denominator)
+                    *
+                    expr.numerator)
 
     def map_power(self, expr):
         from pymbolic.primitives import Sum
