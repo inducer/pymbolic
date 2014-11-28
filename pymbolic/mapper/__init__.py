@@ -721,7 +721,23 @@ class CallbackMapper(RecursiveMapper):
 # }}}
 
 
-# {{{ cse caching mixin
+# {{{ caching mixins
+
+class CachingMapperMixin(object):
+    def __init__(self):
+        super(CachingMapperMixin, self).__init__()
+        self.result_cache = {}
+
+    def rec(self, expr):
+        try:
+            return self.result_cache[expr]
+        except KeyError:
+            result = super(CachingMapperMixin, self).rec(expr)
+            self.result_cache[expr] = result
+            return result
+
+    __call__ = rec
+
 
 class CSECachingMapperMixin(object):
     """A :term:`mix-in` that helps
