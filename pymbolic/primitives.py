@@ -1571,17 +1571,21 @@ def make_common_subexpression(field, prefix=None, scope=None):
             return CommonSubexpression(field, prefix, scope)
 
 
-def make_sym_vector(name, components):
+def make_sym_vector(name, components, var_class=None):
     """Return an object array of *components* subscripted
-    :class:`Variable` instances.
+    :class:`Variable` (or subclass) instances.
 
-    :param components: The number of components in the vector.
+    :arg components: The number of components in the vector.
+    :arg var_class: The :class:`Variable` subclass to use for instantiating
+        the scalar variables.
     """
     if isinstance(components, int):
         components = list(range(components))
 
+    if var_class is None:
+        var_class = Variable
     from pytools.obj_array import join_fields
-    vfld = Variable(name)
+    vfld = var_class(name)
     return join_fields(*[vfld.index(i) for i in components])
 
 
