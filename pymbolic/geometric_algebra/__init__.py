@@ -897,8 +897,10 @@ class MultiVector(object):
 
         return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.data)
+
+    __nonzero__ = __bool__
 
     def __eq__(self, other):
         other = _cast_or_ni(other, self.space)
