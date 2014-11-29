@@ -731,6 +731,9 @@ class CachingMapperMixin(object):
     def rec(self, expr):
         try:
             return self.result_cache[expr]
+        except TypeError:
+            # not hashable, oh well
+            return super(CachingMapperMixin, self).rec(expr)
         except KeyError:
             result = super(CachingMapperMixin, self).rec(expr)
             self.result_cache[expr] = result
