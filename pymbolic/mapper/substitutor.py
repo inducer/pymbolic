@@ -25,8 +25,6 @@ THE SOFTWARE.
 import pymbolic.mapper
 
 
-
-
 class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
     def __init__(self, subst_func):
         self.subst_func = subst_func
@@ -53,8 +51,6 @@ class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
             return pymbolic.mapper.IdentityMapper.map_lookup(self, expr)
 
 
-
-
 def make_subst_func(variable_assignments):
     import pymbolic.primitives as primitives
 
@@ -71,8 +67,6 @@ def make_subst_func(variable_assignments):
                 return None
 
     return subst_func
-
-
 
 
 def substitute(expression, variable_assignments={}, **kwargs):

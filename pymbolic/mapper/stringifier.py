@@ -91,7 +91,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def join_rec(self, joiner, iterable, prec, *args, **kwargs):
         f = joiner.join("%s" for i in iterable)
-        return self.format(f, *[self.rec(i, prec, *args, **kwargs) for i in iterable])
+        return self.format(f,
+                *[self.rec(i, prec, *args, **kwargs) for i in iterable])
 
     def parenthesize(self, s):
         return "(%s)" % s
@@ -111,7 +112,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         if isinstance(self, strifier):
             raise ValueError("stringifier '%s' can't handle '%s'"
                     % (self, victim.__class__))
-        return strifier(self.constant_mapper)(victim, enclosing_prec, *args, **kwargs)
+        return strifier(self.constant_mapper)(
+                victim, enclosing_prec, *args, **kwargs)
 
     def map_constant(self, expr, enclosing_prec, *args, **kwargs):
         result = self.constant_mapper(expr)
@@ -180,7 +182,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                     # space is necessary--otherwise '/*' becomes
                     # start-of-comment in C. ('*' from dereference)
                     self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
-                    self.rec(expr.denominator, PREC_POWER, *args, **kwargs)),  # analogous to ^{-1}
+                    self.rec(
+                        expr.denominator, PREC_POWER,   # analogous to ^{-1}
+                        *args, **kwargs)),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec, *args, **kwargs):
@@ -189,7 +193,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
         result = self.format("%s // %s",
                     self.rec(expr.numerator, PREC_POWER, *args, **kwargs),
-                    self.rec(expr.denominator, PREC_POWER, *args, **kwargs))  # analogous to ^{-1}
+                    self.rec(
+                        expr.denominator, PREC_POWER,   # analogous to ^{-1}
+                        *args, **kwargs))
 
         # Note ">=", not ">" as in parenthesize_if_needed().
         if enclosing_prec >= PREC_PRODUCT:
@@ -207,7 +213,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
         return self.format("(%s %% %s)",
                     self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
-                    self.rec(expr.denominator, PREC_POWER, *args, **kwargs))  # analogous to ^{-1}
+                    self.rec(
+                        expr.denominator, PREC_POWER,    # analogous to ^{-1}
+                        *args, **kwargs))
 
     def map_polynomial(self, expr, enclosing_prec, *args, **kwargs):
         from pymbolic.primitives import flattened_sum
@@ -236,17 +244,20 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_bitwise_or(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                self.join_rec(" | ", expr.children, PREC_BITWISE_OR, *args, **kwargs),
+                self.join_rec(
+                    " | ", expr.children, PREC_BITWISE_OR, *args, **kwargs),
                 enclosing_prec, PREC_BITWISE_OR)
 
     def map_bitwise_xor(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                self.join_rec(" ^ ", expr.children, PREC_BITWISE_XOR, *args, **kwargs),
+                self.join_rec(
+                    " ^ ", expr.children, PREC_BITWISE_XOR, *args, **kwargs),
                 enclosing_prec, PREC_BITWISE_XOR)
 
     def map_bitwise_and(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                self.join_rec(" ^ ", expr.children, PREC_BITWISE_AND, *args, **kwargs),
+                self.join_rec(
+                    " ^ ", expr.children, PREC_BITWISE_AND, *args, **kwargs),
                 enclosing_prec, PREC_BITWISE_AND)
 
     def map_comparison(self, expr, enclosing_prec, *args, **kwargs):
@@ -264,21 +275,25 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_logical_or(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                self.join_rec(" or ", expr.children, PREC_LOGICAL_OR, *args, **kwargs),
+                self.join_rec(
+                    " or ", expr.children, PREC_LOGICAL_OR, *args, **kwargs),
                 enclosing_prec, PREC_LOGICAL_OR)
 
     def map_logical_and(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                self.join_rec(" and ", expr.children, PREC_LOGICAL_AND, *args, **kwargs),
+                self.join_rec(
+                    " and ", expr.children, PREC_LOGICAL_AND, *args, **kwargs),
                 enclosing_prec, PREC_LOGICAL_AND)
 
     def map_list(self, expr, enclosing_prec, *args, **kwargs):
-        return self.format("[%s]", self.join_rec(", ", expr, PREC_NONE, *args, **kwargs))
+        return self.format(
+                "[%s]", self.join_rec(", ", expr, PREC_NONE, *args, **kwargs))
 
     map_vector = map_list
 
     def map_tuple(self, expr, enclosing_prec, *args, **kwargs):
-        el_str = ", ".join(self.rec(child, PREC_NONE, *args, **kwargs) for child in expr)
+        el_str = ", ".join(
+                self.rec(child, PREC_NONE, *args, **kwargs) for child in expr)
         if len(expr) == 1:
             el_str += ","
 
@@ -352,7 +367,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
-        return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE, *args, **kwargs), substs)
+        return "[%s]{%s}" % (
+                self.rec(expr.child, PREC_NONE, *args, **kwargs),
+                substs)
 
     def map_slice(self, expr, enclosing_prec, *args, **kwargs):
         children = []
@@ -527,7 +544,8 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
                 # Otherwise two unary minus signs merge into a pre-decrement.
                 entries.append(
                         self.format(
-                            "- %s", self.rec(expr.children[i+1], PREC_UNARY, *args, **kwargs)))
+                            "- %s", self.rec(
+                                expr.children[i+1], PREC_UNARY, *args, **kwargs)))
                 i += 2
             else:
                 entries.append(self.rec(child, PREC_PRODUCT, *args, **kwargs))
