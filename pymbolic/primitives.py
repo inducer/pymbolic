@@ -31,8 +31,6 @@ from six.moves import range
 from six.moves import zip
 
 __doc__ = """
-.. autofunction:: disable_subscript_by_getitem
-
 Expression base class
 ---------------------
 
@@ -189,36 +187,14 @@ vectors and matrices of :mod:`pymbolic` objects.
 """
 
 
-_SUBSCRIPT_BY_GETITEM = True
-
-
 def disable_subscript_by_getitem():
-    """In prior versions of :mod:`pymbolic`, directly subscripting an :class:`Expression`
-    subclass generated a :class:`Subscript`. For various reasons, this was a
-    very bad idea.  For example, the following code snippet would result in an
-    infinite loop::
-
-        for el in expr:
-            print(el)
-
-    :mod:`numpy` does similar things under the hodd, leading to hard-to-debug
-    infinite loops. As a result, this behavior is being deprecated. In Pymbolic
-    2016.x, it will disappear entirely.  It can also be disabled by this
-    function. Once disabled, it cannot be reenabled.
-
-    See also :meth:`Expression.index`.
-
-    .. versionadded:: 2014.3
-    """
-
-    global _SUBSCRIPT_BY_GETITEM
-    _SUBSCRIPT_BY_GETITEM = False
-
-    try:
-        del Expression.__getitem__
-    except AttributeError:
-        # Yay, somebody did the sane thing before us.
-        pass
+    # The issue that was addressed by this could be fixed
+    # in a much less ham-fisted manner, and thus this has been
+    # made a no-op.
+    #
+    # See
+    # https://github.com/inducer/pymbolic/issues/4
+    pass
 
 
 class Expression(object):
@@ -415,22 +391,6 @@ class Expression(object):
         else:
             return Call(self, args)
 
-    def __getitem__(self, subscript):
-        if _SUBSCRIPT_BY_GETITEM:
-            from warnings import warn
-
-            warn("creating subscripts using x[i] syntax is deprecated "
-                    "and will be removed in Pymbolic 2016.x. "
-                    "Use x.index(i) instead.",
-                    DeprecationWarning, stacklevel=2)
-
-            if subscript == ():
-                return self
-            else:
-                return Subscript(self, subscript)
-        else:
-            return NotImplemented
-
     def index(self, subscript):
         """Return an expression representing ``self[subscript]``.
 
@@ -441,6 +401,8 @@ class Expression(object):
             return self
         else:
             return Subscript(self, subscript)
+
+    __getitem__ = index
 
     def attr(self, name):
         """Return a :class:`Lookup` for *name* in *self*.
@@ -546,6 +508,10 @@ class Expression(object):
         raise TypeError("expressions don't have an order")
 
     # }}}
+
+    def __iter__(self):
+        # prevent infinite loops (e.g. when inseserting into numpy arrays)
+        raise TypeError("expression types are not iterable")
 
 
 class AlgebraicLeaf(Expression):
