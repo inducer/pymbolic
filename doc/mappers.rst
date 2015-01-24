@@ -25,6 +25,9 @@ Mappers
 
 .. autoclass:: CCodeMapper
 
+.. autoclass:: GraphvizMapper
+
+
 Some minimal mathematics
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
