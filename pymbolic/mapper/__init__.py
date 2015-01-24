@@ -503,16 +503,29 @@ class WalkMapper(RecursiveMapper):
     without propagating any result. Also calls :meth:`visit` for each
     visited subexpression.
 
+    ``map_...`` methods are required to call :meth:`visit` *before*
+        descending to visit their chidlren.
+
     .. method:: visit(expr, *args, **kwargs)
+
+        Returns *False* if no children of this node should be examined.
+
+    .. method:: post_visit(expr, *args, **kwargs)
+
+        Is called after a node's children are visited.
     """
+
     def map_constant(self, expr, *args, **kwargs):
         self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
 
     def map_variable(self, expr, *args, **kwargs):
         self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
 
     def map_function_symbol(self, expr, *args, **kwargs):
         self.visit(expr)
+        self.post_visit(expr, *args, **kwargs)
 
     def map_call(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
@@ -521,6 +534,8 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.function, *args, **kwargs)
         for child in expr.parameters:
             self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
@@ -533,6 +548,8 @@ class WalkMapper(RecursiveMapper):
         for child in list(expr.kw_parameters.values()):
             self.rec(child, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_subscript(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
@@ -540,11 +557,15 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.aggregate, *args, **kwargs)
         self.rec(expr.index, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_lookup(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
 
         self.rec(expr.aggregate, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     def map_sum(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
@@ -552,6 +573,8 @@ class WalkMapper(RecursiveMapper):
 
         for child in expr.children:
             self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     map_product = map_sum
 
@@ -561,6 +584,8 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.numerator, *args, **kwargs)
         self.rec(expr.denominator, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     map_floor_div = map_quotient
     map_remainder = map_quotient
@@ -572,6 +597,8 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.base, *args, **kwargs)
         self.rec(expr.exponent, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_polynomial(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
@@ -580,12 +607,16 @@ class WalkMapper(RecursiveMapper):
         for exp, coeff in expr.data:
             self.rec(coeff, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_list(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
 
         for child in expr:
             self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     map_tuple = map_list
 
@@ -597,18 +628,24 @@ class WalkMapper(RecursiveMapper):
         for i in indices_in_shape(expr.shape):
             self.rec(expr[i], *args, **kwargs)
 
-    def map_multivector(self, expr, *args):
-        if not self.visit(expr, *args):
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_multivector(self, expr, *args, **kwargs):
+        if not self.visit(expr, *args, **kwargs):
             return
 
         for bits, coeff in six.iteritems(expr.data):
             self.rec(coeff)
+
+        self.post_visit(expr, *args, **kwargs)
 
     def map_common_subexpression(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
 
         self.rec(expr.child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     def map_left_shift(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
@@ -617,6 +654,8 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.shift, *args, **kwargs)
         self.rec(expr.shiftee, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     map_right_shift = map_left_shift
 
     def map_bitwise_not(self, expr, *args, **kwargs):
@@ -624,6 +663,8 @@ class WalkMapper(RecursiveMapper):
             return
 
         self.rec(expr.child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     map_bitwise_or = map_sum
     map_bitwise_xor = map_sum
@@ -635,6 +676,8 @@ class WalkMapper(RecursiveMapper):
 
         self.rec(expr.left, *args, **kwargs)
         self.rec(expr.right, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     map_logical_not = map_bitwise_not
     map_logical_and = map_sum
@@ -648,6 +691,8 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.then, *args, **kwargs)
         self.rec(expr.else_, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_if_positive(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
@@ -655,6 +700,8 @@ class WalkMapper(RecursiveMapper):
         self.rec(expr.criterion, *args, **kwargs)
         self.rec(expr.then, *args, **kwargs)
         self.rec(expr.else_, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
 
     def map_substitution(self, expr, *args, **kwargs):
         if not self.visit(expr):
@@ -664,15 +711,21 @@ class WalkMapper(RecursiveMapper):
         for v in expr.values:
             self.rec(v, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def map_derivative(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
 
         self.rec(expr.child, *args, **kwargs)
 
+        self.post_visit(expr, *args, **kwargs)
+
     def visit(self, expr, *args, **kwargs):
         return True
 
+    def post_visit(self, expr, *args, **kwargs):
+        pass
 # }}}
 
 

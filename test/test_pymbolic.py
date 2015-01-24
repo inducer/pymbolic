@@ -265,6 +265,18 @@ def test_func_dep_consistency():
     assert dep_map(f(x=x)) == set([x])
 
 
+def test_graphviz():
+    from pymbolic import parse
+    expr = parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
+            "-hankel_1(1,sqrt(a[1]**2+a[0]**2)*k))*k /(4*sqrt(a[1]**2+a[0]**2)) "
+            "+hankel_1(0,sqrt(a[1]**2+a[0]**2)*k)")
+
+    from pymbolic.mapper.graphviz import GraphvizMapper
+    gvm = GraphvizMapper()
+    gvm(expr)
+    print(gvm.get_dot_code())
+
+
 # {{{ geometric algebra
 
 @pytest.mark.parametrize("dims", [2, 3, 4, 5])
