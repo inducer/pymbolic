@@ -22,11 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from six.moves import reduce
 from pymbolic.mapper import \
         IdentityMapper, \
         CSECachingMapperMixin
-
-
 
 
 class ConstantFoldingMapperBase(object):
@@ -75,7 +74,6 @@ class ConstantFoldingMapperBase(object):
         return self.fold(expr, Sum, operator.add, flattened_sum)
 
 
-
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
     def map_product(self, expr):
         from pymbolic.primitives import Product, flattened_product
@@ -84,15 +82,14 @@ class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
         return self.fold(expr, Product, operator.mul, flattened_product)
 
 
-
-
 class ConstantFoldingMapper(
-        CSECachingMapperMixin, 
-        ConstantFoldingMapperBase, 
+        CSECachingMapperMixin,
+        ConstantFoldingMapperBase,
         IdentityMapper):
 
     map_common_subexpression_uncached = \
             IdentityMapper.map_common_subexpression
+
 
 class CommutativeConstantFoldingMapper(
         CSECachingMapperMixin,
