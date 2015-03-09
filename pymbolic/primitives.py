@@ -964,6 +964,9 @@ class Comparison(Expression):
     """
     .. attribute:: left
     .. attribute:: operator
+
+        One of ``[">", ">=", "==", "!=", "<", "<="]``.
+
     .. attribute:: right
 
     .. note::
@@ -975,10 +978,6 @@ class Comparison(Expression):
     init_arg_names = ("left", "operator", "right")
 
     def __init__(self, left, operator, right):
-        """
-        :arg operator: One of ``[">", ">=", "==", "!=", "<", "<="]``.
-        """
-
         self.left = left
         self.right = right
         if operator not in [">", ">=", "==", "!=", "<", "<="]:
