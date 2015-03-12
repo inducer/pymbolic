@@ -39,6 +39,8 @@ class GraphvizMapper(WalkMapper):
         self.parent_stack = []
 
         self.next_unique_id = -1
+        self.nodes_visited = set()
+        self.common_subexpressions = {}
 
     def get_dot_code(self):
         """Return the dot source code for a previously traversed expression."""
@@ -51,24 +53,40 @@ class GraphvizMapper(WalkMapper):
 
         return "id%d" % id(expr)
 
+    def map_leaf(self, expr):
+        self.lines.append(
+                "%s [label=\"%s\", shape=box];" % (
+                    self.get_id(expr), str(expr)))
+
+        self.visit(expr, node_printed=True)
+        self.post_visit(expr)
+
     def generate_unique_id(self):
         self.next_unique_id += 1
         return "uid%d" % self.next_unique_id
 
     def visit(self, expr, node_printed=False, node_id=None):
+        # {{{ print connectivity
+
         if node_id is None:
             node_id = self.get_id(expr)
+
+        if self.parent_stack:
+            self.lines.append("%s -> %s;" % (
+                self.get_id(self.parent_stack[-1]),
+                node_id))
+
+        # }}}
+
+        if id(expr) in self.nodes_visited:
+            return False
+        self.nodes_visited.add(id(expr))
 
         if not node_printed:
             self.lines.append(
                     "%s [label=\"%s\"];" % (
                         self.get_id(expr),
                         type(expr).__name__))
-
-        if self.parent_stack:
-            self.lines.append("%s -> %s;" % (
-                self.get_id(self.parent_stack[-1]),
-                node_id))
 
         self.parent_stack.append(expr)
         return True
@@ -102,7 +120,17 @@ class GraphvizMapper(WalkMapper):
         self.lines.append(
                 "%s [label=\"%s\", shape=box];" % (self.get_id(expr), expr.name))
 
-        self.visit(expr, node_printed=True)
+        if self.visit(expr, node_printed=True):
+            self.post_visit(expr)
+
+    def map_lookup(self, expr):
+        self.lines.append(
+                "%s [label=\"Lookup[%s]\",shape=box];" % (
+                    self.get_id(expr), expr.name))
+        if not self.visit(expr, node_printed=True):
+            return
+
+        self.rec(expr.aggregate)
         self.post_visit(expr)
 
     def map_constant(self, expr):
@@ -116,5 +144,43 @@ class GraphvizMapper(WalkMapper):
                 "%s [label=\"%s\",shape=ellipse];" % (
                     node_id,
                     str(expr)))
-        self.visit(expr, node_printed=True, node_id=node_id)
+        if not self.visit(expr, node_printed=True, node_id=node_id):
+            return
+
         self.post_visit(expr)
+
+    def map_call(self, expr):
+        from pymbolic.primitives import Variable
+        if not isinstance(expr.function, Variable):
+            return super(GraphvizMapper, self).map_call(expr)
+
+        self.lines.append(
+                "%s [label=\"Call[%s]\",shape=box];" % (
+                    self.get_id(expr), str(expr.function)))
+        if not self.visit(expr, node_printed=True):
+            return
+
+        for child in expr.parameters:
+            self.rec(child)
+
+        self.post_visit(expr)
+
+    def map_common_subexpression(self, expr):
+        try:
+            expr = self.common_subexpressions[expr]
+        except KeyError:
+            self.common_subexpressions[expr] = expr
+
+        if not self.visit(expr):
+            return
+
+        self.rec(expr.child)
+
+        self.post_visit(expr)
+
+    # {{{ geometric algebra
+
+    map_nabla_component = map_leaf
+    map_nabla = map_leaf
+
+    # }}}

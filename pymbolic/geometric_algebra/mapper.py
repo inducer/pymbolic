@@ -38,6 +38,8 @@ from pymbolic.mapper import (
         WalkMapper as WalkMapperBase,
         CachingMapperMixin
         )
+from pymbolic.mapper.graphviz import (
+        GraphvizMapper as GraphvizMapperBase)
 from pymbolic.mapper.stringifier import (
         StringifyMapper as StringifyMapperBase,
         PREC_NONE
@@ -72,15 +74,18 @@ class Collector(CollectorBase):
 class WalkMapper(WalkMapperBase):
     def map_nabla(self, expr, *args):
         self.visit(expr, *args)
+        self.post_visit(expr)
 
     def map_nabla_component(self, expr, *args):
         self.visit(expr, *args)
+        self.post_visit(expr)
 
     def map_derivative_source(self, expr, *args):
         if not self.visit(expr, *args):
             return
 
         self.rec(expr.operand)
+        self.post_visit(expr)
 
 
 class EvaluationMapper(EvaluationMapperBase):
@@ -116,6 +121,18 @@ class StringifyMapper(StringifyMapperBase):
 
     def map_derivative_source(self, expr, enclosing_prec):
         return r"D[%s](%s)" % (expr.nabla_id, self.rec(expr.operand, PREC_NONE))
+
+
+class GraphvizMapper(GraphvizMapperBase):
+    def map_derivative_source(self, expr):
+        self.lines.append(
+                "%s [label=\"D[%s]\",shape=ellipse];" % (
+                    self.get_id(expr), expr.nabla_id))
+        if not self.visit(expr, node_printed=True):
+            return
+
+        self.rec(expr.operand)
+        self.post_visit(expr)
 
 
 # {{{ dimensionalizer
