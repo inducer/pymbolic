@@ -56,10 +56,10 @@ class GraphvizMapper(WalkMapper):
     def map_leaf(self, expr):
         self.lines.append(
                 "%s [label=\"%s\", shape=box];" % (
-                    self.get_id(expr), str(expr)))
+                    self.get_id(expr), str(expr).replace("\\", "\\\\")))
 
-        self.visit(expr, node_printed=True)
-        self.post_visit(expr)
+        if self.visit(expr, node_printed=True):
+            self.post_visit(expr)
 
     def generate_unique_id(self):
         self.next_unique_id += 1
@@ -117,11 +117,19 @@ class GraphvizMapper(WalkMapper):
         self.post_visit(expr)
 
     def map_variable(self, expr):
-        self.lines.append(
-                "%s [label=\"%s\", shape=box];" % (self.get_id(expr), expr.name))
+        # Shared nodes for variables do not make for pretty graphs.
+        # So we generate our own unique IDs for them.
 
-        if self.visit(expr, node_printed=True):
-            self.post_visit(expr)
+        node_id = self.generate_unique_id()
+
+        self.lines.append(
+                "%s [label=\"%s\",shape=box];" % (
+                    node_id,
+                    expr.name))
+        if not self.visit(expr, node_printed=True, node_id=node_id):
+            return
+
+        self.post_visit(expr)
 
     def map_lookup(self, expr):
         self.lines.append(
