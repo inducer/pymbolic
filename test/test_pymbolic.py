@@ -221,6 +221,11 @@ def test_parser():
     print(repr(parse("3::1")))
     print(repr(parse(":5:1")))
     print(repr(parse("3:5:1")))
+    print(repr(parse("g[i,k]+2.0*h[i,k]")))
+    print(repr(parse("g[i,k]+(+2.0)*h[i,k]")))
+    print(repr(parse("a - b - c")))
+    print(repr(parse("-a - -b - -c")))
+    print(repr(parse("- - - a - - - - b - - - - - c")))
 
     print(parse("3::1"))
 
