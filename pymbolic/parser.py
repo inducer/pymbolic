@@ -380,13 +380,13 @@ class Parser:
 
             comma_allowed = True
 
-    def __call__(self, expr_str):
+    def __call__(self, expr_str, min_precedence=0):
         lex_result = [(tag, s, idx)
                 for (tag, s, idx) in pytools.lex.lex(self.lex_table, expr_str)
                 if tag is not _whitespace]
         pstate = pytools.lex.LexIterator(lex_result, expr_str)
 
-        result = self. parse_expression(pstate)
+        result = self. parse_expression(pstate, min_precedence)
         if not pstate.is_at_end():
             pstate.raise_parse_error("leftover input after completed parse")
         return result
