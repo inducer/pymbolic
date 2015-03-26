@@ -30,8 +30,6 @@ from pymbolic.mapper import RecursiveMapper
 from pymbolic.primitives import Variable
 
 
-
-
 def unify_map(map1, map2):
     result = map1.copy()
     for name, value in six.iteritems(map2):
@@ -42,8 +40,6 @@ def unify_map(map1, map2):
             result[name] = value
 
     return result
-
-
 
 
 class UnificationRecord(object):
@@ -85,8 +81,6 @@ class UnificationRecord(object):
                 for lhs, rhs in self.equations))
 
 
-
-
 def unify_many(unis1, uni2):
     result = []
     for uni1 in unis1:
@@ -95,8 +89,6 @@ def unify_many(unis1, uni2):
             result.append(unif_result)
 
     return result
-
-
 
 
 class UnifierBase(RecursiveMapper):
@@ -174,8 +166,20 @@ class UnifierBase(RecursiveMapper):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
+        # {{{ unpack length-1 index tuples to avoid ambiguity
+
+        expr_index = expr.index
+        if isinstance(expr_index, tuple) and len(expr_index) == 1:
+            expr_index, = expr_index
+
+        other_index = other.index
+        if isinstance(other_index, tuple) and len(other_index) == 1:
+            other_index, = other_index
+
+        # }}}
+
         return self.rec(expr.aggregate, other.aggregate,
-                self.rec(expr.index, other.index, urecs))
+                self.rec(expr_index, other_index, urecs))
 
     def map_lookup(self, expr, other, urecs):
         if not isinstance(other, type(expr)):
@@ -250,8 +254,6 @@ class UnifierBase(RecursiveMapper):
         if urecs is None:
             urecs = [UnificationRecord([])]
         return self.rec(expr, other, urecs)
-
-
 
 
 class UnidirectionalUnifier(UnifierBase):
