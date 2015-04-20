@@ -1165,7 +1165,7 @@ class Vector(Expression):
     mapper_method = intern("map_vector")
 
 
-class cse_scope:
+class cse_scope:  # noqa
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
 
     .. attribute:: EVALUATION
