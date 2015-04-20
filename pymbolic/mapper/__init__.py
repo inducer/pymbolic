@@ -493,6 +493,12 @@ class IdentityMapper(Mapper):
                 self.rec(expr.then, *args, **kwargs),
                 self.rec(expr.else_, *args, **kwargs))
 
+    def map_min(self, expr, *args, **kwargs):
+        return type(expr)(tuple(
+            self.rec(child, *args, **kwargs) for child in expr.children))
+
+    map_max = map_min
+
 # }}}
 
 
