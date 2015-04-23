@@ -37,6 +37,7 @@ except NameError:
 
 pymbolic.disable_subscript_by_getitem()
 
+
 def test_integer_power():
     from pymbolic.algorithm import integer_power
 
@@ -227,6 +228,12 @@ def test_parser():
     print(repr(parse("-a - -b - -c")))
     print(repr(parse("- - - a - - - - b - - - - - c")))
 
+    print(repr(parse("~(a ^ b)")))
+    print(repr(parse("(a | b) | ~(~a & ~b)")))
+
+    print(repr(parse("3 << 1")))
+    print(repr(parse("1 >> 3")))
+
     print(parse("3::1"))
 
     assert parse("e1") == prim.Variable("e1")
@@ -290,7 +297,7 @@ def test_geometric_algebra(dims):
     pytest.importorskip("numpy")
 
     import numpy as np
-    from pymbolic.geometric_algebra import MultiVector as MV
+    from pymbolic.geometric_algebra import MultiVector as MV  # noqa
 
     vec1 = MV(np.random.randn(dims))
     vec2 = MV(np.random.randn(dims))

@@ -885,10 +885,10 @@ class _ShiftOperator(Expression):
         self.shift = shift
 
     def __getinitargs__(self):
-        return self.base, self.exponent
+        return self.shiftee, self.shift
 
 
-class LeftShift(Expression):
+class LeftShift(_ShiftOperator):
     """
     .. attribute:: shiftee
     .. attribute:: shift
@@ -897,7 +897,7 @@ class LeftShift(Expression):
     mapper_method = intern("map_left_shift")
 
 
-class RightShift(Expression):
+class RightShift(_ShiftOperator):
     """
     .. attribute:: shiftee
     .. attribute:: shift

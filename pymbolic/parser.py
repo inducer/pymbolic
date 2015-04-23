@@ -54,20 +54,34 @@ _lessequal = intern("lessequal")
 _greater = intern("greater")
 _greaterequal = intern("greaterequal")
 
+_leftshift = intern("leftshift")
+_rightshift = intern("rightshift")
+
 _and = intern("and")
 _or = intern("or")
 _not = intern("not")
+
+_bitwiseand = intern("bitwiseand")
+_bitwiseor = intern("bitwiseor")
+_bitwisexor = intern("bitwisexor")
+_bitwisenot = intern("bitwisenot")
 
 _PREC_COMMA = 5  # must be > 1 (1 is used by fortran-to-cl)
 _PREC_SLICE = 10
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
-_PREC_COMPARISON = 100
-_PREC_PLUS = 110
-_PREC_TIMES = 120
-_PREC_POWER = 130
-_PREC_UNARY = 140
-_PREC_CALL = 150
+
+_PREC_BITWISE_OR = 120
+_PREC_BITWISE_XOR = 120
+_PREC_BITWISE_AND = 130
+
+_PREC_COMPARISON = 200
+_PREC_SHIFT = 205
+_PREC_PLUS = 210
+_PREC_TIMES = 220
+_PREC_POWER = 230
+_PREC_UNARY = 240
+_PREC_CALL = 250
 
 
 def _join_to_slice(left, right):
@@ -89,6 +103,9 @@ class Parser:
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
             (_equal, pytools.lex.RE(r"==")),
+
+            (_leftshift, pytools.lex.RE(r"\<\<")),
+            (_rightshift, pytools.lex.RE(r"\>\>")),
 
             (_lessequal, pytools.lex.RE(r"\<=")),
             (_greaterequal, pytools.lex.RE(r"\>=")),
@@ -117,6 +134,7 @@ class Parser:
                 pytools.lex.RE(
                     r"[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"))),
             (_int, pytools.lex.RE(r"[0-9]+")),
+
             (_plus, pytools.lex.RE(r"\+")),
             (_minus, pytools.lex.RE(r"-")),
             (_power, pytools.lex.RE(r"\*\*")),
@@ -124,6 +142,12 @@ class Parser:
             (_floordiv, pytools.lex.RE(r"//")),
             (_over, pytools.lex.RE(r"/")),
             (_modulo, pytools.lex.RE(r"%")),
+
+            (_bitwiseand, pytools.lex.RE(r"\&")),
+            (_bitwiseor, pytools.lex.RE(r"\|")),
+            (_bitwisenot, pytools.lex.RE(r"\~")),
+            (_bitwisexor, pytools.lex.RE(r"\^")),
+
             (_openpar, pytools.lex.RE(r"\(")),
             (_closepar, pytools.lex.RE(r"\)")),
             (_openbracket, pytools.lex.RE(r"\[")),
@@ -192,6 +216,11 @@ class Parser:
             pstate.advance()
             from pymbolic.primitives import LogicalNot
             left_exp = LogicalNot(
+                    self.parse_expression(pstate, _PREC_UNARY))
+        elif pstate.is_next(_bitwisenot):
+            pstate.advance()
+            from pymbolic.primitives import BitwiseNot
+            left_exp = BitwiseNot(
                     self.parse_expression(pstate, _PREC_UNARY))
         elif pstate.is_next(_openpar):
             pstate.advance()
@@ -294,6 +323,41 @@ class Parser:
             left_exp = LogicalOr((
                     left_exp,
                     self.parse_expression(pstate, _PREC_LOGICAL_OR)))
+            did_something = True
+        elif next_tag is _bitwiseor and _PREC_BITWISE_OR > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import BitwiseOr
+            left_exp = BitwiseOr((
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_BITWISE_OR)))
+            did_something = True
+        elif next_tag is _bitwisexor and _PREC_BITWISE_XOR > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import BitwiseXor
+            left_exp = BitwiseXor((
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_BITWISE_XOR)))
+            did_something = True
+        elif next_tag is _bitwiseand and _PREC_BITWISE_AND > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import BitwiseAnd
+            left_exp = BitwiseAnd((
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_BITWISE_AND)))
+            did_something = True
+        elif next_tag is _rightshift and _PREC_SHIFT > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import RightShift
+            left_exp = RightShift(
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_SHIFT))
+            did_something = True
+        elif next_tag is _leftshift and _PREC_SHIFT > min_precedence:
+            pstate.advance()
+            from pymbolic.primitives import LeftShift
+            left_exp = LeftShift(
+                    left_exp,
+                    self.parse_expression(pstate, _PREC_SHIFT))
             did_something = True
         elif next_tag in self._COMP_TABLE and _PREC_COMPARISON > min_precedence:
             pstate.advance()
