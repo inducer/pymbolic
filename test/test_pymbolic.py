@@ -233,8 +233,6 @@ def test_parser():
 
     print(repr(parse("3 << 1")))
     print(repr(parse("1 >> 3")))
-    print(repr(parse("min(5, 4, 3)")))
-    print(repr(parse("max(2, 4, 3)")))
 
     print(parse("3::1"))
 

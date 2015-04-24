@@ -263,21 +263,10 @@ class Parser:
             pstate.advance()
             args, kwargs = self.parse_arglist(pstate)
 
-            if (isinstance(left_exp, primitives.Variable)
-                    and left_exp.name in ["min", "max"]):
-                if kwargs:
-                    raise ValueError("min/max do not support keyword arguments")
-                if left_exp.name == "min":
-                    left_exp = primitives.Min(args)
-                elif left_exp.name == "max":
-                    left_exp = primitives.Max(args)
-                else:
-                    assert False
+            if kwargs:
+                left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
             else:
-                if kwargs:
-                    left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
-                else:
-                    left_exp = primitives.Call(left_exp, args)
+                left_exp = primitives.Call(left_exp, args)
 
             did_something = True
         elif next_tag is _openbracket and _PREC_CALL > min_precedence:
