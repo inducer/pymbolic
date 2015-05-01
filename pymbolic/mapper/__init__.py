@@ -251,9 +251,9 @@ class CombineMapper(RecursiveMapper):
                 )
 
     def map_left_shift(self, expr, *args, **kwargs):
-        return self.combine(
-                self.rec(expr.shiftee, *args, **kwargs),
-                self.rec(expr.shift, *args, **kwargs))
+        return self.combine((
+            self.rec(expr.shiftee, *args, **kwargs),
+            self.rec(expr.shift, *args, **kwargs)))
 
     map_right_shift = map_left_shift
 
