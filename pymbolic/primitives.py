@@ -36,27 +36,6 @@ Expression base class
 
 .. autoclass:: Expression
 
-    .. attribute:: attr
-
-    .. attribute:: mapper_method
-
-        The :class:`pymbolic.mapper.Mapper` method called for objects of
-        this type.
-
-    .. method:: __getitem__
-
-        Deprecated, see :func:`disable_subscript_by_getitem`. Use :meth:`index`
-        instead.
-
-    .. automethod:: index
-
-    .. automethod:: stringifier
-
-    .. automethod:: __eq__
-    .. automethod:: __hash__
-    .. automethod:: __str__
-    .. automethod:: __repr__
-
 Sums, products and such
 -----------------------
 
@@ -202,6 +181,38 @@ class Expression(object):
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
     Expression objects are immutable.
+
+    .. attribute:: attr
+
+    .. attribute:: mapper_method
+
+        The :class:`pymbolic.mapper.Mapper` method called for objects of
+        this type.
+
+    .. method:: __getitem__
+
+        Deprecated, see :func:`disable_subscript_by_getitem`. Use :meth:`index`
+        instead.
+
+    .. automethod:: index
+
+    .. automethod:: stringifier
+
+    .. automethod:: __eq__
+    .. automethod:: __hash__
+    .. automethod:: __str__
+    .. automethod:: __repr__
+
+    .. automethod:: __repr__
+
+    .. rubric:: Comparison constructors
+
+    .. automethod:: eq
+    .. automethod:: ne
+    .. automethod:: lt
+    .. automethod:: le
+    .. automethod:: gt
+    .. automethod:: ge
     """
 
     # {{{ arithmetic
@@ -380,7 +391,7 @@ class Expression(object):
 
     # }}}
 
-    # {{{
+    # {{{ misc
 
     def __neg__(self):
         return -1*self
@@ -436,6 +447,7 @@ class Expression(object):
         initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
 
         return "%s(%s)" % (self.__class__.__name__, initargs_str)
+
     # }}}
 
     # {{{ hash/equality interface
@@ -488,6 +500,52 @@ class Expression(object):
 
     def get_hash(self):
         return hash((type(self).__name__,) + self.__getinitargs__())
+
+    # }}}
+
+    # {{{ comparison constructors
+
+    def eq(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, "==", other)
+
+    def ne(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, "!=", other)
+
+    def le(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, "<=", other)
+
+    def lt(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, "<", other)
+
+    def ge(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, ">=", other)
+
+    def gt(self, other):
+        """Return a :class:`Comparison` comparing *self* to *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return Comparison(self, ">", other)
 
     # }}}
 
@@ -972,7 +1030,7 @@ class Comparison(Expression):
     .. note::
 
         Unlike other expressions, comparisons are not implicitly constructed by
-        comparing :class:`Expression` objects.
+        comparing :class:`Expression` objects. See :meth:`Expression.eq`.
     """
 
     init_arg_names = ("left", "operator", "right")
