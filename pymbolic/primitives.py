@@ -523,14 +523,14 @@ class Expression(object):
 
         .. versionadded:: 2015.2
         """
-        return LogicalAnd(self, other)
+        return LogicalAnd((self, other))
 
     def or_(self, other):
         """Return :class:`LogicalOr` between *self* and *other*.
 
         .. versionadded:: 2015.2
         """
-        return LogicalOr(self, other)
+        return LogicalOr((self, other))
 
     # }}}
 

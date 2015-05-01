@@ -277,6 +277,13 @@ def test_func_dep_consistency():
     assert dep_map(f(x=x)) == set([x])
 
 
+def test_conditions():
+    from pymbolic import var
+    x = var('x')
+    y = var('y')
+    assert str(x.eq(y).and_(x.le(5))) == "x == y and x <= 5"
+
+
 def test_graphviz():
     from pymbolic import parse
     expr = parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
