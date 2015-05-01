@@ -205,6 +205,12 @@ class Expression(object):
 
     .. automethod:: __repr__
 
+    .. rubric:: Logical operator constructors
+
+    .. automethod:: not_
+    .. automethod:: and_
+    .. automethod:: or_
+
     .. rubric:: Comparison constructors
 
     .. automethod:: eq
@@ -500,6 +506,31 @@ class Expression(object):
 
     def get_hash(self):
         return hash((type(self).__name__,) + self.__getinitargs__())
+
+    # }}}
+
+    # {{{ logical op constructors
+
+    def not_(self):
+        """Return *self* wrapped in a :class:`LogicalNot.
+
+        .. versionadded:: 2015.2
+        """
+        return LogicalNot(self)
+
+    def and_(self, other):
+        """Return :class:`LogicalAnd` between *self* and *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return LogicalAnd(self, other)
+
+    def or_(self, other):
+        """Return :class:`LogicalOr` between *self* and *other*.
+
+        .. versionadded:: 2015.2
+        """
+        return LogicalOr(self, other)
 
     # }}}
 
