@@ -25,6 +25,8 @@ Mappers
 
 .. autoclass:: CCodeMapper
 
+.. automodule:: pymbolic.mapper.graphviz
+
 .. autoclass:: GraphvizMapper
 
 
