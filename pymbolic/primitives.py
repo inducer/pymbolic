@@ -182,6 +182,8 @@ class Expression(object):
 
     Expression objects are immutable.
 
+    .. attribute:: a
+
     .. attribute:: attr
 
     .. attribute:: mapper_method
@@ -190,11 +192,6 @@ class Expression(object):
         this type.
 
     .. method:: __getitem__
-
-        Deprecated, see :func:`disable_subscript_by_getitem`. Use :meth:`index`
-        instead.
-
-    .. automethod:: index
 
     .. automethod:: stringifier
 
@@ -425,6 +422,19 @@ class Expression(object):
         """Return a :class:`Lookup` for *name* in *self*.
         """
         return Lookup(self, name)
+
+    @property
+    def a(self):
+        """Provide a spelling ``expr.a.name`` for encoding attribute lookup.
+        """
+        class AttributeLookupCreator(object):
+            def __init__(self, aggregate):
+                self.aggregate = aggregate
+
+            def __getattr__(self, name):
+                return Lookup(self.aggregate, name)
+
+        return AttributeLookupCreator(self)
 
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float

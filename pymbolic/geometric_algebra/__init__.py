@@ -880,7 +880,7 @@ class MultiVector(object):
         return self.norm_squared()**0.5
 
     @property
-    def I(self):
+    def I(self):  # noqa
         """Return the pseudoscalar associated with this object's :class:`Space`.
         """
         return MultiVector({2**self.space.dimensions-1: 1}, self.space)
