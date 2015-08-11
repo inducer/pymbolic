@@ -27,8 +27,7 @@ THE SOFTWARE.
 import pymbolic.traits as traits
 
 import six
-from six.moves import range
-from six.moves import zip
+from six.moves import range, zip, intern
 
 __doc__ = """
 Expression base class
@@ -633,7 +632,7 @@ class Variable(Leaf):
     init_arg_names = ("name",)
 
     def __init__(self, name):
-        self.name = name
+        self.name = intern(name)
 
     def __getinitargs__(self):
         return self.name,
@@ -643,6 +642,11 @@ class Variable(Leaf):
             return self.name.__lt__(other.name)
         else:
             return NotImplemented
+
+    def __setstate__(self, val):
+        super(Variable, self).__setstate__(val)
+
+        self.name = intern(self.name)
 
     mapper_method = intern("map_variable")
 
