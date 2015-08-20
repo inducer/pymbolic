@@ -207,7 +207,8 @@ def test_parser():
     print(repr(parse("d4knl0")))
     print(repr(parse("0.")))
     print(repr(parse("0.e1")))
-    print(repr(parse("0.e1")))
+    assert parse("0.e1") == 0
+    assert parse("1e-12") == 1e-12
     print(repr(parse("a >= 1")))
     print(repr(parse("a <= 1")))
 

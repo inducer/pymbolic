@@ -121,8 +121,6 @@ class Parser:
 
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
-                # has a letter tag
-                pytools.lex.RE(r"[0-9]+([a-zA-Z]+)"),
                 # has digits before the dot (after optional)
                 pytools.lex.RE(
                     r"[0-9]+\.[0-9]*([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
@@ -132,7 +130,10 @@ class Parser:
                 pytools.lex.RE(
                     r"[0-9]*\.[0-9]+([eEdD][+-]?[0-9]+)?([a-zA-Z]*)"),
                 pytools.lex.RE(
-                    r"[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"))),
+                    r"[0-9]*\.[0-9]+[eEdD][+-]?[0-9]+([a-zA-Z]*)\b"),
+                # has a letter tag
+                pytools.lex.RE(r"[0-9]+([a-zA-Z]+)"),
+                )),
             (_int, pytools.lex.RE(r"[0-9]+")),
 
             (_plus, pytools.lex.RE(r"\+")),
