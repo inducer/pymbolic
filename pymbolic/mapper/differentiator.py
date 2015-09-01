@@ -81,94 +81,109 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         self.variable = variable
         self.function_map = func_map
 
-    def map_constant(self, expr):
+    def rec_undiff(self, expr, *args):
+        """This method exists for the benefit of subclasses that may need to
+        process un-differentiated subexpressions.
+        """
+        return expr
+
+    def map_constant(self, expr, *args):
         return 0
 
-    def map_variable(self, expr):
+    def map_variable(self, expr, *args):
         if expr == self.variable:
             return 1
         else:
             return 0
 
-    def map_call(self, expr):
+    def map_call(self, expr, *args):
         return pymbolic.flattened_sum(
-            self.function_map(i, expr.function, expr.parameters)
-            * self.rec(par)
+            self.function_map(
+                i, expr.function, self.rec_undiff(expr.parameters, *args))
+            * self.rec(par, *args)
             for i, par in enumerate(expr.parameters)
             )
 
     map_subscript = map_variable
 
-    def map_sum(self, expr):
-        return pymbolic.flattened_sum(self.rec(child) for child in expr.children)
+    def map_sum(self, expr, *args):
+        return pymbolic.flattened_sum(
+                self.rec(child, *args) for child in expr.children)
 
-    def map_product(self, expr):
+    def map_product(self, expr, *args):
         return pymbolic.flattened_sum(
             pymbolic.flattened_product(
-                expr.children[0:i] +
-                (self.rec(child),) +
-                expr.children[i+1:])
+                [self.rec_undiff(ch, *args) for ch in expr.children[0:i]] +
+                [self.rec(child, *args)] +
+                [self.rec_undiff(ch, *args) for ch in expr.children[i+1:]]
+                )
             for i, child in enumerate(expr.children))
 
-    def map_quotient(self, expr):
+    def map_quotient(self, expr, *args):
         f = expr.numerator
         g = expr.denominator
-        df = self.rec(f)
-        dg = self.rec(g)
+        df = self.rec(f, *args)
+        dg = self.rec(g, *args)
+        f = self.rec_undiff(f, *args)
+        g = self.rec_undiff(g, *args)
 
         if (not df) and (not dg):
             return 0
         elif (not df):
-            return -f*self.rec(g)/g**2
+            return -f*dg/g**2
         elif (not dg):
-            return self.rec(f)/g
+            return self.rec(f, *args)/g
         else:
-            return (self.rec(f)*g-self.rec(g)*f)/g**2
+            return (df*g-dg*f)/g**2
 
-    def map_power(self, expr):
+    def map_power(self, expr, *args):
         f = expr.base
         g = expr.exponent
-        df = self.rec(f)
-        dg = self.rec(g)
+        df = self.rec(f, *args)
+        dg = self.rec(g, *args)
+        f = self.rec_undiff(f, *args)
+        g = self.rec_undiff(g, *args)
 
         log = pymbolic.var("log")
 
         if (not df) and (not dg):
             return 0
         elif (not df):
-            return log(f) * f**g * self.rec(g)
+            return log(f) * f**g * dg
         elif (not dg):
-            return g * f**(g-1) * self.rec(f)
+            return g * f**(g-1) * df
         else:
-            return log(f) * f**g * self.rec(g) + \
-                    g * f**(g-1) * self.rec(f)
+            return log(f) * f**g * dg + \
+                    g * f**(g-1) * df
 
-    def map_polynomial(self, expr):
+    def map_polynomial(self, expr, *args):
         # (a(x)*f(x))^n)' = a'(x)f(x)^n + a(x)f'(x)*n*f(x)^(n-1)
         deriv_coeff = []
         deriv_base = []
 
-        dbase = self.rec(expr.base)
+        dbase = self.rec(expr.base, *args)
 
         for exp, coeff in expr.data:
-            dcoeff = self.rec(coeff)
+            dcoeff = self.rec(coeff, *args)
             if dcoeff:
                 deriv_coeff.append((exp, dcoeff))
             if dbase and exp > 0:
-                deriv_base.append((exp-1, exp*dbase*coeff))
+                deriv_base.append((exp-1, exp*dbase*self.rec_undiff(coeff, *args)))
 
         from pymbolic import Polynomial
 
-        return \
-                Polynomial(expr.base, tuple(deriv_coeff), expr.unit) + \
-                Polynomial(expr.base, tuple(deriv_base), expr.unit)
+        return (
+                Polynomial(self.rec_undiff(expr.base, *args),
+                        tuple(deriv_coeff), expr.unit) +
+                + Polynomial(self.rec_undiff(expr.base, *args),
+                    tuple(deriv_base), expr.unit))
 
-    def map_numpy_array(self, expr):
+    def map_numpy_array(self, expr, *args):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         from pytools import indices_in_shape
         for i in indices_in_shape(expr.shape):
-            result[i] = self.rec(expr[i])
+            result[i] = self.rec(expr[i], *args)
         return result
 
 
