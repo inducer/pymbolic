@@ -25,6 +25,7 @@ THE SOFTWARE.
 import pymbolic
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
+from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
 from pymbolic.primitives import Sum, Product, is_zero
 
 
@@ -43,11 +44,15 @@ class DistributeMapper(IdentityMapper):
 
     def __init__(self, collector=TermCollector()):
         self.collector = collector
+        self.const_folder = CommutativeConstantFoldingMapper()
+
+    def collect(self, expr):
+        return self.collector(self.const_folder(expr))
 
     def map_sum(self, expr):
         res = IdentityMapper.map_sum(self, expr)
         if isinstance(res, Sum):
-            return self.collector(res)
+            return self.collect(res)
         else:
             return res
 
@@ -76,7 +81,7 @@ class DistributeMapper(IdentityMapper):
                 else:
                     rest = 1
 
-                result = self.collector(pymbolic.flattened_sum(
+                result = self.collect(pymbolic.flattened_sum(
                        pymbolic.flattened_product(leading) * dist(sumchild*rest)
                        for sumchild in sum.children
                        ))
