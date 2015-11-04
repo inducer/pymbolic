@@ -89,10 +89,9 @@ class DistributeMapper(IdentityMapper):
             return expr
         else:
             # not the smartest thing we can do, but at least *something*
-            return self.rec(
-                    type(expr)(1, expr.denominator)
-                    *
-                    expr.numerator)
+            return pymbolic.flattened_product([
+                    type(expr)(1, self.rec(expr.denominator)),
+                    self.rec(expr.numerator)])
 
     def map_power(self, expr):
         from pymbolic.primitives import Sum
