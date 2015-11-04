@@ -28,8 +28,6 @@ import pymbolic
 from pymbolic.mapper import IdentityMapper
 
 
-
-
 class TermCollector(IdentityMapper):
     """A term collector that assumes that multiplication is commutative.
 
@@ -91,13 +89,14 @@ class TermCollector(IdentityMapper):
         cleaned_base2exp = {}
         for base, exp in six.iteritems(base2exp):
             term = base**exp
-            if  self.get_dependencies(term) <= self.parameters:
+            if self.get_dependencies(term) <= self.parameters:
                 coefficients.append(term)
             else:
                 cleaned_base2exp[base] = exp
 
-        term = frozenset((base,exp) for base, exp in six.iteritems(cleaned_base2exp))
-        return term, pymbolic.flattened_product(coefficients)
+        term = frozenset(
+                (base, exp) for base, exp in six.iteritems(cleaned_base2exp))
+        return term, self.rec(pymbolic.flattened_product(coefficients))
 
     def map_sum(self, mysum):
         term2coeff = {}
