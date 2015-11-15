@@ -115,9 +115,9 @@ class Parser:
 
             (_assign, pytools.lex.RE(r"=")),
 
-            (_and, pytools.lex.RE(r"and")),
-            (_or, pytools.lex.RE(r"or")),
-            (_not, pytools.lex.RE(r"not")),
+            (_and, pytools.lex.RE(r"and\b")),
+            (_or, pytools.lex.RE(r"or\b")),
+            (_not, pytools.lex.RE(r"not\b")),
 
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
