@@ -25,9 +25,40 @@ THE SOFTWARE.
 import ast
 import pymbolic.primitives as p
 
-__doc__ = """
+__doc__ = r'''
+
+An example::
+
+    src = """
+    def f():
+        xx = 3*y + z * (12 if x < 13 else 13)
+        yy = f(x, y=y)
+    """
+
+    import ast
+    mod = ast.parse(src.replace("\n    ", "\n"))
+
+    print(ast.dump(mod))
+
+    from pymbolic.interop.ast import ASTToPymbolic
+    ast2p = ASTToPymbolic()
+
+    for f in mod.body:
+        if not isinstance(f, ast.FunctionDef):
+            continue
+
+        for stmt in f.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+
+            lhs, = stmt.targets
+            lhs = ast2p(lhs)
+            rhs = ast2p(stmt.value)
+
+            print(lhs, rhs)
+
 .. autoclass:: ASTToPymbolic
-"""
+'''
 
 
 class ASTMapper(object):

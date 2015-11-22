@@ -42,12 +42,12 @@ At any rate, to answer your question, here goes:
     custom node types that may or may not obey the same rules as scalars,
     I feel like 'leave it alone' is a safer default.
 
-* Pickling: https://github.com/sympy/sympy/issues/4297
+*   Pickling: https://github.com/sympy/sympy/issues/4297
 
     The very moment code generation starts taking more than a second or
     so, you'll want to implement a caching mechanism, likely using Pickle.
 
-- Extensibility of transformation constructs: sympy's built-in traversal
+*   Extensibility of transformation constructs: sympy's built-in traversal
     behaviors (e.g. taking derivatives, conversion to string, code
     generation) aren't particularly easy to extend.  It's important to
     understand what I'm talking about here: I would like to be able to

@@ -402,8 +402,6 @@ def test_geometric_algebra(dims):
 
 
 def test_ast_interop():
-    # These are here mainly to keep flake8 happy when parsing f.
-
     src = """
     def f():
         xx = 3*y + z * (12 if x < 13 else 13)
