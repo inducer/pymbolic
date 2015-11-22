@@ -72,8 +72,6 @@ class CompileMapper(StringifyMapper):
                 next_exp = 0
             result = "(%s+%s)%s" % (result, self(coeff, PREC_SUM),
                     stringify_exp(exp-next_exp))
-        #print "A", result
-        #print "B", expr
 
         if enclosing_prec > PREC_SUM and len(expr.data) > 1:
             return "(%s)" % result

@@ -401,6 +401,38 @@ def test_geometric_algebra(dims):
 # }}}
 
 
+def test_ast_interop():
+    # These are here mainly to keep flake8 happy when parsing f.
+
+    src = """
+    def f():
+        xx = 3*y + z * (12 if x < 13 else 13)
+        yy = f(x, y=y)
+    """
+
+    import ast
+    mod = ast.parse(src.replace("\n    ", "\n"))
+
+    print(ast.dump(mod))
+
+    from pymbolic.interop.ast import ASTToPymbolic
+    ast2p = ASTToPymbolic()
+
+    for f in mod.body:
+        if not isinstance(f, ast.FunctionDef):
+            continue
+
+        for stmt in f.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+
+            lhs, = stmt.targets
+            lhs = ast2p(lhs)
+            rhs = ast2p(stmt.value)
+
+            print(lhs, rhs)
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:

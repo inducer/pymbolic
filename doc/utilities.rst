@@ -1,5 +1,5 @@
-Utilities for dealing with exressions
-=====================================
+Utilities for dealing with expressions
+======================================
 
 Parser
 ------
@@ -26,16 +26,20 @@ Compiler
 
     .. method:: __call__(*args)
 
+Interoperability with other symbolic systems
+============================================
 
-:mod:`sympy` interface
-----------------------
+Interoperability with :mod:`sympy`
+----------------------------------
 
-.. automodule:: pymbolic.sympy_interface
+.. automodule:: pymbolic.interop.sympy
 
-.. class:: SympyToPymbolicMapper
+Interoperability with Maxima
+----------------------------
 
-    .. method:: __call__(expr)
+.. automodule:: pymbolic.interop.maxima
 
-.. class:: PymbolicToSympyMapper
+Interoperability with Python's :mod:`ast` module
+------------------------------------------------
 
-    .. method:: __call__(expr)
+.. automodule:: pymbolic.interop.ast
