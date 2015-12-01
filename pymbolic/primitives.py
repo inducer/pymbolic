@@ -763,6 +763,10 @@ class Subscript(AlgebraicLeaf):
 
     .. attribute:: aggregate
     .. attribute:: index
+    .. attribute:: index_tuple
+
+        Return :attr:`index` wrapped in a single-element tuple, if it is not already
+        a tuple.
     """
 
     init_arg_names = ("aggregate", "index",)
@@ -773,6 +777,13 @@ class Subscript(AlgebraicLeaf):
 
     def __getinitargs__(self):
         return self.aggregate, self.index
+
+    @property
+    def index_tuple(self):
+        if isinstance(self.index, tuple):
+            return self.index
+        else:
+            return (self.index,)
 
     mapper_method = intern("map_subscript")
 
