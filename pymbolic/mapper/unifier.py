@@ -162,6 +162,13 @@ class UnifierBase(RecursiveMapper):
         else:
             return unify_many(urecs, new_uni_record)
 
+    def map_call(self, expr, other, urecs):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.function, other.function,
+                self.rec(expr.parameters, other.parameters, urecs))
+
     def map_subscript(self, expr, other, urecs):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
@@ -235,6 +242,56 @@ class UnifierBase(RecursiveMapper):
 
         return self.rec(expr.base, other.base,
                 self.rec(expr.exponent, other.exponent, urecs))
+
+    def map_left_shift(self, expr, other, urecs):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.shiftee, other.shiftee,
+                self.rec(expr.shift, other.shift, urecs))
+
+    map_right_shift = map_left_shift
+
+    def map_bitwise_not(self, expr, other, urecs):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.child, other.child, urecs)
+
+    map_bitwise_or = map_sum
+    map_bitwise_xor = map_sum
+    map_bitwise_and = map_sum
+
+    map_logical_not = map_bitwise_not
+    map_logical_or = map_sum
+    map_logical_and = map_sum
+
+    def map_comparison(self, expr, other, urecs):
+        if (not isinstance(other, type(expr))
+                or expr.operator != other.operator):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.left, other.left,
+                self.rec(expr.right, other.right, urecs))
+
+    def map_if_positive(self, expr, other, urecs):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.criterion, other.criterion,
+                self.rec(expr.then, other.then,
+                    self.rec(expr.else_, other.else_, urecs)))
+
+    def map_if(self, expr, other, urecs):
+        if not isinstance(other, type(expr)):
+            return self.treat_mismatch(expr, other, urecs)
+
+        return self.rec(expr.condition, other.condition,
+                self.rec(expr.then, other.then,
+                    self.rec(expr.else_, other.else_, urecs)))
+
+    map_min = map_sum
+    map_max = map_sum
 
     def map_list(self, expr, other, urecs):
         if (not isinstance(other, type(expr))
