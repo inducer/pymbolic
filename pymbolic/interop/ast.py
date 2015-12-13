@@ -95,7 +95,7 @@ class ASTToPymbolic(ASTMapper):
         return p.Sum((x, y))
 
     def _sub(x, y):
-        return p.Sum((x, p.Product((-1), y)))
+        return p.Sum((x, p.Product(((-1), y))))
 
     def _mult(x, y):
         return p.Product((x, y))
