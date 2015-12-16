@@ -431,6 +431,17 @@ def test_ast_interop():
             print(lhs, rhs)
 
 
+def test_compile():
+    from pymbolic import parse, compile
+    code = compile(parse("x ** y"), ["x", "y"])
+    assert code(2, 5) == 32
+
+    # Test pickling of compiled code.
+    import pickle
+    code = pickle.loads(pickle.dumps(code))
+    assert code(3, 3) == 27
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
