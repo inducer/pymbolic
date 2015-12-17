@@ -94,7 +94,7 @@ class CompileMapper(StringifyMapper):
         return StringifyMapper.map_foreign(self, expr, enclosing_prec)
 
 
-class CompiledExpression:
+class CompiledExpression(object):
     """This class encapsulates an expression compiled into Python bytecode
     for faster evaluation.
 
@@ -108,13 +108,12 @@ class CompiledExpression:
             compiled function.  All variables used by the expression and not
             present here are added in alphabetical order.
         """
-        import pymbolic.primitives as primi
+        self._compile(expression, variables)
 
+    def _compile(self, expression, variables):
+        import pymbolic.primitives as primi
         self._Expression = expression
         self._Variables = [primi.make_variable(v) for v in variables]
-        self._compile()
-
-    def _compile(self):
         ctx = self.context().copy()
 
         try:
@@ -136,16 +135,16 @@ class CompiledExpression:
         expr_s = CompileMapper()(self._Expression, PREC_NONE)
         func_s = "lambda %s: %s" % (",".join(str(v) for v in all_variables),
                 expr_s)
-        self.__call__ = eval(func_s, ctx)
-
-    def __getinitargs__(self):
-        return self._Expression, self._Variables
+        self._code = eval(func_s, ctx)
 
     def __getstate__(self):
-        return None
+        return self._Expression, self._Variables
 
     def __setstate__(self, state):
-        pass
+        self._compile(*state)
+
+    def __call__(self, *args):
+        return self._code(*args)
 
     def context(self):
         return {"math": math}
