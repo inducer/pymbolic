@@ -160,6 +160,7 @@ In particular, :mod:`numpy` object arrays are useful for capturing
 vectors and matrices of :mod:`pymbolic` objects.
 
 .. autofunction:: make_sym_vector
+.. autofunction:: make_sym_array
 """
 
 
@@ -1648,26 +1649,30 @@ def make_common_subexpression(field, prefix=None, scope=None):
             return CommonSubexpression(field, prefix, scope)
 
 
-def make_sym_vector(name, components, var_class=None):
+def make_sym_vector(name, components, var_factory=None):
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
     :arg components: The number of components in the vector.
-    :arg var_class: The :class:`Variable` subclass to use for instantiating
+    :arg var_factory: The :class:`Variable` subclass to use for instantiating
         the scalar variables.
     """
+    if var_factory is None:
+        var_factory = Variable
+
     if isinstance(components, int):
         components = list(range(components))
 
-    if var_class is None:
-        var_class = Variable
     from pytools.obj_array import join_fields
-    vfld = var_class(name)
+    vfld = var_factory(name)
     return join_fields(*[vfld.index(i) for i in components])
 
 
-def make_sym_array(name, shape):
-    vfld = Variable(name)
+def make_sym_array(name, shape, var_factory=None):
+    if var_factory is None:
+        var_factory = Variable
+
+    vfld = var_factory(name)
     if shape == ():
         return vfld
 
