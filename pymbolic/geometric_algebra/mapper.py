@@ -38,6 +38,8 @@ from pymbolic.mapper import (
         WalkMapper as WalkMapperBase,
         CachingMapperMixin
         )
+from pymbolic.mapper.constant_folder import (
+        ConstantFoldingMapper as ConstantFoldingMapperBase)
 from pymbolic.mapper.graphviz import (
         GraphvizMapper as GraphvizMapperBase)
 from pymbolic.mapper.stringifier import (
@@ -336,5 +338,9 @@ class DerivativeBinder(IdentityMapper):
                 for axis in range(n_axes))
 
 # }}}
+
+
+class ConstantFoldingMapper(IdentityMapper, ConstantFoldingMapperBase):
+    pass
 
 # vim: foldmethod=marker
