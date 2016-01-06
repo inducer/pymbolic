@@ -42,9 +42,14 @@ class DistributeMapper(IdentityMapper):
         7*x**6 + 21*x**5 + 21*x**2 + 35*x**3 + 1 + 35*x**4 + 7*x + x**7
     """
 
-    def __init__(self, collector=TermCollector()):
+    def __init__(self, collector=None, const_folder=None):
+        if collector is None:
+            collector = TermCollector()
+        if const_folder is None:
+            const_folder = CommutativeConstantFoldingMapper()
+
         self.collector = collector
-        self.const_folder = CommutativeConstantFoldingMapper()
+        self.const_folder = const_folder
 
     def collect(self, expr):
         return self.collector(self.const_folder(expr))
