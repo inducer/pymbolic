@@ -1184,7 +1184,7 @@ class _MinMaxBase(Expression):
         self.children = children
 
     def __getinitargs__(self):
-        return self.children
+        return (self.children,)
 
 
 class Min(_MinMaxBase):
