@@ -706,6 +706,9 @@ class WalkMapper(RecursiveMapper):
 
         self.post_visit(expr, *args, **kwargs)
 
+    map_min = map_sum
+    map_max = map_sum
+
     def map_substitution(self, expr, *args, **kwargs):
         if not self.visit(expr):
             return
