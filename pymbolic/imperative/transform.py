@@ -69,11 +69,12 @@ def disambiguate_identifiers(instructions_a, instructions_b,
     from pytools import UniqueNameGenerator
     vng = UniqueNameGenerator(id_a | id_b)
 
+    from pymbolic import var
     subst_b = {}
     for clash in id_a & id_b:
         if should_disambiguate_name(clash):
             unclash = vng(clash)
-            subst_b[clash] = unclash
+            subst_b[clash] = var(unclash)
 
     from pymbolic.mapper.substitutor import (
             make_subst_func, SubstitutionMapper)
