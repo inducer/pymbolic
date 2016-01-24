@@ -53,4 +53,55 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
 # }}}
 
 
+# {{{ disambiguate_identifiers
+
+def disambiguate_identifiers(instructions_a, instructions_b,
+        should_disambiguate_name=None):
+    if should_disambiguate_name is None:
+        def should_disambiguate_name(name):
+            return True
+
+    from pymbolic.imperative.analysis import get_all_used_identifiers
+
+    id_a = get_all_used_identifiers(instructions_a)
+    id_b = get_all_used_identifiers(instructions_b)
+
+    from pytools import UniqueNameGenerator
+    vng = UniqueNameGenerator(id_a | id_b)
+
+    subst_b = {}
+    for clash in id_a & id_b:
+        if should_disambiguate_name(clash):
+            unclash = vng(clash)
+            subst_b[clash] = unclash
+
+    from pymbolic.mapper.substitutor import (
+            make_subst_func, SubstitutionMapper)
+    subst_map = SubstitutionMapper(make_subst_func(subst_b))
+
+    instructions_b = [
+            insn.map_expressions(subst_map) for insn in instructions_b]
+
+    return instructions_b, subst_b
+
+# }}}
+
+
+# {{{ disambiguate_and_fuse
+
+def disambiguate_and_fuse(instructions_a, instructions_b,
+        should_disambiguate_name=None):
+    instructions_b, subst_b = disambiguate_identifiers(
+            instructions_a, instructions_b,
+            should_disambiguate_name)
+
+    fused, old_b_id_to_new_b_id = \
+            fuse_instruction_streams_with_unique_ids(
+                    instructions_a, instructions_b)
+
+    return fused, subst_b, old_b_id_to_new_b_id
+
+# }}}
+
+
 # vim: foldmethod=marker
