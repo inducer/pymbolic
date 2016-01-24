@@ -48,8 +48,9 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
                         old_b_id_to_new_b_id[dep_id]
                         for dep_id in insnb.depends_on)))
 
-    return new_instructions
+    return new_instructions, old_b_id_to_new_b_id
 
 # }}}
+
 
 # vim: foldmethod=marker
