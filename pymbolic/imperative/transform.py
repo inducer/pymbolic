@@ -26,7 +26,7 @@ THE SOFTWARE.
 # {{{ fuse instruction streams
 
 def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
-    new_instructions = instructions_a
+    new_instructions = instructions_a[:]
     from pytools import UniqueNameGenerator
     insn_id_gen = UniqueNameGenerator(
             set([insna.id for insna in new_instructions]))
