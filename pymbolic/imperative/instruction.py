@@ -201,4 +201,13 @@ class ConditionalAssignment(ConditionalInstruction, Assignment):
 # }}}
 
 
+# {{{ nop
+
+class Nop(Instruction):
+    def __str__(self):
+        return 'nop'
+
+# }}}
+
+
 # vim: foldmethod=marker
