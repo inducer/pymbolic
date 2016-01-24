@@ -32,11 +32,6 @@ from pytools import RecordWithoutPickling
 
 class Instruction(RecordWithoutPickling):
     """
-    .. attribute:: condition
-
-       The instruction condition as a :mod:`pymbolic` expression (`True` if the
-       instruction is unconditionally executed)
-
     .. attribute:: depends_on
 
         A :class:`frozenset` of instruction ids that are reuqired to be
@@ -47,7 +42,7 @@ class Instruction(RecordWithoutPickling):
 
         A string, a unique identifier for this instruction.
 
-    .. automethod:: get_assignees
+    .. automethod:: get_written_variables
     .. automethod:: get_read_variables
     """
 
@@ -62,7 +57,7 @@ class Instruction(RecordWithoutPickling):
                                        depends_on=depends_on,
                                        **kwargs)
 
-    def get_assignees(self):
+    def get_written_variables(self):
         """Returns a :class:`frozenset` of variables being written by this
         instruction.
         """
@@ -142,7 +137,7 @@ class Assignment(Instruction):
                 rhs=rhs,
                 **kwargs)
 
-    def get_assignees(self):
+    def get_written_variables(self):
         from pymbolic.primitives import Variable, Subscript
         if isinstance(self.lhs, Variable):
             return frozenset([self.lhs.name])
