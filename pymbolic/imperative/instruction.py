@@ -69,7 +69,7 @@ class Instruction(RecordWithoutPickling):
         """
         return frozenset()
 
-    def map_expressions(self, mapper):
+    def map_expressions(self, mapper, include_lhs=True):
         """Returns a new copy of *self* with all expressions
         replaced by ``mapepr(expr)`` for every
         :class:`pymbolic.primitives.Expression`
@@ -158,10 +158,12 @@ class Assignment(Instruction):
 
         return result
 
-    def map_expressions(self, mapper):
-        return super(Assignment, self).map_expressions(mapper).copy(
-                lhs=mapper(self.lhs),
-                rhs=mapper(self.rhs))
+    def map_expressions(self, mapper, include_lhs=True):
+        return (super(Assignment, self)
+                .map_expressions(mapper, include_lhs=include_lhs)
+                .copy(
+                    lhs=mapper(self.lhs) if include_lhs else self.lhs,
+                    rhs=mapper(self.rhs)))
 
     def __str__(self):
         result = "{assignee} <- {expr}".format(
@@ -194,9 +196,10 @@ class ConditionalAssignment(ConditionalInstruction, Assignment):
 
     """
 
-    def map_expressions(self, mapper):
-        return super(ConditionalAssignment, self).map_expressions(mapper).copy(
-                condition=mapper(self.condition))
+    def map_expressions(self, mapper, include_lhs=True):
+        return (super(ConditionalAssignment, self)
+                .map_expressions(mapper, include_lhs=include_lhs)
+                .copy(condition=mapper(self.condition)))
 
 # }}}
 
