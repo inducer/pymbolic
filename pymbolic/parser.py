@@ -98,7 +98,7 @@ class FinalizedTuple(tuple):
     """
 
 
-class Parser:
+class Parser(object):
     lex_table = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
