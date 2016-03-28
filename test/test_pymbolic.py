@@ -442,6 +442,32 @@ def test_compile():
     assert code(3, 3) == 27
 
 
+def test_unifier():
+    from pymbolic import var
+    from pymbolic.mapper.unifier import UnidirectionalUnifier
+    a, b, c, d, e, f = [var(s) for s in "abcdef"]
+
+    def match_found(records, eqns):
+        for record in records:
+            if eqns <= set(record.equations):
+                return True
+        return False
+
+    recs = UnidirectionalUnifier("abc")(a+b*c, d+e*f)
+    assert len(recs) == 2
+    assert match_found(recs, set([(a, d), (b, e), (c, f)]))
+    assert match_found(recs, set([(a, d), (b, f), (c, e)]))
+
+    recs = UnidirectionalUnifier("abc")(a+b, d+e+f)
+    assert len(recs) == 6
+    assert match_found(recs, set([(a, d), (b, e+f)]))
+    assert match_found(recs, set([(a, e), (b, d+f)]))
+    assert match_found(recs, set([(a, f), (b, d+e)]))
+    assert match_found(recs, set([(b, d), (a, e+f)]))
+    assert match_found(recs, set([(b, e), (a, d+f)]))
+    assert match_found(recs, set([(b, f), (a, d+e)]))
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
