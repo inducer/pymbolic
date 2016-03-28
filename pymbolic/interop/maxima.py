@@ -36,6 +36,7 @@ __doc__ = """
 # Inspired by similar code in Sage at:
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
+import six
 from six.moves import intern
 import re
 import pytools
@@ -110,7 +111,11 @@ class MaximaParser(ParserBase):
             pstate.advance()
             return 1j
         elif next_tag is p._identifier:
-            return primitives.Variable(pstate.next_str_and_advance())
+            if six.PY3:
+                return primitives.Variable(pstate.next_str_and_advance())
+            else:
+                # Py2 does not have Unicode identifiers
+                return primitives.Variable(str(pstate.next_str_and_advance()))
         else:
             pstate.expected("terminal")
 
