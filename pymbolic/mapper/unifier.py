@@ -326,52 +326,46 @@ class UnidirectionalUnifier(UnifierBase):
         if not isinstance(other, type(expr)):
             return
 
-        plain_cand_variables = []
-        non_var_children = []
-        for child in expr.children:
-            if (isinstance(child, Variable)
-                    and child.name in self.lhs_mapping_candidates):
-                plain_cand_variables.append(child)
-            else:
-                non_var_children.append(child)
-
-        # list (with indices matching non_var_children) of
-        #   list of tuples (other_index, unifiers)
         unification_candidates = []
 
-        for i, my_child in enumerate(non_var_children):
-            i_matches = []
-            for j, other_child in enumerate(other.children):
-                result = self.rec(my_child, other_child, urecs)
-                if result:
-                    i_matches.append((j, result))
+        def subsets_modulo_ac(n):
+            from itertools import combinations
+            base = tuple(range(n))
+            for r in range(1, n+1):
+                for p in combinations(base, r):
+                    yield p
 
+        # Unify children of expr with subtrees of the other expr.
+        for i, my_child in enumerate(expr.children):
+            i_matches = {}
+            for subset in subsets_modulo_ac(len(other.children)):
+                subtree = factory(other.children[idx] for idx in subset)
+                result = self.rec(my_child, subtree, urecs)
+                if result:
+                    i_matches[frozenset(subset)] = result
             unification_candidates.append(i_matches)
 
-        def match_children(urec, next_my_idx, other_leftovers):
-            if next_my_idx >= len(non_var_children):
-                if not plain_cand_variables and other_leftovers:
-                    return
-
-                eqns = []
-                for pv in plain_cand_variables:
-                    eqns.append((pv, factory(
-                        other.children[i] for i in other_leftovers)))
-                    other_leftovers = []
-
-                yield urec.unify(UnificationRecord(eqns))
+        # Combine the unification candidates of children in all possible ways.
+        def match_children(urec, next_cand_idx, other_leftovers):
+            if next_cand_idx >= len(expr.children):
+                if len(other_leftovers) == 0:
+                    # Only return records that are fully matched.
+                    yield urec
                 return
 
-            for other_idx, pair_urecs in unification_candidates[next_my_idx]:
-                if other_idx not in other_leftovers:
+            from six import iteritems
+            for other_idxs, pair_urecs in iteritems(
+                    unification_candidates[next_cand_idx]):
+                if not other_idxs <= other_leftovers:
+                    # Don't re-match any elements.
                     continue
 
                 new_urecs = unify_many(pair_urecs, urec)
-                new_rhs_leftovers = other_leftovers - set([other_idx])
+                new_rhs_leftovers = other_leftovers - other_idxs
 
                 for cand_urec in new_urecs:
-                    for result_urec in match_children(cand_urec, next_my_idx+1,
-                            new_rhs_leftovers):
+                    for result_urec in match_children(
+                            cand_urec, next_cand_idx + 1, new_rhs_leftovers):
                         yield result_urec
 
         for urec in match_children(
