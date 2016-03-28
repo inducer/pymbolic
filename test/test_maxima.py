@@ -25,11 +25,12 @@ THE SOFTWARE.
 import pytest
 from pytools.test import mark_test
 
+from pymbolic.interop.maxima import MaximaKernel
+
 
 def test_kernel():
     pytest.importorskip("pexpect")
 
-    from pymbolic.interop.maxima import MaximaKernel
     knl = MaximaKernel()
     knl.exec_str("k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))")
     knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
@@ -40,7 +41,6 @@ def test_kernel():
 def pytest_funcarg__knl(request):
     pytest.importorskip("pexpect")
 
-    from pymbolic.interop.maxima import MaximaKernel
     knl = MaximaKernel()
     request.addfinalizer(knl.shutdown)
     return knl

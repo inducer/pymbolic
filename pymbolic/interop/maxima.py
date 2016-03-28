@@ -36,6 +36,7 @@ __doc__ = """
 # Inspired by similar code in Sage at:
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
+from six.moves import intern
 import re
 import pytools
 
@@ -43,13 +44,13 @@ from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase
 
 
-IN_PROMPT_RE = re.compile(r"\(%i([0-9]+)\) ")
-OUT_PROMPT_RE = re.compile(r"\(%o([0-9]+)\) ")
+IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
+OUT_PROMPT_RE = re.compile(br"\(%o([0-9]+)\) ")
 ERROR_PROMPT_RE = re.compile(
-    r"(Principal Value|debugmode|incorrect syntax|Maxima encountered a Lisp error)")
-ASK_RE = re.compile(r"(zero or nonzero|an integer|positive, negative, or zero|"
-        "positive or negative|positive or zero)")
-MULTI_WHITESPACE = re.compile(r"[ \r\n\t]+")
+    br"(Principal Value|debugmode|incorrect syntax|Maxima encountered a Lisp error)")
+ASK_RE = re.compile(br"(zero or nonzero|an integer|positive, negative, or zero|"
+        b"positive or negative|positive or zero)")
+MULTI_WHITESPACE = re.compile(br"[ \r\n\t]+")
 
 
 class MaximaError(RuntimeError):
@@ -261,6 +262,7 @@ class MaximaKernel:
             return
         if which == 1:
             txt = self.child.before+self.child.after+self.child.readline()
+            txt = txt.decode()
             self.restart()
             raise MaximaError(
                     "maxima encountered an error and had to be restarted:"
@@ -268,6 +270,7 @@ class MaximaKernel:
                     % (75*"-", txt.rstrip("\n"), 75*"-"))
         elif which == 2:
             txt = self.child.before+self.child.after+self.child.readline()
+            txt = txt.decode()
             self.restart()
             raise MaximaError(
                     "maxima asked a question and had to be restarted:\n%s\n%s\n%s"
@@ -323,18 +326,18 @@ class MaximaKernel:
             print("[MAXIMA INPUT]", cmd)
 
         self._sendline(cmd)
-        s_echo = self.child.readline()
+        s_echo = self.child.readline().decode()
 
         assert s_echo.strip() == cmd.strip()
 
         self._expect_prompt(OUT_PROMPT_RE)
         self._expect_prompt(IN_PROMPT_RE)
 
-        result, _ = MULTI_WHITESPACE.subn(" ", self.child.before)
+        result, _ = MULTI_WHITESPACE.subn(b" ", self.child.before)
 
         if _DEBUG & 1:
             print("[MAXIMA RESPONSE]", result)
-        return result
+        return result.decode()
 
     def reset(self):
         self.current_prompt = 0
