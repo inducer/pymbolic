@@ -449,7 +449,6 @@ def test_unifier():
 
     def match_found(records, eqns):
         for record in records:
-            print(record.equations)
             if eqns <= set(record.equations):
                 return True
         return False
