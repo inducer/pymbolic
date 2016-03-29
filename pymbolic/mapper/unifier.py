@@ -45,6 +45,8 @@ def unify_map(map1, map2):
 class UnificationRecord(object):
 
     def __init__(self, equations, lmap=None, rmap=None):
+        self.equations = equations
+
         # lmap and rmap just serve as a tool to reject
         # some unifications early.
 
@@ -61,16 +63,6 @@ class UnificationRecord(object):
         self.lmap = lmap
         self.rmap = rmap
 
-    @property
-    def equations(self):
-        from six import iteritems
-        eqns = [(Variable(key), expr) for key, expr in iteritems(self.lmap)]
-        for key, expr in iteritems(self.rmap):
-            if isinstance(expr, Variable) and expr.name in self.lmap:
-                continue
-            eqns.append((expr, Variable(key)))
-        return eqns
-
     def unify(self, other):
         new_lmap = unify_map(self.lmap, other.lmap)
         if new_lmap is None:
@@ -80,7 +72,12 @@ class UnificationRecord(object):
         if new_rmap is None:
             return None
 
-        return UnificationRecord(None, new_lmap, new_rmap)
+        # Merge redundant equations.
+        new_equations = set(self.equations)
+        new_equations.update(other.equations)
+
+        return UnificationRecord(
+            list(new_equations), new_lmap, new_rmap)
 
     def __repr__(self):
         return "UnificationRecord(%s)" % (
