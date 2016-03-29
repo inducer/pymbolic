@@ -43,6 +43,7 @@ def unify_map(map1, map2):
 
 
 class UnificationRecord(object):
+
     def __init__(self, equations, lmap=None, rmap=None):
         self.equations = equations
 
@@ -67,13 +68,16 @@ class UnificationRecord(object):
         if new_lmap is None:
             return None
 
-        new_rmap = unify_map(self.lmap, other.lmap)
+        new_rmap = unify_map(self.rmap, other.rmap)
         if new_rmap is None:
             return None
 
+        # Merge redundant equations.
+        new_equations = set(self.equations)
+        new_equations.update(other.equations)
+
         return UnificationRecord(
-                self.equations + other.equations,
-                new_lmap, new_rmap)
+            list(new_equations), new_lmap, new_rmap)
 
     def __repr__(self):
         return "UnificationRecord(%s)" % (
@@ -399,12 +403,19 @@ class UnidirectionalUnifier(UnifierBase):
                     other_leftovers, len(plain_var_candidates)):
                 result = urec
                 for subset, var in zip(partition, plain_var_candidates):
-                    eqn = (var, factory(other.children[i] for i in subset))
-                    result = result.unify(UnificationRecord([eqn]))
+                    rec = self.unification_record_from_equation(
+                        var, factory(other.children[i] for i in subset))
+                    result = result.unify(rec)
                     if not result:
                         break
                 else:
-                    yield result
+                    if len(non_var_children) != 0:
+                        # urecs was merged in.
+                        yield result
+                        return
+                    # urecs was not merged in, do it here.
+                    for unif in unify_many(urecs, result):
+                        yield unif
 
         for urec in match_children(
                 UnificationRecord([]), 0, set(range(len(other.children)))):
