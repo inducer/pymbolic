@@ -467,6 +467,11 @@ def test_unifier():
     assert match_found(recs, set([(b, e), (a, d+f)]))
     assert match_found(recs, set([(b, f), (a, d+e)]))
 
+    vals = [var("v" + str(i)) for i in range(100)]
+    recs = UnidirectionalUnifier("a")(sum(vals[1:]) + a, sum(vals))
+    assert len(recs) == 1
+    assert match_found(recs, set([(a, var("v0"))]))
+
 
 if __name__ == "__main__":
     import sys
