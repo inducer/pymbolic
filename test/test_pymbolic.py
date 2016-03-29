@@ -449,6 +449,7 @@ def test_unifier():
 
     def match_found(records, eqns):
         for record in records:
+            print(record.equations)
             if eqns <= set(record.equations):
                 return True
         return False
@@ -471,6 +472,13 @@ def test_unifier():
     recs = UnidirectionalUnifier("a")(sum(vals[1:]) + a, sum(vals))
     assert len(recs) == 1
     assert match_found(recs, set([(a, var("v0"))]))
+
+    recs = UnidirectionalUnifier("abc")(a+b+c,d+e)
+    assert len(recs) == 0
+
+    recs = UnidirectionalUnifier("abc")(f(a+b,f(a+c)), f(b+c,f(b+d)))
+    assert len(recs) == 1
+    assert match_found(recs, set([(a, b), (b, c), (c, d)]))
 
 
 if __name__ == "__main__":
