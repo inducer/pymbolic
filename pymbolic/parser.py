@@ -446,8 +446,10 @@ class Parser(object):
             comma_allowed = True
 
     def __call__(self, expr_str, min_precedence=0):
-        lex_result = [(tag, s, idx)
-                for (tag, s, idx) in pytools.lex.lex(self.lex_table, expr_str)
+        lex_result = [(tag, s, idx, match_obj)
+                for (tag, s, idx, match_obj) in pytools.lex.lex(
+                    self.lex_table, expr_str,
+                    match_objects=True)
                 if tag is not _whitespace]
         pstate = pytools.lex.LexIterator(lex_result, expr_str)
 
