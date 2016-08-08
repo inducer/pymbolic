@@ -1523,7 +1523,7 @@ global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
 if six.PY2:
-    VALID_CONSTANT_CLASSES += (long,)
+    VALID_CONSTANT_CLASSES += (long,)  # noqa
 
 VALID_OPERANDS = (Expression,)
 
