@@ -631,6 +631,7 @@ class Variable(Leaf):
     init_arg_names = ("name",)
 
     def __init__(self, name):
+        assert name
         self.name = intern(name)
 
     def __getinitargs__(self):
