@@ -11,3 +11,5 @@ setuptools*egg
 setuptools*tar.gz
 setuptools.pth
 _build
+
+.cache
