@@ -37,6 +37,7 @@ class PersistentHashWalkMapper(WalkMapper):
 
     def visit(self, expr):
         self.key_hash.update(type(expr).__name__.encode("utf8"))
+        return True
 
     def map_variable(self, expr):
         self.key_hash.update(expr.name.encode("utf8"))
