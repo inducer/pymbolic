@@ -201,7 +201,8 @@ class Space(object):
         if basis is None:
             basis = int(metric_matrix.shape[0])
 
-        if isinstance(basis, int):
+        from numbers import Integral
+        if isinstance(basis, Integral):
             basis = ["e%d" % i for i in range(basis)]
 
         if metric_matrix is None:
