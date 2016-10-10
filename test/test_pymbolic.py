@@ -472,10 +472,10 @@ def test_unifier():
     assert len(recs) == 1
     assert match_found(recs, set([(a, var("v0"))]))
 
-    recs = UnidirectionalUnifier("abc")(a+b+c,d+e)
+    recs = UnidirectionalUnifier("abc")(a+b+c, d+e)
     assert len(recs) == 0
 
-    recs = UnidirectionalUnifier("abc")(f(a+b,f(a+c)), f(b+c,f(b+d)))
+    recs = UnidirectionalUnifier("abc")(f(a+b, f(a+c)), f(b+c, f(b+d)))
     assert len(recs) == 1
     assert match_found(recs, set([(a, b), (b, c), (c, d)]))
 
