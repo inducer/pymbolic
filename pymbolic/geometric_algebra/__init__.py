@@ -919,7 +919,7 @@ class MultiVector(object):
         """
 
         if tol is None:
-            tol = 1e-13
+            tol = 1e-12
 
         new_data = {}
         for bits, coeff in six.iteritems(self.data):
