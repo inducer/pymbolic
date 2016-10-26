@@ -257,14 +257,22 @@ class MaximaKernel:
         self.exec_str("keepfloat:true")
         self.exec_str("linel:16384")
 
-    def _expect_prompt(self, prompt_re):
+    def _expect_prompt(self, prompt_re, enforce_prompt_numbering=True):
         if prompt_re is IN_PROMPT_RE:
             self.current_prompt += 1
 
         which = self.child.expect([prompt_re, ERROR_PROMPT_RE, ASK_RE])
         if which == 0:
-            assert int(self.child.match.group(1)) == self.current_prompt
+            if enforce_prompt_numbering:
+                assert int(self.child.match.group(1)) == self.current_prompt, (
+                        "found prompt: %s, expected: %s" % (
+                            self.child.match.group(1).decode(),
+                            self.current_prompt))
+            else:
+                self.current_prompt = int(self.child.match.group(1).decode())
+
             return
+
         if which == 1:
             txt = self.child.before+self.child.after+self.child.readline()
             txt = txt.decode()
@@ -315,15 +323,17 @@ class MaximaKernel:
 
         self.child.sendline(l)
 
-    def exec_str(self, s):
+    def exec_str(self, s, enforce_prompt_numbering=True):
         cmd = s+";"
         if _DEBUG & 1:
             print("[MAXIMA INPUT]", cmd)
 
         self._sendline(s+";")
-        self._expect_prompt(IN_PROMPT_RE)
+        self._expect_prompt(
+                IN_PROMPT_RE,
+                enforce_prompt_numbering=enforce_prompt_numbering)
 
-    def eval_str(self, s):
+    def eval_str(self, s, enforce_prompt_numbering=True):
         self._check_debug()
 
         cmd = s+";"
@@ -335,7 +345,8 @@ class MaximaKernel:
 
         assert s_echo.strip() == cmd.strip()
 
-        self._expect_prompt(OUT_PROMPT_RE)
+        self._expect_prompt(OUT_PROMPT_RE,
+                enforce_prompt_numbering=enforce_prompt_numbering)
         self._expect_prompt(IN_PROMPT_RE)
 
         result, _ = MULTI_WHITESPACE.subn(b" ", self.child.before)
