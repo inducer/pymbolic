@@ -104,6 +104,17 @@ def test_lax_round_trip(knl):
             "ratsimp(result-result2)") == 0
 
 
+def test_parse_matrix(knl):
+    z = knl.clean_eval_str_with_setup([
+        "A:matrix([1,2+0.3*dt], [3,4])",
+        "B:matrix([1,1], [0,1])",
+        ],
+        "A.B")
+
+    from pymbolic.interop.maxima import MaximaParser
+    print(MaximaParser()(z))
+
+
 def test_diff():
     pytest.importorskip("pexpect")
 

@@ -98,6 +98,22 @@ class MaximaParser(ParserBase):
             (imag_unit, pytools.lex.RE(r"%i")),
             ] + ParserBase.lex_table
 
+    def parse_prefix(self, pstate):
+        pstate.expect_not_end()
+
+        from pymbolic.parser import _openbracket, _closebracket
+        if pstate.is_next(_openbracket):
+            pstate.advance()
+            left_exp = self.parse_expression(pstate)
+            pstate.expect(_closebracket)
+            pstate.advance()
+            if isinstance(left_exp, tuple):
+                left_exp = list(left_exp)
+        else:
+            left_exp = super(MaximaParser, self).parse_prefix(pstate)
+
+        return left_exp
+
     def parse_terminal(self, pstate):
         import pymbolic.primitives as primitives
 
@@ -137,9 +153,16 @@ class MaximaParser(ParserBase):
                 args = self.parse_expression(pstate)
                 if not isinstance(args, tuple):
                     args = (args,)
-                left_exp = primitives.Call(left_exp, args)
+
                 pstate.expect(p._closepar)
                 pstate.advance()
+
+                if left_exp == primitives.Variable("matrix"):
+                    import numpy as np
+                    left_exp = np.array(list(args))
+                else:
+                    left_exp = primitives.Call(left_exp, args)
+
             did_something = True
         elif next_tag is p._openbracket and p._PREC_CALL > min_precedence:
             pstate.advance()
