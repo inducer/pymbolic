@@ -42,7 +42,7 @@ import re
 import pytools
 
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.parser import Parser as ParserBase
+from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
 
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
@@ -108,7 +108,7 @@ class MaximaParser(ParserBase):
             pstate.expect(_closebracket)
             pstate.advance()
             if isinstance(left_exp, tuple):
-                left_exp = list(left_exp)
+                left_exp = FinalizedTuple(left_exp)
         else:
             left_exp = super(MaximaParser, self).parse_prefix(pstate)
 
@@ -159,7 +159,7 @@ class MaximaParser(ParserBase):
 
                 if left_exp == primitives.Variable("matrix"):
                     import numpy as np
-                    left_exp = np.array(list(args))
+                    left_exp = np.array(list(list(row) for row in args))
                 else:
                     left_exp = primitives.Call(left_exp, args)
 
@@ -207,7 +207,8 @@ class MaximaParser(ParserBase):
                 left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, p._PREC_COMMA)
-                if isinstance(left_exp, tuple):
+                if isinstance(left_exp, tuple) \
+                        and not isinstance(left_exp, FinalizedTuple):
                     left_exp = left_exp + (new_el,)
                 else:
                     left_exp = (left_exp, new_el)
