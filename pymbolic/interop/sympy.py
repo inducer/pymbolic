@@ -79,25 +79,25 @@ def make_cse(arg, prefix=None):
 # {{{ sympy -> pymbolic
 
 class SympyToPymbolicMapper(SympyMapper):
-    def map_Symbol(self, expr):
+    def map_Symbol(self, expr):  # noqa
         return prim.Variable(expr.name)
 
-    def map_ImaginaryUnit(self, expr):
+    def map_ImaginaryUnit(self, expr):  # noqa
         return 1j
 
-    def map_Float(self, expr):
+    def map_Float(self, expr):  # noqa
         return float(expr)
 
-    def map_Pi(self, expr):
+    def map_Pi(self, expr):  # noqa
         return float(expr)
 
-    def map_Add(self, expr):
+    def map_Add(self, expr):  # noqa
         return prim.Sum(tuple(self.rec(arg) for arg in expr.args))
 
-    def map_Mul(self, expr):
+    def map_Mul(self, expr):  # noqa
         return prim.Product(tuple(self.rec(arg) for arg in expr.args))
 
-    def map_Rational(self, expr):
+    def map_Rational(self, expr):  # noqa
         num = self.rec(expr.p)
         denom = self.rec(expr.q)
 
@@ -105,20 +105,20 @@ class SympyToPymbolicMapper(SympyMapper):
             return num
         return prim.Quotient(num, denom)
 
-    def map_Pow(self, expr):
+    def map_Pow(self, expr):  # noqa
         return prim.Power(self.rec(expr.base), self.rec(expr.exp))
 
-    def map_Subs(self, expr):
+    def map_Subs(self, expr):  # noqa
         return prim.Substitution(self.rec(expr.expr),
                 tuple(v.name for v in expr.variables),
                 tuple(self.rec(v) for v in expr.point),
                 )
 
-    def map_Derivative(self, expr):
+    def map_Derivative(self, expr):  # noqa
         return prim.Derivative(self.rec(expr.expr),
                 tuple(v.name for v in expr.variables))
 
-    def map_CSE(self, expr):
+    def map_CSE(self, expr):  # noqa
         return prim.CommonSubexpression(
                 self.rec(expr.args[0]), expr.prefix)
 

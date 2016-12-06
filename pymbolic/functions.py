@@ -1,5 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -24,21 +23,29 @@ THE SOFTWARE.
 """
 
 
-
-
 import pymbolic.primitives as primitives
 
 
-
-
 def sin(x):
-    return primitives.Call(primitives.Lookup(primitives.Variable("math"), "sin"), (x,))
-def cos(x):
-    return primitives.Call(primitives.Lookup(primitives.Variable("math"), "cos"), (x,))
-def tan(x):
-    return primitives.Call(primitives.Lookup(primitives.Variable("math"), "tan"), (x,))
-def log(x):
-    return primitives.Call(primitives.Lookup(primitives.Variable("math"), "log"), (x,))
-def exp(x):
-    return primitives.Call(primitives.Lookup(primitives.Variable("math"), "exp"), (x,))
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "sin"), (x,))
 
+
+def cos(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "cos"), (x,))
+
+
+def tan(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "tan"), (x,))
+
+
+def log(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "log"), (x,))
+
+
+def exp(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "exp"), (x,))

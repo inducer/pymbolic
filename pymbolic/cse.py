@@ -30,8 +30,6 @@ from pymbolic.mapper import IdentityMapper, WalkMapper
 COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
 
 
-
-
 class NormalizedKeyGetter(object):
     def __call__(self, expr):
         if isinstance(expr, COMMUTATIVE_CLASSES):
@@ -42,8 +40,6 @@ class NormalizedKeyGetter(object):
             return type(expr), frozenset(six.iteritems(kid_count))
         else:
             return expr
-
-
 
 
 class UseCountMapper(WalkMapper):
@@ -78,9 +74,6 @@ class UseCountMapper(WalkMapper):
 
             self.rec(expr.child)
             self.subexpr_counts[key] = 1
-
-
-
 
 
 class CSEMapper(IdentityMapper):
@@ -136,8 +129,6 @@ class CSEMapper(IdentityMapper):
                 tuple(self.rec(v) for v in expr.values))
 
 
-
-
 def tag_common_subexpressions(exprs):
     get_key = NormalizedKeyGetter()
     ucm = UseCountMapper(get_key)
@@ -155,4 +146,3 @@ def tag_common_subexpressions(exprs):
     cse_mapper = CSEMapper(to_eliminate, get_key)
     result = [cse_mapper(expr) for expr in exprs]
     return result
-

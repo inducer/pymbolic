@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -31,8 +31,8 @@ y = var("y")
 expr2 = 3*x+5-y
 expr = parse("3*x+5-y")
 
-print expr
-print expr2
+print(expr)
+print(expr2)
 
 dm = DependencyMapper()
-print dm(expr)
+print(dm(expr))

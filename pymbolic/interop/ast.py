@@ -91,13 +91,13 @@ class ASTMapper(object):
 # {{{ mapper
 
 class ASTToPymbolic(ASTMapper):
-    def _add(x, y):
+    def _add(x, y):  # noqa
         return p.Sum((x, y))
 
-    def _sub(x, y):
+    def _sub(x, y):  # noqa
         return p.Sum((x, p.Product(((-1), y))))
 
-    def _mult(x, y):
+    def _mult(x, y):  # noqa
         return p.Product((x, y))
 
     bin_op_map = {
@@ -116,7 +116,7 @@ class ASTToPymbolic(ASTMapper):
             ast.BitAnd: p.BitwiseAnd,
             }
 
-    def map_BinOp(self, expr):
+    def map_BinOp(self, expr):  # noqa
         try:
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
@@ -127,7 +127,7 @@ class ASTToPymbolic(ASTMapper):
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
-    def _neg(x):
+    def _neg(x):  # noqa
         return p.Product((-1), x)
 
     unary_op_map = {
@@ -137,7 +137,7 @@ class ASTToPymbolic(ASTMapper):
             ast.USub: _neg,
             }
 
-    def map_UnaryOp(self, expr):
+    def map_UnaryOp(self, expr):  # noqa
         try:
             op_constructor = self.unary_op_map[expr.op]
         except KeyError:
@@ -148,7 +148,7 @@ class ASTToPymbolic(ASTMapper):
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
-    def map_IfExp(self, expr):
+    def map_IfExp(self, expr):  # noqa
         # (expr test, expr body, expr orelse)
         return p.If(self.rec(expr.test), self.rec(expr.body), self.rec(expr.orelse))
 
@@ -165,7 +165,7 @@ class ASTToPymbolic(ASTMapper):
             # NotIn
             }
 
-    def map_Compare(self, expr):
+    def map_Compare(self, expr):  # noqa
         # (expr left, cmpop* ops, expr* comparators)
         op, = expr.ops
 
@@ -182,7 +182,7 @@ class ASTToPymbolic(ASTMapper):
 
         return p.Comparison(self.rec(expr.left), comp, self.rec(right))
 
-    def map_Call(self, expr):
+    def map_Call(self, expr):  # noqa
         # (expr func, expr* args, keyword* keywords)
         func = self.rec(expr.func)
         args = tuple(self.rec(arg) for arg in expr.args)
@@ -194,25 +194,25 @@ class ASTToPymbolic(ASTMapper):
         else:
             return p.Call(func, args)
 
-    def map_Num(self, expr):
+    def map_Num(self, expr):  # noqa
         # (object n) -- a number as a PyObject.
         return expr.n
 
-    def map_Str(self, expr):
+    def map_Str(self, expr):  # noqa
         return expr.s
 
-    def map_Bytes(self, expr):
+    def map_Bytes(self, expr):  # noqa
         return expr.s
 
-    def map_NameConstant(self, expr):
+    def map_NameConstant(self, expr):  # noqa
         # (singleton value)
         return expr.value
 
-    def map_Attribute(self, expr):
+    def map_Attribute(self, expr):  # noqa
         # (expr value, identifier attr, expr_context ctx)
         return p.Lookup(self.rec(expr.value), expr.attr)
 
-    def map_Subscript(self, expr):
+    def map_Subscript(self, expr):  # noqa
         # (expr value, slice slice, expr_context ctx)
         def none_or_rec(x):
             if x is None:
@@ -234,11 +234,11 @@ class ASTToPymbolic(ASTMapper):
 
     # def map_Starred(self, expr):
 
-    def map_Name(self, expr):
+    def map_Name(self, expr):  # noqa
         # (identifier id, expr_context ctx)
         return p.Variable(expr.id)
 
-    def map_Tuple(self, expr):
+    def map_Tuple(self, expr):  # noqa
         # (expr* elts, expr_context ctx)
         return tuple(self.rec(ti) for ti in expr.elts)
 

@@ -25,8 +25,6 @@ THE SOFTWARE.
 from pymbolic.mapper import CombineMapper
 
 
-
-
 class FlopCounter(CombineMapper):
     def combine(self, values):
         return sum(values)

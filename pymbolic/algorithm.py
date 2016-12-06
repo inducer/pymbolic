@@ -1,10 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-import six
-from six.moves import range
-from six.moves import zip
-from functools import reduce
+from __future__ import division, absolute_import, print_function
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -28,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import six
+from six.moves import range, zip, reduce
 import cmath
 from pytools import memoize
 
@@ -81,12 +77,12 @@ def extended_euclidean(q, r):
         p, a, b = extended_euclidean(r, q)
         return p, b, a
 
-    Q = 1, 0
-    R = 0, 1
+    Q = 1, 0  # noqa
+    R = 0, 1  # noqa
 
     while r:
         quot, t = divmod(q, r)
-        T = Q[0] - quot*R[0], Q[1] - quot*R[1]
+        T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # noqa
         q, r = r, t
         Q, R = R, T
 
@@ -115,20 +111,20 @@ def lcm(q, r):
 # {{{ fft
 
 @memoize
-def find_factors(N):
+def find_factors(n):
     from math import sqrt
 
-    N1 = 2
-    max_N1 = int(sqrt(N))+1
-    while N % N1 != 0 and N1 <= max_N1:
-        N1 += 1
+    n1 = 2
+    max_n1 = int(sqrt(n))+1
+    while n % n1 != 0 and n1 <= max_n1:
+        n1 += 1
 
-    if N1 > max_N1:
-        N1 = N
+    if n1 > max_n1:
+        n1 = n
 
-    N2 = N // N1
+    n2 = n // n1
 
-    return N1, N2
+    return n1, n2
 
 
 def fft(x, sign=1, wrap_intermediate=lambda x: x):
@@ -149,12 +145,12 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
     from math import pi
     import numpy
 
-    N = len(x)
+    n = len(x)
 
-    if N == 1:
+    if n == 1:
         return x
 
-    N1, N2 = find_factors(N)
+    N1, N2 = find_factors(n)
 
     sub_ffts = [
             wrap_intermediate(
@@ -222,7 +218,7 @@ def sym_fft(x, sign=1):
 # }}}
 
 
-def csr_matrix_multiply(S, x):
+def csr_matrix_multiply(S, x):  # noqa
     """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
     h, w = S.shape
