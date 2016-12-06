@@ -458,4 +458,5 @@ class Parser(object):
             pstate.raise_parse_error("leftover input after completed parse")
         return result
 
+
 parse = Parser()

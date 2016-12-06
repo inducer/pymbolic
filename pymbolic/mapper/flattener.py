@@ -25,8 +25,6 @@ THE SOFTWARE.
 from pymbolic.mapper import IdentityMapper
 
 
-
-
 class FlattenMapper(IdentityMapper):
     def map_sum(self, expr):
         from pymbolic.primitives import flattened_sum
@@ -35,8 +33,6 @@ class FlattenMapper(IdentityMapper):
     def map_product(self, expr):
         from pymbolic.primitives import flattened_product
         return flattened_product(self.rec(ch) for ch in expr.children)
-
-
 
 
 def flatten(expr):
