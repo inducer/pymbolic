@@ -1,5 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
@@ -80,6 +79,11 @@ class DerivativeSource(_GeometricCalculusExpression):
 
 
 class Derivative(object):
+    """
+    .. autoproperty:: nabla
+    .. automethod:: __call__
+    .. automethod:: resolve
+    """
     _next_id = [0]
 
     def __init__(self):
@@ -90,6 +94,13 @@ class Derivative(object):
     def nabla(self):
         return Nabla(self.my_id)
 
+    def dnabla(self, ambient_dim):
+        from pymbolic.geometric_algebra import MultiVector
+        from pytools.obj_array import make_obj_array
+        return MultiVector(make_obj_array(
+            [NablaComponent(axis, self.my_id)
+                for axis in range(ambient_dim)]))
+
     def __call__(self, operand):
         from pymbolic.geometric_algebra import MultiVector
         if isinstance(operand, MultiVector):
@@ -97,6 +108,13 @@ class Derivative(object):
                     lambda coeff: DerivativeSource(coeff, self.my_id))
         else:
             return DerivativeSource(operand, self.my_id)
+
+    def resolve(self, expr):
+        # This method will need to be overriden by codes using this
+        # infrastructure to use the appropriate subclass of DerivativeBinder.
+
+        from pymbolic.geometric_algebra.mapper import DerivativeBinder
+        return DerivativeBinder(self.id)(expr)
 
 # }}}
 

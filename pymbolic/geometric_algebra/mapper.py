@@ -1,8 +1,5 @@
 # * encoding: utf-8 *
-from __future__ import division
-from __future__ import absolute_import
-from six.moves import range
-from six.moves import zip
+from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
@@ -28,6 +25,8 @@ THE SOFTWARE.
 
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
+
+from six.moves import range, zip
 
 from pymbolic.geometric_algebra import MultiVector
 import pymbolic.geometric_algebra.primitives as prim
@@ -227,9 +226,10 @@ class DerivativeBinder(IdentityMapper):
     nabla_component_to_unit_vector = NablaComponentToUnitVector
     derivative_source_finder = DerivativeSourceFinder
 
-    def __init__(self):
+    def __init__(self, restrict_to_id=None):
         self.derivative_collector = \
                 self.derivative_source_and_nabla_component_collector()
+        self.restrict_to_id = restrict_to_id
 
     def map_product(self, expr):
         # We may write to this below. Make a copy.
@@ -282,6 +282,9 @@ class DerivativeBinder(IdentityMapper):
             try:
                 nablas = nabla_finder[nabla_id]
             except KeyError:
+                continue
+
+            if self.restrict_to_id is not None and nabla_id != self.restrict_to_id:
                 continue
 
             n_axes = max(axis for _, axis in nablas) + 1
