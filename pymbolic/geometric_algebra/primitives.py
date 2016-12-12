@@ -109,12 +109,13 @@ class Derivative(object):
         else:
             return DerivativeSource(operand, self.my_id)
 
-    def resolve(self, expr):
+    @staticmethod
+    def resolve(expr):
         # This method will need to be overriden by codes using this
         # infrastructure to use the appropriate subclass of DerivativeBinder.
 
         from pymbolic.geometric_algebra.mapper import DerivativeBinder
-        return DerivativeBinder(self.id)(expr)
+        return DerivativeBinder()(expr)
 
 # }}}
 
