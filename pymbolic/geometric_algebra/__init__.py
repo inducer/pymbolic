@@ -1,7 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
-import six
-from six.moves import range
+from __future__ import division, absolute_import
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -24,6 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+
+import six
+from six.moves import range
 
 from pytools import memoize, memoize_method
 import numpy as np
@@ -599,12 +599,15 @@ class MultiVector(object):
 
             blade_str = self.space.blade_bits_to_str(bits)
             if bits:
-                terms.append("%s*%s" % (coeff_str, blade_str))
+                terms.append("%s * %s" % (blade_str, coeff_str))
             else:
                 terms.append(coeff_str)
 
         if terms:
-            result = " + ".join(terms)
+            if any(len(t) > 15 for t in terms):
+                result = "\n    " + "\n    + ".join(terms)
+            else:
+                result = " + ".join(terms)
         else:
             result = "0"
 
