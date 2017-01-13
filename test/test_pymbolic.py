@@ -480,6 +480,13 @@ def test_unifier():
     assert match_found(recs, set([(a, b), (b, c), (c, d)]))
 
 
+def test_long_sympy_mapping():
+    from pymbolic.interop.sympy import SympyToPymbolicMapper
+    import sympy as sp
+    SympyToPymbolicMapper()(sp.sympify(int(10**20)))
+    SympyToPymbolicMapper()(sp.sympify(int(10)))
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:

@@ -85,6 +85,10 @@ class SympyToPymbolicMapper(SympyMapper):
     def map_ImaginaryUnit(self, expr):  # noqa
         return 1j
 
+    # only called for Py2
+    def map_long(self, expr):
+        return long(expr)  # noqa
+
     def map_Float(self, expr):  # noqa
         return float(expr)
 
