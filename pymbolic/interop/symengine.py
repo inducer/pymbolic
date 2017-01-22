@@ -2,7 +2,6 @@ from __future__ import division, absolute_import
 
 __copyright__ = """
 Copyright (C) 2017 Matt Wala
-Copyright (C) 2009-2013 Andreas Kloeckner
 """
 
 __license__ = """
@@ -28,15 +27,16 @@ THE SOFTWARE.
 from pymbolic.interop.common import (
     SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
 
-import sympy
+import pymbolic.primitives as prim
+import symengine.sympy_compat
 
 
 __doc__ = """
-.. class:: SympyToPymbolicMapper
+.. class:: SymEngineToPymbolicMapper
 
     .. method:: __call__(expr)
 
-.. class:: PymbolicToSympyMapper
+.. class:: PymbolicToSymEngineMapper
 
     .. method:: __call__(expr)
 """
@@ -44,43 +44,52 @@ __doc__ = """
 
 # {{{ symengine -> pymbolic
 
-class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
+class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 
-    def map_ImaginaryUnit(self, expr):  # noqa
-        return 1j
+    def map_Pow(self, expr):  # noqa
+        # SymEngine likes to use as e**a to express exp(a); we undo that here.
+        base, exp = expr.args
+        if base == symengine.E:
+            return prim.Variable("exp")(self.rec(exp))
+        else:
+            return prim.Power(self.rec(base), self.rec(exp))
 
-    map_Float = SympyLikeToPymbolicMapper.to_float
+    def map_Constant(self, expr):  # noqa
+        return self.rec(expr.n())
 
-    map_NumberSymbol = SympyLikeToPymbolicMapper.to_float
+    map_Complex = map_Constant
+
+    def map_ComplexDouble(self, expr):  # noqa
+        r = self.rec(expr.real_part())
+        i = self.rec(expr.imaginary_part())
+        if prim.is_zero(i):
+            return r
+        else:
+            return r + 1j * i
+
+    map_RealDouble = SympyLikeToPymbolicMapper.to_float
 
     def function_name(self, expr):
-        return type(expr).__name__
+        try:
+            # For FunctionSymbol instances
+            return expr.get_name()
+        except AttributeError:
+            # For builtin functions
+            return type(expr).__name__
 
 # }}}
 
 
 # {{{ pymbolic -> symengine
 
-class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
+class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
 
-    sym = sympy
+    sym = symengine.sympy_compat
 
     def raise_conversion_error(self, expr):
         raise RuntimeError(
-            "do not know how to translate '%s' to sympy" % expr)
+            "do not know how to translate '%s' to symengine" % expr)
 
 # }}}
-
-
-class CSE(sympy.Function):
-    """A function to translate to a Pymbolic CSE."""
-    nargs = 1
-
-
-def make_cse(arg, prefix=None):
-    result = CSE(arg)
-    result.prefix = prefix
-    return result
-
 
 # vim: fdm=marker
