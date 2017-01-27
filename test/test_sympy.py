@@ -95,6 +95,8 @@ def _test_from_pymbolic(mapper, sym):
     assert mapper(prim.Derivative(x_**2, ("x",))) == \
         sym.Derivative(x**2, x)
 
+    assert mapper(x_[0]) == sym.Symbol("x_0")
+
 # }}}
 
 
