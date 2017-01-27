@@ -55,12 +55,6 @@ class SympyLikeMapperBase(object):
                     type(expr).__name__))
 
 
-def make_cse(cls, arg, prefix=None):
-    result = cls(arg)
-    result.prefix = prefix
-    return result
-
-
 # {{{ sympy like -> pymbolic
 
 class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
