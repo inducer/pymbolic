@@ -56,6 +56,10 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
     def function_name(self, expr):
         return type(expr).__name__
 
+    # only called for Py2
+    def map_long(self, expr):
+        return long(expr)  # noqa
+
 # }}}
 
 
