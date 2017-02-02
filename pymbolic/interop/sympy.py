@@ -73,6 +73,10 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
         raise RuntimeError(
             "do not know how to translate '%s' to sympy" % expr)
 
+    def map_derivative(self, expr):
+        return self.sym.Derivative(self.rec(expr.child),
+                *[self.sym.Symbol(v) for v in expr.variables])
+
 # }}}
 
 

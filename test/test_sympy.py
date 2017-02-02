@@ -37,12 +37,12 @@ except ImportError:
 
 import pymbolic.primitives as prim
 
-x_, y_ = (prim.Variable(s) for s in "xy")
+x_, y_ = (prim.Variable(s) for s in "x y".split())
 
 
 # {{{ to pymbolic test
 
-def _test_to_pymbolic(mapper, sym):
+def _test_to_pymbolic(mapper, sym, use_symengine):
     x, y = sym.symbols("x,y")
 
     assert mapper(sym.Rational(3, 4)) == prim.Quotient(3, 4)
@@ -50,8 +50,9 @@ def _test_to_pymbolic(mapper, sym):
 
     assert mapper(sym.Subs(x**2, (x,), (y,))) == \
         prim.Substitution(x_**2, ("x",), (y_,))
-    assert mapper(sym.Derivative(x**2, x)) == \
-        prim.Derivative(x_**2, ("x",))
+    # FIXME in symengine
+    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
+    assert mapper(deriv) == prim.Derivative(x_**2, ("x",))
 
     # functions
     assert mapper(sym.Function("f")(x)) == prim.Variable("f")(x_)
@@ -71,19 +72,19 @@ def test_symengine_to_pymbolic():
     sym = pytest.importorskip("symengine.sympy_compat")
     mapper = SymEngineToPymbolicMapper()
 
-    _test_to_pymbolic(mapper, sym)
+    _test_to_pymbolic(mapper, sym, True)
 
 
 def test_sympy_to_pymbolic():
     import sympy as sym
     mapper = SympyToPymbolicMapper()
 
-    _test_to_pymbolic(mapper, sym)
+    _test_to_pymbolic(mapper, sym, False)
 
 
 # {{{ from pymbolic test
 
-def _test_from_pymbolic(mapper, sym):
+def _test_from_pymbolic(mapper, sym, use_symengine):
     x, y = sym.symbols("x,y")
 
     assert mapper(x_ + y_) == x + y
@@ -92,10 +93,13 @@ def _test_from_pymbolic(mapper, sym):
 
     assert mapper(prim.Substitution(x_**2, ("x",), (y_,))) == \
         sym.Subs(x**2, (x,), (y,))
-    assert mapper(prim.Derivative(x_**2, ("x",))) == \
-        sym.Derivative(x**2, x)
+    # FIXME in symengine
+    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
+    assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
 
     assert mapper(x_[0]) == sym.Symbol("x_0")
+
+    assert mapper(prim.Variable("f")(x_)) == sym.Function("f")(x)
 
 # }}}
 
@@ -104,14 +108,14 @@ def test_pymbolic_to_symengine():
     sym = pytest.importorskip("symengine.sympy_compat")
     mapper = PymbolicToSymEngineMapper()
 
-    _test_from_pymbolic(mapper, sym)
+    _test_from_pymbolic(mapper, sym, True)
 
 
 def test_pymbolic_to_sympy():
     import sympy as sym
     mapper = PymbolicToSympyMapper()
 
-    _test_from_pymbolic(mapper, sym)
+    _test_from_pymbolic(mapper, sym, False)
 
 
 if __name__ == "__main__":
