@@ -72,7 +72,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
     # }}}
 
     def map_Symbol(self, expr):  # noqa
-        return prim.Variable(expr.name)
+        return prim.Variable(str(expr.name))
 
     def map_Rational(self, expr):  # noqa
         p, q = expr.p, expr.q
