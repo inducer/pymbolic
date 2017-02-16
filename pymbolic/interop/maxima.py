@@ -282,6 +282,19 @@ class MaximaKernel:
         for command in PRE_MAXIMA_COMMANDS:
             self.child.sendline(command)
 
+        # {{{ check for maxima command
+
+        self.child.sendline(
+            "hash \"{command}\"; echo $?".format(command=self.executable))
+
+        hash_output = self.child.expect(["0\r\n", "1\r\n"])
+        if hash_output != 0:
+            raise RuntimeError(
+                "maxima executable \"{command}\" not found"
+                .format(command=self.executable))
+
+        # }}}
+
         self.child.sendline(" ".join(
                 [self.executable, "--disable-readline", "-q"]))
 
