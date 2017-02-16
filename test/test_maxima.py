@@ -23,8 +23,6 @@ THE SOFTWARE.
 """
 
 import pytest
-from pytools.test import mark_test
-
 from pymbolic.interop.maxima import MaximaKernel
 
 
@@ -123,7 +121,6 @@ def test_diff():
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
 
-@mark_test.xfail
 def test_long_command(knl):
     from pymbolic.interop.maxima import set_debug
     set_debug(4)

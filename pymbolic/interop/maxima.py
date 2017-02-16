@@ -270,10 +270,21 @@ class MaximaKernel:
 
     def _initialize(self):
 
+        PEXPECT_SHELL = "bash"
+
+        PRE_MAXIMA_COMMANDS = (
+            # Makes long line inputs possible.
+            ("stty -icanon",)
+        )
+
         import pexpect
-        self.child = pexpect.spawn(self.executable,
-                ["--disable-readline", "-q"],
-                timeout=self.timeout)
+        self.child = pexpect.spawn(PEXPECT_SHELL, timeout=self.timeout, echo=False)
+        for command in PRE_MAXIMA_COMMANDS:
+            self.child.sendline(command)
+
+        self.child.sendline(" ".join(
+                [self.executable, "--disable-readline", "-q"]))
+
         self.current_prompt = 0
         self._expect_prompt(IN_PROMPT_RE)
 
@@ -326,9 +337,11 @@ class MaximaKernel:
         self._initialize()
 
     def shutdown(self):
-        # tty echo appears to cause waitpid() to block on OS X; turn it off.
-        self.child.setecho(False)
         self._sendline("quit();")
+        # Exit shell
+        self._sendline("exit")
+        from pexpect import EOF
+        self.child.expect(EOF)
         self.child.wait()
 
     # }}}
@@ -342,11 +355,6 @@ class MaximaKernel:
 
     def _sendline(self, l):
         self._check_debug()
-
-        if len(l) > 2048:
-            raise RuntimeError("input lines longer than 2048 characters "
-                    "don't work, refusing")
-
         self.child.sendline(l)
 
     def exec_str(self, s, enforce_prompt_numbering=True):
@@ -367,9 +375,6 @@ class MaximaKernel:
             print("[MAXIMA INPUT]", cmd)
 
         self._sendline(cmd)
-        s_echo = self.child.readline().decode()
-
-        assert s_echo.strip() == cmd.strip()
 
         self._expect_prompt(OUT_PROMPT_RE,
                 enforce_prompt_numbering=enforce_prompt_numbering)
