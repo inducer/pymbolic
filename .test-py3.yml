@@ -4,6 +4,7 @@ channels:
  - conda-forge
  - defaults
 dependencies:
+ - pexpect
  - conda-forge::numpy
  - conda-forge::sympy
  - python=3.5
