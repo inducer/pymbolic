@@ -296,7 +296,7 @@ class MaximaKernel:
         # }}}
 
         self.child.sendline(" ".join(
-                [self.executable, "--disable-readline", "-q"]))
+                ['"' + self.executable + '"', "--disable-readline", "-q"]))
 
         self.current_prompt = 0
         self._expect_prompt(IN_PROMPT_RE)
