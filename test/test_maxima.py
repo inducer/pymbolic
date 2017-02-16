@@ -36,7 +36,8 @@ def test_kernel():
     knl.shutdown()
 
 
-def pytest_funcarg__knl(request):
+@pytest.fixture
+def knl(request):
     pytest.importorskip("pexpect")
 
     knl = MaximaKernel()
