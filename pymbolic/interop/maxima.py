@@ -326,6 +326,8 @@ class MaximaKernel:
         self._initialize()
 
     def shutdown(self):
+        # tty echo appears to cause waitpid() to block on OS X; turn it off.
+        self.child.setecho(False)
         self._sendline("quit();")
         self.child.wait()
 
