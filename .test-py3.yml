@@ -1,0 +1,11 @@
+name: py3
+channels:
+ - symengine/label/dev
+ - conda-forge
+ - defaults
+dependencies:
+ - pexpect
+ - conda-forge::numpy
+ - conda-forge::sympy
+ - python=3.5
+ - symengine/label/dev::python-symengine=0.2.0.53.g83912b7=py35_1

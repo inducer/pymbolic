@@ -10,6 +10,14 @@ Python 2.7:
   except:
   - tags
 
+Python 2.7 Conda:
+  script:
+  - CONDA_ENVIRONMENT=.test-py2.yml
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
+  - ". ./build-and-test-py-project-within-miniconda.sh"
+  except:
+  - tags
+
 Python 3.5:
   script:
   - py_version=3.5
@@ -19,6 +27,14 @@ Python 3.5:
   tags:
   - python3.5
   - maxima
+  except:
+  - tags
+
+Python 3.5 Conda:
+  script:
+  - CONDA_ENVIRONMENT=.test-py3.yml
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
+  - ". ./build-and-test-py-project-within-miniconda.sh"
   except:
   - tags
 
