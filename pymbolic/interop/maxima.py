@@ -270,9 +270,9 @@ class MaximaKernel:
 
     def _initialize(self):
 
-        PEXPECT_SHELL = "bash"
+        PEXPECT_SHELL = "bash"  # noqa
 
-        PRE_MAXIMA_COMMANDS = (
+        PRE_MAXIMA_COMMANDS = (  # noqa
             # Makes long line inputs possible.
             ("stty -icanon",)
         )
