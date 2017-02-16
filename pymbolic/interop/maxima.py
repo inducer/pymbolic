@@ -345,8 +345,7 @@ class MaximaKernel:
     # {{{ execution control
 
     def restart(self):
-        from signal import SIGKILL
-        self.child.kill(SIGKILL)
+        self.child.close(force=True)
         self._initialize()
 
     def shutdown(self):

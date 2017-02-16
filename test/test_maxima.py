@@ -128,6 +128,15 @@ def test_long_command(knl):
     knl.eval_str("+".join(["1"]*16384))
 
 
+def test_restart(knl):
+    pytest.importorskip("pexpect")
+
+    knl = MaximaKernel()
+    knl.restart()
+    knl.eval_str("1")
+    knl.shutdown()
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
