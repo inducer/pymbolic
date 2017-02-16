@@ -15,10 +15,6 @@ Python 2.7 Conda:
   - CONDA_ENVIRONMENT=.test-py2.yml
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
   - ". ./build-and-test-py-project-within-miniconda.sh"
-  tags:
-  - python2.7
-  - conda
-  - symengine
   except:
   - tags
 
@@ -39,11 +35,8 @@ Python 3.5 Conda:
   - CONDA_ENVIRONMENT=.test-py3.yml
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
   - ". ./build-and-test-py-project.sh"
-  tags:
-  - python3.5
-  - conda
-  - symengine
   except:
+  - tags
 
 Python 2.6:
   script:
