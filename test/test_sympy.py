@@ -23,18 +23,6 @@ THE SOFTWARE.
 """
 
 import pytest
-
-from pymbolic.interop.sympy import (
-    SympyToPymbolicMapper, PymbolicToSympyMapper)
-
-try:
-    from pymbolic.interop.symengine import (
-        SymEngineToPymbolicMapper, PymbolicToSymEngineMapper)
-except ImportError:
-    # This will throw if SymEngine isn't installed.
-    pass
-
-
 import pymbolic.primitives as prim
 
 x_, y_ = (prim.Variable(s) for s in "x y".split())
@@ -70,13 +58,15 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
 
 def test_symengine_to_pymbolic():
     sym = pytest.importorskip("symengine.sympy_compat")
+    from pymbolic.interop.symengine import SymEngineToPymbolicMapper
     mapper = SymEngineToPymbolicMapper()
 
     _test_to_pymbolic(mapper, sym, True)
 
 
 def test_sympy_to_pymbolic():
-    import sympy as sym
+    sym = pytest.importorskip("sympy")
+    from pymbolic.interop.sympy import SympyToPymbolicMapper
     mapper = SympyToPymbolicMapper()
 
     _test_to_pymbolic(mapper, sym, False)
@@ -106,13 +96,15 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
 
 def test_pymbolic_to_symengine():
     sym = pytest.importorskip("symengine.sympy_compat")
+    from pymbolic.interop.symengine import PymbolicToSymEngineMapper
     mapper = PymbolicToSymEngineMapper()
 
     _test_from_pymbolic(mapper, sym, True)
 
 
 def test_pymbolic_to_sympy():
-    import sympy as sym
+    sym = pytest.importorskip("sympy")
+    from pymbolic.interop.sympy import PymbolicToSympyMapper
     mapper = PymbolicToSympyMapper()
 
     _test_from_pymbolic(mapper, sym, False)
