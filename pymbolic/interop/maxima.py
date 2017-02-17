@@ -270,10 +270,34 @@ class MaximaKernel:
 
     def _initialize(self):
 
+        PEXPECT_SHELL = "bash"  # noqa
+
+        PRE_MAXIMA_COMMANDS = (  # noqa
+            # Makes long line inputs possible.
+            ("stty -icanon",)
+        )
+
         import pexpect
-        self.child = pexpect.spawn(self.executable,
-                ["--disable-readline", "-q"],
-                timeout=self.timeout)
+        self.child = pexpect.spawn(PEXPECT_SHELL, timeout=self.timeout, echo=False)
+        for command in PRE_MAXIMA_COMMANDS:
+            self.child.sendline(command)
+
+        # {{{ check for maxima command
+
+        self.child.sendline(
+            "hash \"{command}\"; echo $?".format(command=self.executable))
+
+        hash_output = self.child.expect(["0\r\n", "1\r\n"])
+        if hash_output != 0:
+            raise RuntimeError(
+                "maxima executable \"{command}\" not found"
+                .format(command=self.executable))
+
+        # }}}
+
+        self.child.sendline(" ".join(
+                ['"' + self.executable + '"', "--disable-readline", "-q"]))
+
         self.current_prompt = 0
         self._expect_prompt(IN_PROMPT_RE)
 
@@ -321,12 +345,15 @@ class MaximaKernel:
     # {{{ execution control
 
     def restart(self):
-        from signal import SIGKILL
-        self.child.kill(SIGKILL)
+        self.child.close(force=True)
         self._initialize()
 
     def shutdown(self):
         self._sendline("quit();")
+        # Exit shell
+        self._sendline("exit")
+        from pexpect import EOF
+        self.child.expect(EOF)
         self.child.wait()
 
     # }}}
@@ -340,11 +367,6 @@ class MaximaKernel:
 
     def _sendline(self, l):
         self._check_debug()
-
-        if len(l) > 2048:
-            raise RuntimeError("input lines longer than 2048 characters "
-                    "don't work, refusing")
-
         self.child.sendline(l)
 
     def exec_str(self, s, enforce_prompt_numbering=True):
@@ -365,9 +387,6 @@ class MaximaKernel:
             print("[MAXIMA INPUT]", cmd)
 
         self._sendline(cmd)
-        s_echo = self.child.readline().decode()
-
-        assert s_echo.strip() == cmd.strip()
 
         self._expect_prompt(OUT_PROMPT_RE,
                 enforce_prompt_numbering=enforce_prompt_numbering)
