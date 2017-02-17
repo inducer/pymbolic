@@ -434,12 +434,12 @@ class IdentityMapper(Mapper):
     def map_tuple(self, expr, *args, **kwargs):
         return tuple(self.rec(child, *args, **kwargs) for child in expr)
 
-    def map_numpy_array(self, expr):
+    def map_numpy_array(self, expr, *args, **kwargs):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         from pytools import indices_in_shape
         for i in indices_in_shape(expr.shape):
-            result[i] = self.rec(expr[i])
+            result[i] = self.rec(expr[i], *args, **kwargs)
         return result
 
     def map_multivector(self, expr, *args, **kwargs):
