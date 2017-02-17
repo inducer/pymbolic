@@ -17,6 +17,7 @@ Python 2.7 Conda:
   - ". ./build-and-test-py-project-within-miniconda.sh"
   tags:
   - maxima
+  - linux
   except:
   - tags
 
@@ -39,6 +40,18 @@ Python 3.5 Conda:
   - ". ./build-and-test-py-project-within-miniconda.sh"
   tags:
   - maxima
+  - linux
+  except:
+  - tags
+
+Python 3.5 Apple:
+  script:
+  - CONDA_ENVIRONMENT=.test-py3.yml
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
+  - ". ./build-and-test-py-project-within-miniconda.sh"
+  tags:
+  - maxima
+  - apple
   except:
   - tags
 
