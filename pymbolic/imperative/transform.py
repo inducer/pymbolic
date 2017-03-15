@@ -22,6 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+# {{{ fuse overlapping instruction streams
+
+def fuse_instruction_streams_with_overlapping_ids(instructions_a, instructions_b,
+    allowed_duplicates=[]):
+    id_a = set([insna.id for insna in instructions_a])
+    #filter b instructions
+    uniques_b = [x for x in instructions_b
+                    if x.id in id_a
+                    and x.id not in allowed_duplicates]
+
+    return fuse_instruction_streams_with_unique_ids(instructions_a, uniques_b)
+
+# }}}
+
 
 # {{{ fuse instruction streams
 
