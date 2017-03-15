@@ -45,6 +45,7 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
     insn_id_gen = UniqueNameGenerator(
             set([insna.id for insna in new_instructions]))
 
+    a_ids = set([insna.id for insna in instructions_a])
     b_unique_instructions = []
     old_b_id_to_new_b_id = {}
     for insnb in instructions_b:
@@ -55,11 +56,17 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
         b_unique_instructions.append(
                 insnb.copy(id=new_id))
 
+    #if this is called by fuse_instruction_streams_with_overlapping_ids
+    #some instructions in b may depend on those in a
+    #therefore we force that any dependencies are in the b map *or*
+    #the a id's
     for insnb in b_unique_instructions:
         new_instructions.append(
                 insnb.copy(
                     depends_on=frozenset(
-                        old_b_id_to_new_b_id[dep_id]
+                        old_b_id_to_new_b_id[dep_id] \
+                            if dep_id in old_b_id_to_new_b_id
+                        else next(a_id for a_id in a_ids if a_id == dep_id)
                         for dep_id in insnb.depends_on)))
 
     return new_instructions, old_b_id_to_new_b_id
