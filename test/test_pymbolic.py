@@ -488,7 +488,7 @@ def test_long_sympy_mapping():
 
 
 # dummy instruction
-class dummy_insn(object):
+class DummyInsn(object):
     def __init__(self, idv, depends_on=frozenset()):
         self.id = idv
         self.depends_on = depends_on
@@ -498,7 +498,7 @@ class dummy_insn(object):
             self.id = id
         if depends_on is not None:
             self.depends_on = depends_on
-        return dummy_insn(self.id, self.depends_on.copy())
+        return DummyInsn(self.id, self.depends_on.copy())
 
 
 def test_unique_fusion():
@@ -506,7 +506,7 @@ def test_unique_fusion():
         fuse_instruction_streams_with_unique_ids
 
     # create instructions 1-5 with depends
-    insns_a = [dummy_insn(str(i), [str(x) for x in range(i)])
+    insns_a = [DummyInsn(str(i),  frozenset([str(x) for x in range(i)]))
         for i in range(5)]
 
     # first try feeding it 'a' twice
@@ -519,7 +519,7 @@ def test_unique_fusion():
     assert all(x.id + '_0' in new_insn_ids for x in insns_a)
 
     # next create independent instructions 5-10
-    insns_b = [dummy_insn(str(i), [str(x) for x in range(5, i)])
+    insns_b = [DummyInsn(str(i), frozenset([str(x) for x in range(5, i)]))
         for i in range(5, 10)]
 
     new_insns, b_map = fuse_instruction_streams_with_unique_ids(
@@ -553,7 +553,7 @@ def test_overlapping_fusion():
         fuse_instruction_streams_with_overlapping_ids
 
     # create instructions 1-5 with depends
-    insns_a = [dummy_insn(str(i))
+    insns_a = [DummyInsn(str(i))
         for i in range(5)]
     a_copy = [i.copy() for i in insns_a]
     a_ids = [i.id for i in insns_a]
@@ -578,7 +578,7 @@ def test_overlapping_fusion():
 
     # try with b depends on a, and the instruction overlapping
     insns_b = a_copy[:]
-    insns_b[1].depends_on = frozenset(insns_a[0].id)
+    insns_b[1].depends_on = frozenset([insns_a[0].id])
     new_insns, b_map = fuse_instruction_streams_with_overlapping_ids(
         insns_a, a_copy, [insns_a[0].id])
 
