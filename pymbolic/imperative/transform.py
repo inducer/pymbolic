@@ -64,7 +64,7 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
         for dep_id in insnb.depends_on:
             new_dep_id = old_b_id_to_new_b_id[dep_id] \
                 if dep_id in old_b_id_to_new_b_id else None
-            if allow_b_depend_on_a:
+            if allow_b_depend_on_a and new_dep_id is None:
                 # if this is called by
                 # fuse_instruction_streams_with_overlapping_ids
                 # some instructions in b may depend on those in a
@@ -72,10 +72,10 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
                 new_dep_id = dep_id if dep_id in a_ids else None
             assert new_dep_id is not None, ('Instruction {} in stream b '
                 'missing dependency {}'.format(insnb.id, dep_id))
-            b_deps |= new_dep_id
+            b_deps.add(new_dep_id)
 
         new_instructions.append(
-                insnb.copy(frozenset(b_deps)))
+                insnb.copy(depends_on=frozenset(b_deps)))
 
     return new_instructions, old_b_id_to_new_b_id
 

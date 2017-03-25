@@ -487,6 +487,102 @@ def test_long_sympy_mapping():
     SympyToPymbolicMapper()(sp.sympify(int(10)))
 
 
+# dummy instruction
+class dummy_insn(object):
+    def __init__(self, idv, depends_on=frozenset()):
+        self.id = idv
+        self.depends_on = depends_on
+
+    def copy(self, id=None, depends_on=None):
+        if id is not None:
+            self.id = id
+        if depends_on is not None:
+            self.depends_on = depends_on
+        return dummy_insn(self.id, self.depends_on.copy())
+
+
+def test_unique_fusion():
+    from pymbolic.imperative.transform import \
+        fuse_instruction_streams_with_unique_ids
+
+    # create instructions 1-5 with depends
+    insns_a = [dummy_insn(str(i), [str(x) for x in range(i)])
+        for i in range(5)]
+
+    # first try feeding it 'a' twice
+    new_insns, b_map = fuse_instruction_streams_with_unique_ids(
+        insns_a, [i.copy() for i in insns_a])
+    new_insn_ids = set([x.id for x in new_insns])
+
+    # should have a duplicate of each instruction
+    assert all(x.id in b_map for x in insns_a)
+    assert all(x.id + '_0' in new_insn_ids for x in insns_a)
+
+    # next create independent instructions 5-10
+    insns_b = [dummy_insn(str(i), [str(x) for x in range(5, i)])
+        for i in range(5, 10)]
+
+    new_insns, b_map = fuse_instruction_streams_with_unique_ids(
+        insns_a, insns_b)
+    new_insn_ids = set([x.id for x in new_insns])
+
+    # should have both sets of instructions
+    assert all(x.id in new_insn_ids for x in
+        insns_a + insns_b)
+    assert all(k == v for k, v in b_map.items())
+
+    # next test b depends on a without flag
+    insns_b[0].depends_on = frozenset(['0'])
+
+    with pytest.raises(AssertionError):
+        fuse_instruction_streams_with_unique_ids(
+            insns_a, insns_b)
+
+    # and with flag
+    new_insns, b_map = fuse_instruction_streams_with_unique_ids(
+        insns_a, insns_b, allow_b_depend_on_a=True)
+
+    # should have both sets of instructions
+    assert all(x.id in new_insn_ids for x in
+            insns_a + insns_b)
+    assert all(k == v for k, v in b_map.items())
+
+
+def test_overlapping_fusion():
+    from pymbolic.imperative.transform import \
+        fuse_instruction_streams_with_overlapping_ids
+
+    # create instructions 1-5 with depends
+    insns_a = [dummy_insn(str(i))
+        for i in range(5)]
+    a_copy = [i.copy() for i in insns_a]
+    a_ids = [i.id for i in insns_a]
+
+    # first try feeding it 'a' twice
+    new_insns, b_map = fuse_instruction_streams_with_overlapping_ids(
+        insns_a, a_copy, a_ids)
+
+    # should have just the original instructions
+    assert len(new_insns) == len(insns_a)
+    assert all(new_insns[i] == insns_a[i] for i in range(len(new_insns)))
+    assert len(b_map) == 0
+
+    # now try with no allowed overlaps
+    new_insns, b_map = fuse_instruction_streams_with_overlapping_ids(
+        insns_a, a_copy, [])
+    # check all a in new instructions
+    new_ids = set([x.id for x in new_insns])
+    # and all a in maps
+    assert all(insn_a.id in new_ids for insn_a in insns_a)
+    assert all(insn_a.id in b_map for insn_a in insns_a)
+
+    # try with b depends on a, and the instruction overlapping
+    insns_b = a_copy[:]
+    insns_b[1].depends_on = frozenset(insns_a[0].id)
+    new_insns, b_map = fuse_instruction_streams_with_overlapping_ids(
+        insns_a, a_copy, [insns_a[0].id])
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
