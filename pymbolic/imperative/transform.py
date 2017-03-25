@@ -33,14 +33,16 @@ def fuse_instruction_streams_with_overlapping_ids(instructions_a, instructions_b
                     if x.id in id_a
                     and x.id not in allowed_duplicates]
 
-    return fuse_instruction_streams_with_unique_ids(instructions_a, uniques_b)
+    return fuse_instruction_streams_with_unique_ids(instructions_a, uniques_b,
+        allow_b_depend_on_a=True)
 
 # }}}
 
 
 # {{{ fuse instruction streams
 
-def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
+def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
+        allow_b_depend_on_a=False):
     new_instructions = list(instructions_a)
     from pytools import UniqueNameGenerator
     insn_id_gen = UniqueNameGenerator(
@@ -57,18 +59,23 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
         b_unique_instructions.append(
                 insnb.copy(id=new_id))
 
-    # if this is called by fuse_instruction_streams_with_overlapping_ids
-    # some instructions in b may depend on those in a
-    # therefore we force that any dependencies are in the b map *or*
-    # the a id's
     for insnb in b_unique_instructions:
+        b_deps = set()
+        for dep in insnb.depends_on:
+            new_dep_id = old_b_id_to_new_b_id[dep_id] \
+                if dep_id in old_b_id_to_new_b_id else None
+            if allow_b_depend_on_a:
+                # if this is called by
+                # fuse_instruction_streams_with_overlapping_ids
+                # some instructions in b may depend on those in a
+                # therefore also check if dep in a instructions
+                new_dep_id = dep_id if dep_id in a_ids else None
+            assert new_dep_id is not None, ('Instruction {} in stream b '
+                'missing dependency {}'.format(insnb.id, dep_id))
+            b_deps |= dep_id
+
         new_instructions.append(
-                insnb.copy(
-                    depends_on=frozenset(
-                        old_b_id_to_new_b_id[dep_id]
-                        if dep_id in old_b_id_to_new_b_id
-                        else next(a_id for a_id in a_ids if a_id == dep_id)
-                        for dep_id in insnb.depends_on)))
+                insnb.copy(frozenset(b_deps)))
 
     return new_instructions, old_b_id_to_new_b_id
 
