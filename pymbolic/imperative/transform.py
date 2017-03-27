@@ -70,8 +70,8 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
                 # some instructions in b may depend on those in a
                 # therefore also check if dep in a instructions
                 new_dep_id = dep_id if dep_id in a_ids else None
-            assert new_dep_id is not None, ('Instruction {} in stream b '
-                'missing dependency {}'.format(insnb.id, dep_id))
+            assert new_dep_id is not None, ('Instruction {0} in stream b '
+                'missing dependency {1}'.format(insnb.id, dep_id))
             b_deps.add(new_dep_id)
 
         new_instructions.append(
