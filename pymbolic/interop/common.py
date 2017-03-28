@@ -123,7 +123,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
 # }}}
 
 
-# {{{ pymbolic -> sympy
+# {{{ pymbolic -> sympy like
 
 class PymbolicToSympyLikeMapper(EvaluationMapper):
 
