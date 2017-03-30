@@ -60,16 +60,20 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
                 insnb.copy(id=new_id))
 
     for insnb in b_unique_instructions:
+        # Now we must update the dependencies in `instructions_b` to
+        # the new b_id's.
+        # If allow_b_depend_on_a is True, `insnb` is allowed to depend on
+        # instructions in `instructions_a`
         b_deps = set()
         for dep_id in insnb.depends_on:
-            new_dep_id = old_b_id_to_new_b_id[dep_id] \
-                if dep_id in old_b_id_to_new_b_id else None
+            # First, see if the dependency is in the updated `instructions_b`
+            # ids.
+            new_dep_id = old_b_id_to_new_b_id.get(dep_id)
+            # Next, if allow_b_depend_on_a, check the a_ids
             if allow_b_depend_on_a and new_dep_id is None:
-                # if this is called by
-                # fuse_instruction_streams_with_overlapping_ids
-                # some instructions in b may depend on those in a
-                # therefore also check if dep in a instructions
                 new_dep_id = dep_id if dep_id in a_ids else None
+            # If the dependency is not found in `instructions_a` or the updated
+            # `instructions_b`, raise an AssertionError.
             assert new_dep_id is not None, ('Instruction {0} in stream b '
                 'missing dependency {1}'.format(insnb.id, dep_id))
             b_deps.add(new_dep_id)
