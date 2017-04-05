@@ -68,7 +68,7 @@ def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b,
             # Next if `allow_b_depend_on_a` is True, check for the dendency in the
             # `a_ids`
             if allow_b_depend_on_a and new_dep_id is None:
-                new_dep_id = a_ids.get(dep_id)
+                new_dep_id = dep_id if dep_id in a_ids else None
             # If the dependency is not found in `instructions_a` or the updated
             # `instructions_b`, raise an AssertionError.
             assert new_dep_id is not None, ('Instruction {0} in stream b '
