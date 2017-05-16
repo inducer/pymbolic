@@ -420,17 +420,21 @@ class MultiVector(object):
     :class:`sympy.galgebra.GA.MV` object in :mod:`sympy`, especially with
     respect to the supported operators:
 
-    .. csv-table::
-        :header: Operation, Result
-        :widths: 10, 40
-
-        ``A+B``,             Sum of multivectors
-        ``A-B``,             Difference of multivectors
-        ``A*B``,             Geometric product :math:`AB`
-        ``A^B``,             Outer product :math:`A\wedge B` of multivectors
-        ``A|B``,             Inner product :math:`A\cdot B` of multivectors
-        ``A<<B``,            Left contraction :math:`A\lrcorner B` of multivectors
-        ``A>>B``,            Right contraction :math:`A\llcorner B` of multivectors
+    =================== ========================================================
+    Operation           Result
+    =================== ========================================================
+    ``A+B``             Sum of multivectors
+    ``A-B``             Difference of multivectors
+    ``A*B``             Geometric product :math:`AB`
+    ``A^B``             Outer product :math:`A\wedge B` of multivectors
+    ``A|B``             Inner product :math:`A\cdot B` of multivectors
+    ``A<<B``            Left contraction :math:`A\lrcorner B` (``_|``)
+                        of multivectors, also read as ':math:`A` removed from
+                        :math:`B`'.
+    ``A>>B``            Right contraction :math:`A\llcorner B`  (``|_``)of
+                        multivectors, also read as ':math:`A` without
+                        :math:`B`'.
+    =================== ========================================================
 
     .. warning ::
 
