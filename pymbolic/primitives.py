@@ -520,7 +520,7 @@ class Expression(object):
     # {{{ logical op constructors
 
     def not_(self):
-        """Return *self* wrapped in a :class:`LogicalNot.
+        """Return *self* wrapped in a :class:`LogicalNot`.
 
         .. versionadded:: 2015.2
         """
@@ -607,7 +607,7 @@ class Expression(object):
     # }}}
 
     def __iter__(self):
-        # prevent infinite loops (e.g. when inseserting into numpy arrays)
+        # prevent infinite loops (e.g. when inserting into numpy arrays)
         raise TypeError("expression types are not iterable")
 
 
@@ -682,7 +682,7 @@ class Call(AlgebraicLeaf):
 
     .. attribute:: parameters
 
-        A :class:`tuple` of positional paramters, each element
+        A :class:`tuple` of positional parameters, each element
         of which is a :class:`Expression` or a constant.
 
     """
@@ -718,7 +718,7 @@ class CallWithKwargs(AlgebraicLeaf):
 
     .. attribute:: parameters
 
-        A :class:`tuple` of positional paramters, each element
+        A :class:`tuple` of positional parameters, each element
         of which is a :class:`Expression` or a constant.
 
     .. attribute:: kw_parameters

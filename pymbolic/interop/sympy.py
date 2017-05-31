@@ -42,7 +42,7 @@ __doc__ = """
 """
 
 
-# {{{ symengine -> pymbolic
+# {{{ sympy -> pymbolic
 
 class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
@@ -63,7 +63,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 # }}}
 
 
-# {{{ pymbolic -> symengine
+# {{{ pymbolic -> sympy
 
 class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
 
