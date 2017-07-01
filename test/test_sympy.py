@@ -57,7 +57,7 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
 
 
 def test_symengine_to_pymbolic():
-    sym = pytest.importorskip("symengine.sympy_compat")
+    sym = pytest.importorskip("symengine")
     from pymbolic.interop.symengine import SymEngineToPymbolicMapper
     mapper = SymEngineToPymbolicMapper()
 
@@ -95,7 +95,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
 
 
 def test_pymbolic_to_symengine():
-    sym = pytest.importorskip("symengine.sympy_compat")
+    sym = pytest.importorskip("symengine")
     from pymbolic.interop.symengine import PymbolicToSymEngineMapper
     mapper = PymbolicToSymEngineMapper()
 
