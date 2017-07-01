@@ -36,11 +36,16 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     assert mapper(sym.Rational(3, 4)) == prim.Quotient(3, 4)
     assert mapper(sym.Integer(6)) == 6
 
-    assert mapper(sym.Subs(x**2, (x,), (y,))) == \
-        prim.Substitution(x_**2, ("x",), (y_,))
-    # FIXME in symengine
-    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
-    assert mapper(deriv) == prim.Derivative(x_**2, ("x",))
+    if not use_symengine:
+        assert mapper(sym.Subs(x**2, (x,), (y,))) == \
+            prim.Substitution(x_**2, ("x",), (y_,))
+        deriv = sym.Derivative(x**2, x)
+        assert mapper(deriv) == prim.Derivative(x_**2, ("x",))
+    else:
+        assert mapper(sym.Subs(x**2, (x,), (y,))) == \
+            y_**2
+        deriv = sym.Derivative(x**2, x)
+        assert mapper(deriv) == 2*x_
 
     # functions
     assert mapper(sym.Function("f")(x)) == prim.Variable("f")(x_)
