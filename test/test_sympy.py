@@ -88,8 +88,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
 
     assert mapper(prim.Substitution(x_**2, ("x",), (y_,))) == \
         sym.Subs(x**2, (x,), (y,))
-    # FIXME in symengine
-    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
+    deriv = sym.Derivative(x**2, x)
     assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
 
     assert mapper(x_[0]) == sym.Symbol("x_0")
