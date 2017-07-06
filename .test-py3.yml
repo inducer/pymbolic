@@ -1,6 +1,6 @@
 name: py3
 channels:
- - symengine/label/dev
+ - symengine
  - conda-forge
  - defaults
 dependencies:
@@ -8,5 +8,5 @@ dependencies:
  - conda-forge::numpy
  - conda-forge::sympy
  - python=3.5
- - symengine/label/dev::python-symengine=0.3.0.rc0
+ - symengine::python-symengine=0.3.0
  - maxima
