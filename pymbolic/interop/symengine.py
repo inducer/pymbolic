@@ -28,7 +28,7 @@ from pymbolic.interop.common import (
     SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
 
 import pymbolic.primitives as prim
-import symengine.sympy_compat
+import symengine
 
 
 __doc__ = """
@@ -84,7 +84,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 
 class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
 
-    sym = symengine.sympy_compat
+    sym = symengine
 
     def raise_conversion_error(self, expr):
         raise RuntimeError(

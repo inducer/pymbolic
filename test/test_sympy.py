@@ -36,11 +36,16 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     assert mapper(sym.Rational(3, 4)) == prim.Quotient(3, 4)
     assert mapper(sym.Integer(6)) == 6
 
-    assert mapper(sym.Subs(x**2, (x,), (y,))) == \
-        prim.Substitution(x_**2, ("x",), (y_,))
-    # FIXME in symengine
-    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
-    assert mapper(deriv) == prim.Derivative(x_**2, ("x",))
+    if not use_symengine:
+        assert mapper(sym.Subs(x**2, (x,), (y,))) == \
+            prim.Substitution(x_**2, ("x",), (y_,))
+        deriv = sym.Derivative(x**2, x)
+        assert mapper(deriv) == prim.Derivative(x_**2, ("x",))
+    else:
+        assert mapper(sym.Subs(x**2, (x,), (y,))) == \
+            y_**2
+        deriv = sym.Derivative(x**2, x)
+        assert mapper(deriv) == 2*x_
 
     # functions
     assert mapper(sym.Function("f")(x)) == prim.Variable("f")(x_)
@@ -57,7 +62,7 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
 
 
 def test_symengine_to_pymbolic():
-    sym = pytest.importorskip("symengine.sympy_compat")
+    sym = pytest.importorskip("symengine")
     from pymbolic.interop.symengine import SymEngineToPymbolicMapper
     mapper = SymEngineToPymbolicMapper()
 
@@ -83,8 +88,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
 
     assert mapper(prim.Substitution(x_**2, ("x",), (y_,))) == \
         sym.Subs(x**2, (x,), (y,))
-    # FIXME in symengine
-    deriv = sym.Derivative(x**2, (x,)) if use_symengine else sym.Derivative(x**2, x)
+    deriv = sym.Derivative(x**2, x)
     assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
 
     assert mapper(x_[0]) == sym.Symbol("x_0")
@@ -95,7 +99,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
 
 
 def test_pymbolic_to_symengine():
-    sym = pytest.importorskip("symengine.sympy_compat")
+    sym = pytest.importorskip("symengine")
     from pymbolic.interop.symengine import PymbolicToSymEngineMapper
     mapper = PymbolicToSymEngineMapper()
 

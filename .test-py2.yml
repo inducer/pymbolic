@@ -1,6 +1,6 @@
 name: py2
 channels:
- - symengine/label/dev
+ - symengine
  - conda-forge
  - defaults
 dependencies:
@@ -9,5 +9,5 @@ dependencies:
  - conda-forge::numpy
  - conda-forge::sympy
  - python=2.7
- - symengine/label/dev::python-symengine=0.2.0.53.g83912b7=py27_1
+ - symengine::python-symengine=0.3.0
  - maxima
