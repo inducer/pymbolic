@@ -79,9 +79,11 @@ class DerivativeSource(_GeometricCalculusExpression):
 
 
 class Derivative(object):
-    """
+    """This mechanism cannot be used to take more than one derivative at a time.
+
     .. autoproperty:: nabla
     .. automethod:: __call__
+    .. automethod:: dnabla
     .. automethod:: resolve
     """
     _next_id = [0]
