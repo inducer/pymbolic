@@ -455,7 +455,7 @@ class Expression(object):
         return self.stringifier()()(self, PREC_NONE)
 
     def _safe_repr(self, limit=10):
-        if limit == 0:
+        if limit <= 0:
             return "..."
 
         def strify_child(child, limit):
