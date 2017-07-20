@@ -454,13 +454,34 @@ class Expression(object):
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.stringifier()()(self, PREC_NONE)
 
+    def _safe_repr(self, limit=10):
+        if limit == 0:
+            return "..."
+
+        def strify_child(child, limit):
+            if isinstance(child, tuple):
+                # Make sure limit propagates at least through tuples
+
+                return "(%s%s)" % (
+                        ", ".join(strify_child(i, limit-1) for i in child),
+                        "," if len(child) == 1 else "")
+
+            elif isinstance(child, Expression):
+                return child._safe_repr(limit=limit-1)
+            else:
+                return repr(child)
+
+        initargs_str = ", ".join(
+                strify_child(i, limit-1)
+                for i in self.__getinitargs__())
+
+        return "%s(%s)" % (self.__class__.__name__, initargs_str)
+
     def __repr__(self):
         """Provides a default :func:`repr` based on
         the Python pickling interface :meth:`__getinitargs__`.
         """
-        initargs_str = ", ".join(repr(i) for i in self.__getinitargs__())
-
-        return "%s(%s)" % (self.__class__.__name__, initargs_str)
+        return self._safe_repr()
 
     # }}}
 
