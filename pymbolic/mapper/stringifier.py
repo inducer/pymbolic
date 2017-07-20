@@ -396,6 +396,22 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 # }}}
 
 
+# {{{ recursion-limited stringify mapper
+
+class RecursionLimitedStringifyMapper(StringifyMapper):
+    def rec(self, expr, prec, rec_limit):
+        rec_limit -= 1
+        if not rec_limit:
+            return "..."
+        return super(RecursionLimitedStringifyMapper, self).rec(
+                expr, prec, rec_limit)
+
+    def __call__(self, expr, prec=PREC_NONE, rec_limit=15):
+        return pymbolic.mapper.Mapper.__call__(self, expr, prec, rec_limit)
+
+# }}}
+
+
 # {{{ cse-splitting stringifier
 
 class CSESplittingStringifyMapperMixin(object):

@@ -443,8 +443,8 @@ class Expression(object):
         a human-readable representation of *self*. Usually a subclass
         of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
         """
-        from pymbolic.mapper.stringifier import StringifyMapper
-        return StringifyMapper
+        from pymbolic.mapper.stringifier import RecursionLimitedStringifyMapper
+        return RecursionLimitedStringifyMapper
 
     def __str__(self):
         """Use the :meth:`stringifier` to return a human-readable
