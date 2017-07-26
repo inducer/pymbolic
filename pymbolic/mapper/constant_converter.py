@@ -58,7 +58,10 @@ class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
     def map_constant(self, expr):
         if expr.imag:
             return self.complex_type(expr)
-        elif int(expr) == expr and not isinstance(expr, float):
+
+        expr = expr.real
+
+        if int(expr) == expr and not isinstance(expr, float):
             if self.integer_type is not None:
                 return self.integer_type(expr)
             else:
