@@ -111,12 +111,6 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return prim.CommonSubexpression(
                 self.rec(expr.args[0]), expr.prefix)
 
-    def map_Indexed(self, expr):
-        return prim.Subscript(
-            self.rec(expr.args[0].args[0]),
-            tuple(self.rec(i) for i in expr.args[1:])
-            )
-
     def not_supported(self, expr):  # noqa
         if isinstance(expr, int):
             return expr
@@ -149,12 +143,6 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
             return func(*[self.rec(par) for par in expr.parameters])
         else:
             self.raise_conversion_error(expr)
-
-    def map_subscript(self, expr):
-        return self.sym.tensor.indexed.Indexed(
-            self.rec(expr.aggregate),
-            *tuple(self.rec(i) for i in expr.index_tuple)
-            )
 
     def map_substitution(self, expr):
         return self.sym.Subs(self.rec(expr.child),
