@@ -28,6 +28,7 @@ THE SOFTWARE.
 from pymbolic.interop.common import (
     SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
 
+import pymbolic.primitives as prim
 import sympy
 
 
