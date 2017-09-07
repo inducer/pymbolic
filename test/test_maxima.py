@@ -74,6 +74,7 @@ def test_strict_round_trip(knl):
             2j,
             parse("x**y"),
             Quotient(1, 2),
+            parse("exp(x)")
             ]
     for expr in exprs:
         result = knl.eval_expr(expr)
