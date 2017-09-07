@@ -125,7 +125,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
         elif expr.operator == ">=":
             return self.sym.GreaterThan(left, right)
         else:
-            raise NotImplementedError("Cannot understand operator {}".format(expr.operator))
+            raise NotImplementedError("Unknown operator '%s'" % expr.operator)
 
 # }}}
 

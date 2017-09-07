@@ -115,6 +115,7 @@ def test_pymbolic_to_sympy():
 
 
 def test_sympy_if_condition():
+    pytest.importorskip("sympy")
     from pymbolic.interop.sympy import PymbolicToSympyMapper, SympyToPymbolicMapper
     forward = PymbolicToSympyMapper()
     backward = SympyToPymbolicMapper()
