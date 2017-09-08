@@ -114,6 +114,17 @@ def test_pymbolic_to_sympy():
     _test_from_pymbolic(mapper, sym, False)
 
 
+def test_sympy_if_condition():
+    pytest.importorskip("sympy")
+    from pymbolic.interop.sympy import PymbolicToSympyMapper, SympyToPymbolicMapper
+    forward = PymbolicToSympyMapper()
+    backward = SympyToPymbolicMapper()
+
+    # Test round trip to sympy and back
+    expr = prim.If(prim.Comparison(x_, "<=", y_), 1, 0)
+    assert backward(forward(expr)) == expr
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
