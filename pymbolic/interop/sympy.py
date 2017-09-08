@@ -67,7 +67,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
         # We only handle piecewises with 2 arguments!
         assert len(expr.args) == 2
         # We only handle if/else cases
-        assert expr.args[0][1] == sympy.Not(expr.args[1][1])
+        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
         then = self.rec(expr.args[0][0])
         else_ = self.rec(expr.args[1][0])
         cond = self.rec(expr.args[0][1])
@@ -106,7 +106,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
     def map_if(self, expr):
         cond = self.rec(expr.condition)
         return self.sym.Piecewise((self.rec(expr.then), cond),
-                                  (self.rec(expr.else_), self.sym.Not(cond))
+                                  (self.rec(expr.else_), True)
                                   )
 
     def map_comparison(self, expr):
