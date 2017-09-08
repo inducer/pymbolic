@@ -67,7 +67,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
         # We only handle piecewises with 2 arguments!
         assert len(expr.args) == 2
         # We only handle if/else cases
-        assert expr.args[0][1] is True
+        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
         then = self.rec(expr.args[0][0])
         else_ = self.rec(expr.args[1][0])
         cond = self.rec(expr.args[0][1])
