@@ -40,6 +40,7 @@ import six
 from six.moves import intern
 import re
 import pytools
+import numpy as np
 
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
@@ -92,10 +93,12 @@ class MaximaStringifyMapper(StringifyMapper):
 class MaximaParser(ParserBase):
     power_sym = intern("power")
     imag_unit = intern("imag_unit")
+    euler_number = intern("euler_number")
 
     lex_table = [
             (power_sym, pytools.lex.RE(r"\^")),
             (imag_unit, pytools.lex.RE(r"%i")),
+            (euler_number, pytools.lex.RE(r"%e")),
             ] + ParserBase.lex_table
 
     def parse_prefix(self, pstate):
@@ -126,6 +129,9 @@ class MaximaParser(ParserBase):
         elif next_tag is self.imag_unit:
             pstate.advance()
             return 1j
+        elif next_tag is self.euler_number:
+            pstate.advance()
+            return np.e
         elif next_tag is p._identifier:
             if six.PY3:
                 return primitives.Variable(pstate.next_str_and_advance())
@@ -158,7 +164,6 @@ class MaximaParser(ParserBase):
                 pstate.advance()
 
                 if left_exp == primitives.Variable("matrix"):
-                    import numpy as np
                     left_exp = np.array(list(list(row) for row in args))
                 else:
                     left_exp = primitives.Call(left_exp, args)
@@ -197,7 +202,12 @@ class MaximaParser(ParserBase):
             did_something = True
         elif next_tag is self.power_sym and p._PREC_POWER > min_precedence:
             pstate.advance()
-            left_exp **= self.parse_expression(pstate, p._PREC_POWER)
+            exponent = self.parse_expression(pstate, p._PREC_POWER)
+            if left_exp == np.e:
+                from pymbolic.primitives import Call, Variable
+                left_exp = Call(Variable("exp"), (exponent,))
+            else:
+                left_exp **= exponent
             did_something = True
         elif next_tag is p._comma and p._PREC_COMMA > min_precedence:
             # The precedence makes the comma left-associative.
