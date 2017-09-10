@@ -108,13 +108,12 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
         return self.sym.Derivative(self.rec(expr.child),
                 *[self.sym.Symbol(v) for v in expr.variables])
 
-<<<<<<< HEAD
     def map_subscript(self, expr):
         return self.sym.tensor.indexed.Indexed(
             self.rec(expr.aggregate),
             *tuple(self.rec(i) for i in expr.index_tuple)
             )
-=======
+
     def map_if(self, expr):
         cond = self.rec(expr.condition)
         return self.sym.Piecewise((self.rec(expr.then), cond),
@@ -138,7 +137,6 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
             return self.sym.GreaterThan(left, right)
         else:
             raise NotImplementedError("Unknown operator '%s'" % expr.operator)
->>>>>>> c860c0d5a0abcf18b34914b2ccbb0a22c9b98d3f
 
 # }}}
 
