@@ -144,6 +144,12 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         else:
             self.raise_conversion_error(expr)
 
+    def map_subscript(self, expr):
+        if isinstance(expr.aggregate, prim.Variable) and isinstance(expr.index, int):
+            return self.sym.Symbol("%s_%d" % (expr.aggregate.name, expr.index))
+        else:
+            self.raise_conversion_error(expr)
+
     def map_substitution(self, expr):
         return self.sym.Subs(self.rec(expr.child),
                 tuple(self.sym.Symbol(v) for v in expr.variables),
