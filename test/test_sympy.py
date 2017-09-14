@@ -25,7 +25,7 @@ THE SOFTWARE.
 import pytest
 import pymbolic.primitives as prim
 
-x_, y_ = (prim.Variable(s) for s in "x y".split())
+x_, y_, i_, j_ = (prim.Variable(s) for s in "x y i j".split())
 
 
 # {{{ to pymbolic test
@@ -50,6 +50,11 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     # functions
     assert mapper(sym.Function("f")(x)) == prim.Variable("f")(x_)
     assert mapper(sym.exp(x)) == prim.Variable("exp")(x_)
+
+    # indexed accesses
+    if not use_symengine:
+        i, j = sym.symbols("i,j")
+        assert mapper(sym.tensor.indexed.Indexed(x, i, j)) == x_[i_, j_]
 
     # constants
     import math
@@ -91,7 +96,11 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
     deriv = sym.Derivative(x**2, x)
     assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
 
-    assert mapper(x_[0]) == sym.Symbol("x_0")
+    if use_symengine:
+        assert mapper(x_[0]) == sym.Symbol("x_0")
+    else:
+        i, j = sym.symbols("i,j")
+        assert mapper(x_[i_, j_]) == sym.tensor.indexed.Indexed(x, i, j)
 
     assert mapper(prim.Variable("f")(x_)) == sym.Function("f")(x)
 

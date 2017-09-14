@@ -63,6 +63,12 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
     def map_long(self, expr):
         return long(expr)  # noqa
 
+    def map_Indexed(self, expr):  # noqa
+        return prim.Subscript(
+            self.rec(expr.args[0].args[0]),
+            tuple(self.rec(i) for i in expr.args[1:])
+            )
+
     def map_Piecewise(self, expr):  # noqa
         # We only handle piecewises with 2 arguments!
         assert len(expr.args) == 2
@@ -85,7 +91,6 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
     map_StrictGreaterThan = partial(_comparison_operator, operator=">")
     map_StrictLessThan = partial(_comparison_operator, operator="<")
 
-
 # }}}
 
 
@@ -102,6 +107,12 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
     def map_derivative(self, expr):
         return self.sym.Derivative(self.rec(expr.child),
                 *[self.sym.Symbol(v) for v in expr.variables])
+
+    def map_subscript(self, expr):
+        return self.sym.tensor.indexed.Indexed(
+            self.rec(expr.aggregate),
+            *tuple(self.rec(i) for i in expr.index_tuple)
+            )
 
     def map_if(self, expr):
         cond = self.rec(expr.condition)

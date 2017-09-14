@@ -111,7 +111,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return prim.CommonSubexpression(
                 self.rec(expr.args[0]), expr.prefix)
 
-    def not_supported(self, expr):
+    def not_supported(self, expr):  # noqa
         if isinstance(expr, int):
             return expr
         elif getattr(expr, "is_Function", False):
