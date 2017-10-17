@@ -23,39 +23,39 @@ THE SOFTWARE.
 """
 
 
-# {{{ fuse instruction streams
+# {{{ fuse statement streams
 
-def fuse_instruction_streams_with_unique_ids(instructions_a, instructions_b):
-    new_instructions = list(instructions_a)
+def fuse_statement_streams_with_unique_ids(statements_a, statements_b):
+    new_statements = list(statements_a)
     from pytools import UniqueNameGenerator
-    insn_id_gen = UniqueNameGenerator(
-            set([insna.id for insna in new_instructions]))
+    stmt_id_gen = UniqueNameGenerator(
+            set([stmta.id for stmta in new_statements]))
 
-    b_unique_instructions = []
+    b_unique_statements = []
     old_b_id_to_new_b_id = {}
-    for insnb in instructions_b:
-        old_id = insnb.id
-        new_id = insn_id_gen(old_id)
+    for stmtb in statements_b:
+        old_id = stmtb.id
+        new_id = stmt_id_gen(old_id)
         old_b_id_to_new_b_id[old_id] = new_id
 
-        b_unique_instructions.append(
-                insnb.copy(id=new_id))
+        b_unique_statements.append(
+                stmtb.copy(id=new_id))
 
-    for insnb in b_unique_instructions:
-        new_instructions.append(
-                insnb.copy(
+    for stmtb in b_unique_statements:
+        new_statements.append(
+                stmtb.copy(
                     depends_on=frozenset(
                         old_b_id_to_new_b_id[dep_id]
-                        for dep_id in insnb.depends_on)))
+                        for dep_id in stmtb.depends_on)))
 
-    return new_instructions, old_b_id_to_new_b_id
+    return new_statements, old_b_id_to_new_b_id
 
 # }}}
 
 
 # {{{ disambiguate_identifiers
 
-def disambiguate_identifiers(instructions_a, instructions_b,
+def disambiguate_identifiers(statements_a, statements_b,
         should_disambiguate_name=None):
     if should_disambiguate_name is None:
         def should_disambiguate_name(name):
@@ -63,8 +63,8 @@ def disambiguate_identifiers(instructions_a, instructions_b,
 
     from pymbolic.imperative.analysis import get_all_used_identifiers
 
-    id_a = get_all_used_identifiers(instructions_a)
-    id_b = get_all_used_identifiers(instructions_b)
+    id_a = get_all_used_identifiers(statements_a)
+    id_b = get_all_used_identifiers(statements_b)
 
     from pytools import UniqueNameGenerator
     vng = UniqueNameGenerator(id_a | id_b)
@@ -80,25 +80,25 @@ def disambiguate_identifiers(instructions_a, instructions_b,
             make_subst_func, SubstitutionMapper)
     subst_map = SubstitutionMapper(make_subst_func(subst_b))
 
-    instructions_b = [
-            insn.map_expressions(subst_map) for insn in instructions_b]
+    statements_b = [
+            stmt.map_expressions(subst_map) for stmt in statements_b]
 
-    return instructions_b, subst_b
+    return statements_b, subst_b
 
 # }}}
 
 
 # {{{ disambiguate_and_fuse
 
-def disambiguate_and_fuse(instructions_a, instructions_b,
+def disambiguate_and_fuse(statements_a, statements_b,
         should_disambiguate_name=None):
-    instructions_b, subst_b = disambiguate_identifiers(
-            instructions_a, instructions_b,
+    statements_b, subst_b = disambiguate_identifiers(
+            statements_a, statements_b,
             should_disambiguate_name)
 
     fused, old_b_id_to_new_b_id = \
-            fuse_instruction_streams_with_unique_ids(
-                    instructions_a, instructions_b)
+            fuse_statement_streams_with_unique_ids(
+                    statements_a, statements_b)
 
     return fused, subst_b, old_b_id_to_new_b_id
 
