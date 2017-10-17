@@ -28,4 +28,5 @@ from warnings import warn
 warn("pymbolic.imperative.instruction was imported. This has been renamed "
         "to pymbolic.imperative.statement", DeprecationWarning, stacklevel=1)
 
-from pymbolic.imperative.instruction import Instruction, ConditionalInstruction, Assignment, Nop
+from pymbolic.imperative.instruction import (  # noqa: F401
+        Instruction, ConditionalInstruction, Assignment, Nop)
