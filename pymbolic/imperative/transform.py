@@ -50,6 +50,15 @@ def fuse_statement_streams_with_unique_ids(statements_a, statements_b):
 
     return new_statements, old_b_id_to_new_b_id
 
+
+def fuse_instruction_streams_with_unique_ids(insns_a, insns_b):
+    from warnings import warn
+    warn("fuse_instruction_streams_with_unique_ids has been renamed to "
+            "fuse_statement_streams_with_unique_ids", DeprecationWarning,
+            stacklevel=2)
+
+    return fuse_statement_streams_with_unique_ids(insns_a, insns_b)
+
 # }}}
 
 
