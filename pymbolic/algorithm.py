@@ -265,9 +265,9 @@ def gaussian_elimination(mat, rhs):
                     # already 0
                     continue
 
-                l = lcm(mat[u, j], mat[i, j])
-                u_fac = l//mat[u, j]
-                i_fac = l//mat[i, j]
+                ell = lcm(mat[u, j], mat[i, j])
+                u_fac = ell//mat[u, j]
+                i_fac = ell//mat[i, j]
 
                 mat[u] = u_fac*mat[u] - i_fac*mat[i]
                 rhs[u] = u_fac*rhs[u] - i_fac*rhs[i]
