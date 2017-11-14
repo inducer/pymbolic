@@ -257,7 +257,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def map_bitwise_and(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
                 self.join_rec(
-                    " ^ ", expr.children, PREC_BITWISE_AND, *args, **kwargs),
+                    " & ", expr.children, PREC_BITWISE_AND, *args, **kwargs),
                 enclosing_prec, PREC_BITWISE_AND)
 
     def map_comparison(self, expr, enclosing_prec, *args, **kwargs):
