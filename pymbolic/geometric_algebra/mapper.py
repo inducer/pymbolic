@@ -232,9 +232,6 @@ class DerivativeBinder(IdentityMapper):
         self.restrict_to_id = restrict_to_id
 
     def map_product(self, expr):
-        # We may write to this below. Make a copy.
-        children = list(expr.children)
-
         # {{{ gather NablaComponents and DerivativeSources
 
         d_source_nabla_ids_per_child = []
@@ -242,7 +239,7 @@ class DerivativeBinder(IdentityMapper):
         # id to set((child index, axis), ...)
         nabla_finder = {}
 
-        for child_idx, rec_child in enumerate(children):
+        for child_idx, rec_child in enumerate(expr.children):
             nabla_component_ids = set()
             derivative_source_ids = set()
 
@@ -257,8 +254,7 @@ class DerivativeBinder(IdentityMapper):
                     raise RuntimeError("unexpected result from "
                             "DerivativeSourceAndNablaComponentCollector")
 
-            d_source_nabla_ids_per_child.append(
-                    derivative_source_ids - nabla_component_ids)
+            d_source_nabla_ids_per_child.append(derivative_source_ids)
 
             for ncomp in nablas:
                 nabla_finder.setdefault(
@@ -266,11 +262,16 @@ class DerivativeBinder(IdentityMapper):
 
         # }}}
 
+        if nabla_finder and not any(d_source_nabla_ids_per_child):
+            raise ValueError("no derivative source found to resolve in '%s'"
+                    "--did you forget to wrap the term that should have its "
+                    "derivative taken in 'Derivative()(term)'?" % str(expr))
+
         # a list of lists, the outer level presenting a sum, the inner a product
-        result = [children]
+        result = [list(expr.children)]
 
         for child_idx, (d_source_nabla_ids, child) in enumerate(
-                zip(d_source_nabla_ids_per_child, children)):
+                zip(d_source_nabla_ids_per_child, expr.children)):
             if not d_source_nabla_ids:
                 continue
 
