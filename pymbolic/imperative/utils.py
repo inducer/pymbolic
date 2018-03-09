@@ -35,9 +35,18 @@ logger = logging.getLogger(__name__)
 # {{{ graphviz / dot export
 
 
-def _default_node_attr_hook(insn):
-    insn_repr = repr(insn.id)[1:-1]
-    return "label=\"{id}\",shape=\"box\",tooltip=\"{id}\"".format(id=insn_repr)
+def _default_node_attr_hook(insn, use_insn_id):
+    if use_insn_id:
+        insn_label = insn.id
+        tooltip = str(insn)
+    else:
+        insn_label = str(insn)
+        tooltip = insn.id
+
+    return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (
+            repr(insn_label)[1:-1],
+            repr(tooltip)[1:-1],
+            )
 
 
 def get_dot_dependency_graph(
@@ -55,14 +64,7 @@ def get_dot_dependency_graph(
     annotation_dep_graph = {}
 
     for insn in instructions:
-        if use_insn_ids:
-            insn_label = insn.id
-            tooltip = str(insn)
-        else:
-            insn_label = str(insn)
-            tooltip = insn.id
-
-        lines.append("\"%s\" [%s];" % (insn.id, node_attr_hook(insn)))
+        lines.append("\"%s\" [%s];" % (insn.id, node_attr_hook(insn, use_insn_ids)))
         for dep in insn.depends_on:
             dep_graph.setdefault(insn.id, set()).add(dep)
 
