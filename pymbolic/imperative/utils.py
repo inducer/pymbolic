@@ -49,10 +49,20 @@ def _default_node_attr_hook(insn, use_insn_id):
             )
 
 
+def _default_edge_attr_hook(insn_from, insn_to):
+    return "dir=\"back\""
+
+
+def _default_annot_edge_attr_hook(insn_from, insn_to, annotation):
+    return "label=\"%s\",dir=\"back\",style=\"dashed\"" % annotation
+
+
 def get_dot_dependency_graph(
         instructions, use_insn_ids=False,
         additional_lines_hook=None,
-        node_attr_hook=_default_node_attr_hook):
+        node_attr_hook=_default_node_attr_hook,
+        edge_attr_hook=_default_edge_attr_hook,
+        annot_edge_attr_hook=_default_annot_edge_attr_hook):
     """Return a string in the `dot <http://graphviz.org/>`_ language depicting
     dependencies among kernel instructions.
     """
@@ -100,12 +110,14 @@ def get_dot_dependency_graph(
 
     for insn_1 in dep_graph:
         for insn_2 in dep_graph.get(insn_1, set()):
-            lines.append("%s -> %s [dir=\"back\"]" % (insn_2, insn_1))
+            lines.append("%s -> %s [%s]" %
+                         (insn_2, insn_1, edge_attr_hook(insn_2, insn_1)))
 
     for (insn_1, insn_2), annot in six.iteritems(annotation_dep_graph):
             lines.append(
-                    "%s -> %s  [dir=\"back\", label=\"%s\", style=dashed]"
-                    % (insn_2, insn_1, annot))
+                    "%s -> %s  [%s]"
+                    % (insn_2, insn_1, annot,
+                       annot_edge_attr_hook(insn_2, insn_1, annot)))
 
     if additional_lines_hook is not None:
         lines.extend(additional_lines_hook())
