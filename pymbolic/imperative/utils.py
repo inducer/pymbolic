@@ -34,19 +34,26 @@ logger = logging.getLogger(__name__)
 
 # {{{ graphviz / dot export
 
-def get_dot_dependency_graph(instructions, use_insn_ids=False,
-        addtional_lines_hook=None):
+def _default_preamble_hook():
+    # Sets default attributes for nodes and edges.
+    yield "node [shape=\"box\"];"
+    yield "edge [dir=\"back\"];"
+
+
+def get_dot_dependency_graph(
+        instructions, use_insn_ids=False,
+        preamble_hook=_default_preamble_hook,
+        additional_lines_hook=list):
     """Return a string in the `dot <http://graphviz.org/>`_ language depicting
     dependencies among kernel instructions.
+
+    :arg preamble_hook: A function that returns an iterable of lines
+        to add at the beginning of the graph
+    :arg additional_lines_hook: A function that returns an iterable
+        of lines to add at the end of the graph
     """
 
-    lines = []
-    dep_graph = {}
-
-    # maps (oriented) edge onto annotation string
-    annotation_dep_graph = {}
-
-    for insn in instructions:
+    def get_node_attrs(insn):
         if use_insn_ids:
             insn_label = insn.id
             tooltip = str(insn)
@@ -54,12 +61,19 @@ def get_dot_dependency_graph(instructions, use_insn_ids=False,
             insn_label = str(insn)
             tooltip = insn.id
 
-        lines.append("\"%s\" [label=\"%s\",shape=\"box\",tooltip=\"%s\"];"
-                % (
-                    insn.id,
-                    repr(insn_label)[1:-1],
-                    repr(tooltip)[1:-1],
-                    ))
+        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (
+                repr(insn_label)[1:-1],
+                repr(tooltip)[1:-1],
+                )
+
+    lines = list(preamble_hook())
+    dep_graph = {}
+
+    # maps (oriented) edge onto annotation string
+    annotation_dep_graph = {}
+
+    for insn in instructions:
+        lines.append("\"%s\" [%s];" % (insn.id, get_node_attrs(insn)))
         for dep in insn.depends_on:
             dep_graph.setdefault(insn.id, set()).add(dep)
 
@@ -99,11 +113,10 @@ def get_dot_dependency_graph(instructions, use_insn_ids=False,
 
     for (insn_1, insn_2), annot in six.iteritems(annotation_dep_graph):
             lines.append(
-                    "%s -> %s  [label=\"%s\", style=dashed]"
+                    "%s -> %s  [label=\"%s\",style=\"dashed\"]"
                     % (insn_2, insn_1, annot))
 
-    if addtional_lines_hook is not None:
-        lines.extend(addtional_lines_hook())
+    lines.extend(additional_lines_hook())
 
     return "digraph code {\n%s\n}" % (
             "\n".join(lines)
