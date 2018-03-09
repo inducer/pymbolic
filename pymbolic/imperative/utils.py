@@ -66,7 +66,7 @@ def get_dot_dependency_graph(
                 repr(tooltip)[1:-1],
                 )
 
-    lines = list(_default_preamble_hook())
+    lines = list(preamble_hook())
     dep_graph = {}
 
     # maps (oriented) edge onto annotation string
