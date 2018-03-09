@@ -34,8 +34,16 @@ logger = logging.getLogger(__name__)
 
 # {{{ graphviz / dot export
 
-def get_dot_dependency_graph(instructions, use_insn_ids=False,
-        addtional_lines_hook=None):
+
+def _default_node_attr_hook(insn):
+    insn_repr = repr(insn.id)[1:-1]
+    return "label=\"{id}\",shape=\"box\",tooltip=\"{id}\"".format(id=insn_repr)
+
+
+def get_dot_dependency_graph(
+        instructions, use_insn_ids=False,
+        additional_lines_hook=None,
+        node_attr_hook=_default_node_attr_hook):
     """Return a string in the `dot <http://graphviz.org/>`_ language depicting
     dependencies among kernel instructions.
     """
@@ -54,12 +62,7 @@ def get_dot_dependency_graph(instructions, use_insn_ids=False,
             insn_label = str(insn)
             tooltip = insn.id
 
-        lines.append("\"%s\" [label=\"%s\",shape=\"box\",tooltip=\"%s\"];"
-                % (
-                    insn.id,
-                    repr(insn_label)[1:-1],
-                    repr(tooltip)[1:-1],
-                    ))
+        lines.append("\"%s\" [%s];" % (insn.id, node_attr_hook(insn)))
         for dep in insn.depends_on:
             dep_graph.setdefault(insn.id, set()).add(dep)
 
@@ -95,15 +98,15 @@ def get_dot_dependency_graph(instructions, use_insn_ids=False,
 
     for insn_1 in dep_graph:
         for insn_2 in dep_graph.get(insn_1, set()):
-            lines.append("%s -> %s" % (insn_2, insn_1))
+            lines.append("%s -> %s [dir=\"back\"]" % (insn_2, insn_1))
 
     for (insn_1, insn_2), annot in six.iteritems(annotation_dep_graph):
             lines.append(
-                    "%s -> %s  [label=\"%s\", style=dashed]"
+                    "%s -> %s  [dir=\"back\", label=\"%s\", style=dashed]"
                     % (insn_2, insn_1, annot))
 
-    if addtional_lines_hook is not None:
-        lines.extend(addtional_lines_hook())
+    if additional_lines_hook is not None:
+        lines.extend(additional_lines_hook())
 
     return "digraph code {\n%s\n}" % (
             "\n".join(lines)
