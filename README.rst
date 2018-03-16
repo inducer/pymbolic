@@ -1,5 +1,10 @@
-Pymbolic
-========
+Pymbolic: Easy Expression Trees and Term Rewriting
+==================================================
+
+.. image:: https://gitlab.tiker.net/inducer/pymbolic/badges/master/pipeline.svg
+   :target: https://gitlab.tiker.net/inducer/pymbolic/commits/master
+.. image:: https://badge.fury.io/py/pymbolic.png
+    :target: http://pypi.python.org/pypi/pymbolic
 
 Pymbolic is a small expression tree and symbolic manipulation library. Two
 things set it apart from other libraries of its kind:
@@ -19,9 +24,6 @@ If you are looking for a full-blown Computer Algebra System, look at
 `PyGinac <http://pyginac.sourceforge.net/>`_. If you are looking for a
 basic, small and extensible set of symbolic operations, pymbolic may
 well be for you.
-
-.. image:: https://badge.fury.io/py/pymbolic.png
-    :target: http://pypi.python.org/pypi/pymbolic
 
 Resources:
 
