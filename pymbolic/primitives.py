@@ -778,6 +778,19 @@ class CallWithKwargs(AlgebraicLeaf):
                     list(self.kw_parameters.items()),
                     key=lambda item: item[0])))
 
+    def __setstate__(self, state):
+        # CallWithKwargs must override __setstate__ because during pickling the
+        # kw_parameters are converted to tuple, which needs to be converted
+        # back to dict.
+        assert len(self.init_arg_names) == len(state)
+        function, parameters, kw_parameters = state
+
+        self.function = function
+        self.parameters = parameters
+        if not isinstance(kw_parameters, dict):
+            kw_parameters = dict(kw_parameters)
+        self.kw_parameters = kw_parameters
+
     mapper_method = intern("map_call_with_kwargs")
 
 
