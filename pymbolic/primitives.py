@@ -321,7 +321,7 @@ class Expression(object):
             return NotImplemented
 
         if is_zero(other-1):
-            return self
+            return 0
         return Remainder(self, other)
 
     def __rmod__(self, other):
