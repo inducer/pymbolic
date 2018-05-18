@@ -355,6 +355,12 @@ class MaximaKernel:
     # {{{ execution control
 
     def restart(self):
+        # https://github.com/pexpect/pexpect/issues/462
+        # caused issues like
+        # https://gitlab.tiker.net/inducer/pymbolic/-/jobs/50932
+        self.child.delayafterclose = 5
+        self.child.ptyproc.delayafterclose = 5
+
         self.child.close(force=True)
         self._initialize()
 
