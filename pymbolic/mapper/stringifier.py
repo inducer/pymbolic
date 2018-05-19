@@ -225,16 +225,20 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_left_shift(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
+                # +1 to address
+                # https://gitlab.tiker.net/inducer/pymbolic/issues/6
                 self.format("%s << %s",
-                    self.rec(expr.shiftee, PREC_SHIFT, *args, **kwargs),
-                    self.rec(expr.shift, PREC_SHIFT, *args, **kwargs)),
+                    self.rec(expr.shiftee, PREC_SHIFT+1, *args, **kwargs),
+                    self.rec(expr.shift, PREC_SHIFT+1, *args, **kwargs)),
                 enclosing_prec, PREC_SHIFT)
 
     def map_right_shift(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
+                # +1 to address
+                # https://gitlab.tiker.net/inducer/pymbolic/issues/6
                 self.format("%s >> %s",
-                    self.rec(expr.shiftee, PREC_SHIFT, *args, **kwargs),
-                    self.rec(expr.shift, PREC_SHIFT, *args, **kwargs)),
+                    self.rec(expr.shiftee, PREC_SHIFT+1, *args, **kwargs),
+                    self.rec(expr.shift, PREC_SHIFT+1, *args, **kwargs)),
                 enclosing_prec, PREC_SHIFT)
 
     def map_bitwise_not(self, expr, enclosing_prec, *args, **kwargs):

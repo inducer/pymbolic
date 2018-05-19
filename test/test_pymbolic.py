@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic
 import pymbolic.primitives as prim
 import pytest
+from pymbolic import parse
 
 
 from pymbolic.mapper import IdentityMapper
@@ -33,9 +33,6 @@ try:
     reduce
 except NameError:
     from functools import reduce
-
-
-pymbolic.disable_subscript_by_getitem()
 
 
 def test_integer_power():
@@ -485,6 +482,14 @@ def test_long_sympy_mapping():
     from pymbolic.interop.sympy import SympyToPymbolicMapper
     SympyToPymbolicMapper()(sp.sympify(int(10**20)))
     SympyToPymbolicMapper()(sp.sympify(int(10)))
+
+
+def test_stringifier_preserve_shift_order():
+    for expr in [
+            parse("(a << b) >> 2"),
+            parse("a << (b >> 2)")
+            ]:
+        assert parse(str(expr)) == expr
 
 
 if __name__ == "__main__":
