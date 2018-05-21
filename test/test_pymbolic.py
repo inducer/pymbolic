@@ -492,7 +492,7 @@ def test_stringifier_preserve_shift_order():
         assert parse(str(expr)) == expr
 
 
-TEX_TEMPLATE = r"""\documentclass{article}
+LATEX_TEMPLATE = r"""\documentclass{article}
 \usepackage{amsmath}
 
 \begin{document}
@@ -500,11 +500,11 @@ TEX_TEMPLATE = r"""\documentclass{article}
 \end{document}"""
 
 
-def test_tex_mapper():
+def test_latex_mapper():
     from pymbolic import parse
-    from pymbolic.mapper.stringifier import TeXMapper, StringifyMapper
+    from pymbolic.mapper.stringifier import LaTeXMapper, StringifyMapper
 
-    tm = TeXMapper()
+    tm = LaTeXMapper()
     sm = StringifyMapper()
 
     equations = []

@@ -563,9 +563,9 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 # }}}
 
 
-# {{{ tex stringifier
+# {{{ latex stringifier
 
-class TeXMapper(StringifyMapper):
+class LaTeXMapper(StringifyMapper):
 
     COMPARISON_OP_TO_LATEX = {
         "==": r"=",
