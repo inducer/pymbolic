@@ -577,11 +577,10 @@ class LaTeXMapper(StringifyMapper):
         }
 
     def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
-        return self.parenthesize_if_needed(
-                self.format(r"%s \bmod %s",
-                    self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
-                    self.rec(expr.denominator, PREC_POWER, *args, **kwargs)),
-                enclosing_prec, PREC_PRODUCT+1)
+        return self.format(r"(%s \bmod %s)",
+                self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
+                self.rec(expr.denominator, PREC_POWER, *args, **kwargs)),
+
 
     def map_left_shift(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
