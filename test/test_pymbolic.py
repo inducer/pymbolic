@@ -541,7 +541,7 @@ def test_latex_mapper():
         tex_file_path = os.path.join(latex_dir, "input.tex")
 
         with open(tex_file_path, "w") as tex_file:
-            contents = TEX_TEMPLATE % "\n".join(equations)
+            contents = LATEX_TEMPLATE % "\n".join(equations)
             tex_file.write(contents)
 
         try:
