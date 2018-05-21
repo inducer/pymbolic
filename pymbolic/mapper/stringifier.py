@@ -562,4 +562,128 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 
 # }}}
 
+
+# {{{ tex stringifier
+
+class TeXMapper(StringifyMapper):
+
+    COMPARISON_OP_TO_LATEX = {
+        "==": r"=",
+        "!=": r"\ne",
+        "<=": r"\le",
+        ">=": r"\ge",
+        "<":  r"<",
+        ">":  r">",
+        }
+
+    def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.format(r"%s \bmod %s",
+                    self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
+                    self.rec(expr.denominator, PREC_POWER, *args, **kwargs)),
+                enclosing_prec, PREC_PRODUCT+1)
+
+    def map_left_shift(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.format(r"%s \ll %s",
+                    self.rec(expr.shiftee, PREC_SHIFT+1, *args, **kwargs),
+                    self.rec(expr.shift, PREC_SHIFT+1, *args, **kwargs)),
+                enclosing_prec, PREC_SHIFT)
+
+    def map_right_shift(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.format(r"%s \gg %s",
+                    self.rec(expr.shiftee, PREC_SHIFT+1, *args, **kwargs),
+                    self.rec(expr.shift, PREC_SHIFT+1, *args, **kwargs)),
+                enclosing_prec, PREC_SHIFT)
+
+    def map_bitwise_xor(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.join_rec(
+                    r" \wedge ", expr.children, PREC_BITWISE_XOR, *args, **kwargs),
+                enclosing_prec, PREC_BITWISE_XOR)
+
+    def map_product(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.join_rec(" ", expr.children, PREC_PRODUCT, *args, **kwargs),
+                enclosing_prec, PREC_PRODUCT)
+
+    def map_power(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.format("{%s}^{%s}",
+                    self.rec(expr.base, PREC_NONE, *args, **kwargs),
+                    self.rec(expr.exponent, PREC_NONE, *args, **kwargs)),
+                enclosing_prec, PREC_NONE)
+
+    def map_min(self, expr, enclosing_prec, *args, **kwargs):
+        from pytools import is_single_valued
+        if is_single_valued(expr.children):
+            return self.rec(expr.children[0], enclosing_prec)
+
+        what = type(expr).__name__.lower()
+        return self.format(r"\%s(%s)",
+                what, self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs))
+
+    def map_max(self, expr, enclosing_prec):
+        return self.map_min(expr, enclosing_prec)
+
+    def map_floor_div(self, expr, enclosing_prec, *args, **kwargs):
+        return self.format(r"\lfloor {%s} / {%s} \rfloor",
+                    self.rec(expr.numerator, PREC_NONE, *args, **kwargs),
+                    self.rec(expr.denominator, PREC_NONE, *args, **kwargs))
+
+    def map_subscript(self, expr, enclosing_prec, *args, **kwargs):
+        if isinstance(expr.index, tuple):
+            index_str = self.join_rec(", ", expr.index, PREC_NONE, *args, **kwargs)
+        else:
+            index_str = self.rec(expr.index, PREC_NONE, *args, **kwargs)
+
+        return self.format("{%s}_{%s}",
+                    self.rec(expr.aggregate, PREC_CALL, *args, **kwargs),
+                    index_str)
+
+    def map_logical_not(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                r"\neg " + self.rec(expr.child, PREC_UNARY, *args, **kwargs),
+                enclosing_prec, PREC_UNARY)
+
+    def map_logical_or(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.join_rec(
+                    r" \vee ", expr.children, PREC_LOGICAL_OR, *args, **kwargs),
+                enclosing_prec, PREC_LOGICAL_OR)
+
+    def map_logical_and(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.join_rec(
+                    r" \wedge ", expr.children, PREC_LOGICAL_AND, *args, **kwargs),
+                enclosing_prec, PREC_LOGICAL_AND)
+
+    def map_comparison(self, expr, enclosing_prec, *args, **kwargs):
+        return self.parenthesize_if_needed(
+                self.format("%s %s %s",
+                    self.rec(expr.left, PREC_COMPARISON, *args, **kwargs),
+                    self.COMPARISON_OP_TO_LATEX[expr.operator],
+                    self.rec(expr.right, PREC_COMPARISON, *args, **kwargs)),
+                enclosing_prec, PREC_COMPARISON)
+
+    def map_substitution(self, expr, enclosing_prec, *args, **kwargs):
+        substs = ", ".join(
+                "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
+                for name, val in zip(expr.variables, expr.values))
+
+        return self.format("[%s]\{%s\}",
+                self.rec(expr.child, PREC_NONE, *args, **kwargs),
+                substs)
+
+    def map_derivative(self, expr, enclosing_prec, *args, **kwargs):
+        derivs = " ".join(
+                r"\frac{\partial}{\partial %s}" % v
+                for v in expr.variables)
+
+        return self.format("%s %s",
+                derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs))
+
+# }}}
+
 # vim: fdm=marker
