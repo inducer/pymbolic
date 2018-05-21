@@ -581,7 +581,6 @@ class LaTeXMapper(StringifyMapper):
                 self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
                 self.rec(expr.denominator, PREC_POWER, *args, **kwargs)),
 
-
     def map_left_shift(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
                 self.format(r"%s \ll %s",
