@@ -12,15 +12,6 @@ Converting to strings and code
 
 .. automodule:: pymbolic.mapper.stringifier
 
-Mappers
-*******
-
-.. autoclass:: StringifyMapper
-
-    .. automethod:: __call__
-
-.. autoclass:: CSESplittingStringifyMapperMixin
-
 .. automodule:: pymbolic.mapper.c_code
 
 .. autoclass:: CCodeMapper

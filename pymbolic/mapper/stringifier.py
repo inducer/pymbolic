@@ -43,6 +43,17 @@ Precedence constants
 .. data:: PREC_LOGICAL_AND
 .. data:: PREC_LOGICAL_OR
 .. data:: PREC_NONE
+
+Mappers
+*******
+
+.. autoclass:: StringifyMapper
+
+    .. automethod:: __call__
+
+.. autoclass:: CSESplittingStringifyMapperMixin
+
+.. autoclass:: LaTeXMapper
 """
 
 
