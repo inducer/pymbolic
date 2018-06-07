@@ -24,8 +24,10 @@ THE SOFTWARE.
 
 import pytest
 from pymbolic.interop.maxima import MaximaKernel
+from pymbolic.interop.maxima import FOUND_MAXIMA
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_kernel():
     pytest.importorskip("pexpect")
 
@@ -45,6 +47,7 @@ def knl(request):
     return knl
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_setup(knl):
     pytest.importorskip("pexpect")
 
@@ -53,6 +56,7 @@ def test_setup(knl):
             "sum(diff(k, t,deg)*t^deg,deg,0,6)")
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_error(knl):
     from pymbolic.interop.maxima import MaximaError
     try:
@@ -66,6 +70,7 @@ def test_error(knl):
         pass
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_strict_round_trip(knl):
     from pymbolic import parse
     from pymbolic.primitives import Quotient
@@ -90,6 +95,7 @@ def test_strict_round_trip(knl):
         assert round_trips_correctly
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_lax_round_trip(knl):
     from pymbolic.interop.maxima import MaximaParser
     k_setup = [
@@ -104,6 +110,7 @@ def test_lax_round_trip(knl):
             "ratsimp(result-result2)") == 0
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_parse_matrix(knl):
     z = knl.clean_eval_str_with_setup([
         "A:matrix([1,2+0.3*dt], [3,4])",
@@ -115,6 +122,7 @@ def test_parse_matrix(knl):
     print(MaximaParser()(z))
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_diff():
     pytest.importorskip("pexpect")
 
@@ -123,12 +131,14 @@ def test_diff():
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_long_command(knl):
     from pymbolic.interop.maxima import set_debug
     set_debug(4)
     knl.eval_str("+".join(["1"]*16384))
 
 
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
 def test_restart(knl):
     pytest.importorskip("pexpect")
 
