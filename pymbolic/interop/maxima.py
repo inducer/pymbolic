@@ -66,7 +66,7 @@ def _find_maxima_executable():
         try:
             import shutil
             FOUND_MAXIMA = bool(shutil.which(executable))
-        except ImportError:
+        except AttributeError:
             for path in os.environ["PATH"].split(os.pathsep):
                 filename = os.path.join(path, executable)
                 if is_executable(filename):
