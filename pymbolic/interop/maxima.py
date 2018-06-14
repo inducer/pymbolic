@@ -45,6 +45,7 @@ import numpy as np
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
+
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
 OUT_PROMPT_RE = re.compile(br"\(%o([0-9]+)\) ")
 ERROR_PROMPT_RE = re.compile(
