@@ -26,9 +26,29 @@ import pytest
 from pymbolic.interop.maxima import MaximaKernel
 
 
-def test_kernel():
-    pytest.importorskip("pexpect")
+# {{{ check for maxima
 
+def _check_maxima():
+    global MAXIMA_UNAVAILABLE
+
+    import os
+    executable = os.environ.get("PYMBOLIC_MAXIMA_EXECUTABLE", "maxima")
+
+    try:
+        knl = MaximaKernel(executable=executable)
+        MAXIMA_UNAVAILABLE = False
+        knl.shutdown()
+    except (ImportError, RuntimeError):
+        MAXIMA_UNAVAILABLE = True
+
+
+_check_maxima()
+
+# }}}
+
+
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
+def test_kernel():
     knl = MaximaKernel()
     knl.exec_str("k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))")
     knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
@@ -38,21 +58,19 @@ def test_kernel():
 
 @pytest.fixture
 def knl(request):
-    pytest.importorskip("pexpect")
-
     knl = MaximaKernel()
     request.addfinalizer(knl.shutdown)
     return knl
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_setup(knl):
-    pytest.importorskip("pexpect")
-
     knl.clean_eval_str_with_setup(
             ["k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))"],
             "sum(diff(k, t,deg)*t^deg,deg,0,6)")
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_error(knl):
     from pymbolic.interop.maxima import MaximaError
     try:
@@ -66,6 +84,7 @@ def test_error(knl):
         pass
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_strict_round_trip(knl):
     from pymbolic import parse
     from pymbolic.primitives import Quotient
@@ -90,6 +109,7 @@ def test_strict_round_trip(knl):
         assert round_trips_correctly
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_lax_round_trip(knl):
     from pymbolic.interop.maxima import MaximaParser
     k_setup = [
@@ -104,6 +124,7 @@ def test_lax_round_trip(knl):
             "ratsimp(result-result2)") == 0
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_parse_matrix(knl):
     z = knl.clean_eval_str_with_setup([
         "A:matrix([1,2+0.3*dt], [3,4])",
@@ -115,23 +136,22 @@ def test_parse_matrix(knl):
     print(MaximaParser()(z))
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_diff():
-    pytest.importorskip("pexpect")
-
     from pymbolic.interop.maxima import diff
     from pymbolic import parse
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_long_command(knl):
     from pymbolic.interop.maxima import set_debug
     set_debug(4)
     knl.eval_str("+".join(["1"]*16384))
 
 
+@pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_restart(knl):
-    pytest.importorskip("pexpect")
-
     knl = MaximaKernel()
     knl.restart()
     knl.eval_str("1")
