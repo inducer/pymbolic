@@ -26,17 +26,6 @@ import pytest
 from pymbolic.interop.maxima import MaximaKernel
 
 
-@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
-def test_kernel():
-    pytest.importorskip("pexpect")
-
-    knl = MaximaKernel()
-    knl.exec_str("k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))")
-    knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
-    assert knl.eval_str("2+2").strip() == "4"
-    knl.shutdown()
-
-
 # {{{ check for maxima executable
 
 def _find_maxima_executable():
@@ -68,6 +57,17 @@ def _find_maxima_executable():
 _find_maxima_executable()
 
 # }}}
+
+
+@pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
+def test_kernel():
+    pytest.importorskip("pexpect")
+
+    knl = MaximaKernel()
+    knl.exec_str("k:1/(sqrt((x0-(a+t*b))^2+(y0-(c+t*d))^2+(z0-(e+t*f))^2))")
+    knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
+    assert knl.eval_str("2+2").strip() == "4"
+    knl.shutdown()
 
 
 @pytest.fixture
