@@ -47,7 +47,6 @@ from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
 # {{{ check for maxima executable
 
-
 def _find_maxima_executable():
     import os
 
@@ -56,7 +55,7 @@ def _find_maxima_executable():
 
     global FOUND_MAXIMA
 
-    executable = os.environ.get("SUMPY_MAXIMA_EXECUTABLE", "maxima")
+    executable = os.environ.get("PYMBOLIC_MAXIMA_EXECUTABLE", "maxima")
 
     FOUND_MAXIMA = False
     if is_executable(executable):
