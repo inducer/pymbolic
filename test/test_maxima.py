@@ -38,6 +38,7 @@ def _find_maxima_executable():
     except (ImportError, RuntimeError):
         FOUND_MAXIMA = False
 
+
 _find_maxima_executable()
 
 # }}}
