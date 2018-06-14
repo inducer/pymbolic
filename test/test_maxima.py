@@ -29,30 +29,14 @@ from pymbolic.interop.maxima import MaximaKernel
 # {{{ check for maxima executable
 
 def _find_maxima_executable():
-    import os
-
-    def is_executable(filename):
-        return os.path.isfile(filename) and os.access(filename, os.X_OK)
-
     global FOUND_MAXIMA
 
-    executable = os.environ.get("PYMBOLIC_MAXIMA_EXECUTABLE", "maxima")
-
-    FOUND_MAXIMA = False
-    if is_executable(executable):
+    try:
+        knl = MaximaKernel()
         FOUND_MAXIMA = True
-    else:
-        executable = os.path.basename(executable)
-        try:
-            import shutil
-            FOUND_MAXIMA = bool(shutil.which(executable))
-        except AttributeError:
-            for path in os.environ["PATH"].split(os.pathsep):
-                filename = os.path.join(path, executable)
-                if is_executable(filename):
-                    FOUND_MAXIMA = True
-                    break
-
+        knl.shutdown()
+    except (ImportError, RuntimeError):
+        FOUND_MAXIMA = False
 
 _find_maxima_executable()
 
