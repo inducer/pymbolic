@@ -45,38 +45,6 @@ import numpy as np
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
-# {{{ check for maxima executable
-
-def _find_maxima_executable():
-    import os
-
-    def is_executable(filename):
-        return os.path.isfile(filename) and os.access(filename, os.X_OK)
-
-    global FOUND_MAXIMA
-
-    executable = os.environ.get("PYMBOLIC_MAXIMA_EXECUTABLE", "maxima")
-
-    FOUND_MAXIMA = False
-    if is_executable(executable):
-        FOUND_MAXIMA = True
-    else:
-        executable = os.path.basename(executable)
-        try:
-            import shutil
-            FOUND_MAXIMA = bool(shutil.which(executable))
-        except AttributeError:
-            for path in os.environ["PATH"].split(os.pathsep):
-                filename = os.path.join(path, executable)
-                if is_executable(filename):
-                    FOUND_MAXIMA = True
-                    break
-
-
-_find_maxima_executable()
-
-# }}}
-
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
 OUT_PROMPT_RE = re.compile(br"\(%o([0-9]+)\) ")
 ERROR_PROMPT_RE = re.compile(

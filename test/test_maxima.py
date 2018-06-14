@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 import pytest
 from pymbolic.interop.maxima import MaximaKernel
-from pymbolic.interop.maxima import FOUND_MAXIMA
 
 
 @pytest.mark.skipif(not FOUND_MAXIMA, reason="cannot find maxima executable")
@@ -36,6 +35,39 @@ def test_kernel():
     knl.eval_str("sum(diff(k, t,deg)*t^deg,deg,0,6)")
     assert knl.eval_str("2+2").strip() == "4"
     knl.shutdown()
+
+
+# {{{ check for maxima executable
+
+def _find_maxima_executable():
+    import os
+
+    def is_executable(filename):
+        return os.path.isfile(filename) and os.access(filename, os.X_OK)
+
+    global FOUND_MAXIMA
+
+    executable = os.environ.get("PYMBOLIC_MAXIMA_EXECUTABLE", "maxima")
+
+    FOUND_MAXIMA = False
+    if is_executable(executable):
+        FOUND_MAXIMA = True
+    else:
+        executable = os.path.basename(executable)
+        try:
+            import shutil
+            FOUND_MAXIMA = bool(shutil.which(executable))
+        except AttributeError:
+            for path in os.environ["PATH"].split(os.pathsep):
+                filename = os.path.join(path, executable)
+                if is_executable(filename):
+                    FOUND_MAXIMA = True
+                    break
+
+
+_find_maxima_executable()
+
+# }}}
 
 
 @pytest.fixture
