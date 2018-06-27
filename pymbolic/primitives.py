@@ -521,7 +521,7 @@ class Expression(object):
 
     def __setstate__(self, state):
         # Can't use trivial pickling: hash_value cache must stay unset
-        assert len(self.init_arg_names) == len(state)
+        assert len(self.init_arg_names) == len(state), type(self)
         for name, value in zip(self.init_arg_names, state):
             setattr(self, name, value)
 
