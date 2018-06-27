@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic
 import pymbolic.primitives as prim
 import pytest
+from pymbolic import parse
 
 
 from pymbolic.mapper import IdentityMapper
@@ -33,9 +33,6 @@ try:
     reduce
 except NameError:
     from functools import reduce
-
-
-pymbolic.disable_subscript_by_getitem()
 
 
 def test_integer_power():
@@ -485,6 +482,82 @@ def test_long_sympy_mapping():
     from pymbolic.interop.sympy import SympyToPymbolicMapper
     SympyToPymbolicMapper()(sp.sympify(int(10**20)))
     SympyToPymbolicMapper()(sp.sympify(int(10)))
+
+
+def test_stringifier_preserve_shift_order():
+    for expr in [
+            parse("(a << b) >> 2"),
+            parse("a << (b >> 2)")
+            ]:
+        assert parse(str(expr)) == expr
+
+
+LATEX_TEMPLATE = r"""\documentclass{article}
+\usepackage{amsmath}
+
+\begin{document}
+%s
+\end{document}"""
+
+
+def test_latex_mapper():
+    from pymbolic import parse
+    from pymbolic.mapper.stringifier import LaTeXMapper, StringifyMapper
+
+    tm = LaTeXMapper()
+    sm = StringifyMapper()
+
+    equations = []
+
+    def add(expr):
+        # Add an equation to the list of tests.
+        equations.append("\[%s\] %% from: %s" % (tm(expr), sm(expr)))
+
+    add(parse("a * b + c"))
+    add(parse("f(a,b,c)"))
+    add(parse("a ** b ** c"))
+    add(parse("(a | b) ^ ~c"))
+    add(parse("a << b"))
+    add(parse("a >> b"))
+    add(parse("a[i,j,k]"))
+    add(parse("a[1:3]"))
+    add(parse("a // b"))
+    add(parse("not (a or b) and c"))
+    add(parse("(a % b) % c"))
+    add(parse("(a >= b) or (b <= c)"))
+    add(prim.Min((1,)) + prim.Max((1, 2)))
+    add(prim.Substitution(prim.Variable("x") ** 2, ("x",), (2,)))
+    add(prim.Derivative(parse("x**2"), ("x",)))
+
+    # Run LaTeX and ensure the file compiles.
+    import os
+    import tempfile
+    import subprocess
+    import shutil
+
+    latex_dir = tempfile.mkdtemp("pymbolic")
+
+    try:
+        tex_file_path = os.path.join(latex_dir, "input.tex")
+
+        with open(tex_file_path, "w") as tex_file:
+            contents = LATEX_TEMPLATE % "\n".join(equations)
+            tex_file.write(contents)
+
+        try:
+            subprocess.check_output(
+                    ["latex",
+                     "-interaction=nonstopmode",
+                     "-output-directory=%s" % latex_dir,
+                     tex_file_path],
+                    universal_newlines=True)
+        except FileNotFoundError:
+            pytest.skip("latex command not found")
+        except subprocess.CalledProcessError as err:
+            assert False, str(err.output)
+
+    finally:
+        shutil.rmtree(latex_dir)
 
 
 if __name__ == "__main__":
