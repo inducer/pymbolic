@@ -560,6 +560,20 @@ def test_latex_mapper():
         shutil.rmtree(latex_dir)
 
 
+def test_flop_counter():
+    x = prim.Variable("x")
+    y = prim.Variable("y")
+    z = prim.Variable("z")
+
+    subexpr = prim.CommonSubexpression(3 * (x**2 + y + z))
+    expr = 3*subexpr + subexpr
+
+    from pymbolic.mapper.flop_counter import FlopCounter, CSEAwareFlopCounter
+    assert FlopCounter()(expr) == 4 * 2 + 2
+
+    assert CSEAwareFlopCounter()(expr) == 4 + 2
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
