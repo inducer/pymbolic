@@ -55,5 +55,6 @@ Finding expression properties
 .. automodule:: pymbolic.mapper.flop_counter
 
 .. autoclass:: FlopCounter
+.. autoclass:: CSEAwareFlopCounter
 
 .. vim: sw=4

@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import CombineMapper
+from pymbolic.mapper import CombineMapper, CachingMapperMixin
 
 
-class FlopCounter(CombineMapper):
+class FlopCounterBase(CombineMapper):
     def combine(self, values):
         return sum(values)
 
@@ -55,3 +55,28 @@ class FlopCounter(CombineMapper):
         return self.rec(expr.criterion) + max(
                 self.rec(expr.then),
                 self.rec(expr.else_))
+
+
+class FlopCounter(FlopCounterBase, CachingMapperMixin):
+    def map_common_subexpression_uncached(self, expr):
+        return self.rec(expr.child)
+
+
+class CSEAwareFlopCounter(FlopCounterBase):
+    """A flop counter that only counts the contribution from common
+    subexpressions once.
+
+    .. warning::
+
+        You must use a fresh mapper for each new evaluation operation for which
+        reuse may take place.
+    """
+    def __init__(self):
+        self.cse_seen_set = set()
+
+    def map_common_subexpression(self, expr):
+        if expr in self.cse_seen_set:
+            return 0
+        else:
+            self.cse_seen_set.add(expr)
+            return self.rec(expr.child)
