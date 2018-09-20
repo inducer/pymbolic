@@ -95,7 +95,7 @@ def test_sympy_interaction():
     import sympy as sp
 
     x, y = sp.symbols("x y")
-    f = sp.symbols("f")
+    f = sp.Function("f")
 
     s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)
 
