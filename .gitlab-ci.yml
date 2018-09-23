@@ -9,6 +9,9 @@ Python 2.7:
   - maxima
   except:
   - tags
+  artifacts:
+    reports:
+      junit: test/pytest.xml
 
 Python 2.7 Conda:
   script:
@@ -19,6 +22,9 @@ Python 2.7 Conda:
   - linux
   except:
   - tags
+  artifacts:
+    reports:
+      junit: test/pytest.xml
 
 Python 3.5:
   script:
@@ -31,6 +37,9 @@ Python 3.5:
   - maxima
   except:
   - tags
+  artifacts:
+    reports:
+      junit: test/pytest.xml
 
 Python 3.5 Conda:
   script:
@@ -41,6 +50,9 @@ Python 3.5 Conda:
   - linux
   except:
   - tags
+  artifacts:
+    reports:
+      junit: test/pytest.xml
 
 Python 3.5 Apple:
   script:
@@ -51,6 +63,9 @@ Python 3.5 Apple:
   - apple
   except:
   - tags
+  artifacts:
+    reports:
+      junit: test/pytest.xml
 
 Documentation:
   script:
