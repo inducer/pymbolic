@@ -281,7 +281,7 @@ def gaussian_elimination(mat, rhs):
     for i in range(m):
         g = gcd_many(*(
             [a for a in mat[i] if a]
-            +
+            +  # noqa: W504
             [a for a in rhs[i] if a]))
 
         mat[i] //= g

@@ -197,8 +197,8 @@ class CombineMapper(RecursiveMapper):
 
     def map_call(self, expr, *args, **kwargs):
         return self.combine(
-                (self.rec(expr.function, *args, **kwargs),) +
-                tuple(
+                (self.rec(expr.function, *args, **kwargs),)
+                + tuple(
                     self.rec(child, *args, **kwargs) for child in expr.parameters)
                 )
 
@@ -242,8 +242,8 @@ class CombineMapper(RecursiveMapper):
 
     def map_polynomial(self, expr, *args, **kwargs):
         return self.combine(
-                (self.rec(expr.base, *args, **kwargs),) +
-                tuple(
+                (self.rec(expr.base, *args, **kwargs),)
+                + tuple(
                     self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data)
                 )
 
