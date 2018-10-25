@@ -211,8 +211,7 @@ class Space(object):
         from pytools import all
         if not (
                 len(metric_matrix.shape) == 2
-                and
-                all(dim == len(basis) for dim in metric_matrix.shape)):
+                and all(dim == len(basis) for dim in metric_matrix.shape)):
             raise ValueError("metric_matrix has the wrong shape")
 
         self.basis_names = basis

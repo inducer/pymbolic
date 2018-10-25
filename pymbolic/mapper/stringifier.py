@@ -151,7 +151,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         args_strings = (
                 tuple(self.rec(ch, PREC_NONE, *args, **kwargs)
                       for ch in expr.parameters)
-                +
+                +  # noqa: W504
                 tuple("%s=%s" % (name, self.rec(ch, PREC_NONE, *args, **kwargs))
                     for name, ch in expr.kw_parameters.items()))
         return self.format("%s(%s)",
@@ -681,7 +681,7 @@ class LaTeXMapper(StringifyMapper):
                 "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
-        return self.format("[%s]\{%s\}",
+        return self.format(r"[%s]\{%s\}",
                 self.rec(expr.child, PREC_NONE, *args, **kwargs),
                 substs)
 

@@ -113,9 +113,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     def map_product(self, expr, *args):
         return pymbolic.flattened_sum(
             pymbolic.flattened_product(
-                [self.rec_undiff(ch, *args) for ch in expr.children[0:i]] +
-                [self.rec(child, *args)] +
-                [self.rec_undiff(ch, *args) for ch in expr.children[i+1:]]
+                [self.rec_undiff(ch, *args) for ch in expr.children[0:i]]
+                + [self.rec(child, *args)]
+                + [self.rec_undiff(ch, *args) for ch in expr.children[i+1:]]
                 )
             for i, child in enumerate(expr.children))
 

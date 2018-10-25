@@ -116,8 +116,7 @@ class ConditionalStatement(Statement):
         dep_mapper = self.get_dependency_mapper()
         return (
                 super(ConditionalStatement, self).get_read_variables()
-                |
-                frozenset(
+                | frozenset(
                     dep.name for dep in dep_mapper(self.condition)))
 
 # }}}

@@ -511,7 +511,7 @@ def test_latex_mapper():
 
     def add(expr):
         # Add an equation to the list of tests.
-        equations.append("\[%s\] %% from: %s" % (tm(expr), sm(expr)))
+        equations.append(r"\[%s\] %% from: %s" % (tm(expr), sm(expr)))
 
     add(parse("a * b + c"))
     add(parse("f(a,b,c)"))
