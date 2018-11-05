@@ -177,24 +177,6 @@ class Assignment(Statement):
 # {{{ conditional assignment
 
 class ConditionalAssignment(ConditionalStatement, Assignment):
-    """
-    .. attribute:: assignee
-    .. attribute:: assignee_subscript
-
-        The subscript in :attr:`assignee` which is being assigned.
-        A tuple, which may be empty, to indicate 'no subscript'.
-
-    .. attribute:: expression
-    .. attribute:: loops
-
-        A list of triples *(identifier, start, end)* that the assignment
-        should be carried out inside of these loops.
-        No ordering of loop iterations is implied.
-        The loops will typically be nested outer-to-inner, but a target
-        may validly use any order it likes.
-
-    """
-
     def map_expressions(self, mapper, include_lhs=True):
         return (super(ConditionalAssignment, self)
                 .map_expressions(mapper, include_lhs=include_lhs)

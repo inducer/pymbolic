@@ -203,7 +203,8 @@ class NablaComponentToUnitVector(EvaluationMapper):
 
 
 class DerivativeSourceFinder(EvaluationMapper):
-    """Recurses down until it finds the :class:`pytential.sym.DerivativeSource`
+    """Recurses down until it finds the
+    :class:`pymbolic.geometric_algebra.primitives.DerivativeSource`
     with the right *nabla_id*, then calls :method:`DerivativeBinder.take_derivative`
     on the source's argument.
     """
