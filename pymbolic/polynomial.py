@@ -77,6 +77,9 @@ class LexicalMonomialOrder:
         return "LexicalMonomialOrder()"
 
 
+
+
+
 class Polynomial(Expression):
     def __init__(self, base, data=None, unit=1, var_less=LexicalMonomialOrder()):
         self.Base = base
