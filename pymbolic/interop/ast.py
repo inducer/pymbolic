@@ -91,12 +91,15 @@ class ASTMapper(object):
 # {{{ mapper
 
 class ASTToPymbolic(ASTMapper):
+    @staticmethod
     def _add(x, y):  # noqa
         return p.Sum((x, y))
 
+    @staticmethod
     def _sub(x, y):  # noqa
         return p.Sum((x, p.Product(((-1), y))))
 
+    @staticmethod
     def _mult(x, y):  # noqa
         return p.Product((x, y))
 
@@ -127,8 +130,9 @@ class ASTToPymbolic(ASTMapper):
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
+    @staticmethod
     def _neg(x):  # noqa
-        return p.Product((-1), x)
+        return p.Product((-1, x),)
 
     unary_op_map = {
             ast.Invert: _neg,

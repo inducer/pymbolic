@@ -119,6 +119,9 @@ class UnifierBase(RecursiveMapper):
         self.rhs_mapping_candidates = rhs_mapping_candidates
         self.force_var_match = force_var_match
 
+    def treat_mismatch(self, expr, other, urecs):
+        raise NotImplementedError
+
     def unification_record_from_equation(self, lhs, rhs):
         if isinstance(lhs, (tuple, list)) or isinstance(rhs, (tuple, list)):
             # Always force lists/tuples to agree elementwise, never

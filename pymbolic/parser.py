@@ -212,7 +212,7 @@ class Parser(object):
             left_exp = self.parse_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_minus):
             pstate.advance()
-            left_exp = -self.parse_expression(pstate, _PREC_UNARY)
+            left_exp = -self.parse_expression(pstate, _PREC_UNARY)  # noqa pylint:disable=invalid-unary-operand-type
         elif pstate.is_next(_not):
             pstate.advance()
             from pymbolic.primitives import LogicalNot

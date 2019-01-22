@@ -61,7 +61,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     # only called for Py2
     def map_long(self, expr):
-        return long(expr)  # noqa
+        return long(expr)  # noqa  pylint:disable=undefined-variable
 
     def map_Indexed(self, expr):  # noqa
         return prim.Subscript(
