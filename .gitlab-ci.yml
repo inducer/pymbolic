@@ -69,7 +69,7 @@ Python 3.5 Apple:
 
 Pylint:
   script:
-  - EXTRA_INSTALL="numpy sympy pexpect"
+  - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
   - py_version=3.6
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-pylint.sh
   - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
