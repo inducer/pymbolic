@@ -104,9 +104,9 @@ class ASTToPymbolic(ASTMapper):
         return p.Product((x, y))
 
     bin_op_map = {
-            ast.Add: _add,
-            ast.Sub: _sub,
-            ast.Mult: _mult,
+            ast.Add: ASTToPymbolic._add,
+            ast.Sub: ASTToPymbolic._sub,
+            ast.Mult: ASTToPymbolic._mult,
             # MatMult
             ast.Div: p.Quotient,
             ast.FloorDiv: p.FloorDiv,
@@ -135,10 +135,10 @@ class ASTToPymbolic(ASTMapper):
         return p.Product((-1, x),)
 
     unary_op_map = {
-            ast.Invert: _neg,
+            ast.Invert: ASTToPymbolic._neg,
             ast.Not: p.LogicalNot,
             # ast.UAdd:
-            ast.USub: _neg,
+            ast.USub: ASTToPymbolic._neg,
             }
 
     def map_UnaryOp(self, expr):  # noqa
