@@ -56,6 +56,13 @@ def _sort_uniq(data):
 
 
 
+def _get_dependencies(expr):
+    from pymbolic.mapper.dependency import DependencyMapper
+    return DependencyMapper()(expr)
+
+
+
+
 class LexicalMonomialOrder:
     def __call__(self, a, b):
         from pymbolic.primitives import Variable
@@ -218,7 +225,7 @@ class Polynomial(Expression):
                 return quot * self, rem * self
 
         if other.degree == -1:
-            raise DivisionByZeroError
+            raise ZeroDivisionError
 
         quot = Polynomial(self.Base, ())
         rem = self
@@ -252,11 +259,11 @@ class Polynomial(Expression):
 
     __truediv__ = __div__
 
-    def __floordiv__(self):
-        return self.__divmod__(self, other)[0]
+    def __floordiv__(self, other):
+        return self.__divmod__(other)[0]
 
-    def __mod__(self):
-        return self.__divmod__(self, other)[1]
+    def __mod__(self, other):
+        return self.__divmod__(other)[1]
 
     def _data(self):
         return self.Data
@@ -283,7 +290,7 @@ class Polynomial(Expression):
     mapper_method = intern("map_polynomial")
 
     def as_primitives(self):
-        deps = pymbolic.get_dependencies(self)
+        deps = _get_dependencies(self)
         context = dict((dep, dep) for dep in deps)
         return pymbolic.evaluate(self, context)
 
@@ -293,21 +300,6 @@ class Polynomial(Expression):
             if exp == sought_exp:
                 return coeff
         return 0
-
-
-
-
-def from_primitives(expr, var_order):
-    from pymbolic import get_dependencies, evaluate
-
-    deps = get_dependencies(expr)
-    var_deps = [dep for dep in deps if dep in var_order]
-    context = dict((vd, Polynomial(vd, var_order=var_order))
-            for vd in var_deps)
-
-    # FIXME not fast, but works
-    # (and exercises multivariate polynomial code)
-    return evaluate(expr, context)
 
 
 
@@ -335,7 +327,8 @@ def integrate_definite(poly, a, b):
     a_bound = pymbolic.substitute(antideriv, {poly.base: a})
     b_bound = pymbolic.substitute(antideriv, {poly.base: b})
 
-    return pymbolic.sum((b_bound, -a_bound))
+    from pymbolic.primitives import Sum
+    return Sum((b_bound, -a_bound))
 
 
 

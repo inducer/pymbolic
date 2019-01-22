@@ -97,7 +97,7 @@ def test_sympy_interaction():
     x, y = sp.symbols("x y")
     f = sp.Function("f")
 
-    s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)
+    s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)  # pylint:disable=not-callable
 
     from pymbolic.sympy_interface import (
             SympyToPymbolicMapper,
