@@ -1310,7 +1310,7 @@ class Vector(Expression):
     def __div__(self, other):
         # Py2 only
         import operator
-        return Vector(tuple(operator.div(x, other) for x in self))  # pylint: disable=no-member
+        return Vector(tuple(operator.div(x, other) for x in self))  # noqa pylint: disable=no-member
 
     def __truediv__(self, other):
         import operator
