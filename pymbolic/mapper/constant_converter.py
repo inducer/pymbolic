@@ -45,7 +45,7 @@ class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
             elif real_type is np.float64:
                 complex_type = np.complex128
             elif real_type is np.float128:  # pylint:disable=no-member
-                complex_type = np.complex256  # pylint:disable-no-member
+                complex_type = np.complex256  # pylint:disable=no-member
             else:
                 raise TypeError(
                         "unable to determine corresponding complex type for '%s'"
