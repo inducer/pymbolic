@@ -53,7 +53,7 @@ def exp(x):
 
 def sinh(x):
     return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "tanh"), (x,))
+            primitives.Lookup(primitives.Variable("math"), "sinh"), (x,))
 
 
 def cosh(x):
@@ -63,7 +63,7 @@ def cosh(x):
 
 def tanh(x):
     return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "sinh"), (x,))
+            primitives.Lookup(primitives.Variable("math"), "tanh"), (x,))
 
 
 def expm1(x):
