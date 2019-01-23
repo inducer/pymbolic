@@ -59,6 +59,7 @@ def map_math_functions_by_name(i, func, pars):
     elif f is math.expm1 and len(pars) == 1:
         return make_f("exp")(*pars)
     elif f is math.fabs and len(pars) == 1:
+        from pymbolic.functions import sgn
         return sgn(*pars)
     else:
         raise RuntimeError("unrecognized function, cannot differentiate")
