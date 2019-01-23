@@ -50,6 +50,16 @@ def map_math_functions_by_name(i, func, pars):
         return primitives.quotient(1, pars[0])
     elif f is math.exp and len(pars) == 1:
         return make_f("exp")(*pars)
+    elif f is math.sinh and len(pars) == 1:
+        return make_f("cosh")(*pars)
+    elif f is math.cosh and len(pars) == 1:
+        return make_f("sinh")(*pars)
+    elif f is math.tanh and len(pars) == 1:
+        return 1-make_f("tanh")(*pars)**2
+    elif f is math.expm1 and len(pars) == 1:
+        return make_f("exp")(*pars)
+    elif f is math.fabs and len(pars) == 1:
+        return sgn(*pars)
     else:
         raise RuntimeError("unrecognized function, cannot differentiate")
 

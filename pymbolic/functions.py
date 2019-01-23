@@ -49,3 +49,34 @@ def log(x):
 def exp(x):
     return primitives.Call(
             primitives.Lookup(primitives.Variable("math"), "exp"), (x,))
+
+
+def sinh(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "tanh"), (x,))
+
+
+def cosh(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "cosh"), (x,))
+
+
+def tanh(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "sinh"), (x,))
+
+
+def expm1(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "expm1"), (x,))
+
+
+def fabs(x):
+    return primitives.Call(
+            primitives.Lookup(primitives.Variable("math"), "fabs"), (x,))
+
+
+def sgn(x):
+    return primitives.Quotient(x,
+            primitives.Call(
+                primitives.Lookup(primitives.Variable("math"), "fabs"), (x,)))
