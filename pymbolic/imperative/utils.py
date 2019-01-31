@@ -124,9 +124,9 @@ def get_dot_dependency_graph(
             lines.append("%s -> %s" % (stmt_2, stmt_1))
 
     for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
-            lines.append(
-                    "%s -> %s  [label=\"%s\",style=\"dashed\"]"
-                    % (stmt_2, stmt_1, annot))
+        lines.append(
+                "%s -> %s  [label=\"%s\",style=\"dashed\"]"
+                % (stmt_2, stmt_1, annot))
 
     lines.extend(additional_lines_hook())
 
