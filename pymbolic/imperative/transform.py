@@ -67,7 +67,7 @@ def fuse_instruction_streams_with_unique_ids(insns_a, insns_b):
 def disambiguate_identifiers(statements_a, statements_b,
         should_disambiguate_name=None):
     if should_disambiguate_name is None:
-        def should_disambiguate_name(name):
+        def should_disambiguate_name(name):  # pylint:disable=function-redefined
             return True
 
     from pymbolic.imperative.analysis import get_all_used_identifiers

@@ -145,11 +145,15 @@ class Dimensionalizer(EvaluationMapper):
         Dimension of ambient space. Must be provided by subclass.
     """
 
+    @property
+    def ambient_dim(self):
+        raise NotImplementedError
+
     def map_multivector_variable(self, expr):
         from pymbolic.primitives import make_sym_vector
         return MultiVector(
                 make_sym_vector(expr.name, self.ambient_dim,
-                    var_class=type(expr)))
+                    var_factory=type(expr)))
 
     def map_nabla(self, expr):
         from pytools.obj_array import make_obj_array
@@ -231,6 +235,9 @@ class DerivativeBinder(IdentityMapper):
         self.derivative_collector = \
                 self.derivative_source_and_nabla_component_collector()
         self.restrict_to_id = restrict_to_id
+
+    def take_derivative(self, ambient_axis, expr):
+        raise NotImplementedError
 
     def map_product(self, expr):
         # {{{ gather NablaComponents and DerivativeSources

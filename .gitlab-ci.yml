@@ -26,14 +26,14 @@ Python 2.7 Conda:
     reports:
       junit: test/pytest.xml
 
-Python 3.5:
+Python 3.6:
   script:
-  - py_version=3.5
+  - py_version=3.6
   - EXTRA_INSTALL="numpy sympy pexpect"
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
   - ". ./build-and-test-py-project.sh"
   tags:
-  - python3.5
+  - python3.6
   - maxima
   except:
   - tags
@@ -67,13 +67,24 @@ Python 3.5 Apple:
     reports:
       junit: test/pytest.xml
 
+Pylint:
+  script:
+  - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
+  - py_version=3.6
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-pylint.sh
+  - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
+  tags:
+  - python3.6
+  except:
+  - tags
+
 Documentation:
   script:
   - EXTRA_INSTALL="numpy"
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-docs.sh
   - ". ./build-docs.sh"
   tags:
-  - python3.5
+  - linux
   only:
   - master
 
