@@ -66,8 +66,8 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
     def map_call(self, expr):
         if self.include_calls == "descend_args":
-                return self.combine(
-                        [self.rec(child) for child in expr.parameters])
+            return self.combine(
+                    [self.rec(child) for child in expr.parameters])
         elif self.include_calls:
             return set([expr])
         else:
@@ -75,10 +75,10 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
     def map_call_with_kwargs(self, expr):
         if self.include_calls == "descend_args":
-                return self.combine(
-                        [self.rec(child) for child in expr.parameters]
-                        + [self.rec(val) for name, val in expr.kw_parameters.items()]
-                        )
+            return self.combine(
+                    [self.rec(child) for child in expr.parameters]
+                    + [self.rec(val) for name, val in expr.kw_parameters.items()]
+                    )
         elif self.include_calls:
             return set([expr])
         else:
