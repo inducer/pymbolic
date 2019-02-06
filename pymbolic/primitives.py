@@ -1700,14 +1700,23 @@ def make_sym_vector(name, components, var_factory=None):
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
-    :arg components: The number of components in the vector.
-    :arg var_factory: The :class:`Variable` subclass to use for instantiating
-        the scalar variables.
+    :arg components: Either a list of indices, or an integer representing the
+        number of indices.
+    :arg var_factory: The :class:`Variable` subclass to
+        use for instantiating the scalar variables.
+
+    For example, this creates a vector with three components::
+
+        >>> make_sym_vector("vec", 3)
+        array([Subscript(Variable('vec'), 0), Subscript(Variable('vec'), 1),
+               Subscript(Variable('vec'), 2)], dtype=object)
+
     """
     if var_factory is None:
         var_factory = Variable
 
-    if isinstance(components, int):
+    from numbers import Integral
+    if isinstance(components, Integral):
         components = list(range(components))
 
     from pytools.obj_array import join_fields
