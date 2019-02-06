@@ -1721,10 +1721,7 @@ def make_sym_vector(name, components, var_factory=Variable):
     return join_fields(*[vfld.index(i) for i in components])
 
 
-def make_sym_array(name, shape, var_factory=None):
-    if var_factory is None:
-        var_factory = Variable
-
+def make_sym_array(name, shape, var_factory=Variable):
     vfld = var_factory(name)
     if shape == ():
         return vfld
