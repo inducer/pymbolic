@@ -1696,7 +1696,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
             return CommonSubexpression(field, prefix, scope)
 
 
-def make_sym_vector(name, components, var_factory=None):
+def make_sym_vector(name, components, var_factory=Variable):
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
@@ -1712,9 +1712,6 @@ def make_sym_vector(name, components, var_factory=None):
                Subscript(Variable('vec'), 2)], dtype=object)
 
     """
-    if var_factory is None:
-        var_factory = Variable
-
     from numbers import Integral
     if isinstance(components, Integral):
         components = list(range(components))
