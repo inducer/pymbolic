@@ -1696,18 +1696,24 @@ def make_common_subexpression(field, prefix=None, scope=None):
             return CommonSubexpression(field, prefix, scope)
 
 
-def make_sym_vector(name, components, var_factory=None):
+def make_sym_vector(name, components, var_factory=Variable):
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
-    :arg components: The number of components in the vector.
-    :arg var_factory: The :class:`Variable` subclass to use for instantiating
-        the scalar variables.
-    """
-    if var_factory is None:
-        var_factory = Variable
+    :arg components: Either a list of indices, or an integer representing the
+        number of indices.
+    :arg var_factory: The :class:`Variable` subclass to
+        use for instantiating the scalar variables.
 
-    if isinstance(components, int):
+    For example, this creates a vector with three components::
+
+        >>> make_sym_vector("vec", 3)
+        array([Subscript(Variable('vec'), 0), Subscript(Variable('vec'), 1),
+               Subscript(Variable('vec'), 2)], dtype=object)
+
+    """
+    from numbers import Integral
+    if isinstance(components, Integral):
         components = list(range(components))
 
     from pytools.obj_array import join_fields
@@ -1715,10 +1721,7 @@ def make_sym_vector(name, components, var_factory=None):
     return join_fields(*[vfld.index(i) for i in components])
 
 
-def make_sym_array(name, shape, var_factory=None):
-    if var_factory is None:
-        var_factory = Variable
-
+def make_sym_array(name, shape, var_factory=Variable):
     vfld = var_factory(name)
     if shape == ():
         return vfld
