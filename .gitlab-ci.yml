@@ -77,7 +77,6 @@ Pylint:
   - python3
   except:
   - tags
-  allow_failure: true
 
 Documentation:
   script:
