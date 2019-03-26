@@ -574,6 +574,15 @@ def test_flop_counter():
     assert CSEAwareFlopCounter()(expr) == 4 + 2
 
 
+def test_make_sym_vector():
+    numpy = pytest.importorskip("numpy")
+    from pymbolic.primitives import make_sym_vector
+
+    assert len(make_sym_vector("vec", 2)) == 2
+    assert len(make_sym_vector("vec", numpy.int32(2))) == 2
+    assert len(make_sym_vector("vec", [1, 2, 3])) == 3
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
