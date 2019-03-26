@@ -79,6 +79,7 @@ def get_dot_dependency_graph(
                 )
 
     lines = list(preamble_hook())
+    lines.append("rankdir=BT;")
     dep_graph = {}
 
     # maps (oriented) edge onto annotation string
@@ -121,7 +122,7 @@ def get_dot_dependency_graph(
 
     for stmt_1 in dep_graph:
         for stmt_2 in dep_graph.get(stmt_1, set()):
-            lines.append("%s -> %s" % (stmt_2, stmt_1))
+            lines.append("%s -> %s" % (stmt_1, stmt_2))
 
     for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
         lines.append(
