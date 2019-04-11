@@ -50,6 +50,8 @@ def get_dot_dependency_graph(
     """Return a string in the `dot <http://graphviz.org/>`_ language depicting
     dependencies among kernel statements.
 
+    :arg statements: A sequence of statements, each of which is stringified by
+        calling :func:`str`.
     :arg preamble_hook: A function that returns an iterable of lines
         to add at the beginning of the graph
     :arg additional_lines_hook: A function that returns an iterable
@@ -73,10 +75,7 @@ def get_dot_dependency_graph(
             stmt_label = str(stmt)
             tooltip = stmt.id
 
-        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (
-                repr(stmt_label)[1:-1],
-                repr(tooltip)[1:-1],
-                )
+        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (stmt_label, tooltip)
 
     lines = list(preamble_hook())
     lines.append("rankdir=BT;")
