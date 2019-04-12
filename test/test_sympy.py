@@ -54,7 +54,7 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     # indexed accesses
     if not use_symengine:
         i, j = sym.symbols("i,j")
-        assert mapper(sym.tensor.indexed.Indexed(x, i, j)) == x_[i_, j_]
+        assert mapper(sym.Indexed(x, i, j)) == x_[i_, j_]
 
     # constants
     import math
@@ -100,7 +100,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
         assert mapper(x_[0]) == sym.Symbol("x_0")
     else:
         i, j = sym.symbols("i,j")
-        assert mapper(x_[i_, j_]) == sym.tensor.indexed.Indexed(x, i, j)
+        assert mapper(x_[i_, j_]) == sym.Indexed(x, i, j)
 
     assert mapper(prim.Variable("f")(x_)) == sym.Function("f")(x)
 
