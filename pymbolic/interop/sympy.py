@@ -109,7 +109,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
                 *[self.sym.Symbol(v) for v in expr.variables])
 
     def map_subscript(self, expr):
-        return self.sym.tensor.indexed.Indexed(
+        return self.sym.Indexed(
             self.rec(expr.aggregate),
             *tuple(self.rec(i) for i in expr.index_tuple)
             )
