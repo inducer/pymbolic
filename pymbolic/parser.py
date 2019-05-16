@@ -384,6 +384,8 @@ class Parser(object):
                 left_exp = _join_to_slice(left_exp, next_expr)
                 pstate.assign(expr_pstate)
 
+            did_something = True
+
         elif next_tag is _comma and _PREC_COMMA > min_precedence:
             # The precedence makes the comma left-associative.
 
