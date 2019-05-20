@@ -220,8 +220,25 @@ def test_parser():
     print(repr(parse("3::1")))
     print(repr(parse(":5:1")))
     print(repr(parse("3:5:1")))
-    print(repr(parse("g[i,k]+2.0*h[i,k]")))
-    print(repr(parse("g[i,k]+(+2.0)*h[i,k]")))
+
+    def assert_parse_roundtrip(expr_str):
+        expr = parse(expr_str)
+        from pymbolic.mapper.stringifier import StringifyMapper
+        strified = StringifyMapper()(expr)
+        assert strified == expr_str, (strified, expr_str)
+
+    assert_parse_roundtrip("()")
+    assert_parse_roundtrip("(3,)")
+
+    assert_parse_roundtrip("[x + 3, 3, 5]")
+    # FIXME: trailing commas not allowed
+    # assert parse("[x + 3, 3, 5]") == parse("[x + 3, 3, 5]")
+    assert_parse_roundtrip("[]")
+    assert_parse_roundtrip("[x]")
+
+    assert_parse_roundtrip("g[i, k] + 2.0*h[i, k]")
+    parse("g[i,k]+(+2.0)*h[i, k]")
+
     print(repr(parse("a - b - c")))
     print(repr(parse("-a - -b - -c")))
     print(repr(parse("- - - a - - - - b - - - - - c")))

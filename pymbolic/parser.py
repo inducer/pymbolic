@@ -92,10 +92,18 @@ def _join_to_slice(left, right):
         return Slice((left, right))
 
 
-class FinalizedTuple(tuple):
-    """A tuple that may not have elements appended to it, because it was
-    terminated by a close-paren.
+class FinalizedContainer(object):
+    """A base class for containers  that may not have elements appended to it,
+    because they were terminated by a closing delimiter.
     """
+
+
+class FinalizedTuple(tuple, FinalizedContainer):
+    pass
+
+
+class FinalizedList(list, FinalizedContainer):
+    pass
 
 
 class Parser(object):
@@ -225,11 +233,42 @@ class Parser(object):
                     self.parse_expression(pstate, _PREC_UNARY))
         elif pstate.is_next(_openpar):
             pstate.advance()
-            left_exp = self.parse_expression(pstate)
+
+            if pstate.is_next(_closepar):
+                left_exp = ()
+            else:
+                # This is parsing expressions separated by commas, so it
+                # will return a tuple. Kind of the lazy way out.
+                left_exp = self.parse_expression(pstate)
+
             pstate.expect(_closepar)
             pstate.advance()
             if isinstance(left_exp, tuple):
+                # These could just be plain parentheses.
+
+                # Finalization prevents things from being appended
+                # to containers after their closing delimiter.
                 left_exp = FinalizedTuple(left_exp)
+        elif pstate.is_next(_openbracket):
+            pstate.advance()
+
+            if pstate.is_next(_closebracket):
+                left_exp = ()
+            else:
+                # This is parsing expressions separated by commas, so it
+                # will return a tuple. Kind of the lazy way out.
+                left_exp = self.parse_expression(pstate)
+
+            pstate.expect(_closebracket)
+            pstate.advance()
+
+            # Finalization prevents things from being appended
+            # to containers after their closing delimiter.
+            if isinstance(left_exp, tuple):
+                left_exp = FinalizedList(left_exp)
+            else:
+                left_exp = FinalizedList([left_exp])
+
         else:
             left_exp = self.parse_terminal(pstate)
 
@@ -394,8 +433,8 @@ class Parser(object):
                 left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
-                if isinstance(left_exp, tuple) \
-                        and not isinstance(left_exp, FinalizedTuple):
+                if isinstance(left_exp, (tuple, list)) \
+                        and not isinstance(left_exp, FinalizedContainer):
                     left_exp = left_exp + (new_el,)
                 else:
                     left_exp = (left_exp, new_el)
