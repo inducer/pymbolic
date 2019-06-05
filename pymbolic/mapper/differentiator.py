@@ -185,7 +185,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
         return (
                 Polynomial(self.rec_undiff(expr.base, *args),
-                        tuple(deriv_coeff), expr.unit) +
+                        tuple(deriv_coeff), expr.unit)
                 + Polynomial(self.rec_undiff(expr.base, *args),
                     tuple(deriv_base), expr.unit))
 

@@ -130,6 +130,13 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
 
 class PymbolicToSympyLikeMapper(EvaluationMapper):
 
+    @property
+    def sym(self):
+        raise NotImplementedError
+
+    def raise_conversion_error(self, message):
+        raise NotImplementedError
+
     def map_variable(self, expr):
         return self.sym.Symbol(expr.name)
 

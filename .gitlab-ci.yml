@@ -26,14 +26,14 @@ Python 2.7 Conda:
     reports:
       junit: test/pytest.xml
 
-Python 3.6:
+Python 3:
   script:
-  - py_version=3.6
+  - PY_EXE=python3
   - EXTRA_INSTALL="numpy sympy pexpect"
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
   - ". ./build-and-test-py-project.sh"
   tags:
-  - python3.6
+  - python3
   - maxima
   except:
   - tags
@@ -41,7 +41,7 @@ Python 3.6:
     reports:
       junit: test/pytest.xml
 
-Python 3.5 Conda:
+Python 3 Conda:
   script:
   - CONDA_ENVIRONMENT=.test-py3.yml
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
@@ -54,7 +54,7 @@ Python 3.5 Conda:
     reports:
       junit: test/pytest.xml
 
-Python 3.5 Apple:
+Python 3 Conda Apple:
   script:
   - CONDA_ENVIRONMENT=.test-py3.yml
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
@@ -66,6 +66,17 @@ Python 3.5 Apple:
   artifacts:
     reports:
       junit: test/pytest.xml
+
+Pylint:
+  script:
+  - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
+  - PY_EXE=python3
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-pylint.sh
+  - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
+  tags:
+  - python3
+  except:
+  - tags
 
 Documentation:
   script:
@@ -82,6 +93,6 @@ Flake8:
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
   - ". ./prepare-and-run-flake8.sh pymbolic test"
   tags:
-  - python3.5
+  - python3
   except:
   - tags

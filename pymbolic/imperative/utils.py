@@ -44,16 +44,23 @@ def get_dot_dependency_graph(
         statements,  use_stmt_ids=None,
         preamble_hook=_default_preamble_hook,
         additional_lines_hook=list,
+        statement_stringifier=lambda s: str(s).replace("\"", "\\\""),
 
         # deprecated
         use_insn_ids=None,):
     """Return a string in the `dot <http://graphviz.org/>`_ language depicting
     dependencies among kernel statements.
 
+    :arg statements: A sequence of statements, each of which is stringified by
+        calling *statement_stringifier*.
+    :arg statement_stringifier: The function to use for stringifying the
+        statements. The default stringifier uses :func:`str` and escapes all
+        double quotes (``"``) in the string representation.
     :arg preamble_hook: A function that returns an iterable of lines
         to add at the beginning of the graph
     :arg additional_lines_hook: A function that returns an iterable
         of lines to add at the end of the graph
+
     """
 
     if use_stmt_ids is not None and use_insn_ids is not None:
@@ -68,17 +75,15 @@ def get_dot_dependency_graph(
     def get_node_attrs(stmt):
         if use_stmt_ids:
             stmt_label = stmt.id
-            tooltip = str(stmt)
+            tooltip = statement_stringifier(stmt)
         else:
-            stmt_label = str(stmt)
+            stmt_label = statement_stringifier(stmt)
             tooltip = stmt.id
 
-        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (
-                repr(stmt_label)[1:-1],
-                repr(tooltip)[1:-1],
-                )
+        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (stmt_label, tooltip)
 
     lines = list(preamble_hook())
+    lines.append("rankdir=BT;")
     dep_graph = {}
 
     # maps (oriented) edge onto annotation string
@@ -121,12 +126,12 @@ def get_dot_dependency_graph(
 
     for stmt_1 in dep_graph:
         for stmt_2 in dep_graph.get(stmt_1, set()):
-            lines.append("%s -> %s" % (stmt_2, stmt_1))
+            lines.append("%s -> %s" % (stmt_1, stmt_2))
 
     for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
-            lines.append(
-                    "%s -> %s  [label=\"%s\",style=\"dashed\"]"
-                    % (stmt_2, stmt_1, annot))
+        lines.append(
+                "%s -> %s  [label=\"%s\",style=\"dashed\"]"
+                % (stmt_2, stmt_1, annot))
 
     lines.extend(additional_lines_hook())
 

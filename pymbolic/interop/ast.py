@@ -90,15 +90,23 @@ class ASTMapper(object):
 
 # {{{ mapper
 
+def _add(x, y):
+    return p.Sum((x, y))
+
+
+def _sub(x, y):
+    return p.Sum((x, p.Product(((-1), y))))
+
+
+def _mult(x, y):
+    return p.Product((x, y))
+
+
+def _neg(x):
+    return p.Product((-1, x),)
+
+
 class ASTToPymbolic(ASTMapper):
-    def _add(x, y):  # noqa
-        return p.Sum((x, y))
-
-    def _sub(x, y):  # noqa
-        return p.Sum((x, p.Product(((-1), y))))
-
-    def _mult(x, y):  # noqa
-        return p.Product((x, y))
 
     bin_op_map = {
             ast.Add: _add,
@@ -126,9 +134,6 @@ class ASTToPymbolic(ASTMapper):
                         type(expr.op).__name__))
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
-
-    def _neg(x):  # noqa
-        return p.Product((-1), x)
 
     unary_op_map = {
             ast.Invert: _neg,

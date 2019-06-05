@@ -97,7 +97,7 @@ def test_sympy_interaction():
     x, y = sp.symbols("x y")
     f = sp.Function("f")
 
-    s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)
+    s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)  # pylint:disable=not-callable
 
     from pymbolic.sympy_interface import (
             SympyToPymbolicMapper,
@@ -220,8 +220,25 @@ def test_parser():
     print(repr(parse("3::1")))
     print(repr(parse(":5:1")))
     print(repr(parse("3:5:1")))
-    print(repr(parse("g[i,k]+2.0*h[i,k]")))
-    print(repr(parse("g[i,k]+(+2.0)*h[i,k]")))
+
+    def assert_parse_roundtrip(expr_str):
+        expr = parse(expr_str)
+        from pymbolic.mapper.stringifier import StringifyMapper
+        strified = StringifyMapper()(expr)
+        assert strified == expr_str, (strified, expr_str)
+
+    assert_parse_roundtrip("()")
+    assert_parse_roundtrip("(3,)")
+
+    assert_parse_roundtrip("[x + 3, 3, 5]")
+    # FIXME: trailing commas not allowed
+    # assert parse("[x + 3, 3, 5]") == parse("[x + 3, 3, 5]")
+    assert_parse_roundtrip("[]")
+    assert_parse_roundtrip("[x]")
+
+    assert_parse_roundtrip("g[i, k] + 2.0*h[i, k]")
+    parse("g[i,k]+(+2.0)*h[i, k]")
+
     print(repr(parse("a - b - c")))
     print(repr(parse("-a - -b - -c")))
     print(repr(parse("- - - a - - - - b - - - - - c")))
@@ -572,6 +589,15 @@ def test_flop_counter():
     assert FlopCounter()(expr) == 4 * 2 + 2
 
     assert CSEAwareFlopCounter()(expr) == 4 + 2
+
+
+def test_make_sym_vector():
+    numpy = pytest.importorskip("numpy")
+    from pymbolic.primitives import make_sym_vector
+
+    assert len(make_sym_vector("vec", 2)) == 2
+    assert len(make_sym_vector("vec", numpy.int32(2))) == 2
+    assert len(make_sym_vector("vec", [1, 2, 3])) == 3
 
 
 if __name__ == "__main__":

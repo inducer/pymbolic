@@ -47,7 +47,7 @@ class ConstantFoldingMapperBase(object):
 
         queue = list(expr.children)
         while queue:
-            child = self.rec(queue.pop(0))
+            child = self.rec(queue.pop(0))  # pylint:disable=no-member
             if isinstance(child, klass):
                 queue = list(child.children) + queue
             else:

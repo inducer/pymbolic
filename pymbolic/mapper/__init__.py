@@ -135,6 +135,9 @@ class Mapper(object):
 
     rec = __call__
 
+    def map_algebraic_leaf(self, expr, *args, **kwargs):
+        raise NotImplementedError
+
     def map_variable(self, expr, *args, **kwargs):
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
@@ -152,6 +155,21 @@ class Mapper(object):
 
     def map_rational(self, expr, *args, **kwargs):
         return self.map_quotient(expr, *args, **kwargs)
+
+    def map_quotient(self, expr, *args, **kwargs):
+        raise NotImplementedError
+
+    def map_constant(self, expr, *args, **kwargs):
+        raise NotImplementedError
+
+    def map_list(self, expr, *args, **kwargs):
+        raise NotImplementedError
+
+    def map_tuple(self, expr, *args, **kwargs):
+        raise NotImplementedError
+
+    def map_numpy_array(self, expr, *args, **kwargs):
+        raise NotImplementedError
 
     def map_foreign(self, expr, *args, **kwargs):
         """Mapper method dispatch for non-:mod:`pymbolic` objects."""
@@ -194,6 +212,9 @@ class CombineMapper(RecursiveMapper):
     :class:`CombineMapper`.) The
     :class:`pymbolic.mapper.dependency.DependencyMapper` is another example.
     """
+
+    def combine(self, values):
+        raise NotImplementedError
 
     def map_call(self, expr, *args, **kwargs):
         return self.combine(

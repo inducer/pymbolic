@@ -61,7 +61,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     # only called for Py2
     def map_long(self, expr):
-        return long(expr)  # noqa
+        return long(expr)  # noqa  pylint:disable=undefined-variable
 
     def map_Indexed(self, expr):  # noqa
         return prim.Subscript(
@@ -109,7 +109,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
                 *[self.sym.Symbol(v) for v in expr.variables])
 
     def map_subscript(self, expr):
-        return self.sym.tensor.indexed.Indexed(
+        return self.sym.Indexed(
             self.rec(expr.aggregate),
             *tuple(self.rec(i) for i in expr.index_tuple)
             )
