@@ -351,15 +351,15 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 type_name, self.rec(expr.child, PREC_NONE, *args, **kwargs))
 
     def map_if(self, expr, enclosing_prec, *args, **kwargs):
-        return "If(%s, %s, %s)" % (
-                self.rec(expr.condition, PREC_NONE, *args, **kwargs),
+        return "(%s if %s else %s)" % (
                 self.rec(expr.then, PREC_NONE, *args, **kwargs),
+                self.rec(expr.condition, PREC_NONE, *args, **kwargs),
                 self.rec(expr.else_, PREC_NONE, *args, **kwargs))
 
     def map_if_positive(self, expr, enclosing_prec, *args, **kwargs):
-        return "If(%s > 0, %s, %s)" % (
-                self.rec(expr.criterion, PREC_NONE, *args, **kwargs),
+        return "(%s if %s > 0 else %s)" % (
                 self.rec(expr.then, PREC_NONE, *args, **kwargs),
+                self.rec(expr.criterion, PREC_NONE, *args, **kwargs),
                 self.rec(expr.else_, PREC_NONE, *args, **kwargs))
 
     def map_min(self, expr, enclosing_prec, *args, **kwargs):
