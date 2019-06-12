@@ -79,6 +79,7 @@ _PREC_BITWISE_AND = 130
 
 _PREC_COMPARISON = 200
 _PREC_SHIFT = 205
+_PREC_IF = 207
 _PREC_PLUS = 210
 _PREC_TIMES = 220
 _PREC_POWER = 230
@@ -320,7 +321,7 @@ class Parser(object):
             pstate.expect(_closebracket)
             pstate.advance()
             did_something = True
-        elif next_tag is _if and _PREC_CALL > min_precedence:
+        elif next_tag is _if and _PREC_IF > min_precedence:
             from pymbolic.primitives import If
             then_expr = left_exp
             pstate.advance()
