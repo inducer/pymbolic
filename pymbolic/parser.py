@@ -326,7 +326,7 @@ class Parser(object):
             then_expr = left_exp
             pstate.advance()
             pstate.expect_not_end()
-            condition = self.parse_expression(pstate)
+            condition = self.parse_expression(pstate, _PREC_LOGICAL_OR)
             pstate.expect(_else)
             pstate.advance()
             else_expr = self.parse_expression(pstate)
