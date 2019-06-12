@@ -25,6 +25,7 @@ THE SOFTWARE.
 import pymbolic.primitives as prim
 import pytest
 from pymbolic import parse
+from pytools.lex import ParseError
 
 
 from pymbolic.mapper import IdentityMapper
@@ -269,6 +270,11 @@ def test_parser():
             == If(Comparison(Variable('i'), '>=', 0), Sum((5, Variable('i'))),
                 If(Comparison(Variable('i'), '<', -1), 0, 10)))
     assert_parse_roundtrip('(5 + i if i >= 0 else (0 if i < -1 else 10))')
+
+    with pytest.raises(ParseError):
+        parse("0 if 1 if 2 else 3 else 4")
+
+    assert parse("0 if (1 if 2 else 3) else 4") == If(If(2, 1, 3), 0, 4)
 
 # }}}
 
