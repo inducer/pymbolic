@@ -228,6 +228,21 @@ def test_parser():
         strified = StringifyMapper()(expr)
         assert strified == expr_str, (strified, expr_str)
 
+    def assert_parsed_same_as_python(expr_str):
+        # makes sure that has only one line
+        expr_str, = expr_str.split('\n')
+        from pymbolic.interop.ast import ASTToPymbolic
+        import ast
+        ast2p = ASTToPymbolic()
+        try:
+            expr_parsed_by_python = ast2p(ast.parse(expr_str).body[0].value)
+        except SyntaxError:
+            with pytest.raises(ParseError):
+                parse(expr_str)
+        else:
+            expr_parsed_by_pymbolic = parse(expr_str)
+            assert expr_parsed_by_python == expr_parsed_by_pymbolic
+
     assert_parse_roundtrip("()")
     assert_parse_roundtrip("(3,)")
 
@@ -265,16 +280,9 @@ def test_parser():
     assert parse("f(x,(y,z),z, name=15, name2=17)") == f(
             x, (y, z), z, name=15, name2=17)
 
-    from pymbolic.primitives import If, Comparison, Variable, Sum
-    assert (parse('5+i if i>=0 else (0 if i<-1 else 10)')
-            == If(Comparison(Variable('i'), '>=', 0), Sum((5, Variable('i'))),
-                If(Comparison(Variable('i'), '<', -1), 0, 10)))
-    assert_parse_roundtrip('5 + i if i >= 0 else (0 if i < -1 else 10)')
-
-    with pytest.raises(ParseError):
-        parse("0 if 1 if 2 else 3 else 4")
-
-    assert parse("0 if (1 if 2 else 3) else 4") == If(If(2, 1, 3), 0, 4)
+    assert_parsed_same_as_python('5+i if i>=0 else (0 if i<-1 else 10)')
+    assert_parsed_same_as_python("0 if 1 if 2 else 3 else 4")
+    assert_parsed_same_as_python("0 if (1 if 2 else 3) else 4")
 
 # }}}
 
