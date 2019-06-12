@@ -600,6 +600,14 @@ def test_make_sym_vector():
     assert len(make_sym_vector("vec", [1, 2, 3])) == 3
 
 
+def test_parse_if():
+    from pymbolic.primitives import If, Comparison, Variable
+    expected = If(Comparison(Variable('i'), '>=', 0), Variable('i'),
+            If(Comparison(Variable('i'), '<', -1), 0, 10))
+    parsed = parse('i if i>=0 else (0 if i<-1 else 10)')
+    assert expected == parsed
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
