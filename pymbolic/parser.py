@@ -60,6 +60,8 @@ _rightshift = intern("rightshift")
 _and = intern("and")
 _or = intern("or")
 _not = intern("not")
+_if = intern("if")
+_else = intern("else")
 
 _bitwiseand = intern("bitwiseand")
 _bitwiseor = intern("bitwiseor")
@@ -68,6 +70,7 @@ _bitwisenot = intern("bitwisenot")
 
 _PREC_COMMA = 5  # must be > 1 (1 is used by fortran-to-cl)
 _PREC_SLICE = 10
+_PREC_IF = 75
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
 
@@ -126,6 +129,8 @@ class Parser(object):
             (_and, pytools.lex.RE(r"and\b")),
             (_or, pytools.lex.RE(r"or\b")),
             (_not, pytools.lex.RE(r"not\b")),
+            (_if, pytools.lex.RE(r"if\b")),
+            (_else, pytools.lex.RE(r"else\b")),
 
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
@@ -315,6 +320,17 @@ class Parser(object):
             left_exp = primitives.Subscript(left_exp, self.parse_expression(pstate))
             pstate.expect(_closebracket)
             pstate.advance()
+            did_something = True
+        elif next_tag is _if and _PREC_IF > min_precedence:
+            from pymbolic.primitives import If
+            then_expr = left_exp
+            pstate.advance()
+            pstate.expect_not_end()
+            condition = self.parse_expression(pstate, _PREC_LOGICAL_OR)
+            pstate.expect(_else)
+            pstate.advance()
+            else_expr = self.parse_expression(pstate)
+            left_exp = If(condition, then_expr, else_expr)
             did_something = True
         elif next_tag is _dot and _PREC_CALL > min_precedence:
             pstate.advance()
