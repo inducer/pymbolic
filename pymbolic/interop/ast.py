@@ -103,7 +103,7 @@ def _mult(x, y):
 
 
 def _neg(x):
-    return p.Product((-1, x),)
+    return -x
 
 
 class ASTToPymbolic(ASTMapper):
@@ -144,14 +144,14 @@ class ASTToPymbolic(ASTMapper):
 
     def map_UnaryOp(self, expr):  # noqa
         try:
-            op_constructor = self.unary_op_map[expr.op]
+            op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
                     "%s does not know how to map operator '%s'"
                     % (type(self).__name__,
                         type(expr.op).__name__))
 
-        return op_constructor(self.rec(expr.left), self.rec(expr.right))
+        return op_constructor(self.rec(expr.operand))
 
     def map_IfExp(self, expr):  # noqa
         # (expr test, expr body, expr orelse)
