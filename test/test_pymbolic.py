@@ -265,8 +265,8 @@ def test_parser():
             x, (y, z), z, name=15, name2=17)
 
     from pymbolic.primitives import If, Comparison, Variable, Sum
-    assert (parse('5+i if i>=0 else (0 if i<-1 else 10)') ==
-            If(Comparison(Variable('i'), '>=', 0), Sum((5, Variable('i'))),
+    assert (parse('5+i if i>=0 else (0 if i<-1 else 10)')
+            == If(Comparison(Variable('i'), '>=', 0), Sum((5, Variable('i'))),
                 If(Comparison(Variable('i'), '<', -1), 0, 10)))
     assert_parse_roundtrip('(5 + i if i >= 0 else (0 if i < -1 else 10))')
 
