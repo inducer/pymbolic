@@ -70,6 +70,7 @@ _bitwisenot = intern("bitwisenot")
 
 _PREC_COMMA = 5  # must be > 1 (1 is used by fortran-to-cl)
 _PREC_SLICE = 10
+_PREC_IF = 75
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
 
@@ -79,7 +80,6 @@ _PREC_BITWISE_AND = 130
 
 _PREC_COMPARISON = 200
 _PREC_SHIFT = 205
-_PREC_IF = 207
 _PREC_PLUS = 210
 _PREC_TIMES = 220
 _PREC_POWER = 230
