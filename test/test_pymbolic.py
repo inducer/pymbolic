@@ -284,6 +284,11 @@ def test_parser():
     assert_parsed_same_as_python("0 if 1 if 2 else 3 else 4")
     assert_parsed_same_as_python("0 if (1 if 2 else 3) else 4")
 
+    with pytest.warns(DeprecationWarning):
+        import warnings
+        warnings.simplefilter("always")
+        parse('1+if(0, 1, 2)')
+
 # }}}
 
 

@@ -197,6 +197,12 @@ class Parser(object):
             return complex(pstate.next_str_and_advance())
         elif next_tag is _identifier:
             return primitives.Variable(pstate.next_str_and_advance())
+        elif next_tag is _if:
+            from warnings import warn
+            warn("Usage of 'if' as an identifier is deprecated due to"
+                    " introduction of python style 'if-else' expressions.",
+                    DeprecationWarning, stacklevel=2)
+            return primitives.Variable(pstate.next_str_and_advance())
         else:
             pstate.expected("terminal")
 
