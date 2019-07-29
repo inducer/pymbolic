@@ -51,7 +51,7 @@ Next, let's create an expression using *x*:
     >>> u = (x+1)**5
     >>> u
     Power(Sum((Variable('x'), 1)), 5)
-    >>> print u
+    >>> print(u)
     (x + 1)**5
 
 Note the two ways an expression can be printed, namely :func:`repr` and
@@ -62,7 +62,7 @@ you put in. It has a few of those built in, but that's not really the point:
 
 .. doctest::
 
-    >>> print pmbl.differentiate(u, 'x')
+    >>> print(pmbl.differentiate(u, 'x'))
     5*(x + 1)**4
 
 .. _custom-manipulation:
@@ -81,9 +81,9 @@ products:
     ...     def map_sum(self, expr):
     ...         return pmbl.primitives.Product(expr.children)
     ...
-    >>> print u
+    >>> print(u)
     (x + 1)**5
-    >>> print MyMapper()(u)
+    >>> print(MyMapper()(u))
     (x*1)**5
 
 Custom Objects
