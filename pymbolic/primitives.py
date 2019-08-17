@@ -459,14 +459,17 @@ class Expression(object):
         try:
             stringifier_class_getter = self.stringifier
         except AttributeError:
-            from pymbolic.mapper.stringifier import StringifyMapper
-            return StringifyMapper(*stringify_mapper_args)
+            pass
         else:
             from warnings import warn
             warn("%s overrides 'stringifier', which is deprecated. "
                     "Override 'make_stringifier' instead.")
 
-            return stringifier_class_getter()(*stringify_mapper_args)
+            if stringifier_class_getter is not None:
+                return stringifier_class_getter()(*stringify_mapper_args)
+
+        from pymbolic.mapper.stringifier import StringifyMapper
+        return StringifyMapper(*stringify_mapper_args)
 
     def __str__(self):
         """Use the :meth:`stringifier` to return a human-readable
