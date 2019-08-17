@@ -119,13 +119,13 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     # {{{ mappings
 
-    def handle_unsupported_expression(self, victim, enclosing_prec, *args, **kwargs):
-        strifier = victim.stringifier()
-        if isinstance(self, strifier):
+    def handle_unsupported_expression(self, expr, enclosing_prec, *args, **kwargs):
+        strifier = expr.make_stringifier(self)
+        if isinstance(self, type(strifier)):
             raise ValueError("stringifier '%s' can't handle '%s'"
-                    % (self, victim.__class__))
-        return strifier(self.constant_mapper)(
-                victim, enclosing_prec, *args, **kwargs)
+                    % (self, expr.__class__))
+        return strifier(
+                expr, enclosing_prec, *args, **kwargs)
 
     def map_constant(self, expr, enclosing_prec, *args, **kwargs):
         result = self.constant_mapper(expr)
