@@ -450,6 +450,11 @@ class Expression(object):
         """Return a :class:`pymbolic.mapper.Mapper` instance that can
         be used to generate a human-readable representation of *self*. Usually
         a subclass of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
+
+        :arg originating_stringifier: If provided, the newly created
+            stringifier should use attributes and settings of
+            *originating_stringifier*, e.g. the
+            :attr:`pymbolic.mapper.StringifyMapper.constant_mapper`.
         """
         if originating_stringifier is None:
             stringify_mapper_args = ()
