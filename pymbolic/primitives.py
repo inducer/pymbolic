@@ -459,7 +459,7 @@ class Expression(object):
         if originating_stringifier is None:
             stringify_mapper_args = ()
         else:
-            stringify_mapper_args = originating_stringifier.constant_mapper
+            stringify_mapper_args = (originating_stringifier.constant_mapper,)
 
         try:
             stringifier_class_getter = self.stringifier
