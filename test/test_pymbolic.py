@@ -36,6 +36,33 @@ except NameError:
     from functools import reduce
 
 
+# {{{ utilities
+
+def assert_parsed_same_as_python(expr_str):
+    # makes sure that has only one line
+    expr_str, = expr_str.split('\n')
+    from pymbolic.interop.ast import ASTToPymbolic
+    import ast
+    ast2p = ASTToPymbolic()
+    try:
+        expr_parsed_by_python = ast2p(ast.parse(expr_str).body[0].value)
+    except SyntaxError:
+        with pytest.raises(ParseError):
+            parse(expr_str)
+    else:
+        expr_parsed_by_pymbolic = parse(expr_str)
+        assert expr_parsed_by_python == expr_parsed_by_pymbolic
+
+
+def assert_parse_roundtrip(expr_str):
+    expr = parse(expr_str)
+    from pymbolic.mapper.stringifier import StringifyMapper
+    strified = StringifyMapper()(expr)
+    assert strified == expr_str, (strified, expr_str)
+
+# }}}
+
+
 def test_integer_power():
     from pymbolic.algorithm import integer_power
 
@@ -221,27 +248,6 @@ def test_parser():
     print(repr(parse("3::1")))
     print(repr(parse(":5:1")))
     print(repr(parse("3:5:1")))
-
-    def assert_parse_roundtrip(expr_str):
-        expr = parse(expr_str)
-        from pymbolic.mapper.stringifier import StringifyMapper
-        strified = StringifyMapper()(expr)
-        assert strified == expr_str, (strified, expr_str)
-
-    def assert_parsed_same_as_python(expr_str):
-        # makes sure that has only one line
-        expr_str, = expr_str.split('\n')
-        from pymbolic.interop.ast import ASTToPymbolic
-        import ast
-        ast2p = ASTToPymbolic()
-        try:
-            expr_parsed_by_python = ast2p(ast.parse(expr_str).body[0].value)
-        except SyntaxError:
-            with pytest.raises(ParseError):
-                parse(expr_str)
-        else:
-            expr_parsed_by_pymbolic = parse(expr_str)
-            assert expr_parsed_by_python == expr_parsed_by_pymbolic
 
     assert_parse_roundtrip("()")
     assert_parse_roundtrip("(3,)")
@@ -621,6 +627,18 @@ def test_make_sym_vector():
     assert len(make_sym_vector("vec", 2)) == 2
     assert len(make_sym_vector("vec", numpy.int32(2))) == 2
     assert len(make_sym_vector("vec", [1, 2, 3])) == 3
+
+
+def test_multiplicative_stringify_preserves_association():
+    for inner in ["*", " / ", " // ", " % "]:
+        for outer in ["*", " / ", " // ", " % "]:
+            if outer == inner:
+                continue
+
+            assert_parse_roundtrip("x%s(y%sz)" % (outer, inner))
+            assert_parse_roundtrip("(y%sz)%sx" % (inner, outer))
+
+    assert_parse_roundtrip("(-1)*(((-1)*x) / 5)")
 
 
 if __name__ == "__main__":
