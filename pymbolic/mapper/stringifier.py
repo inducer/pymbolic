@@ -200,50 +200,41 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     multiplicative_primitives = (p.Product, p.Quotient, p.FloorDiv, p.Remainder)
 
     def map_product(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = (p.Quotient, p.FloorDiv, p.Remainder)
         return self.parenthesize_if_needed(
-                self.join_rec("*", expr.children, PREC_PRODUCT, *args, **kwargs,
-                    force_parens_around=(p.Quotient, p.FloorDiv, p.Remainder)),
+                self.join_rec("*", expr.children, PREC_PRODUCT, *args, **kwargs),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = self.multiplicative_primitives
         return self.parenthesize_if_needed(
                 self.format("%s / %s",
                     # space is necessary--otherwise '/*' becomes
                     # start-of-comment in C. ('*' from dereference)
                     self.rec_with_force_parens_around(expr.numerator, PREC_PRODUCT,
-                        *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs),
+                        *args, **kwargs),
                     self.rec_with_force_parens_around(
-                        expr.denominator, PREC_PRODUCT, *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs)),
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = self.multiplicative_primitives
         return self.parenthesize_if_needed(
                 self.format("%s // %s",
                     self.rec_with_force_parens_around(
-                        expr.numerator, PREC_PRODUCT, *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs),
+                        expr.numerator, PREC_PRODUCT, *args, **kwargs),
                     self.rec_with_force_parens_around(
-                        expr.denominator, PREC_PRODUCT, *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs)),
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = self.multiplicative_primitives
         return self.parenthesize_if_needed(
                 self.format("%s %% %s",
                     self.rec_with_force_parens_around(
-                        expr.numerator, PREC_PRODUCT, *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs),
+                        expr.numerator, PREC_PRODUCT, *args, **kwargs),
                     self.rec_with_force_parens_around(
-                        expr.denominator, PREC_PRODUCT, *args,
-                        force_parens_around=self.multiplicative_primitives,
-                        **kwargs)),
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
                 enclosing_prec, PREC_PRODUCT)
 
     # }}}
