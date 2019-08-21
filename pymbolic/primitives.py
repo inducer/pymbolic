@@ -469,7 +469,8 @@ class Expression(object):
         else:
             from warnings import warn
             warn("%s overrides 'stringifier', which is deprecated. "
-                    "Override 'make_stringifier' instead.")
+                    "Override 'make_stringifier' instead."
+                    % type(self).__name__)
 
             return stringifier_class_getter()(*stringify_mapper_args)
 
