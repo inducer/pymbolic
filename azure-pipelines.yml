@@ -24,6 +24,12 @@ jobs:
             . ./build-and-test-py-project.sh
 
         displayName: 'Pytest'
+    -
+        task: PublishTestResults@2
+        inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'test/pytest.xml'
+
 -
     job: 'Flake8'
     pool:
