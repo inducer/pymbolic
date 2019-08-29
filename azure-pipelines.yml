@@ -20,7 +20,7 @@ jobs:
         script: |
             set -e
             py_version=$PYTON_VERSION
-            EXTRA_INSTALL="numpy sympy pexpect"
+            EXTRA_INSTALL="numpy sympy symengine pexpect"
             curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
             . ./build-and-test-py-project.sh
 
