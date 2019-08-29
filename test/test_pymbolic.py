@@ -597,7 +597,7 @@ def test_latex_mapper():
                      "-output-directory=%s" % latex_dir,
                      tex_file_path],
                     universal_newlines=True)
-        except FileNotFoundError:
+        except OSError:  # FIXME: Should be FileNotFoundError on Py3
             pytest.skip("latex command not found")
         except subprocess.CalledProcessError as err:
             assert False, str(err.output)
