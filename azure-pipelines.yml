@@ -2,13 +2,15 @@ jobs:
 -
     job: 'Pytest'
     pool:
-        vmImage: 'ubuntu-16.04'
+        vmImage: 'ubuntu-latest'
     strategy:
         matrix:
             Python27:
                 python.version: '2.7'
             Python36:
                 python.version: '3.6'
+            Python37:
+                python.version: '3.7'
 
     steps:
     -
@@ -33,11 +35,11 @@ jobs:
 -
     job: 'Flake8'
     pool:
-        vmImage: 'ubuntu-16.04'
+        vmImage: 'ubuntu-latest'
     strategy:
         matrix:
             Python36:
-                python.version: '3.6'
+                python.version: '3.7'
 
     steps:
     -
@@ -56,11 +58,11 @@ jobs:
 -
     job: 'Pylint'
     pool:
-        vmImage: 'ubuntu-16.04'
+        vmImage: 'ubuntu-latest'
     strategy:
         matrix:
             Python36:
-                python.version: '3.6'
+                python.version: '3.7'
 
     steps:
     -
