@@ -357,7 +357,7 @@ class Parser(object):
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Sum):
-                left_exp = primitives.Sum(left_exp.children + (-right_exp,))
+                left_exp = primitives.Sum(left_exp.children + ((-right_exp),))
             else:
                 left_exp = primitives.Sum((left_exp, -right_exp))
             did_something = True
@@ -388,7 +388,6 @@ class Parser(object):
             pstate.advance()
             left_exp = primitives.Power(
                     left_exp, self.parse_expression(pstate, _PREC_TIMES))
-            left_exp **= self.parse_expression(pstate, _PREC_POWER)
             did_something = True
         elif next_tag is _and and _PREC_LOGICAL_AND > min_precedence:
             pstate.advance()
