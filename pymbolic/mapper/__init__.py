@@ -748,6 +748,19 @@ class WalkMapper(RecursiveMapper):
 
         self.post_visit(expr, *args, **kwargs)
 
+    def map_slice(self, expr, *args, **kwargs):
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        if expr.start is not None:
+            self.rec(expr.start, *args, **kwargs)
+        if expr.stop is not None:
+            self.rec(expr.stop, *args, **kwargs)
+        if expr.step is not None:
+            self.rec(expr.step, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
     def visit(self, expr, *args, **kwargs):
         return True
 
