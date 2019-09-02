@@ -357,9 +357,9 @@ class Parser(object):
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Sum):
-                left_exp = primitives.Sum(left_exp.children + ((-right_exp),))
+                left_exp = primitives.Sum(left_exp.children + ((-right_exp),))  # noqa pylint:disable=invalid-unary-operand-type
             else:
-                left_exp = primitives.Sum((left_exp, -right_exp))
+                left_exp = primitives.Sum((left_exp, -right_exp))  # noqa pylint:disable=invalid-unary-operand-type
             did_something = True
         elif next_tag is _times and _PREC_TIMES > min_precedence:
             pstate.advance()
