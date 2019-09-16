@@ -60,6 +60,8 @@ _rightshift = intern("rightshift")
 _and = intern("and")
 _or = intern("or")
 _not = intern("not")
+_if = intern("if")
+_else = intern("else")
 
 _bitwiseand = intern("bitwiseand")
 _bitwiseor = intern("bitwiseor")
@@ -68,6 +70,7 @@ _bitwisenot = intern("bitwisenot")
 
 _PREC_COMMA = 5  # must be > 1 (1 is used by fortran-to-cl)
 _PREC_SLICE = 10
+_PREC_IF = 75
 _PREC_LOGICAL_OR = 80
 _PREC_LOGICAL_AND = 90
 
@@ -126,6 +129,8 @@ class Parser(object):
             (_and, pytools.lex.RE(r"and\b")),
             (_or, pytools.lex.RE(r"or\b")),
             (_not, pytools.lex.RE(r"not\b")),
+            (_if, pytools.lex.RE(r"if\b")),
+            (_else, pytools.lex.RE(r"else\b")),
 
             (_imaginary, (_float, pytools.lex.RE("j"))),
             (_float, ("|",
@@ -191,6 +196,12 @@ class Parser(object):
         elif next_tag is _imaginary:
             return complex(pstate.next_str_and_advance())
         elif next_tag is _identifier:
+            return primitives.Variable(pstate.next_str_and_advance())
+        elif next_tag is _if:
+            from warnings import warn
+            warn("Usage of 'if' as an identifier is deprecated due to"
+                    " introduction of python style 'if-else' expressions.",
+                    DeprecationWarning, stacklevel=2)
             return primitives.Variable(pstate.next_str_and_advance())
         else:
             pstate.expected("terminal")
@@ -316,6 +327,17 @@ class Parser(object):
             pstate.expect(_closebracket)
             pstate.advance()
             did_something = True
+        elif next_tag is _if and _PREC_IF > min_precedence:
+            from pymbolic.primitives import If
+            then_expr = left_exp
+            pstate.advance()
+            pstate.expect_not_end()
+            condition = self.parse_expression(pstate, _PREC_LOGICAL_OR)
+            pstate.expect(_else)
+            pstate.advance()
+            else_expr = self.parse_expression(pstate)
+            left_exp = If(condition, then_expr, else_expr)
+            did_something = True
         elif next_tag is _dot and _PREC_CALL > min_precedence:
             pstate.advance()
             pstate.expect(_identifier)
@@ -324,31 +346,48 @@ class Parser(object):
             did_something = True
         elif next_tag is _plus and _PREC_PLUS > min_precedence:
             pstate.advance()
-            left_exp += self.parse_expression(pstate, _PREC_PLUS)
+            right_exp = self.parse_expression(pstate, _PREC_PLUS)
+            if isinstance(left_exp, primitives.Sum):
+                left_exp = primitives.Sum(left_exp.children + (right_exp,))
+            else:
+                left_exp = primitives.Sum((left_exp, right_exp))
+
             did_something = True
         elif next_tag is _minus and _PREC_PLUS > min_precedence:
             pstate.advance()
-            left_exp -= self.parse_expression(pstate, _PREC_PLUS)
+            right_exp = self.parse_expression(pstate, _PREC_PLUS)
+            if isinstance(left_exp, primitives.Sum):
+                left_exp = primitives.Sum(left_exp.children + ((-right_exp),))  # noqa pylint:disable=invalid-unary-operand-type
+            else:
+                left_exp = primitives.Sum((left_exp, -right_exp))  # noqa pylint:disable=invalid-unary-operand-type
             did_something = True
         elif next_tag is _times and _PREC_TIMES > min_precedence:
             pstate.advance()
-            left_exp *= self.parse_expression(pstate, _PREC_TIMES)
+            right_exp = self.parse_expression(pstate, _PREC_PLUS)
+            if isinstance(left_exp, primitives.Product):
+                left_exp = primitives.Product(left_exp.children + (right_exp,))
+            else:
+                left_exp = primitives.Product((left_exp, right_exp))
             did_something = True
         elif next_tag is _floordiv and _PREC_TIMES > min_precedence:
             pstate.advance()
-            left_exp //= self.parse_expression(pstate, _PREC_TIMES)
+            left_exp = primitives.FloorDiv(
+                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _over and _PREC_TIMES > min_precedence:
             pstate.advance()
-            left_exp /= self.parse_expression(pstate, _PREC_TIMES)
+            left_exp = primitives.Quotient(
+                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _modulo and _PREC_TIMES > min_precedence:
             pstate.advance()
-            left_exp %= self.parse_expression(pstate, _PREC_TIMES)
+            left_exp = primitives.Remainder(
+                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _power and _PREC_POWER > min_precedence:
             pstate.advance()
-            left_exp **= self.parse_expression(pstate, _PREC_POWER)
+            left_exp = primitives.Power(
+                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _and and _PREC_LOGICAL_AND > min_precedence:
             pstate.advance()

@@ -41,7 +41,7 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         >>> x = p.Variable("x")
 
         >>> u = 5*x**2 - 3*x
-        >>> print u
+        >>> print(u)
         5*x**2 + (-1)*3*x
 
         >>> from pymbolic.mapper.evaluator import EvaluationMapper as EM

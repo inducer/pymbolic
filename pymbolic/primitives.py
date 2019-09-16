@@ -191,7 +191,7 @@ class Expression(object):
 
     .. method:: __getitem__
 
-    .. automethod:: stringifier
+    .. automethod:: make_stringifier
 
     .. automethod:: __eq__
     .. automethod:: __hash__
@@ -446,13 +446,33 @@ class Expression(object):
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
-    def stringifier(self):
-        """Return a :class:`pymbolic.mapper.Mapper` class used to yield
-        a human-readable representation of *self*. Usually a subclass
-        of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
+    def make_stringifier(self, originating_stringifier=None):
+        """Return a :class:`pymbolic.mapper.Mapper` instance that can
+        be used to generate a human-readable representation of *self*. Usually
+        a subclass of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
+
+        :arg originating_stringifier: If provided, the newly created
+            stringifier should use attributes and settings of
+            *originating_stringifier*, e.g. the
+            :attr:`pymbolic.mapper.StringifyMapper.constant_mapper`.
         """
-        from pymbolic.mapper.stringifier import StringifyMapper
-        return StringifyMapper
+        if originating_stringifier is None:
+            stringify_mapper_args = ()
+        else:
+            stringify_mapper_args = (originating_stringifier.constant_mapper,)
+
+        try:
+            stringifier_class_getter = self.stringifier
+        except AttributeError:
+            from pymbolic.mapper.stringifier import StringifyMapper
+            return StringifyMapper(*stringify_mapper_args)
+        else:
+            from warnings import warn
+            warn("%s overrides 'stringifier', which is deprecated. "
+                    "Override 'make_stringifier' instead."
+                    % type(self).__name__)
+
+            return stringifier_class_getter()(*stringify_mapper_args)
 
     def __str__(self):
         """Use the :meth:`stringifier` to return a human-readable
@@ -460,7 +480,7 @@ class Expression(object):
         """
 
         from pymbolic.mapper.stringifier import PREC_NONE
-        return self.stringifier()()(self, PREC_NONE)
+        return self.make_stringifier()(self, PREC_NONE)
 
     def _safe_repr(self, limit=10):
         if limit <= 0:

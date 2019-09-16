@@ -2,9 +2,14 @@ Pymbolic: Easy Expression Trees and Term Rewriting
 ==================================================
 
 .. image:: https://gitlab.tiker.net/inducer/pymbolic/badges/master/pipeline.svg
-   :target: https://gitlab.tiker.net/inducer/pymbolic/commits/master
+    :alt: Gitlab Build Status
+    :target: https://gitlab.tiker.net/inducer/pymbolic/commits/master
+.. image:: https://dev.azure.com/ak-spam/inducer/_apis/build/status/inducer.pymbolic?branchName=master
+    :alt: Azure Build Status
+    :target: https://dev.azure.com/ak-spam/inducer/_build/latest?definitionId=3&branchName=master
 .. image:: https://badge.fury.io/py/pymbolic.png
-    :target: http://pypi.python.org/pypi/pymbolic
+    :alt: Python Package Index Release Page
+    :target: https://pypi.org/project/pymbolic/
 
 Pymbolic is a small expression tree and symbolic manipulation library. Two
 things set it apart from other libraries of its kind:

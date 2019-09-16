@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 import pymbolic.mapper
+import pymbolic.primitives as p
 
 __doc__ = """
 .. _prec-constants:
@@ -69,6 +70,7 @@ PREC_BITWISE_OR = 7
 PREC_COMPARISON = 6
 PREC_LOGICAL_AND = 5
 PREC_LOGICAL_OR = 4
+PREC_IF = 3
 PREC_NONE = 0
 
 
@@ -100,10 +102,21 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def join(self, joiner, iterable):
         return self.format(joiner.join("%s" for i in iterable), *iterable)
 
+    def rec_with_force_parens_around(self, expr, *args, **kwargs):
+        force_parens_around = kwargs.pop("force_parens_around", ())
+
+        result = self.rec(expr, *args, **kwargs)
+
+        if isinstance(expr, force_parens_around):
+            result = "(%s)" % result
+
+        return result
+
     def join_rec(self, joiner, iterable, prec, *args, **kwargs):
         f = joiner.join("%s" for i in iterable)
         return self.format(f,
-                *[self.rec(i, prec, *args, **kwargs) for i in iterable])
+                *[self.rec_with_force_parens_around(i, prec, *args, **kwargs)
+                    for i in iterable])
 
     def parenthesize(self, s):
         return "(%s)" % s
@@ -118,13 +131,13 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     # {{{ mappings
 
-    def handle_unsupported_expression(self, victim, enclosing_prec, *args, **kwargs):
-        strifier = victim.stringifier()
-        if isinstance(self, strifier):
+    def handle_unsupported_expression(self, expr, enclosing_prec, *args, **kwargs):
+        strifier = expr.make_stringifier(self)
+        if isinstance(self, type(strifier)):
             raise ValueError("stringifier '%s' can't handle '%s'"
-                    % (self, victim.__class__))
-        return strifier(self.constant_mapper)(
-                victim, enclosing_prec, *args, **kwargs)
+                    % (self, expr.__class__))
+        return strifier(
+                expr, enclosing_prec, *args, **kwargs)
 
     def map_constant(self, expr, enclosing_prec, *args, **kwargs):
         result = self.constant_mapper(expr)
@@ -182,37 +195,49 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 self.join_rec(" + ", expr.children, PREC_SUM, *args, **kwargs),
                 enclosing_prec, PREC_SUM)
 
+    # {{{ multiplicative operators
+
+    multiplicative_primitives = (p.Product, p.Quotient, p.FloorDiv, p.Remainder)
+
     def map_product(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = (p.Quotient, p.FloorDiv, p.Remainder)
         return self.parenthesize_if_needed(
                 self.join_rec("*", expr.children, PREC_PRODUCT, *args, **kwargs),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = self.multiplicative_primitives
         return self.parenthesize_if_needed(
                 self.format("%s / %s",
                     # space is necessary--otherwise '/*' becomes
                     # start-of-comment in C. ('*' from dereference)
-                    self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
-                    self.rec(
-                        expr.denominator, PREC_POWER,   # analogous to ^{-1}
-                        *args, **kwargs)),
+                    self.rec_with_force_parens_around(expr.numerator, PREC_PRODUCT,
+                        *args, **kwargs),
+                    self.rec_with_force_parens_around(
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
                 enclosing_prec, PREC_PRODUCT)
 
     def map_floor_div(self, expr, enclosing_prec, *args, **kwargs):
-        # (-1) * ((-1)*x // 5) should not reassociate. Therefore raise precedence
-        # on the numerator and shield against surrounding products.
+        kwargs["force_parens_around"] = self.multiplicative_primitives
+        return self.parenthesize_if_needed(
+                self.format("%s // %s",
+                    self.rec_with_force_parens_around(
+                        expr.numerator, PREC_PRODUCT, *args, **kwargs),
+                    self.rec_with_force_parens_around(
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
+                enclosing_prec, PREC_PRODUCT)
 
-        result = self.format("%s // %s",
-                    self.rec(expr.numerator, PREC_POWER, *args, **kwargs),
-                    self.rec(
-                        expr.denominator, PREC_POWER,   # analogous to ^{-1}
-                        *args, **kwargs))
+    def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
+        kwargs["force_parens_around"] = self.multiplicative_primitives
+        return self.parenthesize_if_needed(
+                self.format("%s %% %s",
+                    self.rec_with_force_parens_around(
+                        expr.numerator, PREC_PRODUCT, *args, **kwargs),
+                    self.rec_with_force_parens_around(
+                        expr.denominator, PREC_PRODUCT, *args, **kwargs)),
+                enclosing_prec, PREC_PRODUCT)
 
-        # Note ">=", not ">" as in parenthesize_if_needed().
-        if enclosing_prec >= PREC_PRODUCT:
-            return "(%s)" % result
-        else:
-            return result
+    # }}}
 
     def map_power(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
@@ -220,13 +245,6 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                     self.rec(expr.base, PREC_POWER, *args, **kwargs),
                     self.rec(expr.exponent, PREC_POWER, *args, **kwargs)),
                 enclosing_prec, PREC_POWER)
-
-    def map_remainder(self, expr, enclosing_prec, *args, **kwargs):
-        return self.format("(%s %% %s)",
-                    self.rec(expr.numerator, PREC_PRODUCT, *args, **kwargs),
-                    self.rec(
-                        expr.denominator, PREC_POWER,    # analogous to ^{-1}
-                        *args, **kwargs))
 
     def map_polynomial(self, expr, enclosing_prec, *args, **kwargs):
         from pymbolic.primitives import flattened_sum
@@ -351,16 +369,20 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 type_name, self.rec(expr.child, PREC_NONE, *args, **kwargs))
 
     def map_if(self, expr, enclosing_prec, *args, **kwargs):
-        return "If(%s, %s, %s)" % (
-                self.rec(expr.condition, PREC_NONE, *args, **kwargs),
-                self.rec(expr.then, PREC_NONE, *args, **kwargs),
-                self.rec(expr.else_, PREC_NONE, *args, **kwargs))
+        return self.parenthesize_if_needed(
+                "%s if %s else %s" % (
+                    self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
+                    self.rec(expr.condition, PREC_LOGICAL_OR, *args, **kwargs),
+                    self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
+                enclosing_prec, PREC_IF)
 
     def map_if_positive(self, expr, enclosing_prec, *args, **kwargs):
-        return "If(%s > 0, %s, %s)" % (
-                self.rec(expr.criterion, PREC_NONE, *args, **kwargs),
-                self.rec(expr.then, PREC_NONE, *args, **kwargs),
-                self.rec(expr.else_, PREC_NONE, *args, **kwargs))
+        return self.parenthesize_if_needed(
+                "%s if %s > 0 else %s" % (
+                    self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
+                    self.rec(expr.criterion, PREC_LOGICAL_OR, *args, **kwargs),
+                    self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
+                enclosing_prec, PREC_IF)
 
     def map_min(self, expr, enclosing_prec, *args, **kwargs):
         what = type(expr).__name__.lower()

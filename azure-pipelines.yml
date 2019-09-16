@@ -1,0 +1,80 @@
+jobs:
+-
+    job: 'Pytest'
+    pool:
+        vmImage: 'ubuntu-latest'
+    strategy:
+        matrix:
+            Python27:
+                python.version: '2.7'
+            Python36:
+                python.version: '3.6'
+            Python37:
+                python.version: '3.7'
+
+    steps:
+    -
+        task: UsePythonVersion@0
+        inputs:
+            versionSpec: '$(python.version)'
+
+    -
+        script: |
+            set -e
+            EXTRA_INSTALL="numpy sympy symengine pexpect"
+            curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
+            . ./build-and-test-py-project.sh
+
+        displayName: 'Pytest'
+    -
+        task: PublishTestResults@2
+        inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'test/pytest.xml'
+
+-
+    job: 'Flake8'
+    pool:
+        vmImage: 'ubuntu-latest'
+    strategy:
+        matrix:
+            Python37:
+                python.version: '3.7'
+
+    steps:
+    -
+        task: UsePythonVersion@0
+        inputs:
+            versionSpec: '$(python.version)'
+
+    -
+        script: |
+            set -e
+            curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
+            . ./prepare-and-run-flake8.sh pytools test
+
+        displayName: 'Flake8'
+
+-
+    job: 'Pylint'
+    pool:
+        vmImage: 'ubuntu-latest'
+    strategy:
+        matrix:
+            Python37:
+                python.version: '3.7'
+
+    steps:
+    -
+        task: UsePythonVersion@0
+        inputs:
+            versionSpec: '$(python.version)'
+
+    -
+        script: |
+            set -e
+            EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
+            curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-pylint.sh
+            . ./prepare-and-run-pylint.sh pymbolic test/test_*.py
+
+        displayName: 'Pylint'
