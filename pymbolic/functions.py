@@ -66,5 +66,5 @@ def fabs(x):
     return p.Call(p.Lookup(p.Variable("math"), "fabs"), (x,))
 
 
-def sgn(x):
+def sign(x):
     return p.Call(p.Lookup(p.Variable("math"), "copysign"), (1, x,))
