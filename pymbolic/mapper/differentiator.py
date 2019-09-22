@@ -99,6 +99,18 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
             by which to differentiate.
         :arg func_map: A function for computing derivatives of function
             calls, signature ``(arg_index, function_variable, parameters)``.
+        :arg allow_non_smooth: Whether to allow differentiation of functions
+            which are not smooth (e.g., ``fabs``), i.e., by ignoring the
+            discontinuity in the resulting derivative.
+            Defaults to *False*.
+        :arg allow_discontinuity: Whether to allow differentiation of
+            which are not continuous (e.g., ``sign``), i.e., by ignoring the
+            discontinuity.
+            Defaults to *False*.
+
+        .. versionchanged:: 2019.2
+
+            Added *allow_non_smooth* and *allow_discontinuity*.
         """
 
         self.variable = variable
