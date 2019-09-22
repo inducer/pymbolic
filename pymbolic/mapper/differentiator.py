@@ -31,7 +31,9 @@ import pymbolic.mapper
 import pymbolic.mapper.evaluator
 
 
-def map_math_functions_by_name(i, func, pars):
+def map_math_functions_by_name(i, func, pars,
+                               allow_non_smooth=False,
+                               allow_discontinuity=False):
     try:
         f = pymbolic.evaluate(func, {"math": math, "cmath": cmath})
     except pymbolic.mapper.evaluator.UnknownVariableError:
@@ -59,8 +61,15 @@ def map_math_functions_by_name(i, func, pars):
     elif f is math.expm1 and len(pars) == 1:
         return make_f("exp")(*pars)
     elif f is math.fabs and len(pars) == 1:
-        from pymbolic.functions import sign
-        return sign(*pars)
+        if allow_non_smooth:
+            return make_f("sign")(*pars)
+        else:
+            raise ValueError("fabs is not smooth")
+    elif f is math.copysign and len(pars) == 2:
+        if allow_discontinuity:
+            return 0
+        else:
+            raise ValueError("sign is discontinuous")
     else:
         raise RuntimeError("unrecognized function, cannot differentiate")
 
@@ -81,7 +90,8 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
                 / (x + -1)**2**2
     """
 
-    def __init__(self, variable, func_map=map_math_functions_by_name):
+    def __init__(self, variable, func_map=map_math_functions_by_name,
+                 allow_non_smooth=False, allow_discontinuity=False):
         """
         :arg variable: A :class:`pymbolic.primitives.Variable` instance
             by which to differentiate.
@@ -91,6 +101,8 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
         self.variable = variable
         self.function_map = func_map
+        self.allow_non_smooth = allow_non_smooth
+        self.allow_discontinuity = allow_discontinuity
 
     def rec_undiff(self, expr, *args):
         """This method exists for the benefit of subclasses that may need to
@@ -110,7 +122,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     def map_call(self, expr, *args):
         return pymbolic.flattened_sum(
             self.function_map(
-                i, expr.function, self.rec_undiff(expr.parameters, *args))
+                i, expr.function, self.rec_undiff(expr.parameters, *args),
+                allow_non_smooth=self.allow_non_smooth,
+                allow_discontinuity=self.allow_discontinuity)
             * self.rec(par, *args)
             for i, par in enumerate(expr.parameters)
             )
@@ -200,7 +214,11 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
 def differentiate(expression,
                   variable,
-                  func_mapper=map_math_functions_by_name):
+                  func_mapper=map_math_functions_by_name,
+                  allow_non_smooth=False,
+                  allow_discontinuity=False):
     if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
         variable = primitives.make_variable(variable)
-    return DifferentiationMapper(variable, func_mapper)(expression)
+    return DifferentiationMapper(variable, func_mapper,
+                                 allow_non_smooth=allow_non_smooth,
+                                 allow_discontinuity=allow_discontinuity)(expression)
