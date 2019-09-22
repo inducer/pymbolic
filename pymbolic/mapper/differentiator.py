@@ -64,12 +64,14 @@ def map_math_functions_by_name(i, func, pars,
         if allow_non_smooth:
             return make_f("sign")(*pars)
         else:
-            raise ValueError("fabs is not smooth")
+            raise ValueError("fabs is not smooth"
+                             ", pass allow_non_smooth=True to return sign")
     elif f is math.copysign and len(pars) == 2:
         if allow_discontinuity:
             return 0
         else:
-            raise ValueError("sign is discontinuous")
+            raise ValueError("sign is discontinuous"
+                             ", pass allow_discontinuity=True to return 0")
     else:
         raise RuntimeError("unrecognized function, cannot differentiate")
 
