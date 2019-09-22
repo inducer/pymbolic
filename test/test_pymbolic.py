@@ -641,6 +641,25 @@ def test_multiplicative_stringify_preserves_association():
     assert_parse_roundtrip("(-1)*(((-1)*x) / 5)")
 
 
+def test_differentiator_flags_for_nonsmooth_and_discontinuous():
+    import pymbolic.functions as pf
+    from pymbolic.mapper.differentiator import differentiate
+
+    x = prim.Variable('x')
+
+    with pytest.raises(ValueError):
+        differentiate(pf.fabs(x), x)
+
+    result = differentiate(pf.fabs(x), x, allow_non_smooth=True)
+    assert result == pf.sign(x)
+
+    with pytest.raises(ValueError):
+        differentiate(pf.sign(x), x)
+
+    result = differentiate(pf.sign(x), x, allow_discontinuous=True)
+    assert result == 0
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
