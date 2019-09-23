@@ -105,6 +105,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
         self.variable = variable
         self.function_map = func_map
+        if allowed_nonsmoothness not in ["none", "continuous", "discontinuous"]:
+            raise ValueError("allowed_nonsmoothness=%s is not a valid option"
+                             % allowed_nonsmoothness)
         self.allowed_nonsmoothness = allowed_nonsmoothness
 
     def rec_undiff(self, expr, *args):
