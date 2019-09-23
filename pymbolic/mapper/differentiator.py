@@ -34,40 +34,35 @@ import pymbolic.mapper.evaluator
 def map_math_functions_by_name(i, func, pars,
                                allow_non_smooth=False,
                                allow_discontinuous=False):
-    try:
-        f = pymbolic.evaluate(func, {"math": math, "cmath": cmath})
-    except pymbolic.mapper.evaluator.UnknownVariableError:
-        raise RuntimeError("No derivative of non-constant function "+str(func))
-
     def make_f(name):
         return primitives.Lookup(primitives.Variable("math"), name)
 
-    if f is math.sin and len(pars) == 1:
+    if func == make_f("sin") and len(pars) == 1:
         return make_f("cos")(*pars)
-    elif f is math.cos and len(pars) == 1:
+    elif func == make_f("cos") and len(pars) == 1:
         return -make_f("sin")(*pars)
-    elif f is math.tan and len(pars) == 1:
+    elif func == make_f("tan") and len(pars) == 1:
         return make_f("tan")(*pars)**2+1
-    elif f is math.log and len(pars) == 1:
+    elif func == make_f("log") and len(pars) == 1:
         return primitives.quotient(1, pars[0])
-    elif f is math.exp and len(pars) == 1:
+    elif func == make_f("exp") and len(pars) == 1:
         return make_f("exp")(*pars)
-    elif f is math.sinh and len(pars) == 1:
+    elif func == make_f("sinh") and len(pars) == 1:
         return make_f("cosh")(*pars)
-    elif f is math.cosh and len(pars) == 1:
+    elif func == make_f("cosh") and len(pars) == 1:
         return make_f("sinh")(*pars)
-    elif f is math.tanh and len(pars) == 1:
+    elif func == make_f("tanh") and len(pars) == 1:
         return 1-make_f("tanh")(*pars)**2
-    elif f is math.expm1 and len(pars) == 1:
+    elif func == make_f("expm1") and len(pars) == 1:
         return make_f("exp")(*pars)
-    elif f is math.fabs and len(pars) == 1:
+    elif func == make_f("fabs") and len(pars) == 1:
         if allow_non_smooth:
             from pymbolic.functions import sign
             return sign(*pars)
         else:
             raise ValueError("fabs is not smooth"
                              ", pass allow_non_smooth=True to return sign")
-    elif f is math.copysign and len(pars) == 2:
+    elif func == make_f("copysign") and len(pars) == 2:
         if allow_discontinuous:
             return 0
         else:
