@@ -650,13 +650,13 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     with pytest.raises(ValueError):
         differentiate(pf.fabs(x), x)
 
-    result = differentiate(pf.fabs(x), x, allow_non_smooth=True)
+    result = differentiate(pf.fabs(x), x, allowed_nonsmoothness="continuous")
     assert result == pf.sign(x)
 
     with pytest.raises(ValueError):
         differentiate(pf.sign(x), x)
 
-    result = differentiate(pf.sign(x), x, allow_discontinuous=True)
+    result = differentiate(pf.sign(x), x, allowed_nonsmoothness="discontinuous")
     assert result == 0
 
 
