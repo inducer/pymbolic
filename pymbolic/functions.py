@@ -23,29 +23,48 @@ THE SOFTWARE.
 """
 
 
-import pymbolic.primitives as primitives
+import pymbolic.primitives as p
 
 
 def sin(x):
-    return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "sin"), (x,))
+    return p.Call(p.Lookup(p.Variable("math"), "sin"), (x,))
 
 
 def cos(x):
-    return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "cos"), (x,))
+    return p.Call(p.Lookup(p.Variable("math"), "cos"), (x,))
 
 
 def tan(x):
-    return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "tan"), (x,))
+    return p.Call(p.Lookup(p.Variable("math"), "tan"), (x,))
 
 
 def log(x):
-    return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "log"), (x,))
+    return p.Call(p.Lookup(p.Variable("math"), "log"), (x,))
 
 
 def exp(x):
-    return primitives.Call(
-            primitives.Lookup(primitives.Variable("math"), "exp"), (x,))
+    return p.Call(p.Lookup(p.Variable("math"), "exp"), (x,))
+
+
+def sinh(x):
+    return p.Call(p.Lookup(p.Variable("math"), "sinh"), (x,))
+
+
+def cosh(x):
+    return p.Call(p.Lookup(p.Variable("math"), "cosh"), (x,))
+
+
+def tanh(x):
+    return p.Call(p.Lookup(p.Variable("math"), "tanh"), (x,))
+
+
+def expm1(x):
+    return p.Call(p.Lookup(p.Variable("math"), "expm1"), (x,))
+
+
+def fabs(x):
+    return p.Call(p.Lookup(p.Variable("math"), "fabs"), (x,))
+
+
+def sign(x):
+    return p.Call(p.Lookup(p.Variable("math"), "copysign"), (1, x,))
