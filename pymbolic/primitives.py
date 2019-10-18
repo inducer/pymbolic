@@ -452,9 +452,8 @@ class Expression(object):
         a subclass of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
 
         :arg originating_stringifier: If provided, the newly created
-            stringifier should use attributes and settings of
-            *originating_stringifier*, e.g. the
-            :attr:`pymbolic.mapper.StringifyMapper.constant_mapper`.
+            stringifier should carry forward attributes and settings of
+            *originating_stringifier*.
         """
         if originating_stringifier is None:
             stringify_mapper_args = ()
@@ -469,8 +468,11 @@ class Expression(object):
         else:
             from warnings import warn
             warn("%s overrides 'stringifier', which is deprecated. "
-                    "Override 'make_stringifier' instead."
-                    % type(self).__name__)
+                    "Override 'make_stringifier' instead. "
+                    "Backward compatibility will go away "
+                    "sometime after June 2020."
+                    % type(self).__name__,
+                    DeprecationWarning)
 
             return stringifier_class_getter()(*stringify_mapper_args)
 

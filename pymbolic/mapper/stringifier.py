@@ -87,11 +87,16 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     method to get a :class:`StringifyMapper` that potentially does.
     """
 
-    def __init__(self, constant_mapper=str):
-        """
-        :arg constant_mapper: A function of a single *expr* argument being used
-            to map constants into strings.
-        """
+    def __init__(self, constant_mapper=None):
+        if constant_mapper is not None:
+            from warnings import warn
+            warn("Overriding constant_mapper is deprecated. "
+                    "Instead, subclass the stringifier to "
+                    "achieve the desired effect. "
+                    "The 'constant_mapper' argument will "
+                    "disappear after June 2020.",
+                    DeprecationWarning)
+
         self.constant_mapper = constant_mapper
 
     # {{{ replaceable string composition interface
@@ -140,7 +145,10 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 expr, enclosing_prec, *args, **kwargs)
 
     def map_constant(self, expr, enclosing_prec, *args, **kwargs):
-        result = self.constant_mapper(expr)
+        if self.constant_mapper is None:
+            result = str(expr)
+        else:
+            result = self.constant_mapper(expr)
 
         if not (result.startswith("(") and result.endswith(")")) \
                 and ("-" in result or "+" in result) \
