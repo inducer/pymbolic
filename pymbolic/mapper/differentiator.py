@@ -86,7 +86,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     """
 
     def __init__(self, variable, func_map=map_math_functions_by_name,
-                 allowed_nonsmoothness="none"):
+                 allowed_nonsmoothness=None):
         """
         :arg variable: A :class:`pymbolic.primitives.Variable` instance
             by which to differentiate.
@@ -102,6 +102,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
 
             Added *allowed_nonsmoothness*.
         """
+
+        if allowed_nonsmoothness is None:
+            allowed_nonsmoothness = "none"
 
         self.variable = variable
         self.function_map = func_map
