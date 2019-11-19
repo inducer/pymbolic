@@ -95,7 +95,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                     "achieve the desired effect. "
                     "The 'constant_mapper' argument will "
                     "disappear after June 2020.",
-                    DeprecationWarning)
+                    DeprecationWarning, stacklevel=2)
 
         self.constant_mapper = constant_mapper
 
