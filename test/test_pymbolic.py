@@ -253,8 +253,6 @@ def test_parser():
     assert_parse_roundtrip("(3,)")
 
     assert_parse_roundtrip("[x + 3, 3, 5]")
-    # FIXME: trailing commas not allowed
-    # assert parse("[x + 3, 3, 5]") == parse("[x + 3, 3, 5]")
     assert_parse_roundtrip("[]")
     assert_parse_roundtrip("[x]")
 
@@ -289,6 +287,7 @@ def test_parser():
     assert_parsed_same_as_python('5+i if i>=0 else (0 if i<-1 else 10)')
     assert_parsed_same_as_python("0 if 1 if 2 else 3 else 4")
     assert_parsed_same_as_python("0 if (1 if 2 else 3) else 4")
+    assert_parsed_same_as_python("(2, 3,)")
 
     with pytest.deprecated_call():
         parse('1+if(0, 1, 2)')

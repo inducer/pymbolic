@@ -469,7 +469,11 @@ class Parser(object):
 
             pstate.advance()
             if pstate.is_at_end() or pstate.next_tag() is _closepar:
-                left_exp = (left_exp,)
+                if isinstance(left_exp, (tuple, list)) \
+                        and not isinstance(left_exp, FinalizedContainer):
+                    pass
+                else:
+                    left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
                 if isinstance(left_exp, (tuple, list)) \
