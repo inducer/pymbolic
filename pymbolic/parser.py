@@ -471,6 +471,7 @@ class Parser(object):
             if pstate.is_at_end() or pstate.next_tag() is _closepar:
                 if isinstance(left_exp, (tuple, list)) \
                         and not isinstance(left_exp, FinalizedContainer):
+                    # left_expr is a container with trailing commas
                     pass
                 else:
                     left_exp = (left_exp,)
