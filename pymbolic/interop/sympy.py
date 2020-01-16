@@ -52,9 +52,9 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
     def map_ImaginaryUnit(self, expr):  # noqa
         return 1j
 
-    map_Float = SympyLikeToPymbolicMapper.to_float
+    map_Float = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
-    map_NumberSymbol = SympyLikeToPymbolicMapper.to_float
+    map_NumberSymbol = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
     def function_name(self, expr):
         return type(expr).__name__
@@ -84,12 +84,12 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
         right = self.rec(expr.args[1])
         return prim.Comparison(left, operator, right)
 
-    map_Equality = partial(_comparison_operator, operator="==")
-    map_Unequality = partial(_comparison_operator, operator="!=")
-    map_GreaterThan = partial(_comparison_operator, operator=">=")
-    map_LessThan = partial(_comparison_operator, operator="<=")
-    map_StrictGreaterThan = partial(_comparison_operator, operator=">")
-    map_StrictLessThan = partial(_comparison_operator, operator="<")
+    map_Equality = partial(_comparison_operator, operator="==")  # noqa: N815
+    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815
+    map_GreaterThan = partial(_comparison_operator, operator=">=")  # noqa: N815
+    map_LessThan = partial(_comparison_operator, operator="<=")  # noqa: N815
+    map_StrictGreaterThan = partial(_comparison_operator, operator=">")  # noqa: N815
+    map_StrictLessThan = partial(_comparison_operator, operator="<")  # noqa: N815
 
 # }}}
 
