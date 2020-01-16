@@ -57,7 +57,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
     def map_Constant(self, expr):  # noqa
         return self.rec(expr.n())
 
-    map_Complex = map_Constant
+    map_Complex = map_Constant  # noqa: N815
 
     def map_ComplexDouble(self, expr):  # noqa
         r = self.rec(expr.real_part())
@@ -67,7 +67,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
         else:
             return r + 1j * i
 
-    map_RealDouble = SympyLikeToPymbolicMapper.to_float
+    map_RealDouble = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
     def function_name(self, expr):
         try:

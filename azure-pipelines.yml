@@ -51,7 +51,7 @@ jobs:
         script: |
             set -e
             curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
-            . ./prepare-and-run-flake8.sh pytools test
+            . ./prepare-and-run-flake8.sh pymbolic test
 
         displayName: 'Flake8'
 
@@ -78,3 +78,11 @@ jobs:
             . ./prepare-and-run-pylint.sh pymbolic test/test_*.py
 
         displayName: 'Pylint'
+
+schedules:
+-
+    cron: "0 0 * * 0"
+    displayName: Weekly build
+    branches:
+        include:
+        - master
