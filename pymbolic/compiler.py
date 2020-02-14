@@ -101,7 +101,7 @@ class CompiledExpression(object):
         :arg variables: The first arguments (as strings or
             :class:`pymbolic.primitives.Variable` instances) to be used for the
             compiled function.  All variables used by the expression and not
-            present here are added in alphabetical order.
+            present here are added in lexicographic order.
         """
         self._compile(expression, variables)
 
