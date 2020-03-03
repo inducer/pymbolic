@@ -77,6 +77,13 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
             # For builtin functions
             return type(expr).__name__
 
+    def not_supported(self, expr):  # noqa
+        if isinstance(expr, symengine.Function) and \
+                self.function_name(expr) == "CSE":
+            return prim.CommonSubexpression(
+                self.rec(expr.args[0]), expr._sympy_().prefix)
+        return SympyLikeToPymbolicMapper.not_supported(self, expr)
+
 # }}}
 
 
@@ -92,5 +99,15 @@ class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
 
 
 # }}}
+
+
+def make_cse(arg, prefix=None):
+    # SymEngine's classes can't be inherited, but there's a
+    # mechanism to create one based on SymPy's ones which stores
+    # the SymPy object inside the C++ object.
+    # This SymPy object is later retrieved to get the prefix
+    from pymbolic.interop.sympy import make_cse as make_cse_sympy
+    sympy_result = make_cse_sympy(arg, prefix=prefix)
+    return symengine.sympify(sympy_result)
 
 # vim: fdm=marker

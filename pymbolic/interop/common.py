@@ -108,10 +108,6 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return prim.Derivative(self.rec(expr.expr),
                 tuple(v.name for v in expr.variables))
 
-    def map_CSE(self, expr):  # noqa
-        return prim.CommonSubexpression(
-                self.rec(expr.args[0]), expr.prefix)
-
     def map_UnevaluatedExpr(self, expr):  # noqa
         return self.rec(expr.args[0])
 
