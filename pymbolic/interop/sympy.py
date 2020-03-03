@@ -69,28 +69,6 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
             tuple(self.rec(i) for i in expr.args[1:])
             )
 
-    def map_Piecewise(self, expr):  # noqa
-        # We only handle piecewises with 2 arguments!
-        assert len(expr.args) == 2
-        # We only handle if/else cases
-        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
-        then = self.rec(expr.args[0][0])
-        else_ = self.rec(expr.args[1][0])
-        cond = self.rec(expr.args[0][1])
-        return prim.If(cond, then, else_)
-
-    def _comparison_operator(self, expr, operator=None):
-        left = self.rec(expr.args[0])
-        right = self.rec(expr.args[1])
-        return prim.Comparison(left, operator, right)
-
-    map_Equality = partial(_comparison_operator, operator="==")  # noqa: N815
-    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815
-    map_GreaterThan = partial(_comparison_operator, operator=">=")  # noqa: N815
-    map_LessThan = partial(_comparison_operator, operator="<=")  # noqa: N815
-    map_StrictGreaterThan = partial(_comparison_operator, operator=">")  # noqa: N815
-    map_StrictLessThan = partial(_comparison_operator, operator="<")  # noqa: N815
-
 # }}}
 
 
@@ -104,40 +82,11 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
         raise RuntimeError(
             "do not know how to translate '%s' to sympy" % expr)
 
-    def map_derivative(self, expr):
-        return self.sym.Derivative(self.rec(expr.child),
-                *[self.sym.Symbol(v) for v in expr.variables])
-
     def map_subscript(self, expr):
         return self.sym.Indexed(
             self.rec(expr.aggregate),
             *tuple(self.rec(i) for i in expr.index_tuple)
             )
-
-    def map_if(self, expr):
-        cond = self.rec(expr.condition)
-        return self.sym.Piecewise((self.rec(expr.then), cond),
-                                  (self.rec(expr.else_), True)
-                                  )
-
-    def map_comparison(self, expr):
-        left = self.rec(expr.left)
-        right = self.rec(expr.right)
-        if expr.operator == "==":
-            return self.sym.Equality(left, right)
-        elif expr.operator == "!=":
-            return self.sym.Unequality(left, right)
-        elif expr.operator == "<":
-            return self.sym.StrictLessThan(left, right)
-        elif expr.operator == ">":
-            return self.sym.StrictGreaterThan(left, right)
-        elif expr.operator == "<=":
-            return self.sym.LessThan(left, right)
-        elif expr.operator == ">=":
-            return self.sym.GreaterThan(left, right)
-        else:
-            raise NotImplementedError("Unknown operator '%s'" % expr.operator)
-
 # }}}
 
 
