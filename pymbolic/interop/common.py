@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import pymbolic.primitives as prim
 from pymbolic.mapper.evaluator import EvaluationMapper
+from functools import partial
 
 
 class SympyLikeMapperBase(object):

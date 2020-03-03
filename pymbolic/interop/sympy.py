@@ -29,7 +29,6 @@ from pymbolic.interop.common import (
     SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
 
 import pymbolic.primitives as prim
-from functools import partial
 
 import sympy
 
