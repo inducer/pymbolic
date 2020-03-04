@@ -70,7 +70,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     def map_CSE(self, expr):  # noqa
         return prim.CommonSubexpression(
-                self.rec(expr.args[0]), expr.prefix)
+                self.rec(expr.args[0]), expr.prefix, expr.scope)
 
 # }}}
 
@@ -98,9 +98,10 @@ class CSE(sympy.Function):
     nargs = 1
 
 
-def make_cse(arg, prefix=None):
+def make_cse(arg, prefix=None, scope=None):
     result = CSE(arg)
     result.prefix = prefix
+    result.scope = scope
     return result
 
 
