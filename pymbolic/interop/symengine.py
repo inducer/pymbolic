@@ -107,12 +107,8 @@ def make_cse(arg, prefix=None, scope=None):
     # mechanism to create one based on SymPy's ones which stores
     # the SymPy object inside the C++ object.
     # This SymPy object is later retrieved to get the prefix
-    # _args is set manually to avoid SymEngine->SymPy->SymEngine casts
-    from sympy import Function as SymPyFunction
-    f = SymPyFunction("CSE")()
-    f._args = (arg,)
-    f.scope = scope
-    f.prefix = prefix
-    return symengine.sympify(f)
+    from pymbolic.interop.sympy import make_cse as make_cse_sympy
+    sympy_result = make_cse_sympy(arg, prefix=prefix, scope=scope)
+    return symengine.sympify(sympy_result)
 
 # vim: fdm=marker
