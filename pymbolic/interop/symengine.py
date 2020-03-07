@@ -79,7 +79,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     def not_supported(self, expr):  # noqa
         from symengine.lib.symengine_wrapper import PyFunction   # noqa: E0611
-        if isinstance(expr, PyFunction) and \                    # noqa: E0611
+        if isinstance(expr, PyFunction) and \
                 self.function_name(expr) == "CSE":               # noqa: E0611
             sympy_expr = expr._sympy_()
             return prim.CommonSubexpression(
