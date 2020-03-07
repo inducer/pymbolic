@@ -9,5 +9,5 @@ dependencies:
  - conda-forge::numpy
  - conda-forge::sympy
  - python=2.7
- - symengine::python-symengine=0.3.0
+ - symengine::python-symengine=0.6.0
  - maxima

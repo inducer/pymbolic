@@ -7,6 +7,6 @@ dependencies:
  - conda-forge::numpy
  - conda-forge::sympy
  - python=3.6
- - symengine::python-symengine=0.3.0
+ - symengine::python-symengine=0.6.0
 # - pexpect
 # - maxima
