@@ -69,8 +69,9 @@ def make_subst_func(variable_assignments):
     return subst_func
 
 
-def substitute(expression, variable_assignments={}, **kwargs):
+def substitute(
+        expression, variable_assignments={}, mapper=SubstitutionMapper, **kwargs):
     variable_assignments = variable_assignments.copy()
     variable_assignments.update(kwargs)
 
-    return SubstitutionMapper(make_subst_func(variable_assignments))(expression)
+    return mapper(make_subst_func(variable_assignments))(expression)
