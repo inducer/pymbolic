@@ -4,9 +4,9 @@ Pymbolic: Easy Expression Trees and Term Rewriting
 .. image:: https://gitlab.tiker.net/inducer/pymbolic/badges/master/pipeline.svg
     :alt: Gitlab Build Status
     :target: https://gitlab.tiker.net/inducer/pymbolic/commits/master
-.. image:: https://dev.azure.com/ak-spam/inducer/_apis/build/status/inducer.pymbolic?branchName=master
-    :alt: Azure Build Status
-    :target: https://dev.azure.com/ak-spam/inducer/_build/latest?definitionId=3&branchName=master
+.. image:: https://github.com/inducer/pymbolic/workflows/CI/badge.svg?branch=master
+    :alt: Github Build Status
+    :target: https://github.com/inducer/pymbolic/actions?query=branch%3Amaster+workflow%3ACI
 .. image:: https://badge.fury.io/py/pymbolic.png
     :alt: Python Package Index Release Page
     :target: https://pypi.org/project/pymbolic/
