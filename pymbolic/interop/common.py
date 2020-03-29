@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import pymbolic.primitives as prim
 from pymbolic.mapper.evaluator import EvaluationMapper
+from functools import partial
 
 
 class SympyLikeMapperBase(object):
@@ -107,10 +108,6 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return prim.Derivative(self.rec(expr.expr),
                 tuple(v.name for v in expr.variables))
 
-    def map_CSE(self, expr):  # noqa
-        return prim.CommonSubexpression(
-                self.rec(expr.args[0]), expr.prefix)
-
     def map_UnevaluatedExpr(self, expr):  # noqa
         return self.rec(expr.args[0])
 
@@ -122,6 +119,28 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
                     *tuple(self.rec(arg) for arg in expr.args))
         else:
             return SympyLikeMapperBase.not_supported(self, expr)
+
+    def map_Piecewise(self, expr):  # noqa
+        # We only handle piecewises with 2 arguments!
+        assert len(expr.args) == 2
+        # We only handle if/else cases
+        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
+        then = self.rec(expr.args[0][0])
+        else_ = self.rec(expr.args[1][0])
+        cond = self.rec(expr.args[0][1])
+        return prim.If(cond, then, else_)
+
+    def _comparison_operator(self, expr, operator=None):
+        left = self.rec(expr.args[0])
+        right = self.rec(expr.args[1])
+        return prim.Comparison(left, operator, right)
+
+    map_Equality = partial(_comparison_operator, operator="==")  # noqa: N815
+    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815
+    map_GreaterThan = partial(_comparison_operator, operator=">=")  # noqa: N815
+    map_LessThan = partial(_comparison_operator, operator="<=")  # noqa: N815
+    map_StrictGreaterThan = partial(_comparison_operator, operator=">")  # noqa: N815
+    map_StrictLessThan = partial(_comparison_operator, operator="<")  # noqa: N815
 
 # }}}
 
@@ -166,8 +185,33 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
                 tuple(self.rec(v) for v in expr.values),
                 )
 
+    def map_if(self, expr):
+        cond = self.rec(expr.condition)
+        return self.sym.Piecewise((self.rec(expr.then), cond),
+                                  (self.rec(expr.else_), True)
+                                  )
+
+    def map_comparison(self, expr):
+        left = self.rec(expr.left)
+        right = self.rec(expr.right)
+        if expr.operator == "==":
+            return self.sym.Equality(left, right)
+        elif expr.operator == "!=":
+            return self.sym.Unequality(left, right)
+        elif expr.operator == "<":
+            return self.sym.StrictLessThan(left, right)
+        elif expr.operator == ">":
+            return self.sym.StrictGreaterThan(left, right)
+        elif expr.operator == "<=":
+            return self.sym.LessThan(left, right)
+        elif expr.operator == ">=":
+            return self.sym.GreaterThan(left, right)
+        else:
+            raise NotImplementedError("Unknown operator '%s'" % expr.operator)
+
     def map_derivative(self, expr):
-        raise NotImplementedError()
+        return self.sym.Derivative(self.rec(expr.child),
+                *[self.sym.Symbol(v) for v in expr.variables])
 
 # }}}
 
