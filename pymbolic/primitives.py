@@ -1467,7 +1467,7 @@ class Slice(Expression):
 
     @property
     def start(self):
-        if len(self.children) > 1:
+        if len(self.children) > 0:
             return self.children[0]
         else:
             return None
