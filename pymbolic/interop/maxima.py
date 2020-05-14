@@ -381,9 +381,9 @@ class MaximaKernel:
             import sys
             self.child.logfile = sys.stdout
 
-    def _sendline(self, l):
+    def _sendline(self, line):
         self._check_debug()
-        self.child.sendline(l)
+        self.child.sendline(line)
 
     def exec_str(self, s, enforce_prompt_numbering=True):
         cmd = s+";"
@@ -420,8 +420,8 @@ class MaximaKernel:
 
     def clean_eval_str_with_setup(self, setup_lines, s):
         self.reset()
-        for l in setup_lines:
-            self.exec_str(l)
+        for line in setup_lines:
+            self.exec_str(line)
 
         return self.eval_str(s)
 
