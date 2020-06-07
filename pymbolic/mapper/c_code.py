@@ -40,8 +40,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         >>> CSE = p.CommonSubexpression
         >>> u = CSE(3*x**2-5, "u")
         >>> expr = u/(u+3)*(u+5)
-        >>> print expr
-        CSE(3*x**2 + -5) / (CSE(3*x**2 + -5) + 3)*(CSE(3*x**2 + -5) + 5)
+        >>> print(expr)
+        (CSE(3*x**2 + -5) / (CSE(3*x**2 + -5) + 3))*(CSE(3*x**2 + -5) + 5)
 
     Notice that if we were to directly generate code from this, the
     subexpression *u* would be evaluated multiple times.
@@ -53,10 +53,10 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         >>> result = ccm(expr)
 
         >>> for name, value in ccm.cse_name_list:
-        ...     print "%s = %s;" % (name, value)
+        ...     print("%s = %s;" % (name, value))
         ...
         _cse_u = 3 * x * x + -5;
-        >>> print result
+        >>> print(result)
         _cse_u / (_cse_u + 3) * (_cse_u + 5)
 
     See :class:`pymbolic.mapper.stringifier.CSESplittingStringifyMapperMixin`
