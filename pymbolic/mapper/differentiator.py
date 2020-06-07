@@ -80,10 +80,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
         >>> expr = x*(x+5)**3/(x-1)**2
 
         >>> from pymbolic.mapper.differentiator import DifferentiationMapper as DM
-        >>> print DM(x)(expr)
-        (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) \
-                / (x + -1)**2**2
-    """
+        >>> print(DM(x)(expr))
+        (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) / (x + -1)**2**2
+    """  # noqa: E501
 
     def __init__(self, variable, func_map=map_math_functions_by_name,
                  allowed_nonsmoothness=None):
