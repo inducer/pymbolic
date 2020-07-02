@@ -1668,11 +1668,16 @@ def make_common_subexpression(field, prefix=None, scope=None):
             or field.scope == scope):
         # Don't re-wrap
         return field
+    
+    import numpy
+    
+    have_obj_array = (
+            isinstance(field, numpy.ndarray)
+            and field.dtype.char == "O")
 
-    if isinstance(field, numpy.ndarray):
-        have_obj_array = (field.dtype.char == "O":)
+    try:
         logical_shape = field.shape
-    else:
+    except AttributeError:
         logical_shape = ()
 
     from pymbolic.geometric_algebra import MultiVector
