@@ -1102,7 +1102,7 @@ def componentwise(f, expr):
     if isinstance(expr, MultiVector):
         return expr.map(f)
 
-    from pytools.obj_array import with_object_array_or_scalar
-    return with_object_array_or_scalar(f, expr)
+    from pytools.obj_array import obj_array_vectorize
+    return obj_array_vectorize(f, expr)
 
 # vim: foldmethod=marker

@@ -1669,15 +1669,13 @@ def make_common_subexpression(field, prefix=None, scope=None):
         # Don't re-wrap
         return field
 
-    try:
-        from pytools.obj_array import log_shape
-    except ImportError:
-        have_obj_array = False
+    if isinstance(field, numpy.ndarray):
+        if field.dtype.char == "O":
+            logical_shape = field.shape
+        else:
+            logical_shape = field.shape[:-1]
     else:
-        have_obj_array = True
-
-    if have_obj_array:
-        ls = log_shape(field)
+        logical_shape = ()
 
     from pymbolic.geometric_algebra import MultiVector
     if isinstance(field, MultiVector):
@@ -1694,11 +1692,9 @@ def make_common_subexpression(field, prefix=None, scope=None):
 
         return MultiVector(new_data, field.space)
 
-    elif have_obj_array and ls != ():
-        from pytools import indices_in_shape
-        result = numpy.zeros(ls, dtype=object)
-
-        for i in indices_in_shape(ls):
+    elif logical_shape != ():
+        result = numpy.zeros(logical_shape, dtype=object)
+        for i in numpy.ndindex(*logical_shape):
             if prefix is not None:
                 component_prefix = prefix+"_".join(str(i_i) for i_i in i)
             else:
@@ -1711,6 +1707,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
                         field[i], component_prefix, scope)
 
         return result
+
     else:
         if is_constant(field):
             return field
@@ -1738,9 +1735,9 @@ def make_sym_vector(name, components, var_factory=Variable):
     if isinstance(components, Integral):
         components = list(range(components))
 
-    from pytools.obj_array import join_fields
+    from pytools.obj_array import flat_obj_array
     vfld = var_factory(name)
-    return join_fields(*[vfld.index(i) for i in components])
+    return flat_obj_array(*[vfld.index(i) for i in components])
 
 
 def make_sym_array(name, shape, var_factory=Variable):
@@ -1750,8 +1747,7 @@ def make_sym_array(name, shape, var_factory=Variable):
 
     import numpy as np
     result = np.zeros(shape, dtype=object)
-    from pytools import indices_in_shape
-    for i in indices_in_shape(shape):
+    for i in np.ndindex(*shape):
         result[i] = vfld.index(i)
 
     return result
