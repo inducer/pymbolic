@@ -213,8 +213,7 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
     def map_numpy_array(self, expr, *args):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        from pytools import indices_in_shape
-        for i in indices_in_shape(expr.shape):
+        for i in numpy.ndindex(*result.shape):
             result[i] = self.rec(expr[i], *args)
         return result
 
