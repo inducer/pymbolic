@@ -1670,10 +1670,8 @@ def make_common_subexpression(field, prefix=None, scope=None):
         return field
 
     if isinstance(field, numpy.ndarray):
-        if field.dtype.char == "O":
-            logical_shape = field.shape
-        else:
-            logical_shape = field.shape[:-1]
+        have_obj_array = (field.dtype.char == "O":)
+        logical_shape = field.shape
     else:
         logical_shape = ()
 
@@ -1692,7 +1690,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
 
         return MultiVector(new_data, field.space)
 
-    elif logical_shape != ():
+    elif have_obj_array and logical_shape != ():
         result = numpy.zeros(logical_shape, dtype=object)
         for i in numpy.ndindex(*logical_shape):
             if prefix is not None:
