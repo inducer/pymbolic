@@ -458,7 +458,7 @@ class IdentityMapper(Mapper):
     def map_numpy_array(self, expr, *args, **kwargs):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        for i in numpy.ndindex(*expr.shape):
+        for i in numpy.ndindex(expr.shape):
             result[i] = self.rec(expr[i], *args, **kwargs)
         return result
 
@@ -648,7 +648,7 @@ class WalkMapper(RecursiveMapper):
             return
 
         import numpy
-        for i in numpy.ndindex(*expr.shape):
+        for i in numpy.ndindex(expr.shape):
             self.rec(expr[i], *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)

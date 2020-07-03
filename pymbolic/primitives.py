@@ -1699,7 +1699,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
 
     elif have_obj_array and logical_shape != ():
         result = numpy.zeros(logical_shape, dtype=object)
-        for i in numpy.ndindex(*logical_shape):
+        for i in numpy.ndindex(logical_shape):
             if prefix is not None:
                 component_prefix = prefix+"_".join(str(i_i) for i_i in i)
             else:
@@ -1752,7 +1752,7 @@ def make_sym_array(name, shape, var_factory=Variable):
 
     import numpy as np
     result = np.zeros(shape, dtype=object)
-    for i in np.ndindex(*shape):
+    for i in np.ndindex(shape):
         result[i] = vfld.index(i)
 
     return result
