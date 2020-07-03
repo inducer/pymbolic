@@ -345,7 +345,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
         str_array = numpy.zeros(expr.shape, dtype="object")
         max_length = 0
-        for i in numpy.ndindex(*expr.shape):
+        for i in numpy.ndindex(expr.shape):
             s = self.rec(expr[i], PREC_NONE, *args, **kwargs)
             max_length = max(len(s), max_length)
             str_array[i] = s.replace("\n", "\n  ")

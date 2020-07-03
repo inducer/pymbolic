@@ -157,7 +157,7 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
     def map_numpy_array(self, expr):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        for i in numpy.ndindex(*expr.shape):
+        for i in numpy.ndindex(expr.shape):
             result[i] = self.rec(expr[i])
         return result
 
