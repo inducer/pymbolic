@@ -1752,7 +1752,7 @@ def make_sym_array(name, shape, var_factory=Variable):
 
     import numpy as np
     result = np.zeros(shape, dtype=object)
-    for i in np.ndindex(*shape):
+    for i in np.ndindex(*result.shape):
         result[i] = vfld.index(i)
 
     return result
