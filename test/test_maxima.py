@@ -147,8 +147,8 @@ def test_diff():
 def test_long_command(knl):
     # Seems to fail with an encoding error on pexpect 4.8 and Py3.8.
     # -AK, 2020-07-13
-    #from pymbolic.interop.maxima import set_debug
-    #set_debug(4)
+    # from pymbolic.interop.maxima import set_debug
+    # set_debug(4)
     knl.eval_str("+".join(["1"]*16384))
 
 
