@@ -22,9 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-# pylint: disable=not-callable
-
-
 import pymbolic.primitives as prim
 import pytest
 from pymbolic import parse
