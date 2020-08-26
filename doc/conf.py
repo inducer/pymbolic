@@ -272,6 +272,7 @@ intersphinx_mapping = {
         'http://docs.scipy.org/doc/numpy/': None,
         'http://docs.makotemplates.org/en/latest/': None,
         'http://docs.sympy.org/dev/': None,
+        'https://galgebra.readthedocs.io/en/latest/': None,
         }
 
 autoclass_content = "both"
