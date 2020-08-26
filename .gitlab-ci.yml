@@ -57,8 +57,6 @@ Documentation:
   - ". ./build-docs.sh"
   tags:
   - linux
-  only:
-  - master
 
 Flake8:
   script:

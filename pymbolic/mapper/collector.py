@@ -32,7 +32,7 @@ class TermCollector(IdentityMapper):
     """A term collector that assumes that multiplication is commutative.
 
     Allows specifying *parameters* (a set of
-    :class:`pymbolic.primitive.Variable` instances) that are viewed as being
+    :class:`pymbolic.primitives.Variable` instances) that are viewed as being
     coefficients and are not used for term collection.
     """
 
