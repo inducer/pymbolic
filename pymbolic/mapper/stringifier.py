@@ -83,7 +83,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     this mapper.
 
     When it encounters an unsupported :class:`pymbolic.primitives.Expression`
-    subclass, it calls its :meth:`pymbolic.primitives.Expression.stringifier`
+    subclass, it calls its :meth:`pymbolic.primitives.Expression.make_stringifier`
     method to get a :class:`StringifyMapper` that potentially does.
     """
 

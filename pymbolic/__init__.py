@@ -55,7 +55,7 @@ Next, let's create an expression using *x*:
     (x + 1)**5
 
 Note the two ways an expression can be printed, namely :func:`repr` and
-:func:`str`.  :mod:`pymbolic` purposefully distinguishes the two.
+:class:`str`.  :mod:`pymbolic` purposefully distinguishes the two.
 
 :mod:`pymbolic` does not perform any manipulations on expressions
 you put in. It has a few of those built in, but that's not really the point:

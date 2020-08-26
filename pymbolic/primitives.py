@@ -155,7 +155,7 @@ Helper functions
 Interaction with :mod:`numpy` arrays
 ------------------------------------
 
-:mod:`numpy.ndarray` instances are supported anywhere in an expression.
+:class:`numpy.ndarray` instances are supported anywhere in an expression.
 In particular, :mod:`numpy` object arrays are useful for capturing
 vectors and matrices of :mod:`pymbolic` objects.
 
@@ -191,13 +191,15 @@ class Expression(object):
 
     .. method:: __getitem__
 
+    .. method:: __getinitargs__
+
     .. automethod:: make_stringifier
 
     .. automethod:: __eq__
+    .. automethod:: is_equal
     .. automethod:: __hash__
+    .. automethod:: get_hash
     .. automethod:: __str__
-    .. automethod:: __repr__
-
     .. automethod:: __repr__
 
     .. rubric:: Logical operator constructors
@@ -477,7 +479,7 @@ class Expression(object):
             return stringifier_class_getter()(*stringify_mapper_args)
 
     def __str__(self):
-        """Use the :meth:`stringifier` to return a human-readable
+        """Use the :meth:`make_stringifier` to return a human-readable
         string representation of *self*.
         """
 

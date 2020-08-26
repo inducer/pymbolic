@@ -420,9 +420,9 @@ class MultiVector(object):
         Unified Language for Mathematics and Physics
         <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
 
-    The object behaves much like the corresponding
-    :class:`sympy.galgebra.GA.MV` object in :mod:`sympy`, especially with
-    respect to the supported operators:
+    The object behaves much like the corresponding :class:`galgebra.mv.Mv`
+    object in :mod:`galgebra`, especially with respect to the supported
+    operators:
 
     =================== ========================================================
     Operation           Result
