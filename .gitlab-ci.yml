@@ -52,7 +52,7 @@ Pylint:
 
 Documentation:
   script:
-  - EXTRA_INSTALL="numpy"
+  - EXTRA_INSTALL="numpy sympy"
   - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-docs.sh
   - ". ./build-docs.sh"
   tags:
