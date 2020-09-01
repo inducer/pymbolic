@@ -46,7 +46,7 @@ class GraphvizMapper(WalkMapper):
         """Return the dot source code for a previously traversed expression."""
 
         return "digraph expression {\n%s\n}" % (
-            "\n".join("  "+l for l in self.lines))
+            "\n".join("  "+line for line in self.lines))
 
     def get_id(self, expr):
         "Generate a unique node ID for dot for *expr*"

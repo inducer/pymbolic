@@ -209,6 +209,11 @@ class ASTToPymbolic(ASTMapper):
     def map_Bytes(self, expr):  # noqa
         return expr.s
 
+    # 3.8 and up
+    def map_Constant(self, expr):  # noqa
+        # (singleton value)
+        return expr.value
+
     def map_NameConstant(self, expr):  # noqa
         # (singleton value)
         return expr.value

@@ -74,8 +74,11 @@ This first example demonstrates how to compute a cross product using
 
     >>> mv_a = MV(a)
     >>> mv_b = MV(b)
-    >>> print -mv_a.I*(mv_a^mv_b)
-    MV(-1.85*e0 + 2.988*e1 + -5.2016*e2)
+    >>> print(-mv_a.I*(mv_a^mv_b))
+    MV(
+        e0 * -1.8499999999999999
+        + e1 * 2.9879999999999995
+        + e2 * -5.201600000000001)
 
 This simple example demonstrates how a complex number is simply a special
 case of a :class:`MultiVector`:
@@ -93,17 +96,19 @@ case of a :class:`MultiVector`:
     >>> one = MV(1, sp)
     >>> one
     MultiVector({0: 1}, Space(['e0'], array([[-1.]])))
-    >>> print one
+    >>> print(one)
     MV(1)
-    >>> print one.I
-    MV(1*e0)
-    >>> print one.I ** 2
+    >>> print(one.I)
+    MV(e0 * 1)
+    >>> print(one.I ** 2)
     MV(-1.0)
 
-    >>> print (3+5j)*(2+3j)/(3j)
-    (6.33333333333+3j)
-    >>> print (3+5*one.I)*(2+3*one.I)/(3*one.I)
-    MV(6.33333333333 + 3.0*e0)
+    >>> print((3+5j)*(2+3j)/(3j))
+    (6.333333333333333+3j)
+    >>> print((3+5*one.I)*(2+3*one.I)/(3*one.I))
+    MV(
+        6.333333333333333
+        + e0 * 3.0)
 
 The following test demonstrates the use of the object and shows many useful
 properties:
@@ -415,9 +420,9 @@ class MultiVector(object):
         Unified Language for Mathematics and Physics
         <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
 
-    The object behaves much like the corresponding
-    :class:`sympy.galgebra.GA.MV` object in :mod:`sympy`, especially with
-    respect to the supported operators:
+    The object behaves much like the corresponding :class:`galgebra.mv.Mv`
+    object in :mod:`galgebra`, especially with respect to the supported
+    operators:
 
     =================== ========================================================
     Operation           Result
@@ -1097,7 +1102,7 @@ def componentwise(f, expr):
     if isinstance(expr, MultiVector):
         return expr.map(f)
 
-    from pytools.obj_array import with_object_array_or_scalar
-    return with_object_array_or_scalar(f, expr)
+    from pytools.obj_array import obj_array_vectorize
+    return obj_array_vectorize(f, expr)
 
 # vim: foldmethod=marker

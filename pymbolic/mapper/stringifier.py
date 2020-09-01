@@ -83,7 +83,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     this mapper.
 
     When it encounters an unsupported :class:`pymbolic.primitives.Expression`
-    subclass, it calls its :meth:`pymbolic.primitives.Expression.stringifier`
+    subclass, it calls its :meth:`pymbolic.primitives.Expression.make_stringifier`
     method to get a :class:`StringifyMapper` that potentially does.
     """
 
@@ -95,7 +95,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                     "achieve the desired effect. "
                     "The 'constant_mapper' argument will "
                     "disappear after June 2020.",
-                    DeprecationWarning)
+                    DeprecationWarning, stacklevel=2)
 
         self.constant_mapper = constant_mapper
 
@@ -343,10 +343,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def map_numpy_array(self, expr, enclosing_prec, *args, **kwargs):
         import numpy
 
-        from pytools import indices_in_shape
         str_array = numpy.zeros(expr.shape, dtype="object")
         max_length = 0
-        for i in indices_in_shape(expr.shape):
+        for i in numpy.ndindex(expr.shape):
             s = self.rec(expr[i], PREC_NONE, *args, **kwargs)
             max_length = max(len(s), max_length)
             str_array[i] = s.replace("\n", "\n  ")
@@ -355,8 +354,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             return "array(%s)" % ", ".join(str_array)
         else:
             lines = ["  %s: %s\n" % (
-                ",".join(str(i_i) for i_i in i), str_array[i])
-                for i in indices_in_shape(expr.shape)]
+                ",".join(str(i_i) for i_i in i), val)
+                for i, val in numpy.ndenumerate(str_array)]
             if max_length > 70:
                 splitter = "  " + "-"*75 + "\n"
                 return "array(\n%s)" % splitter.join(lines)

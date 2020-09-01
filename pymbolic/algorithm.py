@@ -84,7 +84,7 @@ def extended_euclidean(q, r):
         quot, t = divmod(q, r)
         T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # noqa
         q, r = r, t
-        Q, R = R, T
+        Q, R = R, T  # noqa: N806
 
     return q, Q[0], Q[1]
 
@@ -150,7 +150,7 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
     if n == 1:
         return x
 
-    N1, N2 = find_factors(n)
+    N1, N2 = find_factors(n)  # noqa: N806
 
     sub_ffts = [
             wrap_intermediate(

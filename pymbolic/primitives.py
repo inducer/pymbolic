@@ -155,7 +155,7 @@ Helper functions
 Interaction with :mod:`numpy` arrays
 ------------------------------------
 
-:mod:`numpy.ndarray` instances are supported anywhere in an expression.
+:class:`numpy.ndarray` instances are supported anywhere in an expression.
 In particular, :mod:`numpy` object arrays are useful for capturing
 vectors and matrices of :mod:`pymbolic` objects.
 
@@ -191,13 +191,15 @@ class Expression(object):
 
     .. method:: __getitem__
 
+    .. method:: __getinitargs__
+
     .. automethod:: make_stringifier
 
     .. automethod:: __eq__
+    .. automethod:: is_equal
     .. automethod:: __hash__
+    .. automethod:: get_hash
     .. automethod:: __str__
-    .. automethod:: __repr__
-
     .. automethod:: __repr__
 
     .. rubric:: Logical operator constructors
@@ -477,7 +479,7 @@ class Expression(object):
             return stringifier_class_getter()(*stringify_mapper_args)
 
     def __str__(self):
-        """Use the :meth:`stringifier` to return a human-readable
+        """Use the :meth:`make_stringifier` to return a human-readable
         string representation of *self*.
         """
 
@@ -1467,7 +1469,7 @@ class Slice(Expression):
 
     @property
     def start(self):
-        if len(self.children) > 1:
+        if len(self.children) > 0:
             return self.children[0]
         else:
             return None
@@ -1670,14 +1672,17 @@ def make_common_subexpression(field, prefix=None, scope=None):
         return field
 
     try:
-        from pytools.obj_array import log_shape
+        import numpy
+        have_obj_array = (
+            isinstance(field, numpy.ndarray)
+            and field.dtype.char == "O")
+        logical_shape = (
+            field.shape
+            if isinstance(field, numpy.ndarray)
+            else ())
     except ImportError:
         have_obj_array = False
-    else:
-        have_obj_array = True
-
-    if have_obj_array:
-        ls = log_shape(field)
+        logical_shape = ()
 
     from pymbolic.geometric_algebra import MultiVector
     if isinstance(field, MultiVector):
@@ -1694,11 +1699,9 @@ def make_common_subexpression(field, prefix=None, scope=None):
 
         return MultiVector(new_data, field.space)
 
-    elif have_obj_array and ls != ():
-        from pytools import indices_in_shape
-        result = numpy.zeros(ls, dtype=object)
-
-        for i in indices_in_shape(ls):
+    elif have_obj_array and logical_shape != ():
+        result = numpy.zeros(logical_shape, dtype=object)
+        for i in numpy.ndindex(logical_shape):
             if prefix is not None:
                 component_prefix = prefix+"_".join(str(i_i) for i_i in i)
             else:
@@ -1711,6 +1714,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
                         field[i], component_prefix, scope)
 
         return result
+
     else:
         if is_constant(field):
             return field
@@ -1738,9 +1742,9 @@ def make_sym_vector(name, components, var_factory=Variable):
     if isinstance(components, Integral):
         components = list(range(components))
 
-    from pytools.obj_array import join_fields
+    from pytools.obj_array import flat_obj_array
     vfld = var_factory(name)
-    return join_fields(*[vfld.index(i) for i in components])
+    return flat_obj_array(*[vfld.index(i) for i in components])
 
 
 def make_sym_array(name, shape, var_factory=Variable):
@@ -1750,8 +1754,7 @@ def make_sym_array(name, shape, var_factory=Variable):
 
     import numpy as np
     result = np.zeros(shape, dtype=object)
-    from pytools import indices_in_shape
-    for i in indices_in_shape(shape):
+    for i in np.ndindex(shape):
         result[i] = vfld.index(i)
 
     return result

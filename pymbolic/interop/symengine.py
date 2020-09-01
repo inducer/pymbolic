@@ -57,7 +57,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
     def map_Constant(self, expr):  # noqa
         return self.rec(expr.n())
 
-    map_Complex = map_Constant
+    map_Complex = map_Constant  # noqa: N815
 
     def map_ComplexDouble(self, expr):  # noqa
         r = self.rec(expr.real_part())
@@ -67,7 +67,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
         else:
             return r + 1j * i
 
-    map_RealDouble = SympyLikeToPymbolicMapper.to_float
+    map_RealDouble = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
     def function_name(self, expr):
         try:
@@ -76,6 +76,19 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
         except AttributeError:
             # For builtin functions
             return type(expr).__name__
+
+    def not_supported(self, expr):  # noqa
+        from symengine.lib.symengine_wrapper import \
+                PyFunction                               # pylint: disable=E0611
+        if isinstance(expr, PyFunction) and \
+                self.function_name(expr) == "CSE":       # pylint: disable=E0611
+            sympy_expr = expr._sympy_()
+            return prim.CommonSubexpression(
+                self.rec(expr.args[0]), sympy_expr.prefix, sympy_expr.scope)
+        elif isinstance(expr, symengine.Function) and \
+                self.function_name(expr) == "CSE":
+            return prim.CommonSubexpression(self.rec(expr.args[0]))
+        return SympyLikeToPymbolicMapper.not_supported(self, expr)
 
 # }}}
 
@@ -90,10 +103,24 @@ class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
         raise RuntimeError(
             "do not know how to translate '%s' to symengine" % expr)
 
-    def map_derivative(self, expr):
-        return self.sym.Derivative(self.rec(expr.child),
-                [self.sym.Symbol(v) for v in expr.variables])
 
 # }}}
+
+
+CSE = symengine.Function("CSE")
+
+
+def make_cse(arg, prefix=None, scope=None):
+    # SymEngine's classes can't be inherited, but there's a
+    # mechanism to create one based on SymPy's ones which stores
+    # the SymPy object inside the C++ object.
+    # This SymPy object is later retrieved to get the prefix
+    # These conversions between SymPy and SymEngine are expensive,
+    # so use it only if necessary.
+    if prefix is None and scope is None:
+        return CSE(arg)
+    from pymbolic.interop.sympy import make_cse as make_cse_sympy
+    sympy_result = make_cse_sympy(arg, prefix=prefix, scope=scope)
+    return symengine.sympify(sympy_result)
 
 # vim: fdm=marker
