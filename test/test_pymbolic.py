@@ -40,7 +40,7 @@ except NameError:
 
 def assert_parsed_same_as_python(expr_str):
     # makes sure that has only one line
-    expr_str, = expr_str.split('\n')
+    expr_str, = expr_str.split("\n")
     from pymbolic.interop.ast import ASTToPymbolic
     import ast
     ast2p = ASTToPymbolic()
@@ -284,13 +284,13 @@ def test_parser():
     assert parse("f(x,(y,z),z, name=15, name2=17)") == f(
             x, (y, z), z, name=15, name2=17)
 
-    assert_parsed_same_as_python('5+i if i>=0 else (0 if i<-1 else 10)')
+    assert_parsed_same_as_python("5+i if i>=0 else (0 if i<-1 else 10)")
     assert_parsed_same_as_python("0 if 1 if 2 else 3 else 4")
     assert_parsed_same_as_python("0 if (1 if 2 else 3) else 4")
     assert_parsed_same_as_python("(2, 3,)")
 
     with pytest.deprecated_call():
-        parse('1+if(0, 1, 2)')
+        parse("1+if(0, 1, 2)")
 
 # }}}
 
@@ -313,8 +313,8 @@ def test_mappers():
 def test_func_dep_consistency():
     from pymbolic import var
     from pymbolic.mapper.dependency import DependencyMapper
-    f = var('f')
-    x = var('x')
+    f = var("f")
+    x = var("x")
     dep_map = DependencyMapper(include_calls="descend_args")
     assert dep_map(f(x)) == set([x])
     assert dep_map(f(x=x)) == set([x])
@@ -322,8 +322,8 @@ def test_func_dep_consistency():
 
 def test_conditions():
     from pymbolic import var
-    x = var('x')
-    y = var('y')
+    x = var("x")
+    y = var("y")
     assert str(x.eq(y).and_(x.le(5))) == "x == y and x <= 5"
 
 
@@ -644,7 +644,7 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     import pymbolic.functions as pf
     from pymbolic.mapper.differentiator import differentiate
 
-    x = prim.Variable('x')
+    x = prim.Variable("x")
 
     with pytest.raises(ValueError):
         differentiate(pf.fabs(x), x)

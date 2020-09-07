@@ -49,13 +49,13 @@ class GraphvizMapper(WalkMapper):
             "\n".join("  "+line for line in self.lines))
 
     def get_id(self, expr):
-        "Generate a unique node ID for dot for *expr*"
+        """Generate a unique node ID for dot for *expr*"""
 
         return "id%d" % id(expr)
 
     def map_leaf(self, expr):
         self.lines.append(
-                "%s [label=\"%s\", shape=box];" % (
+                '%s [label="%s", shape=box];' % (
                     self.get_id(expr), str(expr).replace("\\", "\\\\")))
 
         if self.visit(expr, node_printed=True):
@@ -84,7 +84,7 @@ class GraphvizMapper(WalkMapper):
 
         if not node_printed:
             self.lines.append(
-                    "%s [label=\"%s\"];" % (
+                    '%s [label="%s"];' % (
                         self.get_id(expr),
                         type(expr).__name__))
 
@@ -96,7 +96,7 @@ class GraphvizMapper(WalkMapper):
 
     def map_sum(self, expr):
         self.lines.append(
-                "%s [label=\"+\",shape=circle];" % (self.get_id(expr)))
+                '%s [label="+",shape=circle];' % (self.get_id(expr)))
         if not self.visit(expr, node_printed=True):
             return
 
@@ -107,7 +107,7 @@ class GraphvizMapper(WalkMapper):
 
     def map_product(self, expr):
         self.lines.append(
-                "%s [label=\"*\",shape=circle];" % (self.get_id(expr)))
+                '%s [label="*",shape=circle];' % (self.get_id(expr)))
         if not self.visit(expr, node_printed=True):
             return
 
@@ -123,7 +123,7 @@ class GraphvizMapper(WalkMapper):
         node_id = self.generate_unique_id()
 
         self.lines.append(
-                "%s [label=\"%s\",shape=box];" % (
+                '%s [label="%s",shape=box];' % (
                     node_id,
                     expr.name))
         if not self.visit(expr, node_printed=True, node_id=node_id):
@@ -133,7 +133,7 @@ class GraphvizMapper(WalkMapper):
 
     def map_lookup(self, expr):
         self.lines.append(
-                "%s [label=\"Lookup[%s]\",shape=box];" % (
+                '%s [label="Lookup[%s]",shape=box];' % (
                     self.get_id(expr), expr.name))
         if not self.visit(expr, node_printed=True):
             return
@@ -149,7 +149,7 @@ class GraphvizMapper(WalkMapper):
         node_id = self.generate_unique_id()
 
         self.lines.append(
-                "%s [label=\"%s\",shape=ellipse];" % (
+                '%s [label="%s",shape=ellipse];' % (
                     node_id,
                     str(expr)))
         if not self.visit(expr, node_printed=True, node_id=node_id):
@@ -163,7 +163,7 @@ class GraphvizMapper(WalkMapper):
             return super(GraphvizMapper, self).map_call(expr)
 
         self.lines.append(
-                "%s [label=\"Call[%s]\",shape=box];" % (
+                '%s [label="Call[%s]",shape=box];' % (
                     self.get_id(expr), str(expr.function)))
         if not self.visit(expr, node_printed=True):
             return

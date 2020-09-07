@@ -370,10 +370,10 @@ def solve_affine_equations_for(unknowns, equations):
 
     if 0:
         for lhs, rhs in equations:
-            print(lhs, '=', rhs)
+            print(lhs, "=", rhs)
         print("-------------------")
         for lhs, rhs in six.iteritems(result):
-            print(lhs, '=', rhs)
+            print(lhs, "=", rhs)
 
     return result
 

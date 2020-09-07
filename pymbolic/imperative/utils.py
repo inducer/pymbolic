@@ -36,15 +36,15 @@ logger = logging.getLogger(__name__)
 
 def _default_preamble_hook():
     # Sets default attributes for nodes and edges.
-    yield "node [shape=\"box\"];"
-    yield "edge [dir=\"back\"];"
+    yield 'node [shape="box"];'
+    yield 'edge [dir="back"];'
 
 
 def get_dot_dependency_graph(
         statements,  use_stmt_ids=None,
         preamble_hook=_default_preamble_hook,
         additional_lines_hook=list,
-        statement_stringifier=lambda s: str(s).replace("\"", "\\\""),
+        statement_stringifier=lambda s: str(s).replace('"', r'\"'),
 
         # deprecated
         use_insn_ids=None,):
@@ -80,7 +80,7 @@ def get_dot_dependency_graph(
             stmt_label = statement_stringifier(stmt)
             tooltip = stmt.id
 
-        return "label=\"%s\",shape=\"box\",tooltip=\"%s\"" % (stmt_label, tooltip)
+        return 'label="%s",shape="box",tooltip="%s"' % (stmt_label, tooltip)
 
     lines = list(preamble_hook())
     lines.append("rankdir=BT;")
@@ -90,7 +90,7 @@ def get_dot_dependency_graph(
     annotation_dep_graph = {}
 
     for stmt in statements:
-        lines.append("\"%s\" [%s];" % (stmt.id, get_node_attrs(stmt)))
+        lines.append('"%s" [%s];' % (stmt.id, get_node_attrs(stmt)))
         for dep in stmt.depends_on:
             dep_graph.setdefault(stmt.id, set()).add(dep)
 
@@ -130,7 +130,7 @@ def get_dot_dependency_graph(
 
     for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
         lines.append(
-                "%s -> %s  [label=\"%s\",style=\"dashed\"]"
+                '%s -> %s  [label="%s",style="dashed"]'
                 % (stmt_2, stmt_1, annot))
 
     lines.extend(additional_lines_hook())
