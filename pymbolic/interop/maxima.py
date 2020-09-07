@@ -295,12 +295,12 @@ class MaximaKernel:
         # {{{ check for maxima command
 
         self.child.sendline(
-            "hash \"{command}\"; echo $?".format(command=self.executable))
+            'hash \"{command}\"; echo $?'.format(command=self.executable))
 
         hash_output = self.child.expect(["0\r\n", "1\r\n"])
         if hash_output != 0:
             raise RuntimeError(
-                "maxima executable \"{command}\" not found"
+                "maxima executable '{command}' not found"
                 .format(command=self.executable))
 
         # }}}

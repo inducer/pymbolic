@@ -189,7 +189,7 @@ class ConditionalAssignment(ConditionalStatement, Assignment):
 
 class Nop(Statement):
     def __str__(self):
-        return 'nop'
+        return "nop"
 
 # }}}
 
