@@ -127,7 +127,7 @@ def find_factors(n):
     return n1, n2
 
 
-def fft(x, sign=1, wrap_intermediate=lambda x: x):
+def fft(x, sign=1, wrap_intermediate=lambda x: x, complex_dtype=None):
     r"""Computes the Fourier transform of x:
 
     .. math::
@@ -145,6 +145,9 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
     from math import pi
     import numpy
 
+    if complex_dtype is None:
+        complex_dtype = numpy.complex128
+
     n = len(x)
 
     if n == 1:
@@ -156,18 +159,18 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x):
             wrap_intermediate(
                 fft(x[n1::N1], sign, wrap_intermediate)
                 * numpy.exp(numpy.linspace(0, sign*(-2j)*pi*n1/N1, N2,
-                    endpoint=False)))
+                    endpoint=False), dtype=complex_dtype))
             for n1 in range(N1)]
 
     return numpy.hstack([
-        sum(subvec * cmath.exp(sign*(-2j)*pi*n1*k1/N1)
+        sum(subvec * complex_dtype(cmath.exp(sign*(-2j)*pi*n1*k1/N1))
             for n1, subvec in enumerate(sub_ffts))
         for k1 in range(N1)
         ])
 
 
-def ifft(x, wrap_intermediate=lambda x: x):
-    return (1/len(x))*fft(x, -1, wrap_intermediate)
+def ifft(x, wrap_intermediate=lambda x: x, complex_dtype=None):
+    return (1/len(x))*fft(x, -1, wrap_intermediate, complex_dtype=complex_dtype)
 
 
 def sym_fft(x, sign=1):
