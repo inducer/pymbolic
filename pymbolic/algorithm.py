@@ -146,7 +146,7 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x, complex_dtype=None):
     import numpy
 
     if complex_dtype is None:
-        complex_dtype = np.complex128
+        complex_dtype = numpy.complex128
 
     n = len(x)
 
