@@ -1163,10 +1163,31 @@ class Comparison(Expression):
 
     init_arg_names = ("left", "operator", "right")
 
+    operator_to_name = {
+            "==": "eq",
+            "!=": "ne",
+            ">=": "ge",
+            ">": "gt",
+            "<=": "le",
+            "<": "lt",
+            }
+    name_to_operator = {name: op for op, name in operator_to_name.items()}
+
     def __init__(self, left, operator, right):
+        """
+        :arg operator: accepts the same values as :attr:`operator`, or the
+            standard Python comparison operator names
+
+        .. versionchanged:: 2020.2
+
+            Now also accepts Python operator names.
+        """
         self.left = left
         self.right = right
-        if operator not in [">", ">=", "==", "!=", "<", "<="]:
+
+        operator = self.name_to_operator.get(operator, operator)
+
+        if operator not in self.operator_to_name:
             raise RuntimeError("invalid operator")
         self.operator = operator
 
