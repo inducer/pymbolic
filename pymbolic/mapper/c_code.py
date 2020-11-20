@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 from pymbolic.mapper.stringifier import (
         SimplifyingSortingStringifyMapper, PREC_UNARY,
-        PREC_LOGICAL_AND, PREC_LOGICAL_OR)
+        PREC_LOGICAL_AND, PREC_LOGICAL_OR, PREC_NONE)
 
 
 class CCodeMapper(SimplifyingSortingStringifyMapper):
@@ -63,10 +63,10 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
     for the ``cse_*`` attributes.
     """
 
-    def __init__(self, constant_mapper=repr, reverse=True,
+    def __init__(self, reverse=True,
             cse_prefix="_cse", complex_constant_base_type="double",
             cse_name_list=[]):
-        SimplifyingSortingStringifyMapper.__init__(self, constant_mapper, reverse)
+        super().__init__(reverse)
         self.cse_prefix = cse_prefix
 
         self.cse_to_name = dict((cse, name) for name, cse in cse_name_list)
@@ -78,7 +78,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
     def copy(self, cse_name_list=None):
         if cse_name_list is None:
             cse_name_list = self.cse_name_list
-        return CCodeMapper(self.constant_mapper, self.reverse,
+        return CCodeMapper(self.reverse,
                 self.cse_prefix, self.complex_constant_base_type,
                 cse_name_list)
 
@@ -100,8 +100,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         if isinstance(x, complex):
             return "std::complex<%s>(%s, %s)" % (
                     self.complex_constant_base_type,
-                    self.constant_mapper(x.real),
-                    self.constant_mapper(x.imag))
+                    self.map_constant(x.real, PREC_NONE),
+                    self.map_constant(x.imag, PREC_NONE))
         else:
             return SimplifyingSortingStringifyMapper.map_constant(
                     self, x, enclosing_prec)
@@ -205,4 +205,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                 self.rec(expr.then, PREC_NONE),
                 self.rec(expr.else_, PREC_NONE),
                 )
+
     # }}}
+
+# vim: foldmethod=marker

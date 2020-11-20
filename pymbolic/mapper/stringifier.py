@@ -87,18 +87,6 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     method to get a :class:`StringifyMapper` that potentially does.
     """
 
-    def __init__(self, constant_mapper=None):
-        if constant_mapper is not None:
-            from warnings import warn
-            warn("Overriding constant_mapper is deprecated. "
-                    "Instead, subclass the stringifier to "
-                    "achieve the desired effect. "
-                    "The 'constant_mapper' argument will "
-                    "disappear after June 2020.",
-                    DeprecationWarning, stacklevel=2)
-
-        self.constant_mapper = constant_mapper
-
     # {{{ replaceable string composition interface
 
     def format(self, s, *args):
@@ -145,10 +133,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 expr, enclosing_prec, *args, **kwargs)
 
     def map_constant(self, expr, enclosing_prec, *args, **kwargs):
-        if self.constant_mapper is None:
-            result = str(expr)
-        else:
-            result = self.constant_mapper(expr)
+        result = str(expr)
 
         if not (result.startswith("(") and result.endswith(")")) \
                 and ("-" in result or "+" in result) \
@@ -514,8 +499,8 @@ class CSESplittingStringifyMapperMixin(object):
 # {{{ sorting stringifier
 
 class SortingStringifyMapper(StringifyMapper):
-    def __init__(self, constant_mapper=str, reverse=True):
-        StringifyMapper.__init__(self, constant_mapper)
+    def __init__(self, reverse=True):
+        super().__init__()
         self.reverse = reverse
 
     def map_sum(self, expr, enclosing_prec, *args, **kwargs):
@@ -538,8 +523,8 @@ class SortingStringifyMapper(StringifyMapper):
 # {{{ simplifying, sorting stringifier
 
 class SimplifyingSortingStringifyMapper(StringifyMapper):
-    def __init__(self, constant_mapper=str, reverse=True):
-        StringifyMapper.__init__(self, constant_mapper)
+    def __init__(self, reverse=True):
+        super().__init__()
         self.reverse = reverse
 
     def map_sum(self, expr, enclosing_prec, *args, **kwargs):
