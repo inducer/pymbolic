@@ -217,6 +217,16 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
             result[i] = self.rec(expr[i], *args)
         return result
 
+    def map_if(self, expr, *args):
+        if self.allowed_nonsmoothness != "discontinuous":
+            raise ValueError("cannot differentiate 'If' nodes unless "
+                    "allowed_nonsmoothness is set to 'discontinuous'")
+
+        return type(expr)(
+                expr.condition,
+                self.rec(expr.then, *args),
+                self.rec(expr.else_, *args))
+
 
 def differentiate(expression,
                   variable,

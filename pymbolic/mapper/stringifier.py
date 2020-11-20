@@ -451,10 +451,23 @@ class CSESplittingStringifyMapperMixin(object):
     See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example
     of the use of this mix-in.
     """
+    def __init__(self):
+        self.cse_to_name = {}
+        self.cse_names = set()
+        self.cse_name_list = []
+
+        super().__init__()
+
     def map_common_subexpression(self, expr, enclosing_prec, *args, **kwargs):
+        # This is here for compatibility, in case the constructor did not get called.
         try:
             self.cse_to_name
         except AttributeError:
+            from warnings import warn
+            warn("Constructor of CSESplittingStringifyMapperMixin did not get "
+                    "called. This is deprecated and will stop working in 2022.",
+                    DeprecationWarning)
+
             self.cse_to_name = {}
             self.cse_names = set()
             self.cse_name_list = []

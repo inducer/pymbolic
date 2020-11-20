@@ -174,20 +174,9 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
             return self.rec(expr.else_)
 
     def map_comparison(self, expr):
-        if expr.operator == "==":
-            return self.rec(expr.left) == self.rec(expr.right)
-        elif expr.operator == "!=":
-            return self.rec(expr.left) != self.rec(expr.right)
-        elif expr.operator == "<":
-            return self.rec(expr.left) < self.rec(expr.right)
-        elif expr.operator == "<=":
-            return self.rec(expr.left) <= self.rec(expr.right)
-        elif expr.operator == ">":
-            return self.rec(expr.left) > self.rec(expr.right)
-        elif expr.operator == ">=":
-            return self.rec(expr.left) >= self.rec(expr.right)
-        else:
-            raise ValueError("invalid comparison operator")
+        import operator
+        return getattr(operator, expr.operator_to_name[expr.operator])(
+            self.rec(expr.left), self.rec(expr.right))
 
     def map_if(self, expr):
         if self.rec(expr.condition):
