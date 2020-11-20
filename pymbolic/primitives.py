@@ -662,6 +662,9 @@ class Expression(object):
 
     # }}}
 
+    def __abs__(self):
+        return Call(Variable("abs"), (self,))
+
     def __iter__(self):
         # prevent infinite loops (e.g. when inserting into numpy arrays)
         raise TypeError("expression types are not iterable")
