@@ -471,6 +471,8 @@ class CSESplittingStringifyMapperMixin(object):
         self.cse_names = set()
         self.cse_name_list = []
 
+        super().__init__()
+
     def map_common_subexpression(self, expr, enclosing_prec, *args, **kwargs):
         # This is here for compatibility, in case the constructor did not get called.
         try:
