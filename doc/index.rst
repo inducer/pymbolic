@@ -23,6 +23,8 @@ Contents
    algorithms
    geometric-algebra
    misc
+   🚀 Github <https://github.com/inducer/pymbolic>
+   💾 Download Releases <https://pypi.org/project/pymbolic>
 
 * :ref:`genindex`
 * :ref:`modindex`
