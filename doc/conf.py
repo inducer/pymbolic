@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-
-# -*- coding: utf-8 -*-
-#
 # pymbolic documentation build configuration file, created by
 # sphinx-quickstart on Fri May 24 11:29:00 2013.
 #
@@ -34,6 +30,7 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     # 'sphinx.ext.viewcode'
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -103,28 +100,10 @@ pygments_style = "sphinx"
 
 # -- Options for HTML output ---------------------------------------------------
 
-html_theme = "alabaster"
+html_theme = "furo"
 
 html_theme_options = {
-    "extra_nav_links": {
-        "🚀 Github": "https://github.com/inducer/pymbolic",
-        "💾 Download Releases": "https://pypi.python.org/pypi/pymbolic",
-    }
-}
-
-html_sidebars = {
-    "**": [
-        "about.html",
-        "navigation.html",
-        "relations.html",
-        "searchbox.html",
-    ]
-}
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-# html_theme_options = {}
+        }
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -280,10 +259,10 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "http://docs.python.org/dev": None,
-    "http://docs.scipy.org/doc/numpy/": None,
-    "http://docs.makotemplates.org/en/latest/": None,
-    "http://docs.sympy.org/dev/": None,
+    "https://docs.python.org/3": None,
+    "https://numpy.org/doc/stable/": None,
+    "https://docs.makotemplates.org/en/latest/": None,
+    "https://docs.sympy.org/dev/": None,
     "https://galgebra.readthedocs.io/en/latest/": None,
 }
 
