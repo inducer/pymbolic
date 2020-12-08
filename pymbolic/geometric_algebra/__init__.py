@@ -213,7 +213,6 @@ class Space(object):
         if metric_matrix is None:
             metric_matrix = np.eye(len(basis), dtype=np.object)
 
-        from pytools import all
         if not (
                 len(metric_matrix.shape) == 2
                 and all(dim == len(basis) for dim in metric_matrix.shape)):
@@ -560,7 +559,6 @@ class MultiVector(object):
         # }}}
 
         # assert that multivectors don't get nested
-        from pytools import any
         assert not any(isinstance(coeff, MultiVector)
                 for coeff in six.itervalues(data))
 
