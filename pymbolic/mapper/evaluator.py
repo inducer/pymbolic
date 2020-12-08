@@ -129,11 +129,9 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         return not self.rec(expr.child)
 
     def map_logical_or(self, expr):
-        from pytools import any
         return any(self.rec(ch) for ch in expr.children)
 
     def map_logical_and(self, expr):
-        from pytools import all
         return all(self.rec(ch) for ch in expr.children)
 
     def map_polynomial(self, expr):
