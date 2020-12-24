@@ -2,6 +2,8 @@ import pymbolic
 
 
 class EqualizerMapper(pymbolic.mapper.Mapper):
+    """A mapper for recursively checking the equality of two expression trees."""
+
     def map_constant(self, expr, other, *args, **kwargs):
         return expr == other
 
@@ -162,3 +164,6 @@ class EqualizerMapper(pymbolic.mapper.Mapper):
 
     def map_slice(self, expr, other, *args, **kwargs):
         return self._map_multichild_expr(expr, other, *args, **kwargs)
+
+    def __call__(self, expr, other, *args, **kwargs):
+        return super(EqualizerMapper, self).__call__(expr, other, *args, **kwargs)
