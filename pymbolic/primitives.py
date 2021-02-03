@@ -379,9 +379,8 @@ class Expression(object):
 
     # {{{ bitwise operators
 
-    def __inv__(self):
+    def __invert__(self):
         return BitwiseNot(self)
-    __invert__ = __inv__
 
     def __or__(self, other):
         return BitwiseOr((self, other))
