@@ -381,6 +381,7 @@ class Expression(object):
 
     def __inv__(self):
         return BitwiseNot(self)
+    __invert__ = __inv__
 
     def __or__(self, other):
         return BitwiseOr((self, other))
