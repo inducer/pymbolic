@@ -52,7 +52,7 @@ class CompileMapper(StringifyMapper):
             if exp == 0:
                 return ""
             elif exp == 1:
-                return "*%s" % sbase
+                return f"*{sbase}"
             else:
                 return f"*{sbase}**{exp}"
 
@@ -67,7 +67,7 @@ class CompileMapper(StringifyMapper):
                     stringify_exp(exp-next_exp))
 
         if enclosing_prec > PREC_SUM and len(expr.data) > 1:
-            return "(%s)" % result
+            return f"({result})"
         else:
             return result
 
@@ -79,9 +79,9 @@ class CompileMapper(StringifyMapper):
             else:
                 rec = stringify_leading_dimension
 
-            return "[%s]" % (", ".join(rec(x) for x in ary))
+            return "[{}]".format(", ".join(rec(x) for x in ary))
 
-        return "numpy.array(%s)" % stringify_leading_dimension(expr)
+        return "numpy.array({})".format(stringify_leading_dimension(expr))
 
     def map_foreign(self, expr, enclosing_prec):
         return StringifyMapper.map_foreign(self, expr, enclosing_prec)

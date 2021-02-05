@@ -74,9 +74,9 @@ class UnificationRecord:
             list(new_equations), new_lmap, new_rmap)
 
     def __repr__(self):
-        return "UnificationRecord(%s)" % (
-                ", ".join("{} = {}".format(str(lhs), str(rhs))
-                for lhs, rhs in self.equations))
+        return "UnificationRecord({})".format(
+                ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
+                )
 
 
 def unify_many(unis1, uni2):

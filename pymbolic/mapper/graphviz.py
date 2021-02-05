@@ -49,7 +49,7 @@ class GraphvizMapper(WalkMapper):
     def get_id(self, expr):
         """Generate a unique node ID for dot for *expr*"""
 
-        return "id%d" % id(expr)
+        return f"id{id(expr)}"
 
     def map_leaf(self, expr):
         self.lines.append(
@@ -61,7 +61,7 @@ class GraphvizMapper(WalkMapper):
 
     def generate_unique_id(self):
         self.next_unique_id += 1
-        return "uid%d" % self.next_unique_id
+        return f"uid{self.next_unique_id}"
 
     def visit(self, expr, node_printed=False, node_id=None):
         # {{{ print connectivity
@@ -94,7 +94,7 @@ class GraphvizMapper(WalkMapper):
 
     def map_sum(self, expr):
         self.lines.append(
-                '%s [label="+",shape=circle];' % (self.get_id(expr)))
+                '{} [label="+",shape=circle];'.format(self.get_id(expr)))
         if not self.visit(expr, node_printed=True):
             return
 
@@ -105,7 +105,7 @@ class GraphvizMapper(WalkMapper):
 
     def map_product(self, expr):
         self.lines.append(
-                '%s [label="*",shape=circle];' % (self.get_id(expr)))
+                '{} [label="*",shape=circle];'.format(self.get_id(expr)))
         if not self.visit(expr, node_printed=True):
             return
 

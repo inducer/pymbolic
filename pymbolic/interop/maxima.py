@@ -330,15 +330,14 @@ class MaximaKernel:
             self.restart()
             raise MaximaError(
                     "maxima encountered an error and had to be restarted:"
-                    "\n%s\n%s\n%s"
-                    % (75*"-", txt.rstrip("\n"), 75*"-"))
+                    "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
         elif which == 2:
             txt = self.child.before+self.child.after+self.child.readline()
             txt = txt.decode()
             self.restart()
             raise MaximaError(
-                    "maxima asked a question and had to be restarted:\n%s\n%s\n%s"
-                    % (75*"-", txt.rstrip("\n"), 75*"-"))
+                    "maxima asked a question and had to be restarted:"
+                    "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
         else:
             self.restart()
             raise MaximaError("unexpected output from maxima, restarted")

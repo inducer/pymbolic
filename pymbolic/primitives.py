@@ -737,9 +737,9 @@ class Call(AlgebraicLeaf):
             pass
         else:
             if len(self.parameters) != arg_count:
-                raise TypeError("%s called with wrong number of arguments "
-                        "(need %d, got %d)" % (
-                            self.function, arg_count, len(parameters)))
+                raise TypeError(
+                        f"{self.function} called with wrong number of arguments "
+                        f"(need {arg_count}, got {len(parameters)})")
 
     def __getinitargs__(self):
         return self.function, self.parameters
@@ -784,9 +784,9 @@ class CallWithKwargs(AlgebraicLeaf):
             pass
         else:
             if len(self.parameters) != arg_count:
-                raise TypeError("%s called with wrong number of arguments "
-                        "(need %d, got %d)" % (
-                            self.function, arg_count, len(parameters)))
+                raise TypeError(
+                        f"{self.function} called with wrong number of arguments "
+                        f"(need {arg_count}, got {len(parameters)})")
 
     def __getinitargs__(self):
         return (self.function,

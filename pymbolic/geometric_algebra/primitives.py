@@ -87,7 +87,7 @@ class Derivative:
     _next_id = [0]
 
     def __init__(self):
-        self.my_id = "id%s" % self._next_id[0]
+        self.my_id = f"id{self._next_id[0]}"
         self._next_id[0] += 1
 
     @property

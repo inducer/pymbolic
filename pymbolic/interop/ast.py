@@ -81,8 +81,8 @@ class ASTMapper:
 
     def not_supported(self, expr):
         raise NotImplementedError(
-                "%s does not know how to map type '%s'"
-                % (type(self).__name__,
+                "{} does not know how to map type '{}'".format(
+                    type(self).__name__,
                     type(expr).__name__))
 
 
@@ -127,8 +127,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(expr.op).__name__))
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
@@ -145,8 +145,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(expr.op).__name__))
 
         return op_constructor(self.rec(expr.operand))
@@ -176,8 +176,8 @@ class ASTToPymbolic(ASTMapper):
             comp = self.comparison_op_map[type(op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(op).__name__))
 
         # FIXME: Support strung-together comparisons

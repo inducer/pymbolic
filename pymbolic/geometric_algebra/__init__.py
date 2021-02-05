@@ -203,7 +203,7 @@ class Space:
 
         from numbers import Integral
         if isinstance(basis, Integral):
-            basis = ["e%d" % i for i in range(basis)]
+            basis = [f"e{i}" for i in range(basis)]
 
         if metric_matrix is None:
             metric_matrix = np.eye(len(basis), dtype=np.object)
@@ -257,9 +257,9 @@ class Space:
 
     def __repr__(self):
         if self is get_euclidean_space(self.dimensions):
-            return "Space(%d)" % self.dimensions
+            return f"Space({self.dimensions})"
         elif self.is_euclidean:
-            return "Space(%r)" % self.basis_names
+            return f"Space({self.basis_names!r})"
         else:
             return f"Space({self.basis_names!r}, {self.metric_matrix!r})"
 
@@ -612,7 +612,7 @@ class MultiVector:
         else:
             result = "0"
 
-        return "MV(%s)" % result
+        return f"MV({result})"
 
     def __str__(self):
         from pymbolic.mapper.stringifier import PREC_NONE
@@ -761,8 +761,8 @@ class MultiVector:
 
         other_new = _cast_or_ni(other, self.space)
         if other_new is NotImplemented:
-            raise NotImplementedError("scalar product between multivector and '%s'"
-                    % type(other))
+            raise NotImplementedError(
+                    f"scalar product between multivector and '{type(other)}'")
 
         return self._generic_product(other_new, _ScalarProduct).as_scalar()
 

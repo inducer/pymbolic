@@ -99,7 +99,7 @@ class StringifyMapper(StringifyMapperBase):
     AXES = {0: "x", 1: "y", 2: "z"}
 
     def map_nabla(self, expr, enclosing_prec):
-        return "∇[%s]" % expr.nabla_id
+        return f"∇[{expr.nabla_id}]"
 
     def map_nabla_component(self, expr, enclosing_prec):
         return "∇{}[{}]".format(
@@ -257,9 +257,9 @@ class DerivativeBinder(IdentityMapper):
         # }}}
 
         if nabla_finder and not any(d_source_nabla_ids_per_child):
-            raise ValueError("no derivative source found to resolve in '%s'"
-                    "--did you forget to wrap the term that should have its "
-                    "derivative taken in 'Derivative()(term)'?" % str(expr))
+            raise ValueError(f"no derivative source found to resolve in '{expr}'"
+                    " -- did you forget to wrap the term that should have its "
+                    "derivative taken in 'Derivative()(term)'?")
 
         # a list of lists, the outer level presenting a sum, the inner a product
         result = [list(expr.children)]

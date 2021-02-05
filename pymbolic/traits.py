@@ -52,8 +52,9 @@ def common_traits(*args):
             return t_x
         else:
             raise NoCommonTraitsError(
-                    "No common traits type between '%s' and '%s'" %
-                    (t_x.__class__.__name__, t_y.__class__.__name__))
+                    "No common traits type between '{}' and '{}'".format(
+                        t_x.__class__.__name__,
+                        t_y.__class__.__name__))
 
     return reduce(common_traits_two, (traits(arg) for arg in args))
 

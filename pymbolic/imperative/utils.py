@@ -124,15 +124,11 @@ def get_dot_dependency_graph(
             lines.append(f"{stmt_1} -> {stmt_2}")
 
     for (stmt_1, stmt_2), annot in annotation_dep_graph.items():
-        lines.append(
-                '%s -> %s  [label="%s",style="dashed"]'
-                % (stmt_2, stmt_1, annot))
+        lines.append(f'{stmt_2} -> {stmt_1}  [label="{annot}", style="dashed"]')
 
     lines.extend(additional_lines_hook())
 
-    return "digraph code {\n%s\n}" % (
-            "\n".join(lines)
-            )
+    return "digraph code {\n%s\n}" % ("\n".join(lines))
 
 # }}}
 
@@ -159,8 +155,8 @@ def show_dot(dot_code):
             cwd=temp_dir)
 
     full_svg_file_name = join(temp_dir, svg_file_name)
-    logger.info("show_dot_dependency_graph: svg written to '%s'"
-            % full_svg_file_name)
+    logger.info("show_dot_dependency_graph: svg written to '%s'",
+            full_svg_file_name)
 
     from webbrowser import open as browser_open
     browser_open("file://" + full_svg_file_name)

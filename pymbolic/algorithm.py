@@ -341,7 +341,7 @@ def solve_affine_equations_for(unknowns, equations):
                 elif key == 1:
                     rhs_mat[i_eqn, -1] = -lhs_factor*coeff
                 else:
-                    raise ValueError("key '%s' not understood" % key)
+                    raise ValueError(f"key '{key}' not understood")
 
     # }}}
 
@@ -353,13 +353,13 @@ def solve_affine_equations_for(unknowns, equations):
     for j, unknown in enumerate(unknowns):
         (nonz_row,) = np.where(mat[:, j])
         if len(nonz_row) != 1:
-            raise RuntimeError("cannot uniquely solve for '%s'" % unknown)
+            raise RuntimeError(f"cannot uniquely solve for '{unknown}'")
 
         (nonz_row,) = nonz_row
 
         if abs(mat[nonz_row, j]) != 1:
-            raise RuntimeError("division with remainder in linear solve for '%s'"
-                    % unknown)
+            raise RuntimeError(
+                    f"division with remainder in linear solve for '{unknown}'")
         div = mat[nonz_row, j]
 
         unknown_val = int(rhs_mat[nonz_row, -1]) // div

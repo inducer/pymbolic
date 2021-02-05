@@ -80,8 +80,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
     sym = sympy
 
     def raise_conversion_error(self, expr):
-        raise RuntimeError(
-            "do not know how to translate '%s' to sympy" % expr)
+        raise RuntimeError("do not know how to translate '{expr}' to sympy")
 
     def map_subscript(self, expr):
         return self.sym.Indexed(
