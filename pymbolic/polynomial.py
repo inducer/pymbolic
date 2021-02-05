@@ -1,7 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from six.moves import range, intern
+from six.moves import intern
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -291,7 +288,7 @@ class Polynomial(Expression):
 
     def as_primitives(self):
         deps = _get_dependencies(self)
-        context = dict((dep, dep) for dep in deps)
+        context = {dep: dep for dep in deps}
         return pymbolic.evaluate(self, context)
 
     def get_coefficient(self, sought_exp):

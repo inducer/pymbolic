@@ -1,5 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
 import six
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
@@ -87,7 +85,7 @@ class TermCollector(IdentityMapper):
 
         coefficients = []
         cleaned_base2exp = {}
-        for base, exp in six.iteritems(base2exp):
+        for base, exp in base2exp.items():
             term = base**exp
             if self.get_dependencies(term) <= self.parameters:
                 coefficients.append(term)
@@ -95,7 +93,7 @@ class TermCollector(IdentityMapper):
                 cleaned_base2exp[base] = exp
 
         term = frozenset(
-                (base, exp) for base, exp in six.iteritems(cleaned_base2exp))
+                (base, exp) for base, exp in cleaned_base2exp.items())
         return term, self.rec(pymbolic.flattened_product(coefficients))
 
     def map_sum(self, mysum):
@@ -108,5 +106,5 @@ class TermCollector(IdentityMapper):
             return pymbolic.flattened_product(base**exp for base, exp in rep)
 
         result = pymbolic.flattened_sum(coeff*rep2term(termrep)
-                for termrep, coeff in six.iteritems(term2coeff))
+                for termrep, coeff in term2coeff.items())
         return result

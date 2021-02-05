@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -28,7 +26,7 @@ from pymbolic.mapper import \
         CSECachingMapperMixin
 
 
-class ConstantFoldingMapperBase(object):
+class ConstantFoldingMapperBase:
     def is_constant(self, expr):
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))

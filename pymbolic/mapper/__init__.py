@@ -1,5 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
 import six
 from functools import reduce
 
@@ -94,7 +92,7 @@ class UnsupportedExpressionError(ValueError):
 
 # {{{ mapper base
 
-class Mapper(object):
+class Mapper:
     """A visitor for trees of :class:`pymbolic.primitives.Expression`
     subclasses. Each expression-derived object is dispatched to the
     method named by the :attr:`pymbolic.primitives.Expression.mapper_method`
@@ -108,7 +106,7 @@ class Mapper(object):
         """
 
         raise UnsupportedExpressionError(
-                "%s cannot handle expressions of type %s" % (
+                "{} cannot handle expressions of type {}".format(
                     type(self), type(expr)))
 
     def __call__(self, expr, *args, **kwargs):
@@ -184,7 +182,7 @@ class Mapper(object):
             return self.map_numpy_array(expr, *args, **kwargs)
         else:
             raise ValueError(
-                    "%s encountered invalid foreign object: %s" % (
+                    "{} encountered invalid foreign object: {}".format(
                         self.__class__, repr(expr)))
 
 # }}}
@@ -304,7 +302,7 @@ class CombineMapper(RecursiveMapper):
     def map_multivector(self, expr, *args, **kwargs):
         return self.combine(
                 self.rec(coeff)
-                for bits, coeff in six.iteritems(expr.data))
+                for bits, coeff in expr.data.items())
 
     def map_common_subexpression(self, expr, *args, **kwargs):
         return self.rec(expr.child, *args, **kwargs)
@@ -380,9 +378,9 @@ class IdentityMapper(Mapper):
                 self.rec(expr.function, *args, **kwargs),
                 tuple(self.rec(child, *args, **kwargs)
                     for child in expr.parameters),
-                dict(
-                    (key, self.rec(val, *args, **kwargs))
-                    for key, val in six.iteritems(expr.kw_parameters))
+                {
+                    key: self.rec(val, *args, **kwargs)
+                    for key, val in expr.kw_parameters.items()}
                     )
 
     def map_subscript(self, expr, *args, **kwargs):
@@ -657,7 +655,7 @@ class WalkMapper(RecursiveMapper):
         if not self.visit(expr, *args, **kwargs):
             return
 
-        for bits, coeff in six.iteritems(expr.data):
+        for bits, coeff in expr.data.items():
             self.rec(coeff)
 
         self.post_visit(expr, *args, **kwargs)
@@ -815,9 +813,9 @@ class CallbackMapper(RecursiveMapper):
 
 # {{{ caching mixins
 
-class CachingMapperMixin(object):
+class CachingMapperMixin:
     def __init__(self):
-        super(CachingMapperMixin, self).__init__()
+        super().__init__()
         self.result_cache = {}
 
     def rec(self, expr):
@@ -825,16 +823,16 @@ class CachingMapperMixin(object):
             return self.result_cache[expr]
         except TypeError:
             # not hashable, oh well
-            return super(CachingMapperMixin, self).rec(expr)
+            return super().rec(expr)
         except KeyError:
-            result = super(CachingMapperMixin, self).rec(expr)
+            result = super().rec(expr)
             self.result_cache[expr] = result
             return result
 
     __call__ = rec
 
 
-class CSECachingMapperMixin(object):
+class CSECachingMapperMixin:
     """A :term:`mix-in` that helps
     subclassed mappers implement caching for
     :class:`pymbolic.primitives.CommonSubexpression`

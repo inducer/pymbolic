@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -158,7 +156,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 tuple(self.rec(ch, PREC_NONE, *args, **kwargs)
                       for ch in expr.parameters)
                 +  # noqa: W504
-                tuple("%s=%s" % (name, self.rec(ch, PREC_NONE, *args, **kwargs))
+                tuple("{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
                     for name, ch in expr.kw_parameters.items()))
         return self.format("%s(%s)",
                 self.rec(expr.function, PREC_CALL, *args, **kwargs),
@@ -338,7 +336,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         if len(expr.shape) == 1 and max_length < 15:
             return "array(%s)" % ", ".join(str_array)
         else:
-            lines = ["  %s: %s\n" % (
+            lines = ["  {}: {}\n".format(
                 ",".join(str(i_i) for i_i in i), val)
                 for i, val in numpy.ndenumerate(str_array)]
             if max_length > 70:
@@ -362,7 +360,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_if(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                "%s if %s else %s" % (
+                "{} if {} else {}".format(
                     self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.condition, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
@@ -370,7 +368,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_if_positive(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                "%s if %s > 0 else %s" % (
+                "{} if {} > 0 else {}".format(
                     self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.criterion, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
@@ -388,15 +386,15 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 "d/d%s" % v
                 for v in expr.variables)
 
-        return "%s %s" % (
+        return "{} {}".format(
                 derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs))
 
     def map_substitution(self, expr, enclosing_prec, *args, **kwargs):
         substs = ", ".join(
-                "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
+                "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
-        return "[%s]{%s}" % (
+        return "[{}]{{{}}}".format(
                 self.rec(expr.child, PREC_NONE, *args, **kwargs),
                 substs)
 
@@ -427,7 +425,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
 # {{{ cse-splitting stringifier
 
-class CSESplittingStringifyMapperMixin(object):
+class CSESplittingStringifyMapperMixin:
     """A :term:`mix-in` for subclasses of
     :class:`StringifyMapper` that collects
     "variable assignments" for
@@ -502,7 +500,7 @@ class CSESplittingStringifyMapperMixin(object):
         return cse_name
 
     def get_cse_strings(self):
-        return ["%s : %s" % (cse_name, cse_str)
+        return [f"{cse_name} : {cse_str}"
                 for cse_name, cse_str in
                     sorted(getattr(self, "cse_name_list", []))]
 
@@ -705,7 +703,7 @@ class LaTeXMapper(StringifyMapper):
 
     def map_substitution(self, expr, enclosing_prec, *args, **kwargs):
         substs = ", ".join(
-                "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
+                "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
         return self.format(r"[%s]\{%s\}",

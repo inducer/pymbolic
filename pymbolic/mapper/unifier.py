@@ -1,8 +1,4 @@
-from __future__ import division
-from __future__ import absolute_import
 import six
-from six.moves import range
-from six.moves import zip
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -32,7 +28,7 @@ from pymbolic.primitives import Variable
 
 def unify_map(map1, map2):
     result = map1.copy()
-    for name, value in six.iteritems(map2):
+    for name, value in map2.items():
         if name in map1:
             if map1[name] != value:
                 return None
@@ -42,7 +38,7 @@ def unify_map(map1, map2):
     return result
 
 
-class UnificationRecord(object):
+class UnificationRecord:
 
     def __init__(self, equations, lmap=None, rmap=None):
         self.equations = equations
@@ -81,7 +77,7 @@ class UnificationRecord(object):
 
     def __repr__(self):
         return "UnificationRecord(%s)" % (
-                ", ".join("%s = %s" % (str(lhs), str(rhs))
+                ", ".join("{} = {}".format(str(lhs), str(rhs))
                 for lhs, rhs in self.equations))
 
 
@@ -361,8 +357,7 @@ class UnidirectionalUnifier(UnifierBase):
         # Combine the unification candidates of children in all possible ways.
         def match_children(urec, next_cand_idx, other_leftovers):
             if next_cand_idx >= len(non_var_children):
-                for match in match_plain_var_candidates(urec, other_leftovers):
-                    yield match
+                yield from match_plain_var_candidates(urec, other_leftovers)
                 return
 
             for other_idx, pair_urecs in unification_candidates[next_cand_idx]:
@@ -371,12 +366,11 @@ class UnidirectionalUnifier(UnifierBase):
                     continue
 
                 new_urecs = unify_many(pair_urecs, urec)
-                new_rhs_leftovers = other_leftovers - set([other_idx])
+                new_rhs_leftovers = other_leftovers - {other_idx}
 
                 for cand_urec in new_urecs:
-                    for result_urec in match_children(
-                            cand_urec, next_cand_idx + 1, new_rhs_leftovers):
-                        yield result_urec
+                    yield from match_children(
+                            cand_urec, next_cand_idx + 1, new_rhs_leftovers)
 
         def match_plain_var_candidates(urec, other_leftovers):
             if len(plain_var_candidates) == len(other_leftovers) == 0:
@@ -391,8 +385,7 @@ class UnidirectionalUnifier(UnifierBase):
             def subsets(s, max_size):
                 from itertools import combinations
                 for size in range(1, max_size + 1):
-                    for subset in combinations(s, size):
-                        yield subset
+                    yield from combinations(s, size)
 
             def partitions(s, k):
                 if k == 1:
@@ -417,8 +410,7 @@ class UnidirectionalUnifier(UnifierBase):
                         yield result
                         return
                     # urecs was not merged in, do it here.
-                    for unif in unify_many(urecs, result):
-                        yield unif
+                    yield from unify_many(urecs, result)
 
         for urec in match_children(
                 UnificationRecord([]), 0, set(range(len(other.children)))):

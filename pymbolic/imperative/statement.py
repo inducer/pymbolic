@@ -52,7 +52,7 @@ class Statement(RecordWithoutPickling):
             id = six.moves.intern(id)
 
         depends_on = frozenset(kwargs.pop("depends_on", []))
-        super(Statement, self).__init__(
+        super().__init__(
                                        id=id,
                                        depends_on=depends_on,
                                        **kwargs)
@@ -99,7 +99,7 @@ class ConditionalStatement(Statement):
 
     def __init__(self, **kwargs):
         condition = kwargs.pop("condition", True)
-        super(ConditionalStatement, self).__init__(
+        super().__init__(
                 condition=condition,
                 **kwargs)
 
@@ -109,13 +109,13 @@ class ConditionalStatement(Statement):
         return " if " + str(self.condition)
 
     def __str__(self):
-        return (super(ConditionalStatement, self).__str__()
+        return (super().__str__()
                 + self._condition_printing_suffix())
 
     def get_read_variables(self):
         dep_mapper = self.get_dependency_mapper()
         return (
-                super(ConditionalStatement, self).get_read_variables()
+                super().get_read_variables()
                 | frozenset(
                     dep.name for dep in dep_mapper(self.condition)))
 
@@ -131,7 +131,7 @@ class Assignment(Statement):
     """
 
     def __init__(self, lhs, rhs, **kwargs):
-        super(Assignment, self).__init__(
+        super().__init__(
                 lhs=lhs,
                 rhs=rhs,
                 **kwargs)
@@ -147,7 +147,7 @@ class Assignment(Statement):
             raise TypeError("unexpected type of LHS")
 
     def get_read_variables(self):
-        result = super(Assignment, self).get_read_variables()
+        result = super().get_read_variables()
         get_deps = self.get_dependency_mapper()
 
         def get_vars(expr):
@@ -158,7 +158,7 @@ class Assignment(Statement):
         return result
 
     def map_expressions(self, mapper, include_lhs=True):
-        return (super(Assignment, self)
+        return (super()
                 .map_expressions(mapper, include_lhs=include_lhs)
                 .copy(
                     lhs=mapper(self.lhs) if include_lhs else self.lhs,
@@ -178,7 +178,7 @@ class Assignment(Statement):
 
 class ConditionalAssignment(ConditionalStatement, Assignment):
     def map_expressions(self, mapper, include_lhs=True):
-        return (super(ConditionalAssignment, self)
+        return (super()
                 .map_expressions(mapper, include_lhs=include_lhs)
                 .copy(condition=mapper(self.condition)))
 

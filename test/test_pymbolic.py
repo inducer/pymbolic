@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -195,7 +193,7 @@ def test_fft():
     code = [ccm(tfi, PREC_NONE) for tfi in traced_fft]
 
     for cse_name, cse_str in enumerate(ccm.cse_name_list):
-        print("%s = %s" % (cse_name, cse_str))
+        print(f"{cse_name} = {cse_str}")
 
     for i, line in enumerate(code):
         print("result[%d] = %s" % (i, line))
@@ -316,8 +314,8 @@ def test_func_dep_consistency():
     f = var("f")
     x = var("x")
     dep_map = DependencyMapper(include_calls="descend_args")
-    assert dep_map(f(x)) == set([x])
-    assert dep_map(f(x=x)) == set([x])
+    assert dep_map(f(x)) == {x}
+    assert dep_map(f(x=x)) == {x}
 
 
 def test_conditions():
@@ -420,7 +418,7 @@ def test_geometric_algebra(dims):
 
         # reverse properties (Sec 2.9.5 [DFM])
         assert c.rev().rev() == c
-        assert (b ^ c).rev() .close_to((c.rev() ^ b.rev()))
+        assert (b ^ c).rev() .close_to(c.rev() ^ b.rev())
 
         # dual properties
         # (1.2.26) in [HS]
@@ -429,7 +427,7 @@ def test_geometric_algebra(dims):
 
         # involution properties (Sec 2.9.5 DFW)
         assert c.invol().invol() == c
-        assert (b ^ c).invol() .close_to((b.invol() ^ c.invol()))
+        assert (b ^ c).invol() .close_to(b.invol() ^ c.invol())
 
         # commutator properties
 
@@ -497,29 +495,29 @@ def test_unifier():
 
     recs = UnidirectionalUnifier("abc")(a+b*c, d+e*f)
     assert len(recs) == 2
-    assert match_found(recs, set([(a, d), (b, e), (c, f)]))
-    assert match_found(recs, set([(a, d), (b, f), (c, e)]))
+    assert match_found(recs, {(a, d), (b, e), (c, f)})
+    assert match_found(recs, {(a, d), (b, f), (c, e)})
 
     recs = UnidirectionalUnifier("abc")(a+b, d+e+f)
     assert len(recs) == 6
-    assert match_found(recs, set([(a, d), (b, e+f)]))
-    assert match_found(recs, set([(a, e), (b, d+f)]))
-    assert match_found(recs, set([(a, f), (b, d+e)]))
-    assert match_found(recs, set([(b, d), (a, e+f)]))
-    assert match_found(recs, set([(b, e), (a, d+f)]))
-    assert match_found(recs, set([(b, f), (a, d+e)]))
+    assert match_found(recs, {(a, d), (b, e+f)})
+    assert match_found(recs, {(a, e), (b, d+f)})
+    assert match_found(recs, {(a, f), (b, d+e)})
+    assert match_found(recs, {(b, d), (a, e+f)})
+    assert match_found(recs, {(b, e), (a, d+f)})
+    assert match_found(recs, {(b, f), (a, d+e)})
 
     vals = [var("v" + str(i)) for i in range(100)]
     recs = UnidirectionalUnifier("a")(sum(vals[1:]) + a, sum(vals))
     assert len(recs) == 1
-    assert match_found(recs, set([(a, var("v0"))]))
+    assert match_found(recs, {(a, var("v0"))})
 
     recs = UnidirectionalUnifier("abc")(a+b+c, d+e)
     assert len(recs) == 0
 
     recs = UnidirectionalUnifier("abc")(f(a+b, f(a+c)), f(b+c, f(b+d)))
     assert len(recs) == 1
-    assert match_found(recs, set([(a, b), (b, c), (c, d)]))
+    assert match_found(recs, {(a, b), (b, c), (c, d)})
 
 
 def test_long_sympy_mapping():
@@ -556,7 +554,7 @@ def test_latex_mapper():
 
     def add(expr):
         # Add an equation to the list of tests.
-        equations.append(r"\[%s\] %% from: %s" % (tm(expr), sm(expr)))
+        equations.append(r"\[{}\] % from: {}".format(tm(expr), sm(expr)))
 
     add(parse("a * b + c"))
     add(parse("f(a,b,c)"))
@@ -634,8 +632,8 @@ def test_multiplicative_stringify_preserves_association():
             if outer == inner:
                 continue
 
-            assert_parse_roundtrip("x%s(y%sz)" % (outer, inner))
-            assert_parse_roundtrip("(y%sz)%sx" % (inner, outer))
+            assert_parse_roundtrip(f"x{outer}(y{inner}z)")
+            assert_parse_roundtrip(f"(y{inner}z){outer}x")
 
     assert_parse_roundtrip("(-1)*(((-1)*x) / 5)")
 

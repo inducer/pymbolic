@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -27,7 +25,7 @@ from pymbolic.mapper.evaluator import EvaluationMapper
 from functools import partial
 
 
-class SympyLikeMapperBase(object):
+class SympyLikeMapperBase:
 
     def __call__(self, expr, *args, **kwargs):
         return self.rec(expr, *args, **kwargs)

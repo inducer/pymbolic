@@ -1,5 +1,3 @@
-from __future__ import division, with_statement
-
 __copyright__ = """
 Copyright (C) 2013 Andreas Kloeckner
 Copyright (C) 2014 Matt Wala
@@ -80,7 +78,7 @@ def get_dot_dependency_graph(
             stmt_label = statement_stringifier(stmt)
             tooltip = stmt.id
 
-        return 'label="%s",shape="box",tooltip="%s"' % (stmt_label, tooltip)
+        return f'label="{stmt_label}",shape="box",tooltip="{tooltip}"'
 
     lines = list(preamble_hook())
     lines.append("rankdir=BT;")
@@ -90,7 +88,7 @@ def get_dot_dependency_graph(
     annotation_dep_graph = {}
 
     for stmt in statements:
-        lines.append('"%s" [%s];' % (stmt.id, get_node_attrs(stmt)))
+        lines.append('"{}" [{}];'.format(stmt.id, get_node_attrs(stmt)))
         for dep in stmt.depends_on:
             dep_graph.setdefault(stmt.id, set()).add(dep)
 
@@ -126,9 +124,9 @@ def get_dot_dependency_graph(
 
     for stmt_1 in dep_graph:
         for stmt_2 in dep_graph.get(stmt_1, set()):
-            lines.append("%s -> %s" % (stmt_1, stmt_2))
+            lines.append(f"{stmt_1} -> {stmt_2}")
 
-    for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
+    for (stmt_1, stmt_2), annot in annotation_dep_graph.items():
         lines.append(
                 '%s -> %s  [label="%s",style="dashed"]'
                 % (stmt_2, stmt_1, annot))

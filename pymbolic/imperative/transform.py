@@ -29,7 +29,7 @@ def fuse_statement_streams_with_unique_ids(statements_a, statements_b):
     new_statements = list(statements_a)
     from pytools import UniqueNameGenerator
     stmt_id_gen = UniqueNameGenerator(
-            set([stmta.id for stmta in new_statements]))
+            {stmta.id for stmta in new_statements})
 
     b_unique_statements = []
     old_b_id_to_new_b_id = {}

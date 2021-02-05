@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -62,16 +60,16 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
         self.include_cses = include_cses
 
     def map_variable(self, expr):
-        return set([expr])
+        return {expr}
 
     def map_call(self, expr):
         if self.include_calls == "descend_args":
             return self.combine(
                     [self.rec(child) for child in expr.parameters])
         elif self.include_calls:
-            return set([expr])
+            return {expr}
         else:
-            return super(DependencyMapper, self).map_call(expr)
+            return super().map_call(expr)
 
     def map_call_with_kwargs(self, expr):
         if self.include_calls == "descend_args":
@@ -80,25 +78,25 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
                     + [self.rec(val) for name, val in expr.kw_parameters.items()]
                     )
         elif self.include_calls:
-            return set([expr])
+            return {expr}
         else:
-            return super(DependencyMapper, self).map_call_with_kwargs(expr)
+            return super().map_call_with_kwargs(expr)
 
     def map_lookup(self, expr):
         if self.include_lookups:
-            return set([expr])
+            return {expr}
         else:
-            return super(DependencyMapper, self).map_lookup(expr)
+            return super().map_lookup(expr)
 
     def map_subscript(self, expr):
         if self.include_subscripts:
-            return set([expr])
+            return {expr}
         else:
-            return super(DependencyMapper, self).map_subscript(expr)
+            return super().map_subscript(expr)
 
     def map_common_subexpression_uncached(self, expr):
         if self.include_cses:
-            return set([expr])
+            return {expr}
         else:
             return Collector.map_common_subexpression(self, expr)
 

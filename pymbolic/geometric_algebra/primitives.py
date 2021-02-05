@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
 __license__ = """
@@ -78,7 +76,7 @@ class DerivativeSource(_GeometricCalculusExpression):
     mapper_method = "map_derivative_source"
 
 
-class Derivative(object):
+class Derivative:
     """This mechanism cannot be used to take more than one derivative at a time.
 
     .. autoproperty:: nabla

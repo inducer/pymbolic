@@ -1,5 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
 import six
 from functools import reduce
 
@@ -42,7 +40,7 @@ def traits(x):
     except AttributeError:
         if isinstance(x, (complex, float)):
             return FieldTraits()
-        elif isinstance(x, six.integer_types):
+        elif isinstance(x, int):
             return IntegerTraits()
         else:
             raise NoTraitsError
@@ -62,7 +60,7 @@ def common_traits(*args):
     return reduce(common_traits_two, (traits(arg) for arg in args))
 
 
-class Traits(object):
+class Traits:
     pass
 
 

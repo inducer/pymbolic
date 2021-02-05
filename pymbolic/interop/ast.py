@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 __copyright__ = "Copyright (C) 2015 Andreas Kloeckner"
 
 __license__ = """
@@ -61,7 +59,7 @@ An example::
 '''
 
 
-class ASTMapper(object):
+class ASTMapper:
     def __call__(self, expr, *args, **kwargs):
         return self.rec(expr, *args, **kwargs)
 
@@ -193,9 +191,9 @@ class ASTToPymbolic(ASTMapper):
         args = tuple(self.rec(arg) for arg in expr.args)
         if expr.keywords:
             return p.CallWithKwargs(func, args,
-                    dict(
-                        (kw.arg, self.rec(kw.value))
-                        for kw in expr.keywords))
+                    {
+                        kw.arg: self.rec(kw.value)
+                        for kw in expr.keywords})
         else:
             return p.Call(func, args)
 
