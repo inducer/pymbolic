@@ -288,7 +288,7 @@ class MaximaKernel:
         # {{{ check for maxima command
 
         self.child.sendline(
-            f'hash \"{self.executable}\"; echo $?')
+            f'hash "{self.executable}"; echo $?')
 
         hash_output = self.child.expect(["0\r\n", "1\r\n"])
         if hash_output != 0:
