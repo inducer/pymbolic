@@ -1,5 +1,3 @@
-from six.moves import intern
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -22,12 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from sys import intern
+
 import pymbolic
 from pymbolic.primitives import Expression
 import pymbolic.algorithm as algorithm
 from pymbolic.traits import traits, EuclideanRingTraits, FieldTraits
-
-
 
 
 def _sort_uniq(data):
@@ -51,13 +49,9 @@ def _sort_uniq(data):
     return uniq_result
 
 
-
-
 def _get_dependencies(expr):
     from pymbolic.mapper.dependency import DependencyMapper
     return DependencyMapper()(expr)
-
-
 
 
 class LexicalMonomialOrder:
@@ -72,9 +66,6 @@ class LexicalMonomialOrder:
 
     def __repr__(self):
         return "LexicalMonomialOrder()"
-
-
-
 
 
 class Polynomial(Expression):
@@ -299,8 +290,6 @@ class Polynomial(Expression):
         return 0
 
 
-
-
 def differentiate(poly):
     return Polynomial(
         poly.base,
@@ -309,14 +298,11 @@ def differentiate(poly):
               if not exp == 0))
 
 
-
 def integrate(poly):
     return Polynomial(
         poly.base,
         tuple((exp+1, pymbolic.quotient(poly.unit, (exp+1))*coeff)
               for exp, coeff in poly.data))
-
-
 
 
 def integrate_definite(poly, a, b):
@@ -328,19 +314,13 @@ def integrate_definite(poly, a, b):
     return Sum((b_bound, -a_bound))
 
 
-
-
 def leading_coefficient(poly):
     return poly.data[-1][1]
-
-
 
 
 def general_polynomial(base, coefflist, degree):
     return Polynomial(base,
             ((i, coefflist[i]) for i in range(degree+1)))
-
-
 
 
 class PolynomialTraits(EuclideanRingTraits):
@@ -352,8 +332,6 @@ class PolynomialTraits(EuclideanRingTraits):
     def get_unit(x):
         lc = leading_coefficient(x)
         return traits(lc).get_unit(lc)
-
-
 
 
 if __name__ == "__main__":

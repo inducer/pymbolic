@@ -21,7 +21,7 @@ THE SOFTWARE.
 """
 
 import pytools.lex
-from six.moves import intern
+from sys import intern
 
 _imaginary = intern("imaginary")
 _float = intern("float")

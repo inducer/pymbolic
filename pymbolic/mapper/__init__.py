@@ -1,6 +1,3 @@
-import six
-from functools import reduce
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -336,6 +333,7 @@ class Collector(CombineMapper):
 
     def combine(self, values):
         import operator
+        from functools import reduce
         return reduce(operator.or_, values, set())
 
     def map_constant(self, expr):

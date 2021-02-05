@@ -34,12 +34,11 @@ __doc__ = """
 # Inspired by similar code in Sage at:
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
-import six
-from six.moves import intern
 import re
 import pytools
 import numpy as np
 
+from sys import intern
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 

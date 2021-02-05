@@ -20,10 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from sys import intern
 import pymbolic.traits as traits
 
-import six
-from six.moves import intern
 
 __doc__ = """
 Expression base class
@@ -1596,9 +1595,6 @@ def quotient(numerator, denominator):
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
-if six.PY2:
-    VALID_CONSTANT_CLASSES += (long,)  # noqa pylint:disable=undefined-variable
-
 VALID_OPERANDS = (Expression,)
 
 try:

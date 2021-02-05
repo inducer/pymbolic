@@ -99,11 +99,9 @@ class StringifyMapper(StringifyMapperBase):
     AXES = {0: "x", 1: "y", 2: "z"}
 
     def map_nabla(self, expr, enclosing_prec):
-        import sys
         return "∇[%s]" % expr.nabla_id
 
     def map_nabla_component(self, expr, enclosing_prec):
-        import sys
         return "∇{}[{}]".format(
                 self.AXES.get(expr.ambient_axis, expr.ambient_axis),
                 expr.nabla_id)

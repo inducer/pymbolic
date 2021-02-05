@@ -20,10 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six.moves import reduce
-from pymbolic.mapper import \
-        IdentityMapper, \
-        CSECachingMapperMixin
+from pymbolic.mapper import (
+        IdentityMapper,
+        CSECachingMapperMixin,
+        )
 
 
 class ConstantFoldingMapperBase:
@@ -60,6 +60,7 @@ class ConstantFoldingMapperBase:
                     nonconstants.append(child)
 
         if constants:
+            from functools import reduce
             constant = reduce(op, constants)
             return constructor(tuple([constant]+nonconstants))
         else:

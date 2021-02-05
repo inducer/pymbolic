@@ -22,9 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-
-import six
-
+from sys import intern
 from pytools import RecordWithoutPickling
 
 
@@ -49,7 +47,7 @@ class Statement(RecordWithoutPickling):
     def __init__(self, **kwargs):
         id = kwargs.pop("id", None)
         if id is not None:
-            id = six.moves.intern(id)
+            id = intern(id)
 
         depends_on = frozenset(kwargs.pop("depends_on", []))
         super().__init__(

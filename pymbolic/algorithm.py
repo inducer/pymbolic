@@ -20,8 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import six
-from six.moves import reduce
 import cmath
 from pytools import memoize
 
@@ -97,6 +95,7 @@ def gcd_many(*args):
     elif len(args) == 1:
         return args[0]
     else:
+        from functools import reduce
         return reduce(gcd, args)
 
 

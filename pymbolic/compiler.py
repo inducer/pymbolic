@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 import math
 import pymbolic
-from pymbolic.mapper.stringifier import (StringifyMapper, PREC_NONE,
+from pymbolic.mapper.stringifier import (
+        StringifyMapper, PREC_NONE,
         PREC_SUM, PREC_POWER)
 
 

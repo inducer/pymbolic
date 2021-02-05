@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 from pymbolic.mapper import RecursiveMapper, CSECachingMapperMixin
 import operator as op
-from six.moves import reduce
+from functools import reduce
 
 
 class UnknownVariableError(Exception):
