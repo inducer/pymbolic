@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 __copyright__ = "Copyright (C) 2015 Andreas Kloeckner"
 
 __license__ = """
@@ -61,7 +59,7 @@ An example::
 '''
 
 
-class ASTMapper(object):
+class ASTMapper:
     def __call__(self, expr, *args, **kwargs):
         return self.rec(expr, *args, **kwargs)
 
@@ -83,8 +81,8 @@ class ASTMapper(object):
 
     def not_supported(self, expr):
         raise NotImplementedError(
-                "%s does not know how to map type '%s'"
-                % (type(self).__name__,
+                "{} does not know how to map type '{}'".format(
+                    type(self).__name__,
                     type(expr).__name__))
 
 
@@ -129,8 +127,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(expr.op).__name__))
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
@@ -147,8 +145,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(expr.op).__name__))
 
         return op_constructor(self.rec(expr.operand))
@@ -178,8 +176,8 @@ class ASTToPymbolic(ASTMapper):
             comp = self.comparison_op_map[type(op)]
         except KeyError:
             raise NotImplementedError(
-                    "%s does not know how to map operator '%s'"
-                    % (type(self).__name__,
+                    "{} does not know how to map operator '{}'".format(
+                        type(self).__name__,
                         type(op).__name__))
 
         # FIXME: Support strung-together comparisons
@@ -193,9 +191,9 @@ class ASTToPymbolic(ASTMapper):
         args = tuple(self.rec(arg) for arg in expr.args)
         if expr.keywords:
             return p.CallWithKwargs(func, args,
-                    dict(
-                        (kw.arg, self.rec(kw.value))
-                        for kw in expr.keywords))
+                    {
+                        kw.arg: self.rec(kw.value)
+                        for kw in expr.keywords})
         else:
             return p.Call(func, args)
 

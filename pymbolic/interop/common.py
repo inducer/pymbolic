@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -27,7 +25,7 @@ from pymbolic.mapper.evaluator import EvaluationMapper
 from functools import partial
 
 
-class SympyLikeMapperBase(object):
+class SympyLikeMapperBase:
 
     def __call__(self, expr, *args, **kwargs):
         return self.rec(expr, *args, **kwargs)
@@ -51,8 +49,8 @@ class SympyLikeMapperBase(object):
     def not_supported(self, expr):
         print(expr, expr.__class__.__mro__)
         raise NotImplementedError(
-                "%s does not know how to map type '%s'"
-                % (type(self).__name__,
+                "{} does not know how to map type '{}'".format(
+                    type(self).__name__,
                     type(expr).__name__))
 
 
@@ -175,7 +173,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
 
     def map_subscript(self, expr):
         if isinstance(expr.aggregate, prim.Variable) and isinstance(expr.index, int):
-            return self.sym.Symbol("%s_%d" % (expr.aggregate.name, expr.index))
+            return self.sym.Symbol(f"{expr.aggregate.name}_{expr.index}")
         else:
             self.raise_conversion_error(expr)
 
@@ -207,7 +205,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         elif expr.operator == ">=":
             return self.sym.GreaterThan(left, right)
         else:
-            raise NotImplementedError("Unknown operator '%s'" % expr.operator)
+            raise NotImplementedError(f"Unknown operator '{expr.operator}'")
 
     def map_derivative(self, expr):
         return self.sym.Derivative(self.rec(expr.child),

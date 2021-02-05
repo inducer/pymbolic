@@ -1,6 +1,3 @@
-# * encoding: utf-8 *
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
 __license__ = """
@@ -26,7 +23,6 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from six.moves import range, zip
 
 from pymbolic.geometric_algebra import MultiVector
 import pymbolic.geometric_algebra.primitives as prim
@@ -103,31 +99,21 @@ class StringifyMapper(StringifyMapperBase):
     AXES = {0: "x", 1: "y", 2: "z"}
 
     def map_nabla(self, expr, enclosing_prec):
-        import sys
-        if sys.version_info >= (3,):
-            return u"∇[%s]" % expr.nabla_id
-        else:
-            return r"\/[%s]" % expr.nabla_id
+        return f"∇[{expr.nabla_id}]"
 
     def map_nabla_component(self, expr, enclosing_prec):
-        import sys
-        if sys.version_info >= (3,):
-            return u"∇%s[%s]" % (
-                    self.AXES.get(expr.ambient_axis, expr.ambient_axis),
-                    expr.nabla_id)
-        else:
-            return r"\/%s[%s]" % (
-                    self.AXES.get(expr.ambient_axis, expr.ambient_axis),
-                    expr.nabla_id)
+        return "∇{}[{}]".format(
+                self.AXES.get(expr.ambient_axis, expr.ambient_axis),
+                expr.nabla_id)
 
     def map_derivative_source(self, expr, enclosing_prec):
-        return r"D[%s](%s)" % (expr.nabla_id, self.rec(expr.operand, PREC_NONE))
+        return r"D[{}]({})".format(expr.nabla_id, self.rec(expr.operand, PREC_NONE))
 
 
 class GraphvizMapper(GraphvizMapperBase):
     def map_derivative_source(self, expr):
         self.lines.append(
-                '%s [label="D[%s]\",shape=ellipse];' % (
+                '{} [label="D[{}]\",shape=ellipse];'.format(
                     self.get_id(expr), expr.nabla_id))
         if not self.visit(expr, node_printed=True):
             return
@@ -169,7 +155,7 @@ class Dimensionalizer(EvaluationMapper):
             return rec_op.map(
                     lambda coeff: DerivativeSource(coeff, expr.nabla_id))
         else:
-            return super(Dimensionalizer, self).map_derivative_source(expr)
+            return super().map_derivative_source(expr)
 
 # }}}
 
@@ -182,10 +168,10 @@ class DerivativeSourceAndNablaComponentCollector(CachingMapperMixin, Collector):
                 "Dimensionalizer--Nabla found, not allowed")
 
     def map_nabla_component(self, expr):
-        return set([expr])
+        return {expr}
 
     def map_derivative_source(self, expr):
-        return set([expr]) | self.rec(expr.operand)
+        return {expr} | self.rec(expr.operand)
 
 
 class NablaComponentToUnitVector(EvaluationMapper):
@@ -271,9 +257,9 @@ class DerivativeBinder(IdentityMapper):
         # }}}
 
         if nabla_finder and not any(d_source_nabla_ids_per_child):
-            raise ValueError("no derivative source found to resolve in '%s'"
-                    "--did you forget to wrap the term that should have its "
-                    "derivative taken in 'Derivative()(term)'?" % str(expr))
+            raise ValueError(f"no derivative source found to resolve in '{expr}'"
+                    " -- did you forget to wrap the term that should have its "
+                    "derivative taken in 'Derivative()(term)'?")
 
         # a list of lists, the outer level presenting a sum, the inner a product
         result = [list(expr.children)]

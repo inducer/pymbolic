@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
 
 from setuptools import setup, find_packages
 
@@ -10,25 +9,25 @@ try:
 finally:
     version_file.close()
 
-exec(compile(version_file_contents, "pymbolic/version.py", 'exec'), ver_dic)
+exec(compile(version_file_contents, "pymbolic/version.py", "exec"), ver_dic)
 
 setup(name="pymbolic",
       version=ver_dic["VERSION_TEXT"],
       description="A package for symbolic computation",
       long_description=open("README.rst").read(),
       classifiers=[
-          'Development Status :: 4 - Beta',
-          'Intended Audience :: Developers',
-          'Intended Audience :: Other Audience',
-          'Intended Audience :: Science/Research',
-          'License :: OSI Approved :: MIT License',
-          'Natural Language :: English',
-          'Programming Language :: Python',
-          'Programming Language :: Python :: 3',
-          'Topic :: Scientific/Engineering',
-          'Topic :: Scientific/Engineering :: Mathematics',
-          'Topic :: Software Development :: Libraries',
-          'Topic :: Utilities',
+          "Development Status :: 4 - Beta",
+          "Intended Audience :: Developers",
+          "Intended Audience :: Other Audience",
+          "Intended Audience :: Science/Research",
+          "License :: OSI Approved :: MIT License",
+          "Natural Language :: English",
+          "Programming Language :: Python",
+          "Programming Language :: Python :: 3",
+          "Topic :: Scientific/Engineering",
+          "Topic :: Scientific/Engineering :: Mathematics",
+          "Topic :: Software Development :: Libraries",
+          "Topic :: Utilities",
           ],
       author="Andreas Kloeckner",
       author_email="inform@tiker.net",
@@ -40,5 +39,4 @@ setup(name="pymbolic",
       install_requires=[
           "pytools>=2",
           "pytest>=2.3",
-          "six",
           ])

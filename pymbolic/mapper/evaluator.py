@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -25,7 +23,7 @@ THE SOFTWARE.
 
 from pymbolic.mapper import RecursiveMapper, CSECachingMapperMixin
 import operator as op
-from six.moves import reduce
+from functools import reduce
 
 
 class UnknownVariableError(Exception):
@@ -70,9 +68,9 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
 
     def map_call_with_kwargs(self, expr):
         args = [self.rec(par) for par in expr.parameters]
-        kwargs = dict(
-                (k, self.rec(v))
-                for k, v in expr.kw_parameters.items())
+        kwargs = {
+                k: self.rec(v)
+                for k, v in expr.kw_parameters.items()}
 
         return self.rec(expr.function)(*args, **kwargs)
 

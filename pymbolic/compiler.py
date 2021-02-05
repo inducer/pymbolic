@@ -1,6 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -25,7 +22,8 @@ THE SOFTWARE.
 
 import math
 import pymbolic
-from pymbolic.mapper.stringifier import (StringifyMapper, PREC_NONE,
+from pymbolic.mapper.stringifier import (
+        StringifyMapper, PREC_NONE,
         PREC_SUM, PREC_POWER)
 
 
@@ -54,9 +52,9 @@ class CompileMapper(StringifyMapper):
             if exp == 0:
                 return ""
             elif exp == 1:
-                return "*%s" % sbase
+                return f"*{sbase}"
             else:
-                return "*%s**%s" % (sbase, exp)
+                return f"*{sbase}**{exp}"
 
         result = ""
         rev_data = expr.data[::-1]
@@ -65,11 +63,11 @@ class CompileMapper(StringifyMapper):
                 next_exp = rev_data[i+1][0]
             else:
                 next_exp = 0
-            result = "(%s+%s)%s" % (result, self(coeff, PREC_SUM),
+            result = "({}+{}){}".format(result, self(coeff, PREC_SUM),
                     stringify_exp(exp-next_exp))
 
         if enclosing_prec > PREC_SUM and len(expr.data) > 1:
-            return "(%s)" % result
+            return f"({result})"
         else:
             return result
 
@@ -81,15 +79,15 @@ class CompileMapper(StringifyMapper):
             else:
                 rec = stringify_leading_dimension
 
-            return "[%s]" % (", ".join(rec(x) for x in ary))
+            return "[{}]".format(", ".join(rec(x) for x in ary))
 
-        return "numpy.array(%s)" % stringify_leading_dimension(expr)
+        return "numpy.array({})".format(stringify_leading_dimension(expr))
 
     def map_foreign(self, expr, enclosing_prec):
         return StringifyMapper.map_foreign(self, expr, enclosing_prec)
 
 
-class CompiledExpression(object):
+class CompiledExpression:
     """This class encapsulates an expression compiled into Python bytecode
     for faster evaluation.
 
@@ -122,13 +120,13 @@ class CompiledExpression(object):
         used_variables = DependencyMapper(
                 composite_leaves=False)(self._Expression)
         used_variables -= set(self._Variables)
-        used_variables -= set(pymbolic.var(key) for key in list(ctx.keys()))
+        used_variables -= {pymbolic.var(key) for key in list(ctx.keys())}
         used_variables = list(used_variables)
         used_variables.sort()
         all_variables = self._Variables + used_variables
 
         expr_s = CompileMapper()(self._Expression, PREC_NONE)
-        func_s = "lambda %s: %s" % (",".join(str(v) for v in all_variables),
+        func_s = "lambda {}: {}".format(",".join(str(v) for v in all_variables),
                 expr_s)
         self._code = eval(func_s, ctx)
 

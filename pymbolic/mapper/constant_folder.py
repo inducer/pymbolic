@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -22,13 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six.moves import reduce
-from pymbolic.mapper import \
-        IdentityMapper, \
-        CSECachingMapperMixin
+from pymbolic.mapper import (
+        IdentityMapper,
+        CSECachingMapperMixin,
+        )
 
 
-class ConstantFoldingMapperBase(object):
+class ConstantFoldingMapperBase:
     def is_constant(self, expr):
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))
@@ -62,6 +60,7 @@ class ConstantFoldingMapperBase(object):
                     nonconstants.append(child)
 
         if constants:
+            from functools import reduce
             constant = reduce(op, constants)
             return constructor(tuple([constant]+nonconstants))
         else:

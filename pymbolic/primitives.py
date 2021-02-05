@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -22,10 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from sys import intern
 import pymbolic.traits as traits
 
-import six
-from six.moves import range, zip, intern
 
 __doc__ = """
 Expression base class
@@ -174,7 +171,7 @@ def disable_subscript_by_getitem():
     pass
 
 
-class Expression(object):
+class Expression:
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
@@ -435,7 +432,7 @@ class Expression(object):
     def a(self):
         """Provide a spelling ``expr.a.name`` for encoding attribute lookup.
         """
-        class AttributeLookupCreator(object):
+        class AttributeLookupCreator:
             def __init__(self, aggregate):
                 self.aggregate = aggregate
 
@@ -476,7 +473,7 @@ class Expression(object):
             if isinstance(child, tuple):
                 # Make sure limit propagates at least through tuples
 
-                return "(%s%s)" % (
+                return "({}{})".format(
                         ", ".join(strify_child(i, limit-1) for i in child),
                         "," if len(child) == 1 else "")
 
@@ -489,7 +486,7 @@ class Expression(object):
                 strify_child(i, limit-1)
                 for i in self.__getinitargs__())
 
-        return "%s(%s)" % (self.__class__.__name__, initargs_str)
+        return f"{self.__class__.__name__}({initargs_str})"
 
     def __repr__(self):
         """Provides a default :func:`repr` based on
@@ -685,7 +682,7 @@ class Variable(Leaf):
             return NotImplemented
 
     def __setstate__(self, val):
-        super(Variable, self).__setstate__(val)
+        super().__setstate__(val)
 
         self.name = intern(self.name)
 
@@ -740,9 +737,9 @@ class Call(AlgebraicLeaf):
             pass
         else:
             if len(self.parameters) != arg_count:
-                raise TypeError("%s called with wrong number of arguments "
-                        "(need %d, got %d)" % (
-                            self.function, arg_count, len(parameters)))
+                raise TypeError(
+                        f"{self.function} called with wrong number of arguments "
+                        f"(need {arg_count}, got {len(parameters)})")
 
     def __getinitargs__(self):
         return self.function, self.parameters
@@ -787,9 +784,9 @@ class CallWithKwargs(AlgebraicLeaf):
             pass
         else:
             if len(self.parameters) != arg_count:
-                raise TypeError("%s called with wrong number of arguments "
-                        "(need %d, got %d)" % (
-                            self.function, arg_count, len(parameters)))
+                raise TypeError(
+                        f"{self.function} called with wrong number of arguments "
+                        f"(need {arg_count}, got {len(parameters)})")
 
     def __getinitargs__(self):
         return (self.function,
@@ -1598,9 +1595,6 @@ def quotient(numerator, denominator):
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES = (int, float, complex)
-if six.PY2:
-    VALID_CONSTANT_CLASSES += (long,)  # noqa pylint:disable=undefined-variable
-
 VALID_OPERANDS = (Expression,)
 
 try:
@@ -1693,7 +1687,7 @@ def make_common_subexpression(field, prefix=None, scope=None):
     from pymbolic.geometric_algebra import MultiVector
     if isinstance(field, MultiVector):
         new_data = {}
-        for bits, coeff in six.iteritems(field.data):
+        for bits, coeff in field.data.items():
             if prefix is not None:
                 blade_str = field.space.blade_bits_to_str(bits, "")
                 component_prefix = prefix+"_"+blade_str

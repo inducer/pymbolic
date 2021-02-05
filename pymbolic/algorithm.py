@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -22,8 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import six
-from six.moves import range, zip, reduce
 import cmath
 from pytools import memoize
 
@@ -99,6 +95,7 @@ def gcd_many(*args):
     elif len(args) == 1:
         return args[0]
     else:
+        from functools import reduce
         return reduce(gcd, args)
 
 
@@ -312,8 +309,8 @@ def solve_affine_equations_for(unknowns, equations):
     from pymbolic import var
     unknowns = [var(u) for u in unknowns]
     unknowns_set = set(unknowns)
-    unknown_idx_lut = dict((tgt_name, idx)
-            for idx, tgt_name in enumerate(unknowns))
+    unknown_idx_lut = {tgt_name: idx
+            for idx, tgt_name in enumerate(unknowns)}
 
     # Find non-unknown variables, fix order for them
     # Last non-unknown is constant.
@@ -323,8 +320,8 @@ def solve_affine_equations_for(unknowns, equations):
         parameters.update(dep_map(rhs) - unknowns_set)
 
     parameters_list = list(parameters)
-    parameter_idx_lut = dict((var_name, idx)
-            for idx, var_name in enumerate(parameters_list))
+    parameter_idx_lut = {var_name: idx
+            for idx, var_name in enumerate(parameters_list)}
 
     from pymbolic.mapper.coefficient import CoefficientCollector
     coeff_coll = CoefficientCollector()
@@ -336,7 +333,7 @@ def solve_affine_equations_for(unknowns, equations):
 
     for i_eqn, (lhs, rhs) in enumerate(equations):
         for lhs_factor, coeffs in [(1, coeff_coll(lhs)), (-1, coeff_coll(rhs))]:
-            for key, coeff in six.iteritems(coeffs):
+            for key, coeff in coeffs.items():
                 if key in unknowns_set:
                     mat[i_eqn, unknown_idx_lut[key]] = lhs_factor*coeff
                 elif key in parameters:
@@ -344,7 +341,7 @@ def solve_affine_equations_for(unknowns, equations):
                 elif key == 1:
                     rhs_mat[i_eqn, -1] = -lhs_factor*coeff
                 else:
-                    raise ValueError("key '%s' not understood" % key)
+                    raise ValueError(f"key '{key}' not understood")
 
     # }}}
 
@@ -356,13 +353,13 @@ def solve_affine_equations_for(unknowns, equations):
     for j, unknown in enumerate(unknowns):
         (nonz_row,) = np.where(mat[:, j])
         if len(nonz_row) != 1:
-            raise RuntimeError("cannot uniquely solve for '%s'" % unknown)
+            raise RuntimeError(f"cannot uniquely solve for '{unknown}'")
 
         (nonz_row,) = nonz_row
 
         if abs(mat[nonz_row, j]) != 1:
-            raise RuntimeError("division with remainder in linear solve for '%s'"
-                    % unknown)
+            raise RuntimeError(
+                    f"division with remainder in linear solve for '{unknown}'")
         div = mat[nonz_row, j]
 
         unknown_val = int(rhs_mat[nonz_row, -1]) // div
@@ -375,7 +372,7 @@ def solve_affine_equations_for(unknowns, equations):
         for lhs, rhs in equations:
             print(lhs, "=", rhs)
         print("-------------------")
-        for lhs, rhs in six.iteritems(result):
+        for lhs, rhs in result.items():
             print(lhs, "=", rhs)
 
     return result

@@ -1,5 +1,3 @@
-from __future__ import division, with_statement
-
 __copyright__ = """
 Copyright (C) 2013 Andreas Kloeckner
 Copyright (C) 2014 Matt Wala
@@ -25,10 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-
-import six
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -80,7 +75,7 @@ def get_dot_dependency_graph(
             stmt_label = statement_stringifier(stmt)
             tooltip = stmt.id
 
-        return 'label="%s",shape="box",tooltip="%s"' % (stmt_label, tooltip)
+        return f'label="{stmt_label}",shape="box",tooltip="{tooltip}"'
 
     lines = list(preamble_hook())
     lines.append("rankdir=BT;")
@@ -90,7 +85,7 @@ def get_dot_dependency_graph(
     annotation_dep_graph = {}
 
     for stmt in statements:
-        lines.append('"%s" [%s];' % (stmt.id, get_node_attrs(stmt)))
+        lines.append('"{}" [{}];'.format(stmt.id, get_node_attrs(stmt)))
         for dep in stmt.depends_on:
             dep_graph.setdefault(stmt.id, set()).add(dep)
 
@@ -126,18 +121,14 @@ def get_dot_dependency_graph(
 
     for stmt_1 in dep_graph:
         for stmt_2 in dep_graph.get(stmt_1, set()):
-            lines.append("%s -> %s" % (stmt_1, stmt_2))
+            lines.append(f"{stmt_1} -> {stmt_2}")
 
-    for (stmt_1, stmt_2), annot in six.iteritems(annotation_dep_graph):
-        lines.append(
-                '%s -> %s  [label="%s",style="dashed"]'
-                % (stmt_2, stmt_1, annot))
+    for (stmt_1, stmt_2), annot in annotation_dep_graph.items():
+        lines.append(f'{stmt_2} -> {stmt_1}  [label="{annot}", style="dashed"]')
 
     lines.extend(additional_lines_hook())
 
-    return "digraph code {\n%s\n}" % (
-            "\n".join(lines)
-            )
+    return "digraph code {\n%s\n}" % ("\n".join(lines))
 
 # }}}
 
@@ -164,8 +155,8 @@ def show_dot(dot_code):
             cwd=temp_dir)
 
     full_svg_file_name = join(temp_dir, svg_file_name)
-    logger.info("show_dot_dependency_graph: svg written to '%s'"
-            % full_svg_file_name)
+    logger.info("show_dot_dependency_graph: svg written to '%s'",
+            full_svg_file_name)
 
     from webbrowser import open as browser_open
     browser_open("file://" + full_svg_file_name)

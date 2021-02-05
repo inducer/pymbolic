@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -36,12 +34,11 @@ __doc__ = """
 # Inspired by similar code in Sage at:
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
-import six
-from six.moves import intern
 import re
 import pytools
 import numpy as np
 
+from sys import intern
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
@@ -73,7 +70,7 @@ class MaximaStringifyMapper(StringifyMapper):
     def map_constant(self, expr, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_SUM
         if isinstance(expr, complex):
-            result = "%r + %r*%%i" % (expr.real, expr.imag)
+            result = f"{expr.real!r} + {expr.imag!r}*%i"
         else:
             result = repr(expr)
 
@@ -113,7 +110,7 @@ class MaximaParser(ParserBase):
             if isinstance(left_exp, tuple):
                 left_exp = FinalizedTuple(left_exp)
         else:
-            left_exp = super(MaximaParser, self).parse_prefix(pstate)
+            left_exp = super().parse_prefix(pstate)
 
         return left_exp
 
@@ -133,11 +130,7 @@ class MaximaParser(ParserBase):
             pstate.advance()
             return np.e
         elif next_tag is p._identifier:
-            if six.PY3:
-                return primitives.Variable(pstate.next_str_and_advance())
-            else:
-                # Py2 does not have Unicode identifiers
-                return primitives.Variable(str(pstate.next_str_and_advance()))
+            return primitives.Variable(pstate.next_str_and_advance())
         else:
             pstate.expected("terminal")
 
@@ -253,7 +246,7 @@ def _strify_assignments_and_expr(assignments, expr):
             return assignment
         if isinstance(assignment, tuple):
             name, value = assignment
-            return"%s: %s" % (name, strify(value))
+            return"{}: {}".format(name, strify(value))
         else:
             return strify(assignment)
 
@@ -295,7 +288,7 @@ class MaximaKernel:
         # {{{ check for maxima command
 
         self.child.sendline(
-            'hash \"{command}\"; echo $?'.format(command=self.executable))
+            f'hash "{self.executable}"; echo $?')
 
         hash_output = self.child.expect(["0\r\n", "1\r\n"])
         if hash_output != 0:
@@ -323,7 +316,7 @@ class MaximaKernel:
         if which == 0:
             if enforce_prompt_numbering:
                 assert int(self.child.match.group(1)) == self.current_prompt, (
-                        "found prompt: %s, expected: %s" % (
+                        "found prompt: {}, expected: {}".format(
                             self.child.match.group(1).decode(),
                             self.current_prompt))
             else:
@@ -337,15 +330,14 @@ class MaximaKernel:
             self.restart()
             raise MaximaError(
                     "maxima encountered an error and had to be restarted:"
-                    "\n%s\n%s\n%s"
-                    % (75*"-", txt.rstrip("\n"), 75*"-"))
+                    "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
         elif which == 2:
             txt = self.child.before+self.child.after+self.child.readline()
             txt = txt.decode()
             self.restart()
             raise MaximaError(
-                    "maxima asked a question and had to be restarted:\n%s\n%s\n%s"
-                    % (75*"-", txt.rstrip("\n"), 75*"-"))
+                    "maxima asked a question and had to be restarted:"
+                    "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
         else:
             self.restart()
             raise MaximaError("unexpected output from maxima, restarted")

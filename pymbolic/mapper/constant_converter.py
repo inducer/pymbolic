@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2017 Andreas Kloeckner"
 
 __license__ = """
@@ -47,9 +45,8 @@ class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
             elif real_type is np.float128:  # pylint:disable=no-member
                 complex_type = np.complex256  # pylint:disable=no-member
             else:
-                raise TypeError(
-                        "unable to determine corresponding complex type for '%s'"
-                        % real_type.__name__)
+                raise TypeError("unable to determine corresponding complex type "
+                        f"for '{real_type.__name__}'")
 
         self.complex_type = complex_type
 

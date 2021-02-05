@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -69,8 +67,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         super().__init__(reverse)
         self.cse_prefix = cse_prefix
 
-        self.cse_to_name = dict((cse, name) for name, cse in cse_name_list)
-        self.cse_names = set(cse for name, cse in cse_name_list)
+        self.cse_to_name = {cse: name for name, cse in cse_name_list}
+        self.cse_names = {cse for name, cse in cse_name_list}
         self.cse_name_list = cse_name_list[:]
 
         self.complex_constant_base_type = complex_constant_base_type
@@ -98,7 +96,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
 
     def map_constant(self, x, enclosing_prec):
         if isinstance(x, complex):
-            return "std::complex<%s>(%s, %s)" % (
+            return "std::complex<{}>({}, {})".format(
                     self.complex_constant_base_type,
                     self.map_constant(x.real, PREC_NONE),
                     self.map_constant(x.imag, PREC_NONE))

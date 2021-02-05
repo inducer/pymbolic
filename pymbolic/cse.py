@@ -1,7 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
-import six
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -30,14 +26,14 @@ from pymbolic.mapper import IdentityMapper, WalkMapper
 COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
 
 
-class NormalizedKeyGetter(object):
+class NormalizedKeyGetter:
     def __call__(self, expr):
         if isinstance(expr, COMMUTATIVE_CLASSES):
             kid_count = {}
             for child in expr.children:
                 kid_count[child] = kid_count.get(child, 0) + 1
 
-            return type(expr), frozenset(six.iteritems(kid_count))
+            return type(expr), frozenset(kid_count.items())
         else:
             return expr
 
@@ -139,9 +135,9 @@ def tag_common_subexpressions(exprs):
     for expr in exprs:
         ucm(expr)
 
-    to_eliminate = set([subexpr_key
-        for subexpr_key, count in six.iteritems(ucm.subexpr_counts)
-        if count > 1])
+    to_eliminate = {subexpr_key
+        for subexpr_key, count in ucm.subexpr_counts.items()
+        if count > 1}
 
     cse_mapper = CSEMapper(to_eliminate, get_key)
     result = [cse_mapper(expr) for expr in exprs]

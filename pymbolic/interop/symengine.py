@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = """
 Copyright (C) 2017 Matt Wala
 """
@@ -100,8 +98,7 @@ class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
     sym = symengine
 
     def raise_conversion_error(self, expr):
-        raise RuntimeError(
-            "do not know how to translate '%s' to symengine" % expr)
+        raise RuntimeError(f"do not know how to translate '{expr}' to symengine")
 
 
 # }}}

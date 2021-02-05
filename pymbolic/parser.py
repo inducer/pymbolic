@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -23,7 +21,7 @@ THE SOFTWARE.
 """
 
 import pytools.lex
-from six.moves import intern
+from sys import intern
 
 _imaginary = intern("imaginary")
 _float = intern("float")
@@ -95,7 +93,7 @@ def _join_to_slice(left, right):
         return Slice((left, right))
 
 
-class FinalizedContainer(object):
+class FinalizedContainer:
     """A base class for containers  that may not have elements appended to it,
     because they were terminated by a closing delimiter.
     """
@@ -109,7 +107,7 @@ class FinalizedList(list, FinalizedContainer):
     pass
 
 
-class Parser(object):
+class Parser:
     lex_table = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),

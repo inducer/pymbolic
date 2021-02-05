@@ -1,8 +1,3 @@
-from __future__ import division
-from __future__ import absolute_import
-import six
-from functools import reduce
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -25,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from functools import reduce
 from . import algorithm
 
 
@@ -42,7 +38,7 @@ def traits(x):
     except AttributeError:
         if isinstance(x, (complex, float)):
             return FieldTraits()
-        elif isinstance(x, six.integer_types):
+        elif isinstance(x, int):
             return IntegerTraits()
         else:
             raise NoTraitsError
@@ -56,13 +52,14 @@ def common_traits(*args):
             return t_x
         else:
             raise NoCommonTraitsError(
-                    "No common traits type between '%s' and '%s'" %
-                    (t_x.__class__.__name__, t_y.__class__.__name__))
+                    "No common traits type between '{}' and '{}'".format(
+                        t_x.__class__.__name__,
+                        t_y.__class__.__name__))
 
     return reduce(common_traits_two, (traits(arg) for arg in args))
 
 
-class Traits(object):
+class Traits:
     pass
 
 

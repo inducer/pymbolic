@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -93,7 +91,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         return s % args
 
     def join(self, joiner, iterable):
-        return self.format(joiner.join("%s" for i in iterable), *iterable)
+        return self.format(joiner.join("%s" for _ in iterable), *iterable)
 
     def rec_with_force_parens_around(self, expr, *args, **kwargs):
         force_parens_around = kwargs.pop("force_parens_around", ())
@@ -101,22 +99,22 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         result = self.rec(expr, *args, **kwargs)
 
         if isinstance(expr, force_parens_around):
-            result = "(%s)" % result
+            result = f"({result})"
 
         return result
 
     def join_rec(self, joiner, iterable, prec, *args, **kwargs):
-        f = joiner.join("%s" for i in iterable)
+        f = joiner.join("%s" for _ in iterable)
         return self.format(f,
                 *[self.rec_with_force_parens_around(i, prec, *args, **kwargs)
                     for i in iterable])
 
     def parenthesize(self, s):
-        return "(%s)" % s
+        return f"({s})"
 
     def parenthesize_if_needed(self, s, enclosing_prec, my_prec):
         if enclosing_prec > my_prec:
-            return "(%s)" % s
+            return f"({s})"
         else:
             return s
 
@@ -127,8 +125,8 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def handle_unsupported_expression(self, expr, enclosing_prec, *args, **kwargs):
         strifier = expr.make_stringifier(self)
         if isinstance(self, type(strifier)):
-            raise ValueError("stringifier '%s' can't handle '%s'"
-                    % (self, expr.__class__))
+            raise ValueError(
+                    "stringifier '{self}' can't handle '{expr.__class__}'")
         return strifier(
                 expr, enclosing_prec, *args, **kwargs)
 
@@ -158,7 +156,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 tuple(self.rec(ch, PREC_NONE, *args, **kwargs)
                       for ch in expr.parameters)
                 +  # noqa: W504
-                tuple("%s=%s" % (name, self.rec(ch, PREC_NONE, *args, **kwargs))
+                tuple("{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
                     for name, ch in expr.kw_parameters.items()))
         return self.format("%s(%s)",
                 self.rec(expr.function, PREC_CALL, *args, **kwargs),
@@ -323,7 +321,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         if len(expr) == 1:
             el_str += ","
 
-        return "(%s)" % el_str
+        return f"({el_str})"
 
     def map_numpy_array(self, expr, enclosing_prec, *args, **kwargs):
         import numpy
@@ -336,16 +334,16 @@ class StringifyMapper(pymbolic.mapper.Mapper):
             str_array[i] = s.replace("\n", "\n  ")
 
         if len(expr.shape) == 1 and max_length < 15:
-            return "array(%s)" % ", ".join(str_array)
+            return "array({})".format(", ".join(str_array))
         else:
-            lines = ["  %s: %s\n" % (
+            lines = ["  {}: {}\n".format(
                 ",".join(str(i_i) for i_i in i), val)
                 for i, val in numpy.ndenumerate(str_array)]
             if max_length > 70:
                 splitter = "  " + "-"*75 + "\n"
-                return "array(\n%s)" % splitter.join(lines)
+                return "array(\n{})".format(splitter.join(lines))
             else:
-                return "array(\n%s)" % "".join(lines)
+                return "array(\n{})".format("".join(lines))
 
     def map_multivector(self, expr, enclosing_prec, *args, **kwargs):
         return expr.stringify(self.rec, enclosing_prec, *args, **kwargs)
@@ -362,7 +360,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_if(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                "%s if %s else %s" % (
+                "{} if {} else {}".format(
                     self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.condition, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
@@ -370,7 +368,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_if_positive(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
-                "%s if %s > 0 else %s" % (
+                "{} if {} > 0 else {}".format(
                     self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.criterion, PREC_LOGICAL_OR, *args, **kwargs),
                     self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)),
@@ -384,16 +382,15 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     map_max = map_min
 
     def map_derivative(self, expr, enclosing_prec, *args, **kwargs):
-        derivs = " ".join(
-                "d/d%s" % v
-                for v in expr.variables)
+        derivs = " ".join(f"d/d{v}" for v in expr.variables)
 
-        return "%s %s" % (
-                derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs))
+        return "{} {}".format(
+                derivs,
+                self.rec(expr.child, PREC_PRODUCT, *args, **kwargs))
 
     def map_substitution(self, expr, enclosing_prec, *args, **kwargs):
         substs = ", ".join(
-                "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
+                "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
         return "[%s]{%s}" % (
@@ -427,7 +424,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
 # {{{ cse-splitting stringifier
 
-class CSESplittingStringifyMapperMixin(object):
+class CSESplittingStringifyMapperMixin:
     """A :term:`mix-in` for subclasses of
     :class:`StringifyMapper` that collects
     "variable assignments" for
@@ -482,7 +479,7 @@ class CSESplittingStringifyMapperMixin(object):
                     yield expr.prefix
                     i = 2
                     while True:
-                        yield expr.prefix + "_%d" % i
+                        yield expr.prefix + f"_{i}"
                         i += 1
             else:
                 def generate_cse_names():
@@ -502,7 +499,7 @@ class CSESplittingStringifyMapperMixin(object):
         return cse_name
 
     def get_cse_strings(self):
-        return ["%s : %s" % (cse_name, cse_str)
+        return [f"{cse_name} : {cse_str}"
                 for cse_name, cse_str in
                     sorted(getattr(self, "cse_name_list", []))]
 
@@ -705,7 +702,7 @@ class LaTeXMapper(StringifyMapper):
 
     def map_substitution(self, expr, enclosing_prec, *args, **kwargs):
         substs = ", ".join(
-                "%s=%s" % (name, self.rec(val, PREC_NONE, *args, **kwargs))
+                "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
                 for name, val in zip(expr.variables, expr.values))
 
         return self.format(r"[%s]\{%s\}",
