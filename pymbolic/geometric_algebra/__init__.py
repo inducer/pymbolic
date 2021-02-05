@@ -206,7 +206,7 @@ class Space:
             basis = [f"e{i}" for i in range(basis)]
 
         if metric_matrix is None:
-            metric_matrix = np.eye(len(basis), dtype=np.object)
+            metric_matrix = np.eye(len(basis), dtype=object)
 
         if not (
                 len(metric_matrix.shape) == 2
