@@ -126,7 +126,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         strifier = expr.make_stringifier(self)
         if isinstance(self, type(strifier)):
             raise ValueError(
-                    "stringifier '{self}' can't handle '{expr.__class__}'")
+                    f"stringifier '{self}' can't handle '{expr.__class__}'")
         return strifier(
                 expr, enclosing_prec, *args, **kwargs)
 
