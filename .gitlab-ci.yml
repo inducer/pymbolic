@@ -4,7 +4,7 @@ Python 3:
     # pytest tries to import this, but it doesn't find symengine
     rm pymbolic/interop/symengine.py
     EXTRA_INSTALL="numpy sympy pexpect"
-    curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project.sh
+    curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
     . ./build-and-test-py-project.sh
   tags:
   - python3
@@ -18,7 +18,7 @@ Python 3:
 Python 3 Conda:
   script:
   - CONDA_ENVIRONMENT=.test-py3.yml
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
   - ". ./build-and-test-py-project-within-miniconda.sh"
   tags:
   - linux
@@ -31,7 +31,7 @@ Python 3 Conda:
 Python 3 Conda Apple:
   script:
   - CONDA_ENVIRONMENT=.test-py3.yml
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-and-test-py-project-within-miniconda.sh
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
   - ". ./build-and-test-py-project-within-miniconda.sh"
   tags:
   - apple
@@ -45,7 +45,7 @@ Pylint:
   script:
   - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
   - PY_EXE=python3
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-pylint.sh
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-pylint.sh
   - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
   tags:
   - python3
@@ -55,14 +55,14 @@ Pylint:
 Documentation:
   script:
   - EXTRA_INSTALL="numpy sympy"
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/build-docs.sh
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
   - ". ./build-docs.sh"
   tags:
   - linux
 
 Flake8:
   script:
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/master/prepare-and-run-flake8.sh
+  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
   - ". ./prepare-and-run-flake8.sh pymbolic test"
   tags:
   - python3
