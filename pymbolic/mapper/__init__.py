@@ -533,7 +533,7 @@ class IdentityMapper(Mapper):
             else:
                 return self.rec(expr, *args, **kwargs)
 
-        children = tuple(do_map(child) for child in expr)
+        children = tuple(do_map(child) for child in expr.children)
         if all(id(child) == id(orig_child) for child, orig_child in
                zip(children, expr.children)):
             return expr
