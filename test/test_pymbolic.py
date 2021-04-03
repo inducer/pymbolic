@@ -657,6 +657,13 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     assert result == 0
 
 
+def test_np_bool_handling():
+    from pymbolic.mapper.evaluator import evaluate
+    numpy = pytest.importorskip("numpy")
+    expr = prim.LogicalNot(numpy.bool_(False))
+    assert evaluate(expr) is True
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:

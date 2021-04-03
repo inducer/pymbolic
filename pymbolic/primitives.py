@@ -1599,7 +1599,7 @@ VALID_OPERANDS = (Expression,)
 
 try:
     import numpy
-    VALID_CONSTANT_CLASSES += (numpy.number,)
+    VALID_CONSTANT_CLASSES += (numpy.number, numpy.bool_)
 except ImportError:
     pass
 
