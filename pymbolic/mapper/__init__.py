@@ -369,8 +369,10 @@ class IdentityMapper(Mapper):
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple(self.rec(child, *args, **kwargs)
                     for child in expr.parameters)
-        if (id(function) == id(expr.function)
-            and all(id(child) == id(orig_child) for child, orig_child in
+        # zipping expr.parameters and parameters is okay
+        # because by construction they have the same length
+        if (function is expr.function
+            and all(child is orig_child for child, orig_child in
                 zip(expr.parameters, parameters))):
             return expr
         return type(expr)(function, parameters)
@@ -382,10 +384,10 @@ class IdentityMapper(Mapper):
         kwargs = {key: self.rec(val, *args, **kwargs)
                     for key, val in expr.kw_parameters.items()}
 
-        if (id(function) == id(expr.function)
-            and all(id(child) == id(orig_child) for child, orig_child in
+        if (function is expr.function
+            and all(child is orig_child for child, orig_child in
                 zip(parameters, expr.parameters))
-                and all(id(kwargs[k]) == id(v) for k, v in
+                and all(kwargs[k] is v for k, v in
                         expr.kw_parameters.items())):
             return expr
         return type(expr)(function, parameters, kwargs)
@@ -393,20 +395,20 @@ class IdentityMapper(Mapper):
     def map_subscript(self, expr, *args, **kwargs):
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
         index = self.rec(expr.index, *args, **kwargs)
-        if id(aggregate) == id(expr.aggregate) and id(index) == id(expr.index):
+        if aggregate is expr.aggregate and index is expr.index:
             return expr
         return type(expr)(aggregate, index)
 
     def map_lookup(self, expr, *args, **kwargs):
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
-        if id(aggregate) == id(expr.aggregate):
+        if aggregate is expr.aggregate:
             return expr
         return type(expr)(aggregate, expr.name)
 
     def map_sum(self, expr, *args, **kwargs):
         children = \
             tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
         from pymbolic.primitives import flattened_sum
@@ -415,7 +417,7 @@ class IdentityMapper(Mapper):
     def map_product(self, expr, *args, **kwargs):
         children = \
             tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
         from pymbolic.primitives import flattened_product
@@ -431,7 +433,7 @@ class IdentityMapper(Mapper):
     def map_power(self, expr, *args, **kwargs):
         base = self.rec(expr.base, *args, **kwargs)
         exponent = self.rec(expr.exponent, *args, **kwargs)
-        if id(base) == id(expr.base) and id(exponent) == id(expr.exponent):
+        if base is expr.base and exponent is expr.exponent:
             return expr
         return expr.__class__(base, exponent)
 
@@ -439,15 +441,15 @@ class IdentityMapper(Mapper):
         base = self.rec(expr.base, *args, **kwargs)
         data = ((exp, self.rec(coeff, *args, **kwargs))
                                   for exp, coeff in expr.data)
-        if id(base) == id(expr.base) and all(
-                id(t[1]) == id(orig_t[1]) for t, orig_t in zip(data, expr.data)):
+        if base is expr.base and all(
+                t[1] is orig_t[1] for t, orig_t in zip(data, expr.data)):
             return expr
         return expr.__class__(base, data)
 
     def map_left_shift(self, expr, *args, **kwargs):
         shiftee = self.rec(expr.shiftee, *args, **kwargs)
         shift = self.rec(expr.shift, *args, **kwargs)
-        if id(shiftee) == id(expr.shiftee) and id(shift) == id(expr.shift):
+        if shiftee is expr.shiftee and shift is expr.shift:
             return expr
         return type(expr)(shiftee, shift)
 
@@ -455,14 +457,14 @@ class IdentityMapper(Mapper):
 
     def map_bitwise_not(self, expr, *args, **kwargs):
         child = self.rec(expr.child, *args, **kwargs)
-        if id(child) == id(expr.child):
+        if child is expr.child:
             return expr
         return type(expr)(child)
 
     def map_bitwise_or(self, expr, *args, **kwargs):
         children = \
             tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
         return type(expr)(children)
@@ -485,7 +487,7 @@ class IdentityMapper(Mapper):
 
     def map_tuple(self, expr, *args, **kwargs):
         children = tuple(self.rec(child, *args, **kwargs) for child in expr)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr)):
             return expr
         return children
@@ -505,7 +507,7 @@ class IdentityMapper(Mapper):
         result = self.rec(expr.child, *args, **kwargs)
         if is_zero(result):
             return 0
-        if id(result) == id(expr.child):
+        if result is expr.child:
             return expr
 
         return type(expr)(
@@ -522,7 +524,7 @@ class IdentityMapper(Mapper):
 
     def map_derivative(self, expr, *args, **kwargs):
         child = self.rec(expr.child, *args, **kwargs)
-        if id(child) == id(expr.child):
+        if child is expr.child:
             return expr
         return type(expr)(child, expr.variables)
 
@@ -534,7 +536,7 @@ class IdentityMapper(Mapper):
                 return self.rec(expr, *args, **kwargs)
 
         children = tuple(do_map(child) for child in expr.children)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
         return type(expr)(children)
@@ -543,9 +545,9 @@ class IdentityMapper(Mapper):
         criterion = self.rec(expr.criterion, *args, **kwargs)
         then = self.rec(expr.then, *args, **kwargs)
         else_ = self.rec(expr.else_, *args, **kwargs)
-        if id(criterion) == id(expr.criterion) \
-                and id(then) == id(expr.then) \
-                and id(else_) == id(expr.else_):
+        if criterion is expr.criterion \
+                and then is expr.then \
+                and else_ is expr.else_:
             return expr
         return type(expr)(criterion, then, else_)
 
@@ -553,16 +555,16 @@ class IdentityMapper(Mapper):
         condition = self.rec(expr.condition, *args, **kwargs)
         then = self.rec(expr.then, *args, **kwargs)
         else_ = self.rec(expr.else_, *args, **kwargs)
-        if id(condition) == id(expr.condition) \
-                and id(then) == id(expr.then) \
-                and id(else_) == id(expr.else_):
+        if condition is expr.condition \
+                and then is expr.then \
+                and else_ is expr.else_:
             return expr
         return type(expr)(condition, then, else_)
 
     def map_min(self, expr, *args, **kwargs):
         children = \
             tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(id(child) == id(orig_child) for child, orig_child in
+        if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
         return type(expr)(children)
