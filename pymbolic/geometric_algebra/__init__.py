@@ -1080,7 +1080,7 @@ class MultiVector:
         for bits, coeff in self.data.items():
             new_coeff = f(coeff)
             new_data[bits] = new_coeff
-            if (id(coeff) != id(new_coeff)):
+            if coeff is not new_coeff:
                 changed = True
 
         if not changed:
