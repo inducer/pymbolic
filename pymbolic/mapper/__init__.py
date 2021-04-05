@@ -529,13 +529,8 @@ class IdentityMapper(Mapper):
         return type(expr)(child, expr.variables)
 
     def map_slice(self, expr, *args, **kwargs):
-        def do_map(expr):
-            if expr is None:
-                return expr
-            else:
-                return self.rec(expr, *args, **kwargs)
-
-        children = tuple(do_map(child) for child in expr.children)
+        children = tuple(None if child is None else
+            self.rec(child, *args, **kwargs) for child in expr.children)
         if all(child is orig_child for child, orig_child in
                zip(children, expr.children)):
             return expr
