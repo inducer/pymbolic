@@ -483,7 +483,7 @@ class IdentityMapper(Mapper):
                 self.rec(expr.right, *args, **kwargs))
 
     def map_list(self, expr, *args, **kwargs):
-        return type(expr)(tuple(self.rec(child, *args, **kwargs) for child in expr))
+        return [self.rec(child, *args, **kwargs) for child in expr]
 
     def map_tuple(self, expr, *args, **kwargs):
         children = tuple(self.rec(child, *args, **kwargs) for child in expr)
