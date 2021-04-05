@@ -1075,11 +1075,18 @@ class MultiVector:
         function *f*, which takes a single coefficient as input and returns the
         new coefficient.
         """
+        changed = False
         new_data = {}
         for bits, coeff in self.data.items():
-            new_data[bits] = f(coeff)
+            new_coeff = f(coeff)
+            new_data[bits] = new_coeff
+            if coeff is not new_coeff:
+                changed = True
 
-        return MultiVector(new_data, self.space)
+        if not changed:
+            return self
+        else:
+            return MultiVector(new_data, self.space)
 
     # }}}
 

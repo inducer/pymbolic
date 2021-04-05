@@ -366,40 +366,62 @@ class IdentityMapper(Mapper):
         return expr
 
     def map_call(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.function, *args, **kwargs),
-                tuple(self.rec(child, *args, **kwargs)
-                    for child in expr.parameters))
+        function = self.rec(expr.function, *args, **kwargs)
+        parameters = tuple(self.rec(child, *args, **kwargs)
+                    for child in expr.parameters)
+        # zipping expr.parameters and parameters is okay
+        # because by construction they have the same length
+        if (function is expr.function
+            and all(child is orig_child for child, orig_child in
+                zip(expr.parameters, parameters))):
+            return expr
+        return type(expr)(function, parameters)
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.function, *args, **kwargs),
-                tuple(self.rec(child, *args, **kwargs)
-                    for child in expr.parameters),
-                {
-                    key: self.rec(val, *args, **kwargs)
+        function = self.rec(expr.function, *args, **kwargs)
+        parameters = tuple(self.rec(child, *args, **kwargs)
+                    for child in expr.parameters)
+        kwargs = {key: self.rec(val, *args, **kwargs)
                     for key, val in expr.kw_parameters.items()}
-                    )
+
+        if (function is expr.function
+            and all(child is orig_child for child, orig_child in
+                zip(parameters, expr.parameters))
+                and all(kwargs[k] is v for k, v in
+                        expr.kw_parameters.items())):
+            return expr
+        return type(expr)(function, parameters, kwargs)
 
     def map_subscript(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.aggregate, *args, **kwargs),
-                self.rec(expr.index, *args, **kwargs))
+        aggregate = self.rec(expr.aggregate, *args, **kwargs)
+        index = self.rec(expr.index, *args, **kwargs)
+        if aggregate is expr.aggregate and index is expr.index:
+            return expr
+        return type(expr)(aggregate, index)
 
     def map_lookup(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.aggregate, *args, **kwargs),
-                expr.name)
+        aggregate = self.rec(expr.aggregate, *args, **kwargs)
+        if aggregate is expr.aggregate:
+            return expr
+        return type(expr)(aggregate, expr.name)
 
     def map_sum(self, expr, *args, **kwargs):
+        children = \
+            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children)):
+            return expr
         from pymbolic.primitives import flattened_sum
-        return flattened_sum(tuple(
-            self.rec(child, *args, **kwargs) for child in expr.children))
+        return flattened_sum(children)
 
     def map_product(self, expr, *args, **kwargs):
+        children = \
+            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children)):
+            return expr
         from pymbolic.primitives import flattened_product
-        return flattened_product(tuple(
-            self.rec(child, *args, **kwargs) for child in expr.children))
+        return flattened_product(children)
 
     def map_quotient(self, expr, *args, **kwargs):
         return expr.__class__(self.rec(expr.numerator, *args, **kwargs),
@@ -409,28 +431,43 @@ class IdentityMapper(Mapper):
     map_remainder = map_quotient
 
     def map_power(self, expr, *args, **kwargs):
-        return expr.__class__(self.rec(expr.base, *args, **kwargs),
-                              self.rec(expr.exponent, *args, **kwargs))
+        base = self.rec(expr.base, *args, **kwargs)
+        exponent = self.rec(expr.exponent, *args, **kwargs)
+        if base is expr.base and exponent is expr.exponent:
+            return expr
+        return expr.__class__(base, exponent)
 
     def map_polynomial(self, expr, *args, **kwargs):
-        return expr.__class__(self.rec(expr.base, *args, **kwargs),
-                              ((exp, self.rec(coeff, *args, **kwargs))
-                                  for exp, coeff in expr.data))
+        base = self.rec(expr.base, *args, **kwargs)
+        data = ((exp, self.rec(coeff, *args, **kwargs))
+                                  for exp, coeff in expr.data)
+        if base is expr.base and all(
+                t[1] is orig_t[1] for t, orig_t in zip(data, expr.data)):
+            return expr
+        return expr.__class__(base, data)
 
     def map_left_shift(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.shiftee, *args, **kwargs),
-                self.rec(expr.shift, *args, **kwargs))
+        shiftee = self.rec(expr.shiftee, *args, **kwargs)
+        shift = self.rec(expr.shift, *args, **kwargs)
+        if shiftee is expr.shiftee and shift is expr.shift:
+            return expr
+        return type(expr)(shiftee, shift)
 
     map_right_shift = map_left_shift
 
     def map_bitwise_not(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.child, *args, **kwargs))
+        child = self.rec(expr.child, *args, **kwargs)
+        if child is expr.child:
+            return expr
+        return type(expr)(child)
 
     def map_bitwise_or(self, expr, *args, **kwargs):
-        return type(expr)(tuple(
-            self.rec(child, *args, **kwargs) for child in expr.children))
+        children = \
+            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children)):
+            return expr
+        return type(expr)(children)
 
     map_bitwise_xor = map_bitwise_or
     map_bitwise_and = map_bitwise_or
@@ -449,7 +486,11 @@ class IdentityMapper(Mapper):
         return [self.rec(child, *args, **kwargs) for child in expr]
 
     def map_tuple(self, expr, *args, **kwargs):
-        return tuple(self.rec(child, *args, **kwargs) for child in expr)
+        children = tuple(self.rec(child, *args, **kwargs) for child in expr)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr)):
+            return expr
+        return children
 
     def map_numpy_array(self, expr, *args, **kwargs):
         import numpy
@@ -466,6 +507,8 @@ class IdentityMapper(Mapper):
         result = self.rec(expr.child, *args, **kwargs)
         if is_zero(result):
             return 0
+        if result is expr.child:
+            return expr
 
         return type(expr)(
                 result,
@@ -480,35 +523,46 @@ class IdentityMapper(Mapper):
                 tuple(self.rec(v, *args, **kwargs) for v in expr.values))
 
     def map_derivative(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.child, *args, **kwargs),
-                expr.variables)
+        child = self.rec(expr.child, *args, **kwargs)
+        if child is expr.child:
+            return expr
+        return type(expr)(child, expr.variables)
 
     def map_slice(self, expr, *args, **kwargs):
-        def do_map(expr):
-            if expr is None:
-                return expr
-            else:
-                return self.rec(expr, *args, **kwargs)
-
-        return type(expr)(
-                tuple(do_map(ch) for ch in expr.children))
+        children = tuple(None if child is None else
+            self.rec(child, *args, **kwargs) for child in expr.children)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children)):
+            return expr
+        return type(expr)(children)
 
     def map_if_positive(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.criterion, *args, **kwargs),
-                self.rec(expr.then, *args, **kwargs),
-                self.rec(expr.else_, *args, **kwargs))
+        criterion = self.rec(expr.criterion, *args, **kwargs)
+        then = self.rec(expr.then, *args, **kwargs)
+        else_ = self.rec(expr.else_, *args, **kwargs)
+        if criterion is expr.criterion \
+                and then is expr.then \
+                and else_ is expr.else_:
+            return expr
+        return type(expr)(criterion, then, else_)
 
     def map_if(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.condition, *args, **kwargs),
-                self.rec(expr.then, *args, **kwargs),
-                self.rec(expr.else_, *args, **kwargs))
+        condition = self.rec(expr.condition, *args, **kwargs)
+        then = self.rec(expr.then, *args, **kwargs)
+        else_ = self.rec(expr.else_, *args, **kwargs)
+        if condition is expr.condition \
+                and then is expr.then \
+                and else_ is expr.else_:
+            return expr
+        return type(expr)(condition, then, else_)
 
     def map_min(self, expr, *args, **kwargs):
-        return type(expr)(tuple(
-            self.rec(child, *args, **kwargs) for child in expr.children))
+        children = \
+            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children)):
+            return expr
+        return type(expr)(children)
 
     map_max = map_min
 
