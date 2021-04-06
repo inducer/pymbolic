@@ -903,17 +903,17 @@ class CSECachingMapperMixin:
     dispatch, to avoid spurious dependencies of the cache on these arguments.
     """
 
-    def map_common_subexpression(self, expr):
+    def map_common_subexpression(self, expr, *args):
         try:
             ccd = self._cse_cache_dict
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
         try:
-            return ccd[expr]
+            return ccd[(expr, *args)]
         except KeyError:
-            result = self.map_common_subexpression_uncached(expr)
-            ccd[expr] = result
+            result = self.map_common_subexpression_uncached(expr, *args)
+            ccd[(expr, *args)] = result
             return result
 
 # }}}
