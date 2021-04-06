@@ -424,8 +424,11 @@ class IdentityMapper(Mapper):
         return flattened_product(children)
 
     def map_quotient(self, expr, *args, **kwargs):
-        return expr.__class__(self.rec(expr.numerator, *args, **kwargs),
-                              self.rec(expr.denominator, *args, **kwargs))
+        numerator = self.rec(expr.numerator, *args, **kwargs)
+        denominator = self.rec(expr.denominator, *args, **kwargs)
+        if numerator is expr.numerator and denominator is expr.denominator:
+            return expr
+        return expr.__class__(numerator, denominator)
 
     map_floor_div = map_quotient
     map_remainder = map_quotient
