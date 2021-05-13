@@ -47,10 +47,13 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         110
     """
 
-    def __init__(self, context={}):
+    def __init__(self, context=None):
         """
         :arg context: a mapping from variable names to values
         """
+        if context is None:
+            context = {}
+
         self.context = context
         self.common_subexp_cache = {}
 
@@ -198,7 +201,9 @@ class FloatEvaluationMapper(EvaluationMapper):
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-def evaluate(expression, context={}):
+def evaluate(expression, context=None):
+    if context is None:
+        context = {}
     return EvaluationMapper(context)(expression)
 
 
@@ -206,5 +211,7 @@ def evaluate_kw(expression, **context):
     return EvaluationMapper(context)(expression)
 
 
-def evaluate_to_float(expression, context={}):
+def evaluate_to_float(expression, context=None):
+    if context is None:
+        context = {}
     return FloatEvaluationMapper(context)(expression)

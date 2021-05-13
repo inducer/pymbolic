@@ -94,13 +94,15 @@ class CompiledExpression:
     Its instances (unlike plain lambdas) are pickleable.
     """
 
-    def __init__(self, expression, variables=[]):
+    def __init__(self, expression, variables=None):
         """
         :arg variables: The first arguments (as strings or
             :class:`pymbolic.primitives.Variable` instances) to be used for the
             compiled function.  All variables used by the expression and not
             present here are added in lexicographic order.
         """
+        if variables is None:
+            variables = []
         self._compile(expression, variables)
 
     def _compile(self, expression, variables):

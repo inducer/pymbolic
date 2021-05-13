@@ -67,7 +67,9 @@ def make_subst_func(variable_assignments):
     return subst_func
 
 
-def substitute(expression, variable_assignments={}, **kwargs):
+def substitute(expression, variable_assignments=None, **kwargs):
+    if variable_assignments is None:
+        variable_assignments = {}
     variable_assignments = variable_assignments.copy()
     variable_assignments.update(kwargs)
 
