@@ -344,7 +344,7 @@ class UnidirectionalUnifier(UnifierBase):
 
         # Unify non-free-variable children of expr with children of the other
         # expr.
-        for i, my_child in enumerate(non_var_children):
+        for my_child in non_var_children:
             i_matches = []
             for j, other_child in enumerate(other.children):
                 result = self.rec(my_child, other_child, urecs)

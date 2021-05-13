@@ -100,7 +100,7 @@ def test_no_comparison():
         except TypeError:
             pass
         else:
-            assert False
+            raise AssertionError
 
     expect_typeerror(lambda: x < y)
     expect_typeerror(lambda: x <= y)
@@ -597,7 +597,7 @@ def test_latex_mapper():
         except OSError:  # FIXME: Should be FileNotFoundError on Py3
             pytest.skip("latex command not found")
         except subprocess.CalledProcessError as err:
-            assert False, str(err.output)
+            raise AssertionError(str(err.output))
 
     finally:
         shutil.rmtree(latex_dir)

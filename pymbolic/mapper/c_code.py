@@ -63,7 +63,9 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
 
     def __init__(self, reverse=True,
             cse_prefix="_cse", complex_constant_base_type="double",
-            cse_name_list=[]):
+            cse_name_list=None):
+        if cse_name_list is None:
+            cse_name_list = []
         super().__init__(reverse)
         self.cse_prefix = cse_prefix
 

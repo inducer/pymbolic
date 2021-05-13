@@ -990,7 +990,7 @@ class MultiVector:
 
         result = None
 
-        for bits, coeff in self.data.items():
+        for bits in self.data.keys():
             grade = bit_count(bits)
             if result is None:
                 result = grade

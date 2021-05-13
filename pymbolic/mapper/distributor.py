@@ -120,7 +120,9 @@ class DistributeMapper(IdentityMapper):
             return IdentityMapper.map_power(self, expr)
 
 
-def distribute(expr, parameters=set(), commutative=True):
+def distribute(expr, parameters=None, commutative=True):
+    if parameters is None:
+        parameters = frozenset()
     if commutative:
         return DistributeMapper(TermCollector(parameters))(expr)
     else:

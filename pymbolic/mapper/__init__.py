@@ -680,7 +680,7 @@ class WalkMapper(RecursiveMapper):
             return
 
         self.rec(expr.base, *args, **kwargs)
-        for exp, coeff in expr.data:
+        for _exp, coeff in expr.data:
             self.rec(coeff, *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)
@@ -710,7 +710,7 @@ class WalkMapper(RecursiveMapper):
         if not self.visit(expr, *args, **kwargs):
             return
 
-        for bits, coeff in expr.data.items():
+        for _bits, coeff in expr.data.items():
             self.rec(coeff)
 
         self.post_visit(expr, *args, **kwargs)

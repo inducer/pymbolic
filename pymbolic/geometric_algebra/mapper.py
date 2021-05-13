@@ -264,7 +264,7 @@ class DerivativeBinder(IdentityMapper):
         # a list of lists, the outer level presenting a sum, the inner a product
         result = [list(expr.children)]
 
-        for child_idx, (d_source_nabla_ids, child) in enumerate(
+        for child_idx, (d_source_nabla_ids, _child) in enumerate(
                 zip(d_source_nabla_ids_per_child, expr.children)):
             if not d_source_nabla_ids:
                 continue

@@ -32,7 +32,9 @@ class TermCollector(IdentityMapper):
     coefficients and are not used for term collection.
     """
 
-    def __init__(self, parameters=set()):
+    def __init__(self, parameters=None):
+        if parameters is None:
+            parameters = set()
         self.parameters = parameters
 
     def get_dependencies(self, expr):
