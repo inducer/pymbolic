@@ -340,6 +340,7 @@ class Collector(CombineMapper):
         return set()
 
     map_variable = map_constant
+    map_wildcard = map_constant
     map_function_symbol = map_constant
 
 # }}}
@@ -360,6 +361,9 @@ class IdentityMapper(Mapper):
 
     def map_variable(self, expr, *args, **kwargs):
         # leaf -- no need to rebuild
+        return expr
+
+    def map_wildcard(self, expr, *args, **kwargs):
         return expr
 
     def map_function_symbol(self, expr, *args, **kwargs):
@@ -599,9 +603,8 @@ class WalkMapper(RecursiveMapper):
         self.visit(expr, *args, **kwargs)
         self.post_visit(expr, *args, **kwargs)
 
-    def map_function_symbol(self, expr, *args, **kwargs):
-        self.visit(expr)
-        self.post_visit(expr, *args, **kwargs)
+    map_wildcard = map_variable
+    map_function_symbol = map_variable
 
     def map_call(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):

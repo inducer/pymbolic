@@ -143,6 +143,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
     def map_variable(self, expr, enclosing_prec, *args, **kwargs):
         return expr.name
 
+    def map_wildcard(self, expr, enclosing_prec, *args, **kwargs):
+        return "*"
+
     def map_function_symbol(self, expr, enclosing_prec, *args, **kwargs):
         return expr.__class__.__name__
 
