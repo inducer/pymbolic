@@ -50,7 +50,7 @@ class TermCollector(IdentityMapper):
 
         The argument `product' has to be fully expanded already.
         """
-        from pymbolic.primitives import Product, Power, AlgebraicLeaf
+        from pymbolic.primitives import Product, Power, AlgebraicLeaf, FloorDiv
 
         def base(term):
             if isinstance(term, Power):
@@ -66,7 +66,7 @@ class TermCollector(IdentityMapper):
 
         if isinstance(mul_term, Product):
             terms = mul_term.children
-        elif isinstance(mul_term, (Power, AlgebraicLeaf)):
+        elif isinstance(mul_term, (Power, AlgebraicLeaf, FloorDiv)):
             terms = [mul_term]
         elif not bool(self.get_dependencies(mul_term)):
             terms = [mul_term]
