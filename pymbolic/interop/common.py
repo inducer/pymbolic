@@ -113,6 +113,9 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         if isinstance(expr, int):
             return expr
         elif getattr(expr, "is_Function", False):
+            if self.function_name(expr) == "Indexed":
+                args = [self.rec(arg) for arg in expr.args]
+                return prim.Subscript(args[0], tuple(args[1:]))
             return prim.Variable(self.function_name(expr))(
                     *tuple(self.rec(arg) for arg in expr.args))
         else:
@@ -172,8 +175,9 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
             self.raise_conversion_error(expr)
 
     def map_subscript(self, expr):
-        if isinstance(expr.aggregate, prim.Variable) and isinstance(expr.index, int):
-            return self.sym.Symbol(f"{expr.aggregate.name}_{expr.index}")
+        if isinstance(expr.aggregate, prim.Variable):
+            return self.sym.Function("Indexed")(expr.aggregate.name,
+                    *expr.index_tuple)
         else:
             self.raise_conversion_error(expr)
 
