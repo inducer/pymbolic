@@ -50,9 +50,12 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     assert mapper(sym.exp(x)) == prim.Variable("exp")(x_)
 
     # indexed accesses
+    i, j = sym.symbols("i,j")
     if not use_symengine:
-        i, j = sym.symbols("i,j")
-        assert mapper(sym.Indexed(x, i, j)) == x_[i_, j_]
+        idx = sym.Indexed(x, i, j)
+    else:
+        idx = sym.Function("Indexed")(x, i, j)
+    assert mapper(idx) == x_[i_, j_]
 
     # constants
     import math
@@ -95,7 +98,7 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
     assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
 
     if use_symengine:
-        assert mapper(x_[0]) == sym.Symbol("x_0")
+        assert mapper(x_[0]) == sym.Function("Indexed")("x", 0)
     else:
         i, j = sym.symbols("i,j")
         assert mapper(x_[i_, j_]) == sym.Indexed(x, i, j)
