@@ -522,10 +522,10 @@ class Expression:
         provide an implementation of :meth:`get_hash`.
         """
         try:
-            return self.hash_value
+            return self._hash_value
         except AttributeError:
-            self.hash_value = self.get_hash()
-            return self.hash_value
+            self._hash_value = self.get_hash()
+            return self._hash_value
 
     def __getinitargs__(self):
         raise NotImplementedError
@@ -534,7 +534,7 @@ class Expression:
         return self.__getinitargs__()
 
     def __setstate__(self, state):
-        # Can't use trivial pickling: hash_value cache must stay unset
+        # Can't use trivial pickling: _hash_value cache must stay unset
         assert len(self.init_arg_names) == len(state), type(self)
         for name, value in zip(self.init_arg_names, state):
             setattr(self, name, value)
