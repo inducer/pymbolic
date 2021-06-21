@@ -134,10 +134,8 @@ def _test_roundtrip(forward, backward, sym, use_symengine):
         x_[0],
         x_[i_, j_],
         prim.Variable("f")(x_),
+        prim.If(prim.Comparison(x_, "<=", y_), 1, 0),
     ]
-
-    if not use_symengine:
-        exprs.append(prim.If(prim.Comparison(x_, "<=", y_), 1, 0))
 
     for expr in exprs:
         assert expr == backward(forward(expr))

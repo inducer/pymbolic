@@ -124,16 +124,6 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         else:
             return SympyLikeMapperBase.not_supported(self, expr)
 
-    def map_Piecewise(self, expr):  # noqa
-        # We only handle piecewises with 2 arguments!
-        assert len(expr.args) == 2
-        # We only handle if/else cases
-        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
-        then = self.rec(expr.args[0][0])
-        else_ = self.rec(expr.args[1][0])
-        cond = self.rec(expr.args[0][1])
-        return prim.If(cond, then, else_)
-
     def _comparison_operator(self, expr, operator=None):
         left = self.rec(expr.args[0])
         right = self.rec(expr.args[1])
