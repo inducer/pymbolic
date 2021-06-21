@@ -124,15 +124,47 @@ def test_pymbolic_to_sympy():
     _test_from_pymbolic(mapper, sym, False)
 
 
-def test_sympy_if_condition():
-    pytest.importorskip("sympy")
+# {{{ roundtrip tests
+
+def _test_roundtrip(forward, backward, sym, use_symengine):
+    x, y = sym.symbols("x,y")
+    i, j = sym.symbols("i,j")
+
+    exprs = [
+        2 + x_,
+        2 * x_,
+        x_ ** 2,
+        x_[0],
+        x_[i_, j_],
+        prim.Variable("f")(x_),
+    ]
+
+    if not use_symengine:
+        exprs.append(prim.If(prim.Comparison(x_, "<=", y_), 1, 0))
+
+    for expr in exprs:
+        assert expr == backward(forward(expr))
+
+# }}}
+
+
+def test_pymbolic_to_sympy_roundtrip():
+    sym = pytest.importorskip("sympy")
     from pymbolic.interop.sympy import PymbolicToSympyMapper, SympyToPymbolicMapper
     forward = PymbolicToSympyMapper()
     backward = SympyToPymbolicMapper()
 
-    # Test round trip to sympy and back
-    expr = prim.If(prim.Comparison(x_, "<=", y_), 1, 0)
-    assert backward(forward(expr)) == expr
+    _test_roundtrip(forward, backward, sym, False)
+
+
+def test_pymbolic_to_symengine_roundtrip():
+    sym = pytest.importorskip("symengine")
+    from pymbolic.interop.symengine import (PymbolicToSymEngineMapper,
+            SymEngineToPymbolicMapper)
+    forward = PymbolicToSymEngineMapper()
+    backward = SymEngineToPymbolicMapper()
+
+    _test_roundtrip(forward, backward, sym, True)
 
 
 if __name__ == "__main__":
