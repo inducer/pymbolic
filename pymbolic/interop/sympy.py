@@ -78,9 +78,11 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     def map_Piecewise(self, expr):  # noqa
         # We only handle piecewises with 2 arguments!
-        assert len(expr.args) == 2
+        if not len(expr.args) == 2:
+            raise NotImplementedError
         # We only handle if/else cases
-        assert expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True
+        if not (expr.args[1][1].is_Boolean and bool(expr.args[1][1]) is True):
+            raise NotImplementedError
         then = self.rec(expr.args[0][0])
         else_ = self.rec(expr.args[1][0])
         cond = self.rec(expr.args[0][1])
