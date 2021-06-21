@@ -67,6 +67,17 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 
     map_RealDouble = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
+    def map_Piecewise(self, expr):  # noqa
+        # We only handle piecewises with 2 statements!
+        if not len(expr.args) == 4:
+            raise NotImplementedError
+        # We only handle if/else cases
+        if not (expr.args[3].is_Boolean and bool(expr.args[3]) is True):
+            raise NotImplementedError
+        rec_args = [self.rec(arg) for arg in expr.args[:3]]
+        then, cond, else_ = rec_args
+        return prim.If(cond, then, else_)
+
     def function_name(self, expr):
         try:
             # For FunctionSymbol instances
