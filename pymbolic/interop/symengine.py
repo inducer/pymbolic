@@ -75,7 +75,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
         if not (expr.args[3].is_Boolean and bool(expr.args[3]) is True):
             raise NotImplementedError
         rec_args = [self.rec(arg) for arg in expr.args[:3]]
-        then, else_, cond = rec_args
+        then, cond, else_ = rec_args
         return prim.If(cond, then, else_)
 
     def function_name(self, expr):
