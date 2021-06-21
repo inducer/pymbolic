@@ -180,7 +180,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
     def map_subscript(self, expr):
         if isinstance(expr.aggregate, prim.Variable):
             return self.sym.Function("Indexed")(expr.aggregate.name,
-                    *expr.index_tuple)
+                *(self.rec(idx) for idx in expr.index_tuple))
         else:
             self.raise_conversion_error(expr)
 

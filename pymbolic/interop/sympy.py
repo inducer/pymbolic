@@ -61,6 +61,12 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
         return long(expr)  # noqa  pylint:disable=undefined-variable
 
     def map_Indexed(self, expr):  # noqa
+        if len(expr.args) == 2:
+            return prim.Subscript(
+                self.rec(expr.args[0].args[0]),
+                self.rec(expr.args[1]),
+                )
+
         return prim.Subscript(
             self.rec(expr.args[0].args[0]),
             tuple(self.rec(i) for i in expr.args[1:])

@@ -127,9 +127,6 @@ def test_pymbolic_to_sympy():
 # {{{ roundtrip tests
 
 def _test_roundtrip(forward, backward, sym, use_symengine):
-    x, y = sym.symbols("x,y")
-    i, j = sym.symbols("i,j")
-
     exprs = [
         2 + x_,
         2 * x_,
