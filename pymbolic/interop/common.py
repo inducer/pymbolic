@@ -115,7 +115,10 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         elif getattr(expr, "is_Function", False):
             if self.function_name(expr) == "Indexed":
                 args = [self.rec(arg) for arg in expr.args]
-                return prim.Subscript(args[0], tuple(args[1:]))
+                if len(args) == 2:
+                    return prim.Subscript(args[0], args[1])
+                else:
+                    return prim.Subscript(args[0], tuple(args[1:]))
             return prim.Variable(self.function_name(expr))(
                     *tuple(self.rec(arg) for arg in expr.args))
         else:

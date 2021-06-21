@@ -84,7 +84,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
 
     def map_subscript(self, expr):
         return self.sym.Indexed(
-            self.rec(expr.aggregate),
+            self.sym.IndexedBase(self.rec(expr.aggregate)),
             *tuple(self.rec(i) for i in expr.index_tuple)
             )
 # }}}
