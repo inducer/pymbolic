@@ -1,28 +1,11 @@
-extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.coverage",
-    "sphinx.ext.mathjax",
-    # 'sphinx.ext.viewcode'
-    "sphinx_copybutton",
-]
+from urllib.request import urlopen
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+_conf_url = \
+        "https://raw.githubusercontent.com/inducer/sphinxconfig/main/sphinxconfig.py"
+with urlopen(_conf_url) as _inf:
+    exec(compile(_inf.read(), _conf_url, "exec"), globals())
 
-# The suffix of source filenames.
-source_suffix = ".rst"
-
-# The encoding of source files.
-# source_encoding = 'utf-8-sig'
-
-# The master toctree document.
-master_doc = "index"
-
-# General information about the project.
-project = "pymbolic"
-copyright = "2013, Andreas Kloeckner"
+copyright = "2013-21, Andreas Kloeckner"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -42,15 +25,6 @@ release = ver_dic["VERSION_TEXT"]
 # directories to ignore when looking for source files.
 exclude_patterns = ["_build"]
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
-
-
-# -- Options for HTML output ---------------------------------------------------
-
-html_theme = "furo"
-
-# Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "https://docs.python.org/3": None,
     "https://numpy.org/doc/stable/": None,
@@ -59,4 +33,3 @@ intersphinx_mapping = {
     "https://galgebra.readthedocs.io/en/latest/": None,
 }
 
-autoclass_content = "class"
