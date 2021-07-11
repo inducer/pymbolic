@@ -37,6 +37,8 @@ _openpar = intern("openpar")
 _closepar = intern("closepar")
 _openbracket = intern("openbracket")
 _closebracket = intern("closebracket")
+_true = intern("True")
+_false = intern("False")
 _identifier = intern("identifier")
 _whitespace = intern("whitespace")
 _comma = intern("comma")
@@ -164,6 +166,8 @@ class Parser:
             (_closepar, pytools.lex.RE(r"\)")),
             (_openbracket, pytools.lex.RE(r"\[")),
             (_closebracket, pytools.lex.RE(r"\]")),
+            (_true, pytools.lex.RE(r"True")),
+            (_false, pytools.lex.RE(r"False")),
             (_identifier, pytools.lex.RE(r"[@$a-z_A-Z_][@$a-zA-Z_0-9]*")),
             (_whitespace, pytools.lex.RE("[ \n\t]*")),
             (_comma, pytools.lex.RE(",")),
@@ -193,6 +197,12 @@ class Parser:
             return self.parse_float(pstate.next_str_and_advance())
         elif next_tag is _imaginary:
             return complex(pstate.next_str_and_advance())
+        elif next_tag is _true:
+            assert pstate.next_str_and_advance() == "True"
+            return True
+        elif next_tag is _false:
+            assert pstate.next_str_and_advance() == "False"
+            return False
         elif next_tag is _identifier:
             return primitives.Variable(pstate.next_str_and_advance())
         elif next_tag is _if:
@@ -330,7 +340,7 @@ class Parser:
             then_expr = left_exp
             pstate.advance()
             pstate.expect_not_end()
-            condition = self.parse_expression(pstate, _PREC_LOGICAL_OR)
+            condition = self.parse_expression(pstate, _PREC_IF)
             pstate.expect(_else)
             pstate.advance()
             else_expr = self.parse_expression(pstate)
