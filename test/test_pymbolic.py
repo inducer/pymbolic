@@ -290,6 +290,8 @@ def test_parser():
     with pytest.deprecated_call():
         parse("1+if(0, 1, 2)")
 
+    assert eval(str(parse("1729 if True or False else 42"))) == 1729
+
 # }}}
 
 
