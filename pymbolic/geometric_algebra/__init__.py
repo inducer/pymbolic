@@ -112,6 +112,11 @@ properties:
    :start-after: START_GA_TEST
    :end-before: END_GA_TEST
 
+Usage as an array container
+---------------------------
+
+The following function permits the use of :class:`MultiVector` as a
+:class:`~arraycontext.ArrayContainer`.
 """
 
 
@@ -1104,5 +1109,41 @@ def componentwise(f, expr):
 
     from pytools.obj_array import obj_array_vectorize
     return obj_array_vectorize(f, expr)
+
+
+# {{{ array container support, see arraycontext.container
+
+# FYI: This doesn't, and never should, make pymbolic depend on arraycontext
+def _serialize_multivec_as_container(mv):
+    return list(mv.data.items())
+
+
+def _deserialize_multivec_as_container(template, iterable):
+    return MultiVector(dict(iterable), space=template.space)
+
+
+def _get_container_context_from_multivec(mv):
+    return None
+
+
+def register_multivector_as_array_container():
+    """Registers :class:`MultiVector` as an :class:`~arraycontext.ArrayContainer`.
+    This function may be called multiple times. The second and subsequent calls
+    have no effect.
+    """
+    from arraycontext.container import (  # pylint: disable=import-error
+            serialize_container,
+            deserialize_container,
+            get_container_context)
+    if MultiVector not in serialize_container.registry:
+        serialize_container.register(MultiVector)(_serialize_multivec_as_container)
+        deserialize_container.register(MultiVector)(
+                _deserialize_multivec_as_container)
+        get_container_context.register(MultiVector)(
+                _get_container_context_from_multivec)
+        assert MultiVector in serialize_container.registry
+
+# }}}
+
 
 # vim: foldmethod=marker
