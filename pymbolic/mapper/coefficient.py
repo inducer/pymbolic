@@ -71,6 +71,29 @@ class CoefficientCollector(Mapper):
 
         return result
 
+    def map_quotient(self, expr):
+        from pymbolic.primitives import Quotient
+        d_num = self.rec(expr.numerator)
+        d_den = self.rec(expr.denominator)
+        # d_den should look like {1: k}
+        if len(d_den) > 1 or 1 not in d_den:
+            raise RuntimeError("nonlinear expression")
+        val = d_den[1]
+        for k in d_num.keys():
+            d_num[k] *= Quotient(1, val)
+        return d_num
+
+    def map_power(self, expr):
+        d_base = self.rec(expr.base)
+        d_exponent = self.rec(expr.exponent)
+        # d_exponent should look like {1: k}
+        if len(d_exponent) > 1 or 1 not in d_exponent:
+            raise RuntimeError("nonlinear expression")
+        # d_base should look like {1: k}
+        if len(d_base) > 1 or 1 not in d_base:
+            raise RuntimeError("nonlinear expression")
+        return {1: expr}
+
     def map_constant(self, expr):
         return {1: expr}
 
