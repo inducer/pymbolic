@@ -678,6 +678,40 @@ def test_np_bool_handling():
     assert evaluate(expr) is True
 
 
+def test_subst_applier():
+    x = prim.Variable("x")
+    y = prim.Variable("y")
+    z = prim.Variable("z")
+
+    from pymbolic.mapper.substitutor import substitute as subst_actual
+
+    def subst_deferred(expr, **kwargs):
+        variables = []
+        values = []
+        for name, value in kwargs.items():
+            variables.append(name)
+            values.append(value)
+        return prim.Substitution(expr, variables, values)
+
+    from pymbolic.mapper.subst_applier import SubstitutionApplier
+    sapp = SubstitutionApplier()
+
+    results = []
+    for subst in [subst_actual, subst_deferred]:
+        expr = subst(x + y, x=5*y)
+        print(expr)
+        expr = subst(subst(expr**2, y=z) - subst(expr, y=x), x=y)
+        print(expr)
+        expr = sapp(expr)
+        print(expr)
+
+        results.append(sapp(expr))
+        print("--------")
+
+    result_actual, result_deferred = results
+    assert result_actual == result_deferred
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
