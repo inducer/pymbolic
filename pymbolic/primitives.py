@@ -1647,6 +1647,9 @@ def unregister_constant_class(class_):
 
 
 def is_nonzero(value):
+    if value is None:
+        raise ValueError("is_nonzero is undefined for None")
+
     try:
         return bool(value)
     except ValueError:
