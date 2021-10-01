@@ -26,10 +26,20 @@ import pymbolic.mapper
 class SubstitutionApplier(pymbolic.mapper.IdentityMapper):
 
     def map_substitution(self, expr, current_substs):
-        # ...
+        current_substs = current_substs or {}
+        new_substs = {}
+        for variable, value in zip(expr.variables, expr.values):
+            new_substs[variable] = value
+            print(f"variable = {variable}")
+            print(f"value = {value}")
+            print("------------------")
+
+        # new_substs.update(current_substs)
+        #import ipdb; ipdb.set_trace()
         return self.rec(expr.child, new_substs)
 
     def map_variable(self, expr, current_substs):
+        current_substs = current_substs or {}
         return current_substs.get(expr.name, expr)
 
     def __call__(self, expr):
