@@ -1167,7 +1167,7 @@ class Comparison(Expression):
         operator = self.name_to_operator.get(operator, operator)
 
         if operator not in self.operator_to_name:
-            raise RuntimeError("invalid operator")
+            raise RuntimeError(f"invalid operator: '{operator}'")
         self.operator = operator
 
     def __getinitargs__(self):
