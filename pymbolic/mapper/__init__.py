@@ -93,7 +93,8 @@ class Mapper:
     """A visitor for trees of :class:`pymbolic.primitives.Expression`
     subclasses. Each expression-derived object is dispatched to the
     method named by the :attr:`pymbolic.primitives.Expression.mapper_method`
-    attribute.
+    attribute and if not found, the methods named by the class attribute
+    *mapper_method* in the method resolution order of the object.
     """
 
     def handle_unsupported_expression(self, expr, *args, **kwargs):
@@ -121,7 +122,14 @@ class Mapper:
             method = getattr(self, expr.mapper_method)
         except AttributeError:
             if isinstance(expr, primitives.Expression):
-                return self.handle_unsupported_expression(
+                for cls in type(expr).__mro__[1:]:
+                    method_name = getattr(cls, "mapper_method", None)
+                    if method_name:
+                        method = getattr(self, method_name, None)
+                        if method:
+                            break
+                else:
+                    return self.handle_unsupported_expression(
                         expr, *args, **kwargs)
             else:
                 return self.map_foreign(expr, *args, **kwargs)

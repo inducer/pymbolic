@@ -678,6 +678,20 @@ def test_np_bool_handling():
     assert evaluate(expr) is True
 
 
+def test_mapper_method_of_parent_class():
+    class SpatialConstant(prim.Variable):
+        mapper_method = "map_spatial_constant"
+
+    class MyMapper(IdentityMapper):
+        def map_spatial_constant(self, expr):
+            return 2*expr
+
+    c = SpatialConstant("k")
+
+    assert MyMapper()(c) == 2*c
+    assert IdentityMapper()(c) == c
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
