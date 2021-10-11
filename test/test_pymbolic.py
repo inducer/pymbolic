@@ -659,6 +659,18 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     assert result == 0
 
 
+def test_coefficient_collector():
+    from pymbolic.mapper.coefficient import CoefficientCollector
+    x = prim.Variable("x")
+    y = prim.Variable("y")
+    z = prim.Variable("z")
+
+    cc = CoefficientCollector([x.name, y.name])
+    assert cc(2*x + y) == {x: 2, y: 1}
+    assert cc(2*x + y - z) == {x: 2, y: 1, 1: -z}
+    assert cc(x/2 + z**2) == {x: prim.Quotient(1, 2), 1: z**2}
+
+
 def test_np_bool_handling():
     from pymbolic.mapper.evaluator import evaluate
     numpy = pytest.importorskip("numpy")

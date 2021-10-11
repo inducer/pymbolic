@@ -1167,7 +1167,7 @@ class Comparison(Expression):
         operator = self.name_to_operator.get(operator, operator)
 
         if operator not in self.operator_to_name:
-            raise RuntimeError("invalid operator")
+            raise RuntimeError(f"invalid operator: '{operator}'")
         self.operator = operator
 
     def __getinitargs__(self):
@@ -1627,6 +1627,9 @@ def unregister_constant_class(class_):
 
 
 def is_nonzero(value):
+    if value is None:
+        raise ValueError("is_nonzero is undefined for None")
+
     try:
         return bool(value)
     except ValueError:
