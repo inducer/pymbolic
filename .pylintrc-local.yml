@@ -1,0 +1,3 @@
+- arg: ignored-modules
+  val:
+  - symengine
