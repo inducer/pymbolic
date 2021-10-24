@@ -22,7 +22,7 @@ jobs:
                 python-version: '3.6'
         -   name: "Main Script"
             run: |
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
+                curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
                 . ./prepare-and-run-flake8.sh pymbolic test
 
     pylint:
@@ -36,9 +36,15 @@ jobs:
                 python-version: '3.x'
         -   name: "Main Script"
             run: |
-                EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-pylint.sh
-                . ./prepare-and-run-pylint.sh pymbolic test/test_*.py
+                EXTRA_INSTALL="numpy sympy scipy pexpect"
+                curl -L -O https://tiker.net/ci-support-v0
+                . ./ci-support-v0
+                build_py_project_in_venv
+
+                # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
+                pip install symengine || true
+
+                run_pylint pymbolic test/test_*.py
 
     pytest:
         name: Pytest on Py${{ matrix.python-version }}
@@ -54,9 +60,17 @@ jobs:
                 python-version: ${{ matrix.python-version }}
         -   name: "Main Script"
             run: |
-                EXTRA_INSTALL="numpy sympy symengine pexpect"
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
-                . ./build-and-test-py-project.sh
+                EXTRA_INSTALL="numpy sympy pexpect"
+                curl -L -O https://tiker.net/inducer/ci-support-v0
+                . ./ci-support-v0
+
+                build_py_project_in_venv
+
+                # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
+                pip install symengine || true
+
+                test_py_project
+
 
     docs:
         name: Documentation
@@ -70,8 +84,8 @@ jobs:
         -   name: "Main Script"
             run: |
                 EXTRA_INSTALL="numpy sympy"
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/ci-support.sh
-                . ci-support.sh
+                curl -L -O https://tiker.net/ci-support-v0
+                . ./ci-support-v0
                 build_py_project_in_venv
                 build_docs
 
@@ -100,8 +114,8 @@ jobs:
 
                 sed -i "/mpi4py/ d" requirements.txt
 
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/ci-support.sh
-                . ./ci-support.sh
+                curl -L -O https://tiker.net/ci-support-v0
+                . ./ci-support-v0
                 build_py_project_in_conda_env
                 test_py_project
 
