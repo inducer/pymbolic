@@ -53,7 +53,11 @@ class IdentityMapper(IdentityMapperBase):
     map_nabla_component = map_multivector_variable
 
     def map_derivative_source(self, expr):
-        return type(expr)(self.rec(expr.operand), expr.nabla_id)
+        operand = self.rec(expr.operand)
+        if operand is expr.operand:
+            return expr
+
+        return type(expr)(operand, expr.nabla_id)
 
 
 class CombineMapper(CombineMapperBase):
@@ -92,7 +96,11 @@ class EvaluationMapper(EvaluationMapperBase):
     map_nabla = map_nabla_component
 
     def map_derivative_source(self, expr):
-        return type(expr)(self.rec(expr.operand), expr.nabla_id)
+        operand = self.rec(expr.operand)
+        if operand is expr.operand:
+            return expr
+
+        return type(expr)(operand, expr.nabla_id)
 
 
 class StringifyMapper(StringifyMapperBase):
