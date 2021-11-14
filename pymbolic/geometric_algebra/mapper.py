@@ -240,13 +240,19 @@ class DerivativeBinder(IdentityMapper):
 
         # id to set((child index, axis), ...)
         nabla_finder = {}
+        has_d_source_nablas = False
 
-        for child_idx, rec_child in enumerate(expr.children):
+        for child_idx, child in enumerate(expr.children):
+            d_or_ns = self.derivative_collector(child)
+            if not d_or_ns:
+                d_source_nabla_ids_per_child.append(set())
+                continue
+
             nabla_component_ids = set()
             derivative_source_ids = set()
 
             nablas = []
-            for d_or_n in self.derivative_collector(rec_child):
+            for d_or_n in d_or_ns:
                 if isinstance(d_or_n, prim.NablaComponent):
                     nabla_component_ids.add(d_or_n.nabla_id)
                     nablas.append(d_or_n)
@@ -257,10 +263,20 @@ class DerivativeBinder(IdentityMapper):
                             "DerivativeSourceAndNablaComponentCollector")
 
             d_source_nabla_ids_per_child.append(derivative_source_ids)
+            if derivative_source_ids:
+                has_d_source_nablas = True
 
             for ncomp in nablas:
                 nabla_finder.setdefault(
                         ncomp.nabla_id, set()).add((child_idx, ncomp.ambient_axis))
+
+        if not has_d_source_nablas:
+            rec_children = [self.rec(child) for child in expr.children]
+            if all(rec_child is child
+                    for rec_child, child in zip(rec_children, expr.children)):
+                return expr
+
+            return type(expr)(tuple(rec_children))
 
         # }}}
 
