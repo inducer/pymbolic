@@ -301,10 +301,12 @@ class DerivativeBinder(IdentityMapper):
             result = new_result
 
         from pymbolic.primitives import flattened_sum
-        return flattened_sum(
-                    type(expr)(tuple(
-                        self.rec(prod_term) for prod_term in prod_term_list))
-                    for prod_term_list in result)
+        return flattened_sum([
+                    type(expr)(tuple([
+                        self.rec(prod_term) for prod_term in prod_term_list
+                        ]))
+                    for prod_term_list in result
+                    ])
 
     map_bitwise_xor = map_product
     map_bitwise_or = map_product
@@ -328,12 +330,13 @@ class DerivativeBinder(IdentityMapper):
         assert n_axes
 
         from pymbolic.primitives import flattened_sum
-        return flattened_sum(
+        return flattened_sum([
                 self.take_derivative(
                     axis,
                     self.nabla_component_to_unit_vector(expr.nabla_id, axis)
                     (rec_operand))
-                for axis in range(n_axes))
+                for axis in range(n_axes)
+                ])
 
 # }}}
 

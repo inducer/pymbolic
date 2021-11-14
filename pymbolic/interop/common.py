@@ -87,10 +87,10 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return int(expr)
 
     def map_Add(self, expr):  # noqa
-        return prim.Sum(tuple(self.rec(arg) for arg in expr.args))
+        return prim.Sum(tuple([self.rec(arg) for arg in expr.args]))
 
     def map_Mul(self, expr):  # noqa
-        return prim.Product(tuple(self.rec(arg) for arg in expr.args))
+        return prim.Product(tuple([self.rec(arg) for arg in expr.args]))
 
     def map_Pow(self, expr):  # noqa
         base, exp = expr.args
@@ -98,13 +98,13 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
 
     def map_Subs(self, expr):  # noqa
         return prim.Substitution(self.rec(expr.expr),
-                tuple(v.name for v in expr.variables),
-                tuple(self.rec(v) for v in expr.point),
+                tuple([v.name for v in expr.variables]),
+                tuple([self.rec(v) for v in expr.point]),
                 )
 
     def map_Derivative(self, expr):  # noqa
         return prim.Derivative(self.rec(expr.expr),
-                tuple(v.name for v in expr.variables))
+                tuple([v.name for v in expr.variables]))
 
     def map_UnevaluatedExpr(self, expr):  # noqa
         return self.rec(expr.args[0])
@@ -120,7 +120,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
                 else:
                     return prim.Subscript(args[0], tuple(args[1:]))
             return prim.Variable(self.function_name(expr))(
-                    *tuple(self.rec(arg) for arg in expr.args))
+                    *[self.rec(arg) for arg in expr.args])
         else:
             return SympyLikeMapperBase.not_supported(self, expr)
 
@@ -176,8 +176,8 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
 
     def map_substitution(self, expr):
         return self.sym.Subs(self.rec(expr.child),
-                tuple(self.sym.Symbol(v) for v in expr.variables),
-                tuple(self.rec(v) for v in expr.values),
+                tuple([self.sym.Symbol(v) for v in expr.variables]),
+                tuple([self.rec(v) for v in expr.values]),
                 )
 
     def map_if(self, expr):

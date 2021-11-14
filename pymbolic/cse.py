@@ -122,7 +122,7 @@ class CSEMapper(IdentityMapper):
         return type(expr)(
                 expr.child,
                 expr.variables,
-                tuple(self.rec(v) for v in expr.values))
+                tuple([self.rec(v) for v in expr.values]))
 
 
 def tag_common_subexpressions(exprs):

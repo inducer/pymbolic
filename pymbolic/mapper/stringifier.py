@@ -156,11 +156,16 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_call_with_kwargs(self, expr, enclosing_prec, *args, **kwargs):
         args_strings = (
-                tuple(self.rec(ch, PREC_NONE, *args, **kwargs)
-                      for ch in expr.parameters)
+                tuple([
+                    self.rec(ch, PREC_NONE, *args, **kwargs)
+                    for ch in expr.parameters
+                    ])
                 +  # noqa: W504
-                tuple("{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
-                    for name, ch in expr.kw_parameters.items()))
+                tuple([
+                    "{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
+                    for name, ch in expr.kw_parameters.items()
+                    ])
+                )
         return self.format("%s(%s)",
                 self.rec(expr.function, PREC_CALL, *args, **kwargs),
                 ", ".join(args_strings))
