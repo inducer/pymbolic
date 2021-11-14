@@ -1306,45 +1306,47 @@ class Vector(Expression):
             return Expression.__getitem__(self, index)
 
     def __neg__(self):
-        return Vector(tuple(-x for x in self))
+        return Vector(tuple([-x for x in self]))
 
     def __add__(self, other):
         if len(other) != len(self):
             raise ValueError("can't add values of differing lengths")
-        return Vector(tuple(x+y for x, y in zip(self, other)))
+        return Vector(tuple([x+y for x, y in zip(self, other)]))
 
     def __radd__(self, other):
         if len(other) != len(self):
             raise ValueError("can't add values of differing lengths")
-        return Vector(tuple(y+x for x, y in zip(self, other)))
+        return Vector(tuple([y+x for x, y in zip(self, other)]))
 
     def __sub__(self, other):
         if len(other) != len(self):
             raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple(x-y for x, y in zip(self, other)))
+        return Vector(tuple([x-y for x, y in zip(self, other)]))
 
     def __rsub__(self, other):
         if len(other) != len(self):
             raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple(y-x for x, y in zip(self, other)))
+        return Vector(tuple([y-x for x, y in zip(self, other)]))
 
     def __mul__(self, other):
-        return Vector(tuple(x*other for x in self))
+        return Vector(tuple([x*other for x in self]))
 
     def __rmul__(self, other):
-        return Vector(tuple(other*x for x in self))
+        return Vector(tuple([other*x for x in self]))
 
     def __div__(self, other):
         # Py2 only
         import operator
-        return Vector(tuple(operator.div(x, other) for x in self))  # noqa pylint: disable=no-member
+        return Vector(tuple([
+            operator.div(x, other) for x in self    # pylint: disable=no-member
+            ]))
 
     def __truediv__(self, other):
         import operator
-        return Vector(tuple(operator.truediv(x, other) for x in self))
+        return Vector(tuple([operator.truediv(x, other) for x in self]))
 
     def __floordiv__(self, other):
-        return Vector(tuple(x//other for x in self))
+        return Vector(tuple([x//other for x in self]))
 
     def __getinitargs__(self):
         return self.children

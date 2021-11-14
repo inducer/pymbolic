@@ -188,7 +188,7 @@ class ASTToPymbolic(ASTMapper):
     def map_Call(self, expr):  # noqa
         # (expr func, expr* args, keyword* keywords)
         func = self.rec(expr.func)
-        args = tuple(self.rec(arg) for arg in expr.args)
+        args = tuple([self.rec(arg) for arg in expr.args])
         if expr.keywords:
             return p.CallWithKwargs(func, args,
                     {
@@ -248,7 +248,7 @@ class ASTToPymbolic(ASTMapper):
 
     def map_Tuple(self, expr):  # noqa
         # (expr* elts, expr_context ctx)
-        return tuple(self.rec(ti) for ti in expr.elts)
+        return tuple([self.rec(ti) for ti in expr.elts])
 
 # }}}
 

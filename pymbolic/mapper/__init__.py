@@ -223,19 +223,20 @@ class CombineMapper(RecursiveMapper):
     def map_call(self, expr, *args, **kwargs):
         return self.combine(
                 (self.rec(expr.function, *args, **kwargs),)
-                + tuple(
-                    self.rec(child, *args, **kwargs) for child in expr.parameters)
+                + tuple([
+                    self.rec(child, *args, **kwargs) for child in expr.parameters
+                    ])
                 )
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
         return self.combine(
                 (self.rec(expr.function, *args, **kwargs),)
-                + tuple(
+                + tuple([
                     self.rec(child, *args, **kwargs)
-                    for child in expr.parameters)
-                + tuple(
+                    for child in expr.parameters])
+                + tuple([
                     self.rec(child, *args, **kwargs)
-                    for child in expr.kw_parameters.values())
+                    for child in expr.kw_parameters.values()])
                 )
 
     def map_subscript(self, expr, *args, **kwargs):
@@ -268,8 +269,9 @@ class CombineMapper(RecursiveMapper):
     def map_polynomial(self, expr, *args, **kwargs):
         return self.combine(
                 (self.rec(expr.base, *args, **kwargs),)
-                + tuple(
-                    self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data)
+                + tuple([
+                    self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data
+                    ])
                 )
 
     def map_left_shift(self, expr, *args, **kwargs):
@@ -380,20 +382,21 @@ class IdentityMapper(Mapper):
 
     def map_call(self, expr, *args, **kwargs):
         function = self.rec(expr.function, *args, **kwargs)
-        parameters = tuple(self.rec(child, *args, **kwargs)
-                    for child in expr.parameters)
-        # zipping expr.parameters and parameters is okay
-        # because by construction they have the same length
+        parameters = tuple([
+            self.rec(child, *args, **kwargs) for child in expr.parameters
+            ])
         if (function is expr.function
-            and all(child is orig_child for child, orig_child in
-                zip(expr.parameters, parameters))):
+            and all(child is orig_child
+                for child, orig_child in zip(expr.parameters, parameters))):
             return expr
+
         return type(expr)(function, parameters)
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
         function = self.rec(expr.function, *args, **kwargs)
-        parameters = tuple(self.rec(child, *args, **kwargs)
-                    for child in expr.parameters)
+        parameters = tuple([
+            self.rec(child, *args, **kwargs) for child in expr.parameters
+            ])
         kw_parameters = {
                 key: self.rec(val, *args, **kwargs)
                 for key, val in expr.kw_parameters.items()}
@@ -420,20 +423,20 @@ class IdentityMapper(Mapper):
         return type(expr)(aggregate, expr.name)
 
     def map_sum(self, expr, *args, **kwargs):
-        children = \
-            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr.children)):
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
             return expr
+
         from pymbolic.primitives import flattened_sum
         return flattened_sum(children)
 
     def map_product(self, expr, *args, **kwargs):
-        children = \
-            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr.children)):
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
             return expr
+
         from pymbolic.primitives import flattened_product
         return flattened_product(children)
 
@@ -479,12 +482,12 @@ class IdentityMapper(Mapper):
         return type(expr)(child)
 
     def map_bitwise_or(self, expr, *args, **kwargs):
-        children = \
-            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr.children)):
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
             return expr
-        return type(expr)(children)
+
+        return type(expr)(tuple(children))
 
     map_bitwise_xor = map_bitwise_or
     map_bitwise_and = map_bitwise_or
@@ -503,10 +506,11 @@ class IdentityMapper(Mapper):
         return [self.rec(child, *args, **kwargs) for child in expr]
 
     def map_tuple(self, expr, *args, **kwargs):
-        children = tuple(self.rec(child, *args, **kwargs) for child in expr)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr)):
+        children = tuple([self.rec(child, *args, **kwargs) for child in expr])
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr)):
             return expr
+
         return children
 
     def map_numpy_array(self, expr, *args, **kwargs):
@@ -537,20 +541,24 @@ class IdentityMapper(Mapper):
         return type(expr)(
                 self.rec(expr.child, *args, **kwargs),
                 expr.variables,
-                tuple(self.rec(v, *args, **kwargs) for v in expr.values))
+                tuple([self.rec(v, *args, **kwargs) for v in expr.values]))
 
     def map_derivative(self, expr, *args, **kwargs):
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
+
         return type(expr)(child, expr.variables)
 
     def map_slice(self, expr, *args, **kwargs):
-        children = tuple(None if child is None else
-            self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr.children)):
+        children = tuple([
+            None if child is None else self.rec(child, *args, **kwargs)
+            for child in expr.children
+            ])
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
             return expr
+
         return type(expr)(children)
 
     def map_if_positive(self, expr, *args, **kwargs):
@@ -561,6 +569,7 @@ class IdentityMapper(Mapper):
                 and then is expr.then \
                 and else_ is expr.else_:
             return expr
+
         return type(expr)(criterion, then, else_)
 
     def map_if(self, expr, *args, **kwargs):
@@ -571,14 +580,17 @@ class IdentityMapper(Mapper):
                 and then is expr.then \
                 and else_ is expr.else_:
             return expr
+
         return type(expr)(condition, then, else_)
 
     def map_min(self, expr, *args, **kwargs):
-        children = \
-            tuple(self.rec(child, *args, **kwargs) for child in expr.children)
-        if all(child is orig_child for child, orig_child in
-               zip(children, expr.children)):
+        children = tuple([
+            self.rec(child, *args, **kwargs) for child in expr.children
+            ])
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
             return expr
+
         return type(expr)(children)
 
     map_max = map_min
