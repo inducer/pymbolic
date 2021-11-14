@@ -180,12 +180,12 @@ class Mapper:
 
         if isinstance(expr, primitives.VALID_CONSTANT_CLASSES):
             return self.map_constant(expr, *args, **kwargs)
+        elif is_numpy_array(expr):
+            return self.map_numpy_array(expr, *args, **kwargs)
         elif isinstance(expr, list):
             return self.map_list(expr, *args, **kwargs)
         elif isinstance(expr, tuple):
             return self.map_tuple(expr, *args, **kwargs)
-        elif is_numpy_array(expr):
-            return self.map_numpy_array(expr, *args, **kwargs)
         else:
             raise ValueError(
                     "{} encountered invalid foreign object: {}".format(
