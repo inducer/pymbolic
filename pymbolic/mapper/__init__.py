@@ -393,16 +393,17 @@ class IdentityMapper(Mapper):
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple(self.rec(child, *args, **kwargs)
                     for child in expr.parameters)
-        kwargs = {key: self.rec(val, *args, **kwargs)
-                    for key, val in expr.kw_parameters.items()}
+        kw_parameters = {
+                key: self.rec(val, *args, **kwargs)
+                for key, val in expr.kw_parameters.items()}
 
         if (function is expr.function
             and all(child is orig_child for child, orig_child in
                 zip(parameters, expr.parameters))
-                and all(kwargs[k] is v for k, v in
+                and all(kw_parameters[k] is v for k, v in
                         expr.kw_parameters.items())):
             return expr
-        return type(expr)(function, parameters, kwargs)
+        return type(expr)(function, parameters, kw_parameters)
 
     def map_subscript(self, expr, *args, **kwargs):
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
