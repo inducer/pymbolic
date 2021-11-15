@@ -270,6 +270,11 @@ class DerivativeBinder(IdentityMapper):
                 nabla_finder.setdefault(
                         ncomp.nabla_id, set()).add((child_idx, ncomp.ambient_axis))
 
+        if nabla_finder and not any(d_source_nabla_ids_per_child):
+            raise ValueError(f"no derivative source found to resolve in '{expr}'"
+                    " -- did you forget to wrap the term that should have its "
+                    "derivative taken in 'Derivative()(term)'?")
+
         if not has_d_source_nablas:
             rec_children = [self.rec(child) for child in expr.children]
             if all(rec_child is child
@@ -279,11 +284,6 @@ class DerivativeBinder(IdentityMapper):
             return type(expr)(tuple(rec_children))
 
         # }}}
-
-        if nabla_finder and not any(d_source_nabla_ids_per_child):
-            raise ValueError(f"no derivative source found to resolve in '{expr}'"
-                    " -- did you forget to wrap the term that should have its "
-                    "derivative taken in 'Derivative()(term)'?")
 
         # a list of lists, the outer level presenting a sum, the inner a product
         result = [list(expr.children)]
