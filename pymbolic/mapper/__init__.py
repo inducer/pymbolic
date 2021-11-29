@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from abc import ABC, abstractmethod
 import pymbolic.primitives as primitives
 
 __doc__ = """
@@ -899,7 +900,7 @@ class CachingMapperMixin:
     __call__ = rec
 
 
-class CSECachingMapperMixin:
+class CSECachingMapperMixin(ABC):
     """A :term:`mix-in` that helps
     subclassed mappers implement caching for
     :class:`pymbolic.primitives.CommonSubexpression`
@@ -927,6 +928,10 @@ class CSECachingMapperMixin:
             result = self.map_common_subexpression_uncached(expr, *args)
             ccd[(expr, *args)] = result
             return result
+
+    @abstractmethod
+    def map_common_subexpression_uncached(self, expr, *args):
+        pass
 
 # }}}
 
