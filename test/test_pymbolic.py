@@ -659,6 +659,34 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     assert result == 0
 
 
+def test_diff_cse():
+    from pymbolic.mapper.differentiator import differentiate
+    from pymbolic import evaluate_kw
+
+    m = prim.Variable("math")
+
+    x = prim.Variable("x")
+    cse = prim.CommonSubexpression(x**2 + 1)
+    expr = m.attr("exp")(cse)*m.attr("sin")(cse**2)
+
+    diff_result = differentiate(expr, x)
+
+    from functools import partial
+    import math
+    my_eval = partial(evaluate_kw, math=math)
+
+    x0 = 5
+    h = 0.001
+    fprime = my_eval(diff_result, x=x0)
+    fprime_num_1 = (my_eval(expr, x=x0+h) - my_eval(expr, x=x0-h))/(2*h)
+    fprime_num_2 = (my_eval(expr, x=x0+0.5*h) - my_eval(expr, x=x0-0.5*h))/h
+
+    err1 = abs(fprime - fprime_num_1)/abs(fprime)
+    err2 = abs(fprime - fprime_num_2)/abs(fprime)
+
+    assert err2 < 1.1 * 0.5**2 * err1
+
+
 def test_coefficient_collector():
     from pymbolic.mapper.coefficient import CoefficientCollector
     x = prim.Variable("x")

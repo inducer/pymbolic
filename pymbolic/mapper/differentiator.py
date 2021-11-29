@@ -67,7 +67,8 @@ def map_math_functions_by_name(i, func, pars, allowed_nonsmoothness="none"):
         raise RuntimeError("unrecognized function, cannot differentiate")
 
 
-class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
+class DifferentiationMapper(pymbolic.mapper.RecursiveMapper,
+        pymbolic.mapper.CSECachingMapperMixin):
     """Example usage:
 
     .. doctest::
@@ -224,6 +225,12 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper):
                 expr.condition,
                 self.rec(expr.then, *args),
                 self.rec(expr.else_, *args))
+
+    def map_common_subexpression_uncached(self, expr, *args):
+        return type(expr)(
+                self.rec(expr.child, *args),
+                expr.prefix,
+                expr.scope)
 
 
 def differentiate(expression,
