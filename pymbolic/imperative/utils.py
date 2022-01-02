@@ -135,12 +135,25 @@ def get_dot_dependency_graph(
 
 # {{{ graphviz / dot interactive show
 
-def show_dot(dot_code):
+def show_dot(dot_code, output_to=None):
     """Show the graph represented by *dot_code* in a browser.
     Can be called on the result of :func:`get_dot_dependency_graph`.
+
+    .. arg:: output_to
+
+        An instance of :class:`str` that can be one of:
+
+        - ``"xwindow"`` to visualize the graph as an
+          `X window <https://en.wikipedia.org/wiki/X_Window_System>`_.
+        - ``"browser"`` to visualize the graph as an SVG file in the
+          system's default web-browser.
+
+        Defaults to ``"xwindow"`` if X11 support is present, otherwise defaults
+        to ``"browser"``.
     """
 
     from tempfile import mkdtemp
+    import subprocess
     temp_dir = mkdtemp(prefix="tmp_dagrt_dot")
 
     dot_file_name = "code.dot"
@@ -149,17 +162,38 @@ def show_dot(dot_code):
     with open(join(temp_dir, dot_file_name), "w") as dotf:
         dotf.write(dot_code)
 
-    svg_file_name = "code.svg"
-    from subprocess import check_call
-    check_call(["dot", "-Tsvg", "-o", svg_file_name, dot_file_name],
-            cwd=temp_dir)
+    # {{{ preprocess 'output_to'
 
-    full_svg_file_name = join(temp_dir, svg_file_name)
-    logger.info("show_dot_dependency_graph: svg written to '%s'",
-            full_svg_file_name)
+    if output_to is None:
+        with subprocess.Popen(["dot", "-T?"],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE
+                              ) as proc:
+            supported_formats = proc.stderr.read().decode()
 
-    from webbrowser import open as browser_open
-    browser_open("file://" + full_svg_file_name)
+            if " x11 " in supported_formats:
+                output_to = "xwindow"
+            else:
+                output_to = "browser"
+
+    # }}}
+
+    if output_to == "xwindow":
+        subprocess.check_call(["dot", "-Tx11", dot_file_name], cwd=temp_dir)
+    elif output_to == "browser":
+        svg_file_name = "code.svg"
+        subprocess.check_call(["dot", "-Tsvg", "-o", svg_file_name, dot_file_name],
+                              cwd=temp_dir)
+
+        full_svg_file_name = join(temp_dir, svg_file_name)
+        logger.info("show_dot_dependency_graph: svg written to '%s'",
+                full_svg_file_name)
+
+        from webbrowser import open as browser_open
+        browser_open("file://" + full_svg_file_name)
+    else:
+        raise ValueError("`output_to` can be one of 'xwindow' or 'browser',"
+                         f" got '{output_to}'")
 
 # }}}
 
