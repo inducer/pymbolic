@@ -293,16 +293,27 @@ class MaximaKernel:
         hash_output = self.child.expect(["0\r\n", "1\r\n"])
         if hash_output != 0:
             raise RuntimeError(
-                "maxima executable '{command}' not found"
-                .format(command=self.executable))
+                f"maxima executable '{self.executable}' not found")
 
         # }}}
 
-        self.child.sendline(" ".join(
-                ['"' + self.executable + '"', "--disable-readline", "-q"]))
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".lisp") as maxima_init_f:
 
-        self.current_prompt = 0
-        self._expect_prompt(IN_PROMPT_RE)
+            # https://sourceforge.net/p/maxima/bugs/3909/
+            # FIXME assumes gcl in use
+            maxima_init_f.write(
+                    b"(if (find :editline *features*) (si::readline-off))")
+            maxima_init_f.flush()
+
+            self.child.sendline(" ".join(
+                    ['"' + self.executable + '"',
+                        "-p", maxima_init_f.name,
+                        "--disable-readline",
+                        "-q"]))
+
+            self.current_prompt = 0
+            self._expect_prompt(IN_PROMPT_RE)
 
         self.exec_str("display2d:false")
         self.exec_str("keepfloat:true")
