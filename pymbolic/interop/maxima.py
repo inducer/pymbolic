@@ -297,6 +297,21 @@ class MaximaKernel:
 
         # }}}
 
+        # {{{ check maxima version
+
+        self.child.sendline(
+            f'"{self.executable}" --version')
+
+        ver_output = self.child.expect(["Maxima ([0-9.]+)"])
+        if ver_output != 0:
+            raise RuntimeError(
+                "unable to find maxima version from '{self.executable}'")
+
+        ver_match = self.child.match.group(1)
+        self.maxima_version = tuple(int(n) for n in ver_match.split(b"."))
+
+        # }}}
+
         import tempfile
         with tempfile.NamedTemporaryFile(suffix=".lisp") as maxima_init_f:
 
