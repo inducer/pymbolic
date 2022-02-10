@@ -49,7 +49,7 @@ def get_dot_dependency_graph(
     :arg statements: A sequence of statements, each of which is stringified by
         calling *statement_stringifier*.
     :arg statement_stringifier: The function to use for stringifying the
-        statements. The default stringifier uses :func:`str` and escapes all
+        statements. The default stringifier uses :class:`str` and escapes all
         double quotes (``"``) in the string representation.
     :arg preamble_hook: A function that returns an iterable of lines
         to add at the beginning of the graph
@@ -136,10 +136,11 @@ def get_dot_dependency_graph(
 # {{{ graphviz / dot interactive show
 
 def show_dot(dot_code, output_to=None):
-    """Show the graph represented by *dot_code* in a browser.
+    """
+    Visualize the graph represented by *dot_code*.
     Can be called on the result of :func:`get_dot_dependency_graph`.
 
-    .. arg:: output_to
+    :arg: output_to
 
         An instance of :class:`str` that can be one of:
 
@@ -147,9 +148,13 @@ def show_dot(dot_code, output_to=None):
           `X window <https://en.wikipedia.org/wiki/X_Window_System>`_.
         - ``"browser"`` to visualize the graph as an SVG file in the
           system's default web-browser.
+        - ``"svg"`` to store the dot code as an SVG file on the file system.
+          Returns the path to the generated svg file.
 
         Defaults to ``"xwindow"`` if X11 support is present, otherwise defaults
         to ``"browser"``.
+
+    :returns: Depends on *output_to*.
     """
 
     from tempfile import mkdtemp
@@ -180,7 +185,7 @@ def show_dot(dot_code, output_to=None):
 
     if output_to == "xwindow":
         subprocess.check_call(["dot", "-Tx11", dot_file_name], cwd=temp_dir)
-    elif output_to == "browser":
+    elif output_to in ["browser", "svg"]:
         svg_file_name = "code.svg"
         subprocess.check_call(["dot", "-Tsvg", "-o", svg_file_name, dot_file_name],
                               cwd=temp_dir)
@@ -189,8 +194,13 @@ def show_dot(dot_code, output_to=None):
         logger.info("show_dot_dependency_graph: svg written to '%s'",
                 full_svg_file_name)
 
-        from webbrowser import open as browser_open
-        browser_open("file://" + full_svg_file_name)
+        if output_to == "svg":
+            return full_svg_file_name
+        else:
+            assert output_to == "browser"
+
+            from webbrowser import open as browser_open
+            browser_open("file://" + full_svg_file_name)
     else:
         raise ValueError("`output_to` can be one of 'xwindow' or 'browser',"
                          f" got '{output_to}'")
