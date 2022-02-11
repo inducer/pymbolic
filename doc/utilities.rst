@@ -44,6 +44,11 @@ Interoperability with Python's :mod:`ast` module
 
 .. automodule:: pymbolic.interop.ast
 
+Interoperability with :mod:`matchpy.functions` module
+-----------------------------------------------------
+
+.. automodule:: pymbolic.interop.matchpy
+
 
 Visualizing Expressions
 =======================
