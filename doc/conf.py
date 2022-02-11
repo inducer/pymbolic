@@ -31,5 +31,6 @@ intersphinx_mapping = {
     "https://docs.makotemplates.org/en/latest/": None,
     "https://docs.sympy.org/dev/": None,
     "https://galgebra.readthedocs.io/en/latest/": None,
+    "https://matchpy.readthedocs.io/en/latest/": None,
 }
 
