@@ -696,6 +696,39 @@ class Wildcard(Leaf):
     mapper_method = intern("map_wildcard")
 
 
+class DotWildcard(Leaf):
+    """
+    A wildcard that can be substituted for a single expression.
+    """
+    init_arg_names = ("name",)
+
+    def __init__(self, name):
+        assert isinstance(name, str)
+        self.name = name
+
+    def __getinitargs__(self):
+        return self.name,
+
+    mapper_method = intern("map_dot_wildcard")
+
+
+class StarWildcard(Leaf):
+    """
+    A wildcard that can be substituted by a sequence of expressions of
+    non-negative length.
+    """
+    init_arg_names = ("name",)
+
+    def __init__(self, name):
+        assert isinstance(name, str)
+        self.name = name
+
+    def __getinitargs__(self):
+        return self.name,
+
+    mapper_method = intern("map_star_wildcard")
+
+
 class FunctionSymbol(AlgebraicLeaf):
     """Represents the name of a function.
 

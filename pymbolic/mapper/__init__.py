@@ -352,6 +352,8 @@ class Collector(CombineMapper):
 
     map_variable = map_constant
     map_wildcard = map_constant
+    map_dot_wildcard = map_constant
+    map_star_wildcard = map_constant
     map_function_symbol = map_constant
 
 # }}}
@@ -375,6 +377,12 @@ class IdentityMapper(Mapper):
         return expr
 
     def map_wildcard(self, expr, *args, **kwargs):
+        return expr
+
+    def map_dot_wildcard(self, expr, *args, **kwargs):
+        return expr
+
+    def map_star_wildcard(self, expr, *args, **kwargs):
         return expr
 
     def map_function_symbol(self, expr, *args, **kwargs):
@@ -626,6 +634,8 @@ class WalkMapper(RecursiveMapper):
         self.post_visit(expr, *args, **kwargs)
 
     map_wildcard = map_variable
+    map_dot_wildcard = map_variable
+    map_star_wildcard = map_variable
     map_function_symbol = map_variable
 
     def map_call(self, expr, *args, **kwargs):
