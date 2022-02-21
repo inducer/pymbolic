@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import cmath
 from pytools import memoize
 
 
@@ -124,7 +123,12 @@ def find_factors(n):
     return n1, n2
 
 
-def fft(x, sign=1, wrap_intermediate=lambda x: x, complex_dtype=None):
+def fft(x, sign=1,
+        wrap_intermediate=None,
+        *,
+        wrap_intermediate_with_level=None,
+        complex_dtype=None,
+        custom_np=None, level=0):
     r"""Computes the Fourier transform of x:
 
     .. math::
@@ -137,13 +141,45 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x, complex_dtype=None):
     See also `Wikipedia <http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm>`_.
     """
 
-    # revision 293076305, http://is.gd/1c7PI
+    # revision 293076305
+    # https://en.wikipedia.org/w/index.php?title=Cooley-Tukey_FFT_algorithm&oldid=293076305
+
+    # {{{ parameter processing
+
+    if wrap_intermediate is not None and wrap_intermediate_with_level is not None:
+        raise TypeError("may specify at most one of wrap_intermediate and "
+                "wrap_intermediate_with_level")
+    if wrap_intermediate is not None:
+        from warnings import warn
+        warn("wrap_intermediate is deprecated. Use wrap_intermediate_with_level "
+                "instead. wrap_intermediate will stop working in 2023.",
+                DeprecationWarning, stacklevel=2)
+
+        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined  # noqa: E501
+            return wrap_intermediate(x)
+
+    if wrap_intermediate_with_level is None:
+        def wrap_intermediate_with_level(level, x):
+            return x
 
     from math import pi
-    import numpy
+    if custom_np is None:
+        import numpy as custom_np
 
     if complex_dtype is None:
-        complex_dtype = numpy.complex128
+        if x.dtype.kind == "c":
+            complex_dtype = x.dtype
+        else:
+            from warnings import warn
+            warn("Not supplying complex_dtype is deprecated, falling back "
+                    "to complex128 for now. This will stop working in 2023.",
+                    DeprecationWarning, stacklevel=2)
+
+            complex_dtype = custom_np.complex128
+
+    complex_dtype = custom_np.dtype(complex_dtype)
+
+    # }}}
 
     n = len(x)
 
@@ -152,18 +188,21 @@ def fft(x, sign=1, wrap_intermediate=lambda x: x, complex_dtype=None):
 
     N1, N2 = find_factors(n)  # noqa: N806
 
+    scalar_tp = complex_dtype.type
     sub_ffts = [
-            wrap_intermediate(
-                fft(x[n1::N1], sign, wrap_intermediate)
-                * numpy.exp(numpy.linspace(0, sign*(-2j)*pi*n1/N1, N2,
-                    endpoint=False), dtype=complex_dtype))
+            wrap_intermediate_with_level(level,
+                fft(x[n1::N1], sign, wrap_intermediate, custom_np=custom_np,
+                    level=level+1)
+                * custom_np.exp(
+                    sign*-2j*pi*n1/(N1*N2)
+                    * custom_np.arange(0, N2, dtype=complex_dtype)))
             for n1 in range(N1)]
 
-    return numpy.hstack([
-        sum(subvec * complex_dtype(cmath.exp(sign*(-2j)*pi*n1*k1/N1))
+    return custom_np.concatenate([
+        sum(subvec * scalar_tp(custom_np.exp(sign*(-2j)*pi*n1*k1/N1))
             for n1, subvec in enumerate(sub_ffts))
         for k1 in range(N1)
-        ])
+        ], axis=0)
 
 
 def ifft(x, wrap_intermediate=lambda x: x, complex_dtype=None):
