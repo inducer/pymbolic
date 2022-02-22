@@ -166,6 +166,8 @@ def fft(x, sign=1,
     if custom_np is None:
         import numpy as custom_np
 
+    x = custom_np.array(x)
+
     if complex_dtype is None:
         if x.dtype.kind == "c":
             complex_dtype = x.dtype
