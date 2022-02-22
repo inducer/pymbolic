@@ -205,8 +205,14 @@ def fft(x, sign=1,
         ], axis=0)
 
 
-def ifft(x, wrap_intermediate=lambda x: x, complex_dtype=None):
-    return (1/len(x))*fft(x, -1, wrap_intermediate, complex_dtype=complex_dtype)
+def ifft(x, wrap_intermediate=None):
+         *,
+         wrap_intermediate_with_level=None,
+         complex_dtype=None,
+         custom_np=None):
+    return (1/len(x))*fft(x, sign=-1, wrap_intermediate=wrap_intermediate,
+            wrap_intermediate_with_level=wrap_intermediate_with_level,
+            complex_dtype=complex_dtype, custom_np=custom_np)
 
 
 def sym_fft(x, sign=1):
