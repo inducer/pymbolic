@@ -205,7 +205,7 @@ def fft(x, sign=1,
         ], axis=0)
 
 
-def ifft(x, wrap_intermediate=None):
+def ifft(x, wrap_intermediate=None,
          *,
          wrap_intermediate_with_level=None,
          complex_dtype=None,
