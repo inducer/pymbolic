@@ -18,13 +18,7 @@ Python 3:
 Python 3 Conda:
   script: |
     CONDA_ENVIRONMENT=.test-py3.yml
-
-    # That's where homebrew lives, and it has the curl that doesn't cause
-    # cert errors from the OS being too old.
-    export PATH="/usr/local/opt/curl/bin:$PATH"
-
     curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
-
     . ./build-and-test-py-project-within-miniconda.sh
 
   tags:
@@ -36,10 +30,14 @@ Python 3 Conda:
       junit: test/pytest.xml
 
 Python 3 Conda Apple:
-  script:
-  - CONDA_ENVIRONMENT=.test-py3.yml
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
-  - ". ./build-and-test-py-project-within-miniconda.sh"
+  script: |
+    # That's where homebrew lives, and it has the curl that doesn't cause
+    # cert errors from the OS being too old.
+    export PATH="/usr/local/opt/curl/bin:$PATH"
+
+    CONDA_ENVIRONMENT=.test-py3.yml
+    curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
+    . ./build-and-test-py-project-within-miniconda.sh
   tags:
   - apple
   except:
