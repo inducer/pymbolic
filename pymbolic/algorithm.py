@@ -192,7 +192,7 @@ def fft(x, sign=1,
     sub_ffts = [
             wrap_intermediate_with_level(level,
                 fft(x[n1::N1], sign, wrap_intermediate, custom_np=custom_np,
-                    level=level+1)
+                    level=level+1, complex_dtype=complex_dtype)
                 * custom_np.exp(
                     sign*-2j*pi*n1/(N1*N2)
                     * custom_np.arange(0, N2, dtype=complex_dtype)))
