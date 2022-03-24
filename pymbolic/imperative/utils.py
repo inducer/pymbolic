@@ -39,7 +39,7 @@ def get_dot_dependency_graph(
         statements,  use_stmt_ids=None,
         preamble_hook=_default_preamble_hook,
         additional_lines_hook=list,
-        statement_stringifier=lambda s: str(s).replace('"', r'\"'),
+        statement_stringifier=None,
 
         # deprecated
         use_insn_ids=None,):
@@ -57,6 +57,9 @@ def get_dot_dependency_graph(
         of lines to add at the end of the graph
 
     """
+    if statement_stringifier is None:
+        def statement_stringifier(s):
+            return str(s).replace('"', r'\"')
 
     if use_stmt_ids is not None and use_insn_ids is not None:
         raise TypeError("may not specify both use_stmt_ids and use_insn_ids")
