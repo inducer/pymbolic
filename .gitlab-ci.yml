@@ -73,3 +73,15 @@ Flake8:
   - python3
   except:
   - tags
+
+Downstream:
+  parallel:
+    matrix:
+    - DOWNSTREAM_PROJECT: [loopy, grudge, pytential, pytato]
+  tags:
+  - large-node
+  - "docker-runner"
+  script: |
+    curl -L -O https://tiker.net/ci-support-v0
+    . ./ci-support-v0
+    test_downstream "$DOWNSTREAM_PROJECT"
