@@ -104,3 +104,6 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
         return self.combine(
                 [self.rec(child) for child in expr.children
                     if child is not None])
+
+    def map_nan(self, expr):
+        return set()

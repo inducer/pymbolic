@@ -175,6 +175,9 @@ class Mapper:
     def map_numpy_array(self, expr, *args, **kwargs):
         raise NotImplementedError
 
+    def map_nan(self, expr, *args, **kwargs):
+        return self.map_algebraic_leaf(expr, *args, **kwargs)
+
     def map_foreign(self, expr, *args, **kwargs):
         """Mapper method dispatch for non-:mod:`pymbolic` objects."""
 
@@ -603,6 +606,10 @@ class IdentityMapper(Mapper):
 
     map_max = map_min
 
+    def map_nan(self, expr, *args, **kwargs):
+        # Leaf node -- don't recurse
+        return expr
+
 # }}}
 
 
@@ -637,6 +644,7 @@ class WalkMapper(RecursiveMapper):
     map_dot_wildcard = map_variable
     map_star_wildcard = map_variable
     map_function_symbol = map_variable
+    map_nan = map_variable
 
     def map_call(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
