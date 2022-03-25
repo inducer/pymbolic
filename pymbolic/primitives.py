@@ -158,6 +158,14 @@ vectors and matrices of :mod:`pymbolic` objects.
 
 .. autofunction:: make_sym_vector
 .. autofunction:: make_sym_array
+
+
+Constants
+---------
+
+.. autoclass:: NaN
+    :undoc-members:
+    :members: mapper_method
 """
 
 
@@ -1529,6 +1537,38 @@ class Slice(Expression):
             return None
 
     mapper_method = intern("map_slice")
+
+
+class NaN(Expression):
+    """
+    An expression node representing not-a-number as a floating point number.
+    Unlike, :data:`math.nan`, all instances of :class:`NaN` compare equal, as
+    one might reasonably expect for program representation. (If this weren't
+    so, programs containing NaNs would effectively be unhashable, because they
+    don't compare equal to themselves.)
+
+    Note that, in Python, this equality comparison is made *even* more
+    complex by `this issue <https://bugs.python.org/issue21873>`__, due
+    to which ``np.nan == np.nan`` is *False*, but ``(np.nan,) == (np.nan,)``
+    is True.
+
+    .. attribute:: data_type
+
+        The data type used for the actual realization of the constant. Defaults
+        to *None*. If given, This must be a callable to which a NaN
+        :class:`float` can be passed to obtain a NaN of the yield the desired
+        type.  It must also be suitable for use as the second argument of
+        :func:`isinstance`.
+    """
+    init_arg_names = ("data_type", )
+
+    def __init__(self, data_type=None):
+        self.data_type = data_type
+
+    def __getinitargs__(self):
+        return (self.data_type, )
+
+    mapper_method = intern("map_nan")
 
 # }}}
 
