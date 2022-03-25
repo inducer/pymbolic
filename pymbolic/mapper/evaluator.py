@@ -192,6 +192,13 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
     def map_tuple(self, expr):
         return tuple([self.rec(child) for child in expr])
 
+    def map_nan(self, expr):
+        if expr.data_type is None:
+            from math import nan
+            return nan
+        else:
+            return expr.data_type(float("nan"))
+
 
 class FloatEvaluationMapper(EvaluationMapper):
     def map_constant(self, expr):
