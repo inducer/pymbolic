@@ -417,6 +417,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 self.join(":", children),
                 enclosing_prec, PREC_NONE)
 
+    def map_nan(self, expr, enclosing_prec, *args, **kwargs):
+        return "NaN"
+
     # }}}
 
     def __call__(self, expr, prec=PREC_NONE, *args, **kwargs):
