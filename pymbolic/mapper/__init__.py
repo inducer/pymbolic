@@ -434,22 +434,12 @@ class IdentityMapper(Mapper):
         return type(expr)(aggregate, expr.name)
 
     def map_sum(self, expr, *args, **kwargs):
-        children = [self.rec(child, *args, **kwargs) for child in expr.children]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children)):
-            return expr
-
-        from pymbolic.primitives import flattened_sum
-        return flattened_sum(children)
+        return expr.__class__(tuple(self.rec(child, *args, **kwargs)
+                                    for child in expr.children))
 
     def map_product(self, expr, *args, **kwargs):
-        children = [self.rec(child, *args, **kwargs) for child in expr.children]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children)):
-            return expr
-
-        from pymbolic.primitives import flattened_product
-        return flattened_product(children)
+        return expr.__class__(tuple(self.rec(child, *args, **kwargs)
+                                    for child in expr.children))
 
     def map_quotient(self, expr, *args, **kwargs):
         numerator = self.rec(expr.numerator, *args, **kwargs)
