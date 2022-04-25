@@ -26,7 +26,11 @@ from functools import reduce
 import pymbolic.primitives as prim
 from pymbolic import parse
 from pytools.lex import ParseError
-from pymbolic.mapper import IdentityMapper
+from testlib import generate_random_expression
+
+
+from pymbolic.mapper import IdentityMapper, WalkMapper
+from pymbolic.mapper.dependency import DependencyMapper, CachedDependencyMapper
 
 import logging
 logger = logging.getLogger(__name__)
@@ -332,8 +336,6 @@ def test_mappers():
     for expr in [
             f(x, (y, z), name=z**2)
             ]:
-        from pymbolic.mapper import WalkMapper
-        from pymbolic.mapper.dependency import DependencyMapper
         str(expr)
         IdentityMapper()(expr)
         WalkMapper()(expr)
@@ -347,7 +349,6 @@ def test_mappers():
 
 def test_func_dep_consistency():
     from pymbolic import var
-    from pymbolic.mapper.dependency import DependencyMapper
     f = var("f")
     x = var("x")
     dep_map = DependencyMapper(include_calls="descend_args")
@@ -859,6 +860,70 @@ def test_equality_complexity():
         p.terminate()
 
     assert not is_alive
+
+# }}}
+
+
+# {{{ test_cached_mapper_memoizes
+
+class InCacheVerifier(WalkMapper):
+    def __init__(self, cached_mapper, walk_call_functions=True):
+        super().__init__()
+        self.cached_mapper = cached_mapper
+        self.walk_call_functions = walk_call_functions
+
+    def post_visit(self, expr):
+        if isinstance(expr, prim.Expression):
+            assert (self.cached_mapper.get_cache_key(expr)
+                    in self.cached_mapper._cache)
+
+    def map_call(self, expr):
+        if not self.visit(expr):
+            return
+
+        if self.walk_call_functions:
+            self.rec(expr.function)
+
+        for child in expr.parameters:
+            self.rec(child)
+
+        self.post_visit(expr)
+
+
+def test_cached_mapper_memoizes():
+    from testlib import (AlwaysFlatteningIdentityMapper,
+                         AlwaysFlatteningCachedIdentityMapper)
+    ntests = 40
+    for i in range(ntests):
+        expr = generate_random_expression(seed=(5+i))
+
+        # {{{ always flattening identity mapper
+
+        # Note: Prefer AlwaysFlatteningIdentityMapper over IdentityMapper as
+        # the flattening logic in IdentityMapper checks for identity across
+        # traversal results => leading to discrepancy b/w
+        # 'CachedIdentityMapper' and 'IdentityMapper'
+
+        cached_mapper = AlwaysFlatteningCachedIdentityMapper()
+        uncached_mapper = AlwaysFlatteningIdentityMapper()
+        assert uncached_mapper(expr) == cached_mapper(expr)
+        verifier = InCacheVerifier(cached_mapper)
+        verifier(expr)
+
+        # }}}
+
+        # {{{ dependency mapper
+
+        mapper = DependencyMapper(include_calls="descend_args")
+        cached_mapper = CachedDependencyMapper(include_calls="descend_args")
+        assert cached_mapper(expr) == mapper(expr)
+        verifier = InCacheVerifier(cached_mapper,
+                                   # dep. mapper does not go over functions
+                                   walk_call_functions=False
+                                   )
+        verifier(expr)
+
+        # }}}
 
 # }}}
 
