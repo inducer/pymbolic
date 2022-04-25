@@ -21,6 +21,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 import pymbolic.primitives as primitives
 
 __doc__ = """
@@ -71,6 +72,20 @@ Base classes for new mappers
 .. autoclass:: WalkMapper
 
 .. autoclass:: CSECachingMapperMixin
+
+
+Base classes for mappers with memoization support
+-------------------------------------------------
+
+.. autoclass:: CachedMapper
+
+.. autoclass:: CachedIdentityMapper
+
+.. autoclass:: CachedCombineMapper
+
+.. autoclass:: CachedCollector
+
+.. autoclass:: CachedWalkMapper
 """
 
 
@@ -193,6 +208,41 @@ class Mapper:
             raise ValueError(
                     "{} encountered invalid foreign object: {}".format(
                         self.__class__, repr(expr)))
+
+
+class CachedMapper(Mapper):
+    """
+    A mapper that memoizes the mapped result for the expressions traversed.
+
+    .. automethod:: get_cache_key
+    """
+    def __init__(self):
+        self._cache: Dict[Any, Any] = {}
+        Mapper.__init__(self)
+
+    def get_cache_key(self, expr, *args, **kwargs):
+        """
+        Returns the key corresponding to which the result of a mapper method is
+        stored in the cache.
+
+        .. warning::
+
+            Assumes that elements of *args* and *kwargs* are immutable, and that
+            *self* does not store any mutable state. Derived mappers must
+            override this method.
+        """
+        return (expr, args, tuple(sorted(kwargs.items())))
+
+    def __call__(self, expr, *args, **kwargs):
+        cache_key = self.get_cache_key(expr, *args, **kwargs)
+        try:
+            return self._cache[cache_key]
+        except KeyError:
+            result = super().rec(expr, *args, **kwargs)
+            self._cache[cache_key] = result
+            return result
+
+    rec = __call__
 
 # }}}
 
@@ -330,6 +380,10 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.then),
             self.rec(expr.else_)])
 
+
+class CachedCombineMapper(CachedMapper, CombineMapper):
+    pass
+
 # }}}
 
 
@@ -358,6 +412,10 @@ class Collector(CombineMapper):
     map_dot_wildcard = map_constant
     map_star_wildcard = map_constant
     map_function_symbol = map_constant
+
+
+class CachedCollector(CachedMapper, Collector):
+    pass
 
 # }}}
 
@@ -610,6 +668,10 @@ class IdentityMapper(Mapper):
         # Leaf node -- don't recurse
         return expr
 
+
+class CachedIdentityMapper(CachedMapper, IdentityMapper):
+    pass
+
 # }}}
 
 
@@ -861,6 +923,11 @@ class WalkMapper(RecursiveMapper):
 
     def post_visit(self, expr, *args, **kwargs):
         pass
+
+
+class CachedWalkMapper(CachedMapper, WalkMapper):
+    pass
+
 # }}}
 
 
