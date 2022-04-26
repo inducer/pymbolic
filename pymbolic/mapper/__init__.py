@@ -905,6 +905,8 @@ class CallbackMapper(RecursiveMapper):
     map_numpy_array = map_constant
     map_common_subexpression = map_constant
     map_if_positive = map_constant
+    map_if = map_constant
+    map_comparison = map_constant
 
 # }}}
 
