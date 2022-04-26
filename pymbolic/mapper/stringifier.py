@@ -41,6 +41,7 @@ Precedence constants
 .. data:: PREC_COMPARISON
 .. data:: PREC_LOGICAL_AND
 .. data:: PREC_LOGICAL_OR
+.. data:: PREC_IF
 .. data:: PREC_NONE
 
 Mappers
