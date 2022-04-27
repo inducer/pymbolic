@@ -643,6 +643,7 @@ def test_multiplicative_stringify_preserves_association():
 def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     import pymbolic.functions as pf
     from pymbolic.mapper.differentiator import differentiate
+    from pymbolic.mapper.flattener import flatten
 
     x = prim.Variable("x")
 
@@ -650,7 +651,7 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
         differentiate(pf.fabs(x), x)
 
     result = differentiate(pf.fabs(x), x, allowed_nonsmoothness="continuous")
-    assert result == pf.sign(x)
+    assert flatten(result) == pf.sign(x)
 
     with pytest.raises(ValueError):
         differentiate(pf.sign(x), x)
@@ -696,7 +697,7 @@ def test_coefficient_collector():
     cc = CoefficientCollector([x.name, y.name])
     assert cc(2*x + y) == {x: 2, y: 1}
     assert cc(2*x + y - z) == {x: 2, y: 1, 1: -z}
-    assert cc(x/2 + z**2) == {x: prim.Quotient(1, 2), 1: z**2}
+    assert cc(x/2 + z**2) == {x: 1*prim.Quotient(1, 2), 1: z**2}
 
 
 def test_np_bool_handling():
