@@ -26,6 +26,7 @@ import pymbolic.mapper
 class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
     def __init__(self, subst_func):
         self.subst_func = subst_func
+        super().__init__()
 
     def map_variable(self, expr):
         result = self.subst_func(expr)

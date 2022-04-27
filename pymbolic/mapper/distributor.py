@@ -48,6 +48,7 @@ class DistributeMapper(IdentityMapper):
 
         self.collector = collector
         self.const_folder = const_folder
+        super().__init__()
 
     def collect(self, expr):
         return self.collector(self.const_folder(expr))
