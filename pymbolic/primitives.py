@@ -236,73 +236,49 @@ class Expression:
     def __add__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
-        if is_nonzero(other):
-            if self:
-                if isinstance(other, Sum):
-                    return Sum((self,) + other.children)
-                else:
-                    return Sum((self, other))
+        if self:
+            if isinstance(other, Sum):
+                return Sum((self,) + other.children)
             else:
-                return other
+                return Sum((self, other))
         else:
-            return self
+            return other
 
     def __radd__(self, other):
         assert is_constant(other)
-        if is_nonzero(other):
-            if self:
-                return Sum((other, self))
-            else:
-                return other
+        if self:
+            return Sum((other, self))
         else:
-            return self
+            return other
 
     def __sub__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_nonzero(other):
-            return self.__add__(-other)
-        else:
-            return self
+        return self.__add__(-other)
 
     def __rsub__(self, other):
         if not is_constant(other):
             return NotImplemented
 
-        if is_nonzero(other):
-            return Sum((other, -self))
-        else:
-            return -self
+        return Sum((other, -self))
 
     def __mul__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other - 1):
-            return self
-        elif is_zero(other):
-            return 0
-        else:
-            return Product((self, other))
+        return Product((self, other))
 
     def __rmul__(self, other):
         if not is_constant(other):
             return NotImplemented
 
-        if is_zero(other-1):
-            return self
-        elif is_zero(other):
-            return 0
-        else:
-            return Product((other, self))
+        return Product((other, self))
 
     def __div__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other-1):
-            return self
         return quotient(self, other)
     __truediv__ = __div__
 
@@ -310,8 +286,6 @@ class Expression:
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other):
-            return 0
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
@@ -319,24 +293,18 @@ class Expression:
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other-1):
-            return self
         return FloorDiv(self, other)
 
     def __rfloordiv__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(self-1):
-            return other
         return FloorDiv(other, self)
 
     def __mod__(self, other):
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other-1):
-            return 0
         return Remainder(self, other)
 
     def __rmod__(self, other):
@@ -349,19 +317,11 @@ class Expression:
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_zero(other):  # exponent zero
-            return 1
-        elif is_zero(other-1):  # exponent one
-            return self
         return Power(self, other)
 
     def __rpow__(self, other):
         assert is_constant(other)
 
-        if is_zero(other):  # base zero
-            return 0
-        elif is_zero(other-1):  # base one
-            return 1
         return Power(other, self)
 
     # }}}
@@ -976,10 +936,6 @@ class Product(_MultiChildExpression):
             return NotImplemented
         if isinstance(other, Product):
             return Product(self.children + other.children)
-        if is_zero(other):
-            return 0
-        if is_zero(other-1):
-            return self
         return Product(self.children + (other,))
 
     def __rmul__(self, other):
@@ -987,10 +943,6 @@ class Product(_MultiChildExpression):
             return NotImplemented
         if isinstance(other, Product):
             return Product(other.children + self.children)
-        if is_zero(other):
-            return 0
-        if is_zero(other-1):
-            return self
         return Product((other,) + self.children)
 
     def __bool__(self):
