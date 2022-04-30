@@ -20,18 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic.primitives as prim
 import pytest
+from functools import reduce
+
+import pymbolic.primitives as prim
 from pymbolic import parse
 from pytools.lex import ParseError
-
-
 from pymbolic.mapper import IdentityMapper
-
-try:
-    reduce
-except NameError:
-    from functools import reduce
 
 
 # {{{ utilities
@@ -61,6 +56,8 @@ def assert_parse_roundtrip(expr_str):
 # }}}
 
 
+# {{{ test_integer_power
+
 def test_integer_power():
     from pymbolic.algorithm import integer_power
 
@@ -72,6 +69,10 @@ def test_integer_power():
             ]:
         assert base**expn == integer_power(base, expn)
 
+# }}}
+
+
+# {{{ test_expand
 
 def test_expand():
     from pymbolic import var, expand
@@ -80,6 +81,10 @@ def test_expand():
     u = (x+1)**5
     expand(u)
 
+# }}}
+
+
+# {{{ test_substitute
 
 def test_substitute():
     from pymbolic import parse, substitute, evaluate
@@ -87,6 +92,10 @@ def test_substitute():
     xmin = parse("x.min")
     assert evaluate(substitute(u, {xmin: 25})) == 630
 
+# }}}
+
+
+# {{{ test_no_comparison
 
 def test_no_comparison():
     from pymbolic import parse
@@ -107,6 +116,10 @@ def test_no_comparison():
     expect_typeerror(lambda: x > y)
     expect_typeerror(lambda: x >= y)
 
+# }}}
+
+
+# {{{ test_structure_preservation
 
 def test_structure_preservation():
     x = prim.Sum((5, 7))
@@ -114,6 +127,10 @@ def test_structure_preservation():
     x2 = IdentityMapper()(x)
     assert x == x2
 
+# }}}
+
+
+# {{{ test_sympy_interaction
 
 def test_sympy_interaction():
     pytest.importorskip("sympy")
@@ -140,6 +157,8 @@ def test_sympy_interaction():
     s3_expr = p2s(p2_expr)
 
     assert sp.ratsimp(s1_expr - s3_expr) == 0
+
+# }}}
 
 
 # {{{ fft
@@ -201,6 +220,8 @@ def test_fft():
 # }}}
 
 
+# {{{ test_sparse_multiply
+
 def test_sparse_multiply():
     numpy = pytest.importorskip("numpy")
     pytest.importorskip("scipy")
@@ -218,6 +239,8 @@ def test_sparse_multiply():
     mat_vec_2 = csr_matrix_multiply(s_mat, vec)
 
     assert la.norm(mat_vec-mat_vec_2) < 1e-14
+
+# }}}
 
 
 # {{{ parser
@@ -295,6 +318,8 @@ def test_parser():
 # }}}
 
 
+# {{{ test_mappers
+
 def test_mappers():
     from pymbolic import variables
     f, x, y, z = variables("f x y z")
@@ -310,6 +335,11 @@ def test_mappers():
         DependencyMapper()(expr)
 
 
+# }}}
+
+
+# {{{ test_func_dep_consistency
+
 def test_func_dep_consistency():
     from pymbolic import var
     from pymbolic.mapper.dependency import DependencyMapper
@@ -319,6 +349,10 @@ def test_func_dep_consistency():
     assert dep_map(f(x)) == {x}
     assert dep_map(f(x=x)) == {x}
 
+# }}}
+
+
+# {{{ test_conditions
 
 def test_conditions():
     from pymbolic import var
@@ -326,6 +360,10 @@ def test_conditions():
     y = var("y")
     assert str(x.eq(y).and_(x.le(5))) == "x == y and x <= 5"
 
+# }}}
+
+
+# {{{ test_graphviz
 
 def test_graphviz():
     from pymbolic import parse
@@ -337,6 +375,8 @@ def test_graphviz():
     gvm = GraphvizMapper()
     gvm(expr)
     print(gvm.get_dot_code())
+
+# }}}
 
 
 # {{{ geometric algebra
@@ -443,6 +483,8 @@ def test_geometric_algebra(dims):
 # }}}
 
 
+# {{{ test_ast_interop
+
 def test_ast_interop():
     src = """
     def f():
@@ -472,6 +514,10 @@ def test_ast_interop():
 
             print(lhs, rhs)
 
+# }}}
+
+
+# {{{ test_compile
 
 def test_compile():
     from pymbolic import parse, compile
@@ -483,6 +529,10 @@ def test_compile():
     code = pickle.loads(pickle.dumps(code))
     assert code(3, 3) == 27
 
+# }}}
+
+
+# {{{ test_unifier
 
 def test_unifier():
     from pymbolic import var
@@ -521,6 +571,10 @@ def test_unifier():
     assert len(recs) == 1
     assert match_found(recs, {(a, b), (b, c), (c, d)})
 
+# }}}
+
+
+# {{{ test_long_sympy_mapping
 
 def test_long_sympy_mapping():
     sp = pytest.importorskip("sympy")
@@ -528,6 +582,10 @@ def test_long_sympy_mapping():
     SympyToPymbolicMapper()(sp.sympify(int(10**20)))
     SympyToPymbolicMapper()(sp.sympify(int(10)))
 
+# }}}
+
+
+# {{{ test_stringifier_preserve_shift_order
 
 def test_stringifier_preserve_shift_order():
     for expr in [
@@ -536,6 +594,10 @@ def test_stringifier_preserve_shift_order():
             ]:
         assert parse(str(expr)) == expr
 
+# }}}
+
+
+# {{{ test_latex_mapper
 
 LATEX_TEMPLATE = r"""\documentclass{article}
 \usepackage{amsmath}
@@ -604,6 +666,10 @@ def test_latex_mapper():
     finally:
         shutil.rmtree(latex_dir)
 
+# }}}
+
+
+# {{{ test_flop_counter
 
 def test_flop_counter():
     x = prim.Variable("x")
@@ -618,6 +684,10 @@ def test_flop_counter():
 
     assert CSEAwareFlopCounter()(expr) == 4 + 2
 
+# }}}
+
+
+# {{{ test_make_sym_vector
 
 def test_make_sym_vector():
     numpy = pytest.importorskip("numpy")
@@ -627,6 +697,10 @@ def test_make_sym_vector():
     assert len(make_sym_vector("vec", numpy.int32(2))) == 2
     assert len(make_sym_vector("vec", [1, 2, 3])) == 3
 
+# }}}
+
+
+# {{{ test_multiplicative_stringify_preserves_association
 
 def test_multiplicative_stringify_preserves_association():
     for inner in ["*", " / ", " // ", " % "]:
@@ -639,6 +713,10 @@ def test_multiplicative_stringify_preserves_association():
 
     assert_parse_roundtrip("(-1)*(((-1)*x) / 5)")
 
+# }}}
+
+
+# {{{ test_differentiator_flags_for_nonsmooth_and_discontinuous
 
 def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     import pymbolic.functions as pf
@@ -658,6 +736,10 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
     result = differentiate(pf.sign(x), x, allowed_nonsmoothness="discontinuous")
     assert result == 0
 
+# }}}
+
+
+# {{{ test_diff_cse
 
 def test_diff_cse():
     from pymbolic.mapper.differentiator import differentiate
@@ -686,6 +768,10 @@ def test_diff_cse():
 
     assert err2 < 1.1 * 0.5**2 * err1
 
+# }}}
+
+
+# {{{ test_coefficient_collector
 
 def test_coefficient_collector():
     from pymbolic.mapper.coefficient import CoefficientCollector
@@ -698,6 +784,10 @@ def test_coefficient_collector():
     assert cc(2*x + y - z) == {x: 2, y: 1, 1: -z}
     assert cc(x/2 + z**2) == {x: prim.Quotient(1, 2), 1: z**2}
 
+# }}}
+
+
+# {{{ test_np_bool_handling
 
 def test_np_bool_handling():
     from pymbolic.mapper.evaluator import evaluate
@@ -705,6 +795,10 @@ def test_np_bool_handling():
     expr = prim.LogicalNot(numpy.bool_(False))
     assert evaluate(expr) is True
 
+# }}}
+
+
+# {{{ test_mapper_method_of_parent_class
 
 def test_mapper_method_of_parent_class():
     class SpatialConstant(prim.Variable):
@@ -718,6 +812,50 @@ def test_mapper_method_of_parent_class():
 
     assert MyMapper()(c) == 2*c
     assert IdentityMapper()(c) == c
+
+# }}}
+
+
+# {{{ test_equality_complexity
+
+@pytest.mark.xfail
+def test_equality_complexity():
+    # NOTE: https://github.com/inducer/pymbolic/issues/73
+    from numpy.random import default_rng
+
+    def construct_intestine_graph(depth=64, seed=0):
+        rng = default_rng(seed)
+        x = prim.Variable("x")
+
+        for _ in range(depth):
+            coeff1, coeff2 = rng.integers(1, 10, 2)
+            x = coeff1 * x + coeff2 * x
+
+        return x
+
+    def check_equality():
+        graph1 = construct_intestine_graph()
+        graph2 = construct_intestine_graph()
+        graph3 = construct_intestine_graph(seed=3)
+
+        assert graph1 == graph2
+        assert graph2 == graph1
+        assert graph1 != graph3
+        assert graph2 != graph3
+
+    # NOTE: this should finish in a second!
+    import multiprocessing
+    p = multiprocessing.Process(target=check_equality)
+    p.start()
+    p.join(timeout=1)
+
+    is_alive = p.is_alive()
+    if p.is_alive():
+        p.terminate()
+
+    assert not is_alive
+
+# }}}
 
 
 if __name__ == "__main__":
