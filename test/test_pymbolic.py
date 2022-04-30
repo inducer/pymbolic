@@ -28,15 +28,20 @@ from pymbolic import parse
 from pytools.lex import ParseError
 from pymbolic.mapper import IdentityMapper
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 # {{{ utilities
 
 def assert_parsed_same_as_python(expr_str):
     # makes sure that has only one line
     expr_str, = expr_str.split("\n")
-    from pymbolic.interop.ast import ASTToPymbolic
+
     import ast
+    from pymbolic.interop.ast import ASTToPymbolic
     ast2p = ASTToPymbolic()
+
     try:
         expr_parsed_by_python = ast2p(ast.parse(expr_str).body[0].value)
     except SyntaxError:
@@ -48,9 +53,10 @@ def assert_parsed_same_as_python(expr_str):
 
 
 def assert_parse_roundtrip(expr_str):
-    expr = parse(expr_str)
     from pymbolic.mapper.stringifier import StringifyMapper
+    expr = parse(expr_str)
     strified = StringifyMapper()(expr)
+
     assert strified == expr_str, (strified, expr_str)
 
 # }}}
@@ -123,7 +129,6 @@ def test_no_comparison():
 
 def test_structure_preservation():
     x = prim.Sum((5, 7))
-    from pymbolic.mapper import IdentityMapper
     x2 = IdentityMapper()(x)
     assert x == x2
 
@@ -200,9 +205,9 @@ def test_fft():
     from pymbolic.algorithm import fft, sym_fft
 
     vars = numpy.array([var(chr(97+i)) for i in range(16)], dtype=object)
-    print(vars)
+    logger.info("vars: %s", vars)
 
-    print(fft(vars))
+    logger.info("fft: %s", fft(vars))
     traced_fft = sym_fft(vars)
 
     from pymbolic.mapper.stringifier import PREC_NONE
@@ -212,10 +217,10 @@ def test_fft():
     code = [ccm(tfi, PREC_NONE) for tfi in traced_fft]
 
     for cse_name, cse_str in enumerate(ccm.cse_name_list):
-        print(f"{cse_name} = {cse_str}")
+        logger.info("%s = %s", cse_name, cse_str)
 
     for i, line in enumerate(code):
-        print("result[%d] = %s" % (i, line))
+        logger.info("result[%d] = %s", i, line)
 
 # }}}
 
@@ -250,25 +255,25 @@ def test_parser():
     parse("(2*a[1]*b[1]+2*a[0]*b[0])*(hankel_1(-1,sqrt(a[1]**2+a[0]**2)*k) "
             "-hankel_1(1,sqrt(a[1]**2+a[0]**2)*k))*k /(4*sqrt(a[1]**2+a[0]**2)) "
             "+hankel_1(0,sqrt(a[1]**2+a[0]**2)*k)")
-    print(repr(parse("d4knl0")))
-    print(repr(parse("0.")))
-    print(repr(parse("0.e1")))
+    logger.info("%r", parse("d4knl0"))
+    logger.info("%r", parse("0."))
+    logger.info("%r", parse("0.e1"))
     assert parse("0.e1") == 0
     assert parse("1e-12") == 1e-12
-    print(repr(parse("a >= 1")))
-    print(repr(parse("a <= 1")))
+    logger.info("%r", parse("a >= 1"))
+    logger.info("%r", parse("a <= 1"))
 
-    print(repr(parse(":")))
-    print(repr(parse("1:")))
-    print(repr(parse(":2")))
-    print(repr(parse("1:2")))
-    print(repr(parse("::")))
-    print(repr(parse("1::")))
-    print(repr(parse(":1:")))
-    print(repr(parse("::1")))
-    print(repr(parse("3::1")))
-    print(repr(parse(":5:1")))
-    print(repr(parse("3:5:1")))
+    logger.info("%r", parse(":"))
+    logger.info("%r", parse("1:"))
+    logger.info("%r", parse(":2"))
+    logger.info("%r", parse("1:2"))
+    logger.info("%r", parse("::"))
+    logger.info("%r", parse("1::"))
+    logger.info("%r", parse(":1:"))
+    logger.info("%r", parse("::1"))
+    logger.info("%r", parse("3::1"))
+    logger.info("%r", parse(":5:1"))
+    logger.info("%r", parse("3:5:1"))
 
     assert_parse_roundtrip("()")
     assert_parse_roundtrip("(3,)")
@@ -280,17 +285,17 @@ def test_parser():
     assert_parse_roundtrip("g[i, k] + 2.0*h[i, k]")
     parse("g[i,k]+(+2.0)*h[i, k]")
 
-    print(repr(parse("a - b - c")))
-    print(repr(parse("-a - -b - -c")))
-    print(repr(parse("- - - a - - - - b - - - - - c")))
+    logger.info("%r", parse("a - b - c"))
+    logger.info("%r", parse("-a - -b - -c"))
+    logger.info("%r", parse("- - - a - - - - b - - - - - c"))
 
-    print(repr(parse("~(a ^ b)")))
-    print(repr(parse("(a | b) | ~(~a & ~b)")))
+    logger.info("%r", parse("~(a ^ b)"))
+    logger.info("%r", parse("(a | b) | ~(~a & ~b)"))
 
-    print(repr(parse("3 << 1")))
-    print(repr(parse("1 >> 3")))
+    logger.info("%r", parse("3 << 1"))
+    logger.info("%r", parse("1 >> 3"))
 
-    print(parse("3::1"))
+    logger.info(parse("3::1"))
 
     assert parse("e1") == prim.Variable("e1")
     assert parse("d1") == prim.Variable("d1")
@@ -374,7 +379,7 @@ def test_graphviz():
     from pymbolic.mapper.graphviz import GraphvizMapper
     gvm = GraphvizMapper()
     gvm(expr)
-    print(gvm.get_dot_code())
+    logger.info("%s", gvm.get_dot_code())
 
 # }}}
 
@@ -495,7 +500,7 @@ def test_ast_interop():
     import ast
     mod = ast.parse(src.replace("\n    ", "\n"))
 
-    print(ast.dump(mod))
+    logger.info("%s", ast.dump(mod))
 
     from pymbolic.interop.ast import ASTToPymbolic
     ast2p = ASTToPymbolic()
@@ -512,7 +517,7 @@ def test_ast_interop():
             lhs = ast2p(lhs)
             rhs = ast2p(stmt.value)
 
-            print(lhs, rhs)
+            logger.info("lhs %s rhs %s", lhs, rhs)
 
 # }}}
 
