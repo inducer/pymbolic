@@ -1,3 +1,8 @@
+"""
+.. autoclass:: DependencyMapper
+.. autoclass:: CachedDependencyMapper
+"""
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """

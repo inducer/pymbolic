@@ -1,3 +1,10 @@
+"""
+.. autoclass:: SubstitutionMapper
+.. autoclass:: CachedSubstitutionMapper
+.. autofunction:: make_subst_func
+.. autofunction:: substitute
+
+"""
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
