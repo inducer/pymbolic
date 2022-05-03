@@ -412,6 +412,9 @@ class Expression:
     def __neg__(self):
         return -1*self
 
+    def __pos__(self):
+        return self
+
     def __call__(self, *args, **kwargs):
         if kwargs:
             return CallWithKwargs(self, args, kwargs)
