@@ -1,3 +1,14 @@
+"""
+.. autoclass:: EvaluationMapper
+.. autoclass:: CachedEvaluationMapper
+.. autoclass:: FloatEvaluationMapper
+.. autoclass:: CachedFloatEvaluationMapper
+
+.. autofunction:: evaluate
+.. autofunction:: evaluate_kw
+.. autofunction:: evaluate_to_float
+"""
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """

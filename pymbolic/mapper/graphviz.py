@@ -1,3 +1,7 @@
+"""
+.. autoclass:: GraphvizMapper
+"""
+
 __copyright__ = "Copyright (C) 2015 Andreas Kloeckner"
 
 __license__ = """
