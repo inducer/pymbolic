@@ -925,6 +925,16 @@ def test_cached_mapper_memoizes():
 
         # }}}
 
+
+def test_cached_mapper_differentiates_float_int():
+    # pymbolic.git<=d343cf14 failed this regression.
+    from pymbolic.mapper import CachedIdentityMapper
+    expr = prim.Sum((4, 4.0))
+    cached_mapper = CachedIdentityMapper()
+    new_expr = cached_mapper(expr)
+    assert isinstance(new_expr.children[0], int)
+    assert isinstance(new_expr.children[1], float)
+
 # }}}
 
 
