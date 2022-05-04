@@ -938,6 +938,13 @@ def test_cached_mapper_differentiates_float_int():
 # }}}
 
 
+def test_nodecount():
+    expr = prim.Sum((4, 4.0))
+    from pymbolic.mapper.analysis import get_num_nodes
+
+    assert get_num_nodes(expr) == 3
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
