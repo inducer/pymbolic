@@ -569,10 +569,12 @@ class IdentityMapper(Mapper):
     map_logical_and = map_bitwise_or
 
     def map_comparison(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.left, *args, **kwargs),
-                expr.operator,
-                self.rec(expr.right, *args, **kwargs))
+        left = self.rec(expr.left, *args, **kwargs)
+        right = self.rec(expr.right, *args, **kwargs)
+        if left is expr.left and right is expr.right:
+            return expr
+
+        return type(expr)(left, expr.operator, right)
 
     def map_list(self, expr, *args, **kwargs):
         return [self.rec(child, *args, **kwargs) for child in expr]
@@ -610,10 +612,13 @@ class IdentityMapper(Mapper):
                 **expr.get_extra_properties())
 
     def map_substitution(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.child, *args, **kwargs),
-                expr.variables,
-                tuple([self.rec(v, *args, **kwargs) for v in expr.values]))
+        child = self.rec(expr.child, *args, **kwargs)
+        values = tuple([self.rec(v, *args, **kwargs) for v in expr.values])
+        if child is expr.child and all([val is orig_val
+                for val, orig_val in zip(values, expr.values)]):
+            return expr
+
+        return type(expr)(child, expr.variables, values)
 
     def map_derivative(self, expr, *args, **kwargs):
         child = self.rec(expr.child, *args, **kwargs)
