@@ -1,4 +1,4 @@
-__copyright__ = """Copyright (C) 2021 University of Illinois Board of Trustees"""
+__copyright__ = """Copyright (C) 2022 University of Illinois Board of Trustees"""
 
 __license__ = """
 Permission is hereby granted, free of charge, to any person obtaining a copy
