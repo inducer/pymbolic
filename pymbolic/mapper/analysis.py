@@ -25,6 +25,7 @@ from pymbolic.mapper import CachedWalkMapper
 
 
 __doc__ = """
+.. autoclass:: NodeCountMapper
 .. autofunction:: get_num_nodes
 """
 
