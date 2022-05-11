@@ -35,8 +35,8 @@ __doc__ = """
 class NodeCountMapper(CachedWalkMapper):
     """
     Counts the number of nodes in an expression tree. Nodes that occur
-    repeatedly as well as :class:`CommonSubexpression` nodes are only counted
-    once.
+    repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
+    nodes are only counted once.
 
     .. attribute:: count
 
@@ -53,8 +53,8 @@ class NodeCountMapper(CachedWalkMapper):
 
 def get_num_nodes(expr) -> int:
     """Returns the number of nodes in *expr*. Nodes that occur
-    repeatedly as well as :class:`CommonSubexpression` nodes are only counted
-    once."""
+    repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
+    nodes are only counted once."""
 
     ncm = NodeCountMapper()
     ncm(expr)
