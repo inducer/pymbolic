@@ -429,7 +429,8 @@ class StringifyMapper(pymbolic.mapper.CachedMapper):
         parenthesize the result.
         """
 
-        return pymbolic.mapper.CachedMapper.__call__(self, expr, prec, *args, **kwargs)
+        return pymbolic.mapper.CachedMapper.__call__(
+            self, expr, prec, *args, **kwargs)
 
 # }}}
 
