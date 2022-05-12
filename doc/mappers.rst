@@ -39,4 +39,10 @@ Finding expression properties
 .. autoclass:: FlopCounter
 .. autoclass:: CSEAwareFlopCounter
 
+Analysis tools
+^^^^^^^^^^^^^^
+
+.. automodule:: pymbolic.mapper.analysis
+
+
 .. vim: sw=4
