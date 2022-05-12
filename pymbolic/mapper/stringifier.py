@@ -75,7 +75,7 @@ PREC_NONE = 0
 
 # {{{ stringifier
 
-class StringifyMapper(pymbolic.mapper.Mapper):
+class StringifyMapper(pymbolic.mapper.CachedMapper):
     """A mapper to turn an expression tree into a string.
 
     :class:`pymbolic.primitives.Expression.__str__` is often implemented using
@@ -429,7 +429,7 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         parenthesize the result.
         """
 
-        return pymbolic.mapper.Mapper.__call__(self, expr, prec, *args, **kwargs)
+        return pymbolic.mapper.CachedMapper.__call__(self, expr, prec, *args, **kwargs)
 
 # }}}
 
