@@ -574,7 +574,7 @@ class MultiVector:
 
         terms = []
         for bits in sorted(self.data.keys(),
-                key=lambda bits: (bit_count(bits), bits)):
+                key=lambda _bits: (bit_count(_bits), _bits)):
             coeff = self.data[bits]
 
             # {{{ try to find a stringifier

@@ -53,7 +53,11 @@ class IdentityMapper(IdentityMapperBase):
     map_nabla_component = map_multivector_variable
 
     def map_derivative_source(self, expr):
-        return type(expr)(self.rec(expr.operand), expr.nabla_id)
+        operand = self.rec(expr.operand)
+        if operand is expr.operand:
+            return expr
+
+        return type(expr)(operand, expr.nabla_id)
 
 
 class CombineMapper(CombineMapperBase):
@@ -92,7 +96,11 @@ class EvaluationMapper(EvaluationMapperBase):
     map_nabla = map_nabla_component
 
     def map_derivative_source(self, expr):
-        return type(expr)(self.rec(expr.operand), expr.nabla_id)
+        operand = self.rec(expr.operand)
+        if operand is expr.operand:
+            return expr
+
+        return type(expr)(operand, expr.nabla_id)
 
 
 class StringifyMapper(StringifyMapperBase):
@@ -232,13 +240,19 @@ class DerivativeBinder(IdentityMapper):
 
         # id to set((child index, axis), ...)
         nabla_finder = {}
+        has_d_source_nablas = False
 
-        for child_idx, rec_child in enumerate(expr.children):
+        for child_idx, child in enumerate(expr.children):
+            d_or_ns = self.derivative_collector(child)
+            if not d_or_ns:
+                d_source_nabla_ids_per_child.append(set())
+                continue
+
             nabla_component_ids = set()
             derivative_source_ids = set()
 
             nablas = []
-            for d_or_n in self.derivative_collector(rec_child):
+            for d_or_n in d_or_ns:
                 if isinstance(d_or_n, prim.NablaComponent):
                     nabla_component_ids.add(d_or_n.nabla_id)
                     nablas.append(d_or_n)
@@ -249,17 +263,27 @@ class DerivativeBinder(IdentityMapper):
                             "DerivativeSourceAndNablaComponentCollector")
 
             d_source_nabla_ids_per_child.append(derivative_source_ids)
+            if derivative_source_ids:
+                has_d_source_nablas = True
 
             for ncomp in nablas:
                 nabla_finder.setdefault(
                         ncomp.nabla_id, set()).add((child_idx, ncomp.ambient_axis))
 
-        # }}}
-
         if nabla_finder and not any(d_source_nabla_ids_per_child):
             raise ValueError(f"no derivative source found to resolve in '{expr}'"
                     " -- did you forget to wrap the term that should have its "
                     "derivative taken in 'Derivative()(term)'?")
+
+        if not has_d_source_nablas:
+            rec_children = [self.rec(child) for child in expr.children]
+            if all(rec_child is child
+                    for rec_child, child in zip(rec_children, expr.children)):
+                return expr
+
+            return type(expr)(tuple(rec_children))
+
+        # }}}
 
         # a list of lists, the outer level presenting a sum, the inner a product
         result = [list(expr.children)]
@@ -301,10 +325,12 @@ class DerivativeBinder(IdentityMapper):
             result = new_result
 
         from pymbolic.primitives import flattened_sum
-        return flattened_sum(
-                    type(expr)(tuple(
-                        self.rec(prod_term) for prod_term in prod_term_list))
-                    for prod_term_list in result)
+        return flattened_sum([
+                    type(expr)(tuple([
+                        self.rec(prod_term) for prod_term in prod_term_list
+                        ]))
+                    for prod_term_list in result
+                    ])
 
     map_bitwise_xor = map_product
     map_bitwise_or = map_product
@@ -328,12 +354,13 @@ class DerivativeBinder(IdentityMapper):
         assert n_axes
 
         from pymbolic.primitives import flattened_sum
-        return flattened_sum(
+        return flattened_sum([
                 self.take_derivative(
                     axis,
                     self.nabla_component_to_unit_vector(expr.nabla_id, axis)
                     (rec_operand))
-                for axis in range(n_axes))
+                for axis in range(n_axes)
+                ])
 
 # }}}
 

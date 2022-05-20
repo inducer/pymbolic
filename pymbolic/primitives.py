@@ -158,6 +158,14 @@ vectors and matrices of :mod:`pymbolic` objects.
 
 .. autofunction:: make_sym_vector
 .. autofunction:: make_sym_array
+
+
+Constants
+---------
+
+.. autoclass:: NaN
+    :undoc-members:
+    :members: mapper_method
 """
 
 
@@ -403,6 +411,9 @@ class Expression:
 
     def __neg__(self):
         return -1*self
+
+    def __pos__(self):
+        return self
 
     def __call__(self, *args, **kwargs):
         if kwargs:
@@ -694,6 +705,39 @@ class Wildcard(Leaf):
         return ()
 
     mapper_method = intern("map_wildcard")
+
+
+class DotWildcard(Leaf):
+    """
+    A wildcard that can be substituted for a single expression.
+    """
+    init_arg_names = ("name",)
+
+    def __init__(self, name):
+        assert isinstance(name, str)
+        self.name = name
+
+    def __getinitargs__(self):
+        return self.name,
+
+    mapper_method = intern("map_dot_wildcard")
+
+
+class StarWildcard(Leaf):
+    """
+    A wildcard that can be substituted by a sequence of expressions of
+    non-negative length.
+    """
+    init_arg_names = ("name",)
+
+    def __init__(self, name):
+        assert isinstance(name, str)
+        self.name = name
+
+    def __getinitargs__(self):
+        return self.name,
+
+    mapper_method = intern("map_star_wildcard")
 
 
 class FunctionSymbol(AlgebraicLeaf):
@@ -1167,7 +1211,7 @@ class Comparison(Expression):
         operator = self.name_to_operator.get(operator, operator)
 
         if operator not in self.operator_to_name:
-            raise RuntimeError("invalid operator")
+            raise RuntimeError(f"invalid operator: '{operator}'")
         self.operator = operator
 
     def __getinitargs__(self):
@@ -1306,45 +1350,47 @@ class Vector(Expression):
             return Expression.__getitem__(self, index)
 
     def __neg__(self):
-        return Vector(tuple(-x for x in self))
+        return Vector(tuple([-x for x in self]))
 
     def __add__(self, other):
         if len(other) != len(self):
             raise ValueError("can't add values of differing lengths")
-        return Vector(tuple(x+y for x, y in zip(self, other)))
+        return Vector(tuple([x+y for x, y in zip(self, other)]))
 
     def __radd__(self, other):
         if len(other) != len(self):
             raise ValueError("can't add values of differing lengths")
-        return Vector(tuple(y+x for x, y in zip(self, other)))
+        return Vector(tuple([y+x for x, y in zip(self, other)]))
 
     def __sub__(self, other):
         if len(other) != len(self):
             raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple(x-y for x, y in zip(self, other)))
+        return Vector(tuple([x-y for x, y in zip(self, other)]))
 
     def __rsub__(self, other):
         if len(other) != len(self):
             raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple(y-x for x, y in zip(self, other)))
+        return Vector(tuple([y-x for x, y in zip(self, other)]))
 
     def __mul__(self, other):
-        return Vector(tuple(x*other for x in self))
+        return Vector(tuple([x*other for x in self]))
 
     def __rmul__(self, other):
-        return Vector(tuple(other*x for x in self))
+        return Vector(tuple([other*x for x in self]))
 
     def __div__(self, other):
         # Py2 only
         import operator
-        return Vector(tuple(operator.div(x, other) for x in self))  # noqa pylint: disable=no-member
+        return Vector(tuple([
+            operator.div(x, other) for x in self    # pylint: disable=no-member
+            ]))
 
     def __truediv__(self, other):
         import operator
-        return Vector(tuple(operator.truediv(x, other) for x in self))
+        return Vector(tuple([operator.truediv(x, other) for x in self]))
 
     def __floordiv__(self, other):
-        return Vector(tuple(x//other for x in self))
+        return Vector(tuple([x//other for x in self]))
 
     def __getinitargs__(self):
         return self.children
@@ -1514,6 +1560,38 @@ class Slice(Expression):
             return None
 
     mapper_method = intern("map_slice")
+
+
+class NaN(Expression):
+    """
+    An expression node representing not-a-number as a floating point number.
+    Unlike, :data:`math.nan`, all instances of :class:`NaN` compare equal, as
+    one might reasonably expect for program representation. (If this weren't
+    so, programs containing NaNs would effectively be unhashable, because they
+    don't compare equal to themselves.)
+
+    Note that, in Python, this equality comparison is made *even* more
+    complex by `this issue <https://bugs.python.org/issue21873>`__, due
+    to which ``np.nan == np.nan`` is *False*, but ``(np.nan,) == (np.nan,)``
+    is True.
+
+    .. attribute:: data_type
+
+        The data type used for the actual realization of the constant. Defaults
+        to *None*. If given, This must be a callable to which a NaN
+        :class:`float` can be passed to obtain a NaN of the yield the desired
+        type.  It must also be suitable for use as the second argument of
+        :func:`isinstance`.
+    """
+    init_arg_names = ("data_type", )
+
+    def __init__(self, data_type=None):
+        self.data_type = data_type
+
+    def __getinitargs__(self):
+        return (self.data_type, )
+
+    mapper_method = intern("map_nan")
 
 # }}}
 

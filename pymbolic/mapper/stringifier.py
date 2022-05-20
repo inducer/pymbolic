@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic.mapper
+from pymbolic.mapper import Mapper, CachedMapper
 import pymbolic.primitives as p
 
 __doc__ = """
@@ -41,6 +41,7 @@ Precedence constants
 .. data:: PREC_COMPARISON
 .. data:: PREC_LOGICAL_AND
 .. data:: PREC_LOGICAL_OR
+.. data:: PREC_IF
 .. data:: PREC_NONE
 
 Mappers
@@ -74,7 +75,7 @@ PREC_NONE = 0
 
 # {{{ stringifier
 
-class StringifyMapper(pymbolic.mapper.Mapper):
+class StringifyMapper(Mapper):
     """A mapper to turn an expression tree into a string.
 
     :class:`pymbolic.primitives.Expression.__str__` is often implemented using
@@ -156,11 +157,16 @@ class StringifyMapper(pymbolic.mapper.Mapper):
 
     def map_call_with_kwargs(self, expr, enclosing_prec, *args, **kwargs):
         args_strings = (
-                tuple(self.rec(ch, PREC_NONE, *args, **kwargs)
-                      for ch in expr.parameters)
+                tuple([
+                    self.rec(ch, PREC_NONE, *args, **kwargs)
+                    for ch in expr.parameters
+                    ])
                 +  # noqa: W504
-                tuple("{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
-                    for name, ch in expr.kw_parameters.items()))
+                tuple([
+                    "{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
+                    for name, ch in expr.kw_parameters.items()
+                    ])
+                )
         return self.format("%s(%s)",
                 self.rec(expr.function, PREC_CALL, *args, **kwargs),
                 ", ".join(args_strings))
@@ -412,6 +418,9 @@ class StringifyMapper(pymbolic.mapper.Mapper):
                 self.join(":", children),
                 enclosing_prec, PREC_NONE)
 
+    def map_nan(self, expr, enclosing_prec, *args, **kwargs):
+        return "NaN"
+
     # }}}
 
     def __call__(self, expr, prec=PREC_NONE, *args, **kwargs):
@@ -420,7 +429,16 @@ class StringifyMapper(pymbolic.mapper.Mapper):
         parenthesize the result.
         """
 
-        return pymbolic.mapper.Mapper.__call__(self, expr, prec, *args, **kwargs)
+        return Mapper.__call__(self, expr, prec, *args, **kwargs)
+
+
+class CachedStringifyMapper(StringifyMapper, CachedMapper):
+    def __init__(self) -> None:
+        StringifyMapper.__init__(self)
+        CachedMapper.__init__(self)
+
+    def __call__(self, expr, prec=PREC_NONE, *args, **kwargs):
+        return CachedMapper.__call__(expr, prec, *args, **kwargs)
 
 # }}}
 

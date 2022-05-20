@@ -4,7 +4,7 @@ Python 3:
     # pytest tries to import this, but it doesn't find symengine
     rm pymbolic/interop/symengine.py
     EXTRA_INSTALL="numpy sympy pexpect"
-    curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
+    curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project.sh
     . ./build-and-test-py-project.sh
   tags:
   - python3
@@ -16,10 +16,11 @@ Python 3:
       junit: test/pytest.xml
 
 Python 3 Conda:
-  script:
-  - CONDA_ENVIRONMENT=.test-py3.yml
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
-  - ". ./build-and-test-py-project-within-miniconda.sh"
+  script: |
+    CONDA_ENVIRONMENT=.test-py3.yml
+    curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
+    . ./build-and-test-py-project-within-miniconda.sh
+
   tags:
   - linux
   except:
@@ -29,10 +30,14 @@ Python 3 Conda:
       junit: test/pytest.xml
 
 Python 3 Conda Apple:
-  script:
-  - CONDA_ENVIRONMENT=.test-py3.yml
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
-  - ". ./build-and-test-py-project-within-miniconda.sh"
+  script: |
+    # That's where homebrew lives, and it has the curl that doesn't cause
+    # cert errors from the OS being too old.
+    export PATH="/usr/local/opt/curl/bin:$PATH"
+
+    CONDA_ENVIRONMENT=.test-py3.yml
+    curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
+    . ./build-and-test-py-project-within-miniconda.sh
   tags:
   - apple
   except:
@@ -45,7 +50,7 @@ Pylint:
   script:
   - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
   - PY_EXE=python3
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-pylint.sh
+  - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-pylint.sh
   - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
   tags:
   - python3
@@ -55,16 +60,28 @@ Pylint:
 Documentation:
   script:
   - EXTRA_INSTALL="numpy sympy"
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
+  - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
   - ". ./build-docs.sh"
   tags:
   - linux
 
 Flake8:
   script:
-  - curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
+  - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
   - ". ./prepare-and-run-flake8.sh pymbolic test"
   tags:
   - python3
   except:
   - tags
+
+Downstream:
+  parallel:
+    matrix:
+    - DOWNSTREAM_PROJECT: [loopy, grudge, pytential, pytato]
+  tags:
+  - large-node
+  - "docker-runner"
+  script: |
+    curl -L -O https://tiker.net/ci-support-v0
+    . ./ci-support-v0
+    test_downstream "$DOWNSTREAM_PROJECT"

@@ -1,3 +1,7 @@
+"""
+.. autoclass:: TermCollector
+"""
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -103,8 +107,9 @@ class TermCollector(IdentityMapper):
             term2coeff[term] = term2coeff.get(term, 0) + coeff
 
         def rep2term(rep):
-            return pymbolic.flattened_product(base**exp for base, exp in rep)
+            return pymbolic.flattened_product([base**exp for base, exp in rep])
 
-        result = pymbolic.flattened_sum(coeff*rep2term(termrep)
-                for termrep, coeff in term2coeff.items())
+        result = pymbolic.flattened_sum([
+            coeff*rep2term(termrep) for termrep, coeff in term2coeff.items()
+            ])
         return result

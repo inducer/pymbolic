@@ -1,3 +1,14 @@
+"""
+.. autoclass:: EvaluationMapper
+.. autoclass:: CachedEvaluationMapper
+.. autoclass:: FloatEvaluationMapper
+.. autoclass:: CachedFloatEvaluationMapper
+
+.. autofunction:: evaluate
+.. autofunction:: evaluate_kw
+.. autofunction:: evaluate_to_float
+"""
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,7 +32,8 @@ THE SOFTWARE.
 """
 
 
-from pymbolic.mapper import RecursiveMapper, CSECachingMapperMixin
+from pymbolic.mapper import (RecursiveMapper, CSECachingMapperMixin,
+                             CachedMapper)
 import operator as op
 from functools import reduce
 
@@ -190,7 +202,20 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         return max(self.rec(child) for child in expr.children)
 
     def map_tuple(self, expr):
-        return tuple(self.rec(child) for child in expr)
+        return tuple([self.rec(child) for child in expr])
+
+    def map_nan(self, expr):
+        if expr.data_type is None:
+            from math import nan
+            return nan
+        else:
+            return expr.data_type(float("nan"))
+
+
+class CachedEvaluationMapper(CachedMapper, EvaluationMapper):
+    def __init__(self, context=None):
+        CachedMapper.__init__(self)
+        EvaluationMapper.__init__(self, context=context)
 
 
 class FloatEvaluationMapper(EvaluationMapper):
@@ -201,17 +226,38 @@ class FloatEvaluationMapper(EvaluationMapper):
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-def evaluate(expression, context=None):
+class CachedFloatEvaluationMapper(CachedEvaluationMapper):
+    def map_constant(self, expr):
+        return float(expr)
+
+    def map_rational(self, expr):
+        return self.rec(expr.numerator) / self.rec(expr.denominator)
+
+
+def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper):
+    """
+    :arg mapper_cls: A :class:`type` of the evaluation mapper
+        whose instance performs the evaluation.
+    """
     if context is None:
         context = {}
-    return EvaluationMapper(context)(expression)
+    return mapper_cls(context)(expression)
 
 
-def evaluate_kw(expression, **context):
-    return EvaluationMapper(context)(expression)
+def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context):
+    """
+    :arg mapper_cls: A :class:`type` of the evaluation mapper
+        whose instance performs the evaluation.
+    """
+    return mapper_cls(context)(expression)
 
 
-def evaluate_to_float(expression, context=None):
+def evaluate_to_float(expression, context=None,
+                      mapper_cls=CachedFloatEvaluationMapper):
+    """
+    :arg mapper_cls: A :class:`type` of the evaluation mapper
+        whose instance performs the evaluation.
+    """
     if context is None:
         context = {}
-    return FloatEvaluationMapper(context)(expression)
+    return mapper_cls(context)(expression)

@@ -10,6 +10,9 @@ Pymbolic: Easy Expression Trees and Term Rewriting
 .. image:: https://badge.fury.io/py/pymbolic.png
     :alt: Python Package Index Release Page
     :target: https://pypi.org/project/pymbolic/
+.. image:: https://zenodo.org/badge/2016193.svg
+    :alt: Zenodo DOI for latest release
+    :target: https://zenodo.org/badge/latestdoi/2016193
 
 Pymbolic is a small expression tree and symbolic manipulation library. Two
 things set it apart from other libraries of its kind:
@@ -21,11 +24,11 @@ things set it apart from other libraries of its kind:
 
 Pymbolic currently understands regular arithmetic expressions, derivatives,
 sparse polynomials, fractions, term substitution, expansion. It automatically
-performs constant folding, and it can compile its expressions into Python 
+performs constant folding, and it can compile its expressions into Python
 bytecode for fast(er) execution.
 
-If you are looking for a full-blown Computer Algebra System, look at 
-`sympy <http://pypi.python.org/pypi/sympy>`_ or 
+If you are looking for a full-blown Computer Algebra System, look at
+`sympy <http://pypi.python.org/pypi/sympy>`_ or
 `PyGinac <http://pyginac.sourceforge.net/>`_. If you are looking for a
 basic, small and extensible set of symbolic operations, pymbolic may
 well be for you.

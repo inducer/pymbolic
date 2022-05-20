@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
+__copyright__ = """Copyright (C) 2022 University of Illinois Board of Trustees"""
 
 __license__ = """
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,18 +20,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import IdentityMapper
+
+from pymbolic.mapper import CachedWalkMapper
 
 
-class FlattenMapper(IdentityMapper):
-    def map_sum(self, expr):
-        from pymbolic.primitives import flattened_sum
-        return flattened_sum([self.rec(ch) for ch in expr.children])
-
-    def map_product(self, expr):
-        from pymbolic.primitives import flattened_product
-        return flattened_product([self.rec(ch) for ch in expr.children])
+__doc__ = """
+.. autoclass:: NodeCountMapper
+.. autofunction:: get_num_nodes
+"""
 
 
-def flatten(expr):
-    return FlattenMapper()(expr)
+# {{{ NodeCountMapper
+
+class NodeCountMapper(CachedWalkMapper):
+    """
+    Counts the number of nodes in an expression tree. Nodes that occur
+    repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
+    nodes are only counted once.
+
+    .. attribute:: count
+
+       The number of nodes.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.count = 0
+
+    def post_visit(self, expr) -> None:
+        self.count += 1
+
+
+def get_num_nodes(expr) -> int:
+    """Returns the number of nodes in *expr*. Nodes that occur
+    repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
+    nodes are only counted once."""
+
+    ncm = NodeCountMapper()
+    ncm(expr)
+
+    return ncm.count
+
+# }}}

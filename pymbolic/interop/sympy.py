@@ -69,7 +69,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
         return prim.Subscript(
             self.rec(expr.args[0].args[0]),
-            tuple(self.rec(i) for i in expr.args[1:])
+            tuple([self.rec(i) for i in expr.args[1:]])
             )
 
     def map_CSE(self, expr):  # noqa
@@ -103,7 +103,7 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
     def map_subscript(self, expr):
         return self.sym.Indexed(
             self.sym.IndexedBase(self.rec(expr.aggregate)),
-            *tuple(self.rec(i) for i in expr.index_tuple)
+            *[self.rec(i) for i in expr.index_tuple]
             )
 # }}}
 

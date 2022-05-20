@@ -21,6 +21,7 @@ THE SOFTWARE.
 """
 
 import pytools.lex
+from pytools import memoize_method
 from sys import intern
 
 _imaginary = intern("imaginary")
@@ -106,7 +107,13 @@ class FinalizedTuple(tuple, FinalizedContainer):
 
 
 class FinalizedList(list, FinalizedContainer):
-    pass
+    @memoize_method
+    def __hash__(self):
+        result = hash(type(self).__name__)
+        for it in self:
+            result ^= hash(it)
+
+        return result
 
 
 class Parser:

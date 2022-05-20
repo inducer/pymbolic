@@ -43,3 +43,16 @@ Interoperability with Python's :mod:`ast` module
 ------------------------------------------------
 
 .. automodule:: pymbolic.interop.ast
+
+Interoperability with :mod:`matchpy.functions` module
+-----------------------------------------------------
+
+.. automodule:: pymbolic.interop.matchpy
+
+
+Visualizing Expressions
+=======================
+
+.. autofunction:: pymbolic.imperative.utils.get_dot_dependency_graph
+
+.. autofunction:: pymbolic.imperative.utils.show_dot
