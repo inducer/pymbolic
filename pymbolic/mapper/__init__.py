@@ -993,6 +993,11 @@ class CachingMapperMixin:
         super().__init__()
         self.result_cache = {}
 
+        from warnings import warn
+        warn("CachingMapperMixin is deprecated and will be removed "
+                "in version 2023.x. Use CachedMapper instead.",
+                DeprecationWarning, stacklevel=2)
+
     def rec(self, expr):
         try:
             return self.result_cache[expr]
