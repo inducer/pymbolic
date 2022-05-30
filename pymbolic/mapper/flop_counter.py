@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import CombineMapper, CachingMapperMixin
+from pymbolic.mapper import CombineMapper, CachedMapper
 
 
 class FlopCounterBase(CombineMapper):
@@ -55,9 +55,10 @@ class FlopCounterBase(CombineMapper):
                 self.rec(expr.else_))
 
 
-class FlopCounter(FlopCounterBase, CachingMapperMixin):
-    def map_common_subexpression_uncached(self, expr):
-        return self.rec(expr.child)
+class FlopCounter(CachedMapper, FlopCounterBase):
+    def __init__(self) -> None:
+        FlopCounterBase.__init__(self)
+        CachedMapper.__init__(self)
 
 
 class CSEAwareFlopCounter(FlopCounterBase):
@@ -70,6 +71,7 @@ class CSEAwareFlopCounter(FlopCounterBase):
         reuse may take place.
     """
     def __init__(self):
+        super().__init__()
         self.cse_seen_set = set()
 
     def map_common_subexpression(self, expr):
