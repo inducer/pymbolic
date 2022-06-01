@@ -20,10 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic.mapper
+from pymbolic.mapper import IdentityMapper
 
 
-class SubstitutionApplier(pymbolic.mapper.IdentityMapper):
+class SubstitutionApplier(IdentityMapper):
     """todo.
     """
 
