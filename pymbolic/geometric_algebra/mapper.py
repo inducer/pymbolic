@@ -324,11 +324,11 @@ class DerivativeBinder(IdentityMapper):
 
             result = new_result
 
-        from pymbolic.primitives import flattened_sum
+        from pymbolic.primitives import flattened_product, flattened_sum
         return flattened_sum([
-                    type(expr)(tuple([
+                    flattened_product([
                         self.rec(prod_term) for prod_term in prod_term_list
-                        ]))
+                        ])
                     for prod_term_list in result
                     ])
 
