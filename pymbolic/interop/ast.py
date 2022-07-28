@@ -189,7 +189,7 @@ class ASTToPymbolic(ASTMapper):
         # (expr func, expr* args, keyword* keywords)
         func = self.rec(expr.func)
         args = tuple([self.rec(arg) for arg in expr.args])
-        if expr.keywords:
+        if getattr(expr, "keywords", []):
             return p.CallWithKwargs(func, args,
                     {
                         kw.arg: self.rec(kw.value)
