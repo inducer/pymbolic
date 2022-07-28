@@ -955,6 +955,18 @@ def test_nodecount():
     assert get_num_nodes(expr) == 12
 
 
+def test_python_ast_interop_roundtrip():
+    from pymbolic.interop.ast import (ASTToPymbolic,
+                                      PymbolicToASTMapper)
+
+    ast2p = ASTToPymbolic()
+    p2ast = PymbolicToASTMapper()
+    ntests = 40
+    for i in range(ntests):
+        expr = generate_random_expression(seed=(5+i))
+        assert ast2p(p2ast(expr)) == expr
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
