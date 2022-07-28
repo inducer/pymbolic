@@ -1,2 +1,3 @@
 # test_matchpy_interop.py
 matchpy
+astunparse; python_version < '3.9'
