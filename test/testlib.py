@@ -27,6 +27,7 @@ import pymbolic.primitives as prim
 from dataclasses import dataclass, replace
 from pytools import UniqueNameGenerator
 from pymbolic.mapper import IdentityMapper, CachedIdentityMapper
+from pymbolic.mapper.optimize import optimize_mapper
 
 
 @dataclass(frozen=True, eq=True)
@@ -123,3 +124,214 @@ class AlwaysFlatteningCachedIdentityMapper(_AlwaysFlatteningMixin,
     pass
 
 # }}}
+
+
+# {{{ supporting bits for mapper optimizer test
+
+BIG_EXPR_STR = """
+(-1)*((cse_577[_pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0], _pt_data_49[(iface_ensm15*1075540 +
+iel_ensm15*10 + idof_ensm15) % 10]] if _pt_data_48[((iface_ensm15*1075540 +
+iel_ensm15*10 + idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_577[_pt_data_46[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_47[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_46[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_577[_pt_data_7[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_43[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_7[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_577[_pt_data_44[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_45[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_44[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_579[_pt_data_68[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_69[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_68[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_579[_pt_data_66[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_67[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_66[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_579[_pt_data_50[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_63[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_50[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_579[_pt_data_64[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_65[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_64[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_581[_pt_data_88[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_89[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_88[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_581[_pt_data_86[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_87[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_86[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_581[_pt_data_70[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_83[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_70[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_581[_pt_data_84[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_85[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_84[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_582[_pt_data_107[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_108[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_107[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_582[_pt_data_105[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_106[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_105[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_582[_pt_data_90[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_102[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_90[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_582[_pt_data_103[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_104[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_103[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0)) +
+(cse_572[_pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_49[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_572[_pt_data_46[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_47[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_46[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_572[_pt_data_7[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_43[(iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 10]] if _pt_data_7[((iface_ensm15*1075540 + iel_ensm15*10 +
+idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+(cse_572[_pt_data_44[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) %
+4302160) // 10, 0], _pt_data_45[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                 idof_ensm15) % 10]] if
+_pt_data_44[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) % 4302160) //
+            10, 0] != -1 else 0) + (cse_573[_pt_data_68[((iface_ensm15*1075540
+                                                          + iel_ensm15*10 +
+                                                          idof_ensm15) %
+                                                         4302160) // 10, 0],
+                                            _pt_data_69[(iface_ensm15*1075540 +
+                                                         iel_ensm15*10 +
+                                                         idof_ensm15) % 10]] if
+                                    _pt_data_68[((iface_ensm15*1075540 +
+                                                  iel_ensm15*10 + idof_ensm15)
+                                                 % 4302160) // 10, 0] != -1
+                                    else 0) +
+            (cse_573[_pt_data_66[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                   idof_ensm15) % 4302160) // 10, 0],
+                     _pt_data_67[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                  idof_ensm15) % 10]] if
+             _pt_data_66[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15)
+                          % 4302160) // 10, 0] != -1 else 0) +
+             (cse_573[_pt_data_50[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                    idof_ensm15) % 4302160) // 10, 0],
+                      _pt_data_63[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                   idof_ensm15) % 10]] if
+              _pt_data_50[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15)
+                           % 4302160) // 10, 0] != -1 else 0) +
+              (cse_573[_pt_data_64[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                     idof_ensm15) % 4302160) // 10, 0],
+                       _pt_data_65[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                    idof_ensm15) % 10]] if
+               _pt_data_64[((iface_ensm15*1075540 + iel_ensm15*10 +
+                             idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+               (cse_574[_pt_data_88[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                      idof_ensm15) % 4302160) // 10, 0],
+                        _pt_data_89[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                     idof_ensm15) % 10]] if
+                _pt_data_88[((iface_ensm15*1075540 + iel_ensm15*10 +
+                              idof_ensm15) % 4302160) // 10, 0] != -1 else 0) +
+                (cse_574[_pt_data_86[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                       idof_ensm15) % 4302160) // 10, 0],
+                         _pt_data_87[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                      idof_ensm15) % 10]] if
+                 _pt_data_86[((iface_ensm15*1075540 + iel_ensm15*10 +
+                               idof_ensm15) % 4302160) // 10, 0] != -1 else 0)
+                 + (cse_574[_pt_data_70[((iface_ensm15*1075540 + iel_ensm15*10
+                                          + idof_ensm15) % 4302160) // 10, 0],
+                            _pt_data_83[(iface_ensm15*1075540 + iel_ensm15*10 +
+                                         idof_ensm15) % 10]] if
+                    _pt_data_70[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                  idof_ensm15) % 4302160) // 10, 0] != -1 else
+                    0) + (cse_574[_pt_data_84[((iface_ensm15*1075540 +
+                                                iel_ensm15*10 + idof_ensm15) %
+                                               4302160) // 10, 0],
+                                  _pt_data_85[(iface_ensm15*1075540 +
+                                               iel_ensm15*10 + idof_ensm15) %
+                                              10]] if
+                          _pt_data_84[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                        idof_ensm15) % 4302160) // 10, 0] != -1
+                          else 0) +
+                    (cse_575[_pt_data_107[((iface_ensm15*1075540 +
+                                            iel_ensm15*10 + idof_ensm15) %
+                                           4302160) // 10, 0],
+                             _pt_data_108[(iface_ensm15*1075540 + iel_ensm15*10
+                                           + idof_ensm15) % 10]] if
+                     _pt_data_107[((iface_ensm15*1075540 + iel_ensm15*10 +
+                                    idof_ensm15) % 4302160) // 10, 0] != -1
+                     else 0) + (cse_575[_pt_data_105[((iface_ensm15*1075540 +
+                                                       iel_ensm15*10 +
+                                                       idof_ensm15) % 4302160)
+                                                     // 10, 0],
+                                        _pt_data_106[(iface_ensm15*1075540 +
+                                                      iel_ensm15*10 +
+                                                      idof_ensm15) % 10]] if
+                                _pt_data_105[((iface_ensm15*1075540 +
+                                               iel_ensm15*10 + idof_ensm15) %
+                                              4302160) // 10, 0] != -1 else 0)
+                                + (cse_575[_pt_data_90[((iface_ensm15*1075540 +
+                                                         iel_ensm15*10 +
+                                                         idof_ensm15) %
+                                                        4302160) // 10, 0],
+                                           _pt_data_102[(iface_ensm15*1075540 +
+                                                         iel_ensm15*10 +
+                                                         idof_ensm15) % 10]] if
+                                   _pt_data_90[((iface_ensm15*1075540 +
+                                                 iel_ensm15*10 + idof_ensm15) %
+                                                4302160) // 10, 0] != -1 else
+                                   0) +
+                                (cse_575[_pt_data_103[((iface_ensm15*1075540 +
+                                                        iel_ensm15*10 +
+                                                        idof_ensm15) % 4302160)
+                                                      // 10, 0],
+                                         _pt_data_104[(iface_ensm15*1075540 +
+                                                       iel_ensm15*10 +
+                                                       idof_ensm15) % 10]] if
+                                 _pt_data_103[((iface_ensm15*1075540 +
+                                                iel_ensm15*10 + idof_ensm15) %
+                                               4302160) // 10, 0] != -1 else 0)
+"""
+
+
+_replacements = {
+        "iface_ensm15": prim.Variable("_0"),
+        "iel_ensm15": prim.Variable("_1"),
+        "idof_ensm15": prim.Variable("_2"),
+        }
+
+
+class Renamer(IdentityMapper):
+    def map_variable(self, expr):
+        return _replacements.get(expr.name, expr)
+
+
+@optimize_mapper(drop_args=True, drop_kwargs=True,
+                 inline_cache=True, inline_rec=True,
+                 inline_get_cache_key=True)
+class OptimizedRenamer(CachedIdentityMapper):
+    def map_variable(self, expr):
+        return _replacements.get(expr.name, expr)
+
+    def get_cache_key(self, expr):
+        # Must add 'type(expr)', to differentiate between python scalar types.
+        # In Python, the following conditions are true: "hash(4) == hash(4.0)"
+        # and "4 == 4.0", but their traversal results cannot be re-used.
+        return (type(expr), expr)
+
+# }}}
+
+
+# vim: foldmethod=marker
