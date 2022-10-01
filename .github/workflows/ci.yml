@@ -93,6 +93,7 @@ jobs:
         strategy:
             matrix:
                 downstream_project: [loopy, grudge, pytential, pytato]
+            fail-fast: false
         name: Tests for downstream project ${{ matrix.downstream_project }}
         runs-on: ubuntu-latest
         steps:
