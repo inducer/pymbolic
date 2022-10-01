@@ -1,8 +1,11 @@
 # See https://github.com/inducer/pymbolic/pull/110 for context
 
+import sys
+
 from pymbolic import parse
 from pymbolic.primitives import Variable
 from pymbolic.mapper import CachedIdentityMapper
+from pymbolic.mapper.optimize import optimize_mapper
 
 
 code = ("(-1)*((cse_577[_pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) % 4302160) // 10, 0],"
@@ -94,6 +97,10 @@ replacements = {
         }
 
 
+@optimize_mapper(drop_args=True, drop_kwargs=True,
+                 # inline_cache=True, inline_rec=True,
+                 inline_get_cache_key=True,
+                 print_modified_code_file=sys.stdout)
 class Renamer(CachedIdentityMapper):
     def map_variable(self, expr):
         return replacements.get(expr.name, expr)
