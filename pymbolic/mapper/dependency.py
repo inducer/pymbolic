@@ -1,3 +1,8 @@
+"""
+.. autoclass:: DependencyMapper
+.. autoclass:: CachedDependencyMapper
+"""
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,7 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import Collector, CSECachingMapperMixin
+from pymbolic.mapper import Collector, CSECachingMapperMixin, CachedMapper
 
 
 class DependencyMapper(CSECachingMapperMixin, Collector):
@@ -107,3 +112,19 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
     def map_nan(self, expr, *args, **kwargs):
         return set()
+
+
+class CachedDependencyMapper(CachedMapper, DependencyMapper):
+    def __init__(self,
+                 include_subscripts=True,
+                 include_lookups=True,
+                 include_calls=True,
+                 include_cses=False,
+                 composite_leaves=None):
+        CachedMapper.__init__(self)
+        DependencyMapper.__init__(self,
+                                  include_subscripts=include_subscripts,
+                                  include_lookups=include_lookups,
+                                  include_calls=include_calls,
+                                  include_cses=include_cses,
+                                  composite_leaves=composite_leaves)

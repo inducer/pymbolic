@@ -21,6 +21,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 import pymbolic.primitives as primitives
 
 __doc__ = """
@@ -71,6 +72,20 @@ Base classes for new mappers
 .. autoclass:: WalkMapper
 
 .. autoclass:: CSECachingMapperMixin
+
+
+Base classes for mappers with memoization support
+-------------------------------------------------
+
+.. autoclass:: CachedMapper
+
+.. autoclass:: CachedIdentityMapper
+
+.. autoclass:: CachedCombineMapper
+
+.. autoclass:: CachedCollector
+
+.. autoclass:: CachedWalkMapper
 """
 
 
@@ -119,25 +134,39 @@ class Mapper:
         implementations.
         """
 
-        try:
-            method = getattr(self, expr.mapper_method)
-        except AttributeError:
-            if isinstance(expr, primitives.Expression):
-                for cls in type(expr).__mro__[1:]:
-                    method_name = getattr(cls, "mapper_method", None)
-                    if method_name:
-                        method = getattr(self, method_name, None)
-                        if method:
-                            break
-                else:
-                    return self.handle_unsupported_expression(
-                        expr, *args, **kwargs)
-            else:
-                return self.map_foreign(expr, *args, **kwargs)
+        method_name = getattr(expr, "mapper_method", None)
+        if method_name is not None:
+            method = getattr(self, method_name, None)
+            if method is not None:
+                result = method(expr, *args, **kwargs)
+                return result
 
-        return method(expr, *args, **kwargs)
+        if isinstance(expr, primitives.Expression):
+            for cls in type(expr).__mro__[1:]:
+                method_name = getattr(cls, "mapper_method", None)
+                if method_name:
+                    method = getattr(self, method_name, None)
+                    if method:
+                        return method(expr, *args, **kwargs)
+            else:
+                return self.handle_unsupported_expression(expr, *args, **kwargs)
+        else:
+            return self.map_foreign(expr, *args, **kwargs)
 
     rec = __call__
+
+    def rec_fallback(self, expr, *args, **kwargs):
+        if isinstance(expr, primitives.Expression):
+            for cls in type(expr).__mro__[1:]:
+                method_name = getattr(cls, "mapper_method", None)
+                if method_name:
+                    method = getattr(self, method_name, None)
+                    if method:
+                        return method(expr, *args, **kwargs)
+            else:
+                return self.handle_unsupported_expression(expr, *args, **kwargs)
+        else:
+            return self.map_foreign(expr, *args, **kwargs)
 
     def map_algebraic_leaf(self, expr, *args, **kwargs):
         raise NotImplementedError
@@ -193,6 +222,57 @@ class Mapper:
             raise ValueError(
                     "{} encountered invalid foreign object: {}".format(
                         self.__class__, repr(expr)))
+
+
+_NOT_IN_CACHE = object()
+
+
+class CachedMapper(Mapper):
+    """
+    A mapper that memoizes the mapped result for the expressions traversed.
+
+    .. automethod:: get_cache_key
+    """
+    def __init__(self):
+        self._cache: Dict[Any, Any] = {}
+        Mapper.__init__(self)
+
+    def get_cache_key(self, expr, *args, **kwargs):
+        """
+        Returns the key corresponding to which the result of a mapper method is
+        stored in the cache.
+
+        .. warning::
+
+            Assumes that elements of *args* and *kwargs* are immutable, and that
+            *self* does not store any mutable state. Derived mappers must
+            override this method.
+        """
+        # Must add 'type(expr)', to differentiate between python scalar types.
+        # In Python, the following conditions are true: "hash(4) == hash(4.0)"
+        # and "4 == 4.0", but their traversal results cannot be re-used.
+        return (type(expr), expr, args, tuple(sorted(kwargs.items())))
+
+    def __call__(self, expr, *args, **kwargs):
+        result = self._cache.get(
+                (cache_key := self.get_cache_key(expr, *args, **kwargs)),
+                _NOT_IN_CACHE)
+        if result is not _NOT_IN_CACHE:
+            return result
+
+        method_name = getattr(expr, "mapper_method", None)
+        if method_name is not None:
+            method = getattr(self, method_name, None)
+            if method is not None:
+                result = method(expr, *args, **kwargs)
+                self._cache[cache_key] = result
+                return result
+
+        result = self.rec_fallback(expr, *args, **kwargs)
+        self._cache[cache_key] = result
+        return result
+
+    rec = __call__
 
 # }}}
 
@@ -330,6 +410,10 @@ class CombineMapper(RecursiveMapper):
             self.rec(expr.then),
             self.rec(expr.else_)])
 
+
+class CachedCombineMapper(CachedMapper, CombineMapper):
+    pass
+
 # }}}
 
 
@@ -358,6 +442,10 @@ class Collector(CombineMapper):
     map_dot_wildcard = map_constant
     map_star_wildcard = map_constant
     map_function_symbol = map_constant
+
+
+class CachedCollector(CachedMapper, Collector):
+    pass
 
 # }}}
 
@@ -439,17 +527,9 @@ class IdentityMapper(Mapper):
                 for child, orig_child in zip(children, expr.children)):
             return expr
 
-        from pymbolic.primitives import flattened_sum
-        return flattened_sum(children)
+        return type(expr)(tuple(children))
 
-    def map_product(self, expr, *args, **kwargs):
-        children = [self.rec(child, *args, **kwargs) for child in expr.children]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children)):
-            return expr
-
-        from pymbolic.primitives import flattened_product
-        return flattened_product(children)
+    map_product = map_sum
 
     def map_quotient(self, expr, *args, **kwargs):
         numerator = self.rec(expr.numerator, *args, **kwargs)
@@ -508,21 +588,23 @@ class IdentityMapper(Mapper):
     map_logical_and = map_bitwise_or
 
     def map_comparison(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.left, *args, **kwargs),
-                expr.operator,
-                self.rec(expr.right, *args, **kwargs))
+        left = self.rec(expr.left, *args, **kwargs)
+        right = self.rec(expr.right, *args, **kwargs)
+        if left is expr.left and right is expr.right:
+            return expr
+
+        return type(expr)(left, expr.operator, right)
 
     def map_list(self, expr, *args, **kwargs):
         return [self.rec(child, *args, **kwargs) for child in expr]
 
     def map_tuple(self, expr, *args, **kwargs):
-        children = tuple([self.rec(child, *args, **kwargs) for child in expr])
+        children = [self.rec(child, *args, **kwargs) for child in expr]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr)):
             return expr
 
-        return children
+        return tuple(children)
 
     def map_numpy_array(self, expr, *args, **kwargs):
         import numpy
@@ -549,10 +631,13 @@ class IdentityMapper(Mapper):
                 **expr.get_extra_properties())
 
     def map_substitution(self, expr, *args, **kwargs):
-        return type(expr)(
-                self.rec(expr.child, *args, **kwargs),
-                expr.variables,
-                tuple([self.rec(v, *args, **kwargs) for v in expr.values]))
+        child = self.rec(expr.child, *args, **kwargs)
+        values = tuple([self.rec(v, *args, **kwargs) for v in expr.values])
+        if child is expr.child and all([val is orig_val
+                for val, orig_val in zip(values, expr.values)]):
+            return expr
+
+        return type(expr)(child, expr.variables, values)
 
     def map_derivative(self, expr, *args, **kwargs):
         child = self.rec(expr.child, *args, **kwargs)
@@ -609,6 +694,10 @@ class IdentityMapper(Mapper):
     def map_nan(self, expr, *args, **kwargs):
         # Leaf node -- don't recurse
         return expr
+
+
+class CachedIdentityMapper(CachedMapper, IdentityMapper):
+    pass
 
 # }}}
 
@@ -861,6 +950,11 @@ class WalkMapper(RecursiveMapper):
 
     def post_visit(self, expr, *args, **kwargs):
         pass
+
+
+class CachedWalkMapper(CachedMapper, WalkMapper):
+    pass
+
 # }}}
 
 
@@ -905,6 +999,8 @@ class CallbackMapper(RecursiveMapper):
     map_numpy_array = map_constant
     map_common_subexpression = map_constant
     map_if_positive = map_constant
+    map_if = map_constant
+    map_comparison = map_constant
 
 # }}}
 
@@ -916,13 +1012,31 @@ class CachingMapperMixin:
         super().__init__()
         self.result_cache = {}
 
+        from warnings import warn
+        warn("CachingMapperMixin is deprecated and will be removed "
+                "in version 2023.x. Use CachedMapper instead.",
+                DeprecationWarning, stacklevel=2)
+
     def rec(self, expr):
         try:
             return self.result_cache[expr]
         except TypeError:
             # not hashable, oh well
+            method_name = getattr(expr, "mapper_method", None)
+            if method_name is not None:
+                method = getattr(self, method_name, None)
+                if method is not None:
+                    return method(expr, )
             return super().rec(expr)
         except KeyError:
+            method_name = getattr(expr, "mapper_method", None)
+            if method_name is not None:
+                method = getattr(self, method_name, None)
+                if method is not None:
+                    result = method(expr, )
+                    self.result_cache[expr] = result
+                    return result
+
             result = super().rec(expr)
             self.result_cache[expr] = result
             return result

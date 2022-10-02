@@ -246,7 +246,7 @@ def _strify_assignments_and_expr(assignments, expr):
             return assignment
         if isinstance(assignment, tuple):
             name, value = assignment
-            return"{}: {}".format(name, strify(value))
+            return "{}: {}".format(name, strify(value))
         else:
             return strify(assignment)
 

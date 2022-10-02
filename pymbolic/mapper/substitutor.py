@@ -1,3 +1,10 @@
+"""
+.. autoclass:: SubstitutionMapper
+.. autoclass:: CachedSubstitutionMapper
+.. autofunction:: make_subst_func
+.. autofunction:: substitute
+
+"""
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,10 +27,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic.mapper
+from pymbolic.mapper import IdentityMapper, CachedIdentityMapper
 
 
-class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
+class SubstitutionMapper(IdentityMapper):
     def __init__(self, subst_func):
         self.subst_func = subst_func
 
@@ -39,14 +46,21 @@ class SubstitutionMapper(pymbolic.mapper.IdentityMapper):
         if result is not None:
             return result
         else:
-            return pymbolic.mapper.IdentityMapper.map_subscript(self, expr)
+            return IdentityMapper.map_subscript(self, expr)
 
     def map_lookup(self, expr):
         result = self.subst_func(expr)
         if result is not None:
             return result
         else:
-            return pymbolic.mapper.IdentityMapper.map_lookup(self, expr)
+            return IdentityMapper.map_lookup(self, expr)
+
+
+class CachedSubstitutionMapper(CachedIdentityMapper,
+                               SubstitutionMapper):
+    def __init__(self, subst_func):
+        CachedIdentityMapper.__init__(self)
+        SubstitutionMapper.__init__(self, subst_func)
 
 
 def make_subst_func(variable_assignments):
@@ -67,10 +81,15 @@ def make_subst_func(variable_assignments):
     return subst_func
 
 
-def substitute(expression, variable_assignments=None, **kwargs):
+def substitute(expression, variable_assignments=None,
+               mapper_cls=CachedSubstitutionMapper, **kwargs):
+    """
+    :arg mapper_cls: A :class:`type` of the substitution mapper
+        whose instance applies the substitution.
+    """
     if variable_assignments is None:
         variable_assignments = {}
     variable_assignments = variable_assignments.copy()
     variable_assignments.update(kwargs)
 
-    return SubstitutionMapper(make_subst_func(variable_assignments))(expression)
+    return mapper_cls(make_subst_func(variable_assignments))(expression)

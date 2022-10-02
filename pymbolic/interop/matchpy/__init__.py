@@ -124,6 +124,10 @@ class PymbolicOp(abc.ABC, Operation):
     """
     unpacked_args_to_init: ClassVar[bool] = True
 
+    @abc.abstractproperty
+    def variable_name(self):
+        pass
+
     @property
     def operands(self) -> Tuple[Expression]:
         return tuple(getattr(self, field.name)

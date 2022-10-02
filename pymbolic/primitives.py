@@ -145,6 +145,8 @@ Helper functions
 
 .. autofunction:: is_zero
 .. autofunction:: is_constant
+.. autofunction:: flattened_sum
+.. autofunction:: flattened_product
 .. autofunction:: register_constant_class
 .. autofunction:: unregister_constant_class
 .. autofunction:: variables
@@ -158,7 +160,6 @@ vectors and matrices of :mod:`pymbolic` objects.
 
 .. autofunction:: make_sym_vector
 .. autofunction:: make_sym_array
-
 
 Constants
 ---------
@@ -411,6 +412,9 @@ class Expression:
 
     def __neg__(self):
         return -1*self
+
+    def __pos__(self):
+        return self
 
     def __call__(self, *args, **kwargs):
         if kwargs:
@@ -1586,9 +1590,14 @@ def subscript(expression, index):
     return Subscript(expression, index)
 
 
-def flattened_sum(components):
-    # flatten any potential sub-sums
-    queue = list(components)
+def flattened_sum(terms):
+    r"""Recursively flattens all the top level :class:`Sum`\ s in *terms*.
+
+    :arg terms: an :class:`~collections.abc.Iterable` of expressions.
+    :returns: a :class:`Sum` expression or, if there is only one term in
+        the sum, the respective term.
+    """
+    queue = list(terms)
     done = []
 
     while queue:
@@ -1616,9 +1625,17 @@ def linear_combination(coefficients, expressions):
                  if coefficient and expression)
 
 
-def flattened_product(components):
-    # flatten any potential sub-products
-    queue = list(components)
+def flattened_product(terms):
+    r"""Recursively flattens all the top level :class:`Product`\ s in *terms*.
+
+    This operation does not change the order of the terms in the products, so
+    it does not require the product to be commutative.
+
+    :arg terms: an :class:`~collections.abc.Iterable` of expressions.
+    :returns: a :class:`Product` expression or, if there is only one term in
+        the product, the respective term.
+    """
+    queue = list(terms)
     done = []
 
     while queue:
@@ -1626,7 +1643,7 @@ def flattened_product(components):
 
         if is_zero(item):
             return 0
-        if is_zero(item-1):
+        if is_zero(item - 1):
             continue
 
         if isinstance(item, Product):
