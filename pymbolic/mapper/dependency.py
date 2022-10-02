@@ -85,19 +85,19 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
         elif self.include_calls:
             return {expr}
         else:
-            return super().map_call_with_kwargs(expr)
+            return super().map_call_with_kwargs(expr, *args, **kwargs)
 
     def map_lookup(self, expr, *args, **kwargs):
         if self.include_lookups:
             return {expr}
         else:
-            return super().map_lookup(expr)
+            return super().map_lookup(expr, *args, **kwargs)
 
     def map_subscript(self, expr, *args, **kwargs):
         if self.include_subscripts:
             return {expr}
         else:
-            return super().map_subscript(expr)
+            return super().map_subscript(expr, *args, **kwargs)
 
     def map_common_subexpression_uncached(self, expr):
         if self.include_cses:

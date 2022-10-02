@@ -398,13 +398,13 @@ class CombineMapper(RecursiveMapper):
     def map_common_subexpression(self, expr, *args, **kwargs):
         return self.rec(expr.child, *args, **kwargs)
 
-    def map_if_positive(self, expr):
+    def map_if_positive(self, expr, *args, **kwargs):
         return self.combine([
             self.rec(expr.criterion),
             self.rec(expr.then),
             self.rec(expr.else_)])
 
-    def map_if(self, expr):
+    def map_if(self, expr, *args, **kwargs):
         return self.combine([
             self.rec(expr.condition),
             self.rec(expr.then),
