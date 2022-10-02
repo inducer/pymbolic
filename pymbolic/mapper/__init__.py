@@ -434,7 +434,7 @@ class Collector(CombineMapper):
         from functools import reduce
         return reduce(operator.or_, values, set())
 
-    def map_constant(self, expr):
+    def map_constant(self, expr, *args, **kwargs):
         return set()
 
     map_variable = map_constant
