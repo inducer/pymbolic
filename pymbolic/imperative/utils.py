@@ -143,9 +143,9 @@ def show_dot(dot_code, output_to=None):
     Visualize the graph represented by *dot_code*.
     Can be called on the result of :func:`get_dot_dependency_graph`.
 
-    :arg: output_to
-
-        An instance of :class:`str` that can be one of:
+    :arg dot_code: An instance of :class:`str` in the `dot <http://graphviz.org/>`__
+        language to visualize.
+    :arg output_to: An instance of :class:`str` that can be one of:
 
         - ``"xwindow"`` to visualize the graph as an
           `X window <https://en.wikipedia.org/wiki/X_Window_System>`_.
