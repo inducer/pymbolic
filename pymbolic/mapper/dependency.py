@@ -70,7 +70,7 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
     def map_call(self, expr, *args, **kwargs):
         if self.include_calls == "descend_args":
             return self.combine(
-                    [self.rec(child) for child in expr.parameters])
+                    [self.rec(child, *args, **kwargs) for child in expr.parameters])
         elif self.include_calls:
             return {expr}
         else:
@@ -79,8 +79,9 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
     def map_call_with_kwargs(self, expr, *args, **kwargs):
         if self.include_calls == "descend_args":
             return self.combine(
-                    [self.rec(child) for child in expr.parameters]
-                    + [self.rec(val) for name, val in expr.kw_parameters.items()]
+                    [self.rec(child, *args, **kwargs) for child in expr.parameters]
+                    + [self.rec(val, *args, **kwargs) for name, val in
+                    expr.kw_parameters.items()]
                     )
         elif self.include_calls:
             return {expr}
@@ -107,7 +108,7 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
     def map_slice(self, expr, *args, **kwargs):
         return self.combine(
-                [self.rec(child) for child in expr.children
+                [self.rec(child, *args, **kwargs) for child in expr.children
                     if child is not None])
 
     def map_nan(self, expr, *args, **kwargs):
