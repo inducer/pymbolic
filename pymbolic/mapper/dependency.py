@@ -99,7 +99,7 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
         else:
             return super().map_subscript(expr, *args, **kwargs)
 
-    def map_common_subexpression_uncached(self, expr):
+    def map_common_subexpression_uncached(self, expr, *args, **kwargs):
         if self.include_cses:
             return {expr}
         else:
