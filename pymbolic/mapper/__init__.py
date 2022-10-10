@@ -388,11 +388,11 @@ class CombineMapper(RecursiveMapper):
     map_tuple = map_list
 
     def map_numpy_array(self, expr, *args, **kwargs):
-        return self.combine(self.rec(el) for el in expr.flat)
+        return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)
 
     def map_multivector(self, expr, *args, **kwargs):
         return self.combine(
-                self.rec(coeff)
+                self.rec(coeff, *args, **kwargs)
                 for bits, coeff in expr.data.items())
 
     def map_common_subexpression(self, expr, *args, **kwargs):
@@ -400,15 +400,15 @@ class CombineMapper(RecursiveMapper):
 
     def map_if_positive(self, expr, *args, **kwargs):
         return self.combine([
-            self.rec(expr.criterion),
-            self.rec(expr.then),
-            self.rec(expr.else_)])
+            self.rec(expr.criterion, *args, **kwargs),
+            self.rec(expr.then, *args, **kwargs),
+            self.rec(expr.else_, *args, **kwargs)])
 
     def map_if(self, expr, *args, **kwargs):
         return self.combine([
-            self.rec(expr.condition),
-            self.rec(expr.then),
-            self.rec(expr.else_)])
+            self.rec(expr.condition, *args, **kwargs),
+            self.rec(expr.then, *args, **kwargs),
+            self.rec(expr.else_, *args, **kwargs)])
 
 
 class CachedCombineMapper(CachedMapper, CombineMapper):
