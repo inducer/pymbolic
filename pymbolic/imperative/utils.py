@@ -139,75 +139,12 @@ def get_dot_dependency_graph(
 # {{{ graphviz / dot interactive show
 
 def show_dot(dot_code, output_to=None):
-    """
-    Visualize the graph represented by *dot_code*.
-    Can be called on the result of :func:`get_dot_dependency_graph`.
+    from warnings import warn
+    warn("pymbolic.imperative.utils.show_dot is deprecated, please "
+         "use pytools.dot.show_dot instead.", DeprecationWarning)
 
-    :arg dot_code: An instance of :class:`str` in the `dot <http://graphviz.org/>`__
-        language to visualize.
-    :arg output_to: An instance of :class:`str` that can be one of:
-
-        - ``"xwindow"`` to visualize the graph as an
-          `X window <https://en.wikipedia.org/wiki/X_Window_System>`_.
-        - ``"browser"`` to visualize the graph as an SVG file in the
-          system's default web-browser.
-        - ``"svg"`` to store the dot code as an SVG file on the file system.
-          Returns the path to the generated svg file.
-
-        Defaults to ``"xwindow"`` if X11 support is present, otherwise defaults
-        to ``"browser"``.
-
-    :returns: Depends on *output_to*.
-    """
-
-    from tempfile import mkdtemp
-    import subprocess
-    temp_dir = mkdtemp(prefix="tmp_dagrt_dot")
-
-    dot_file_name = "code.dot"
-
-    from os.path import join
-    with open(join(temp_dir, dot_file_name), "w") as dotf:
-        dotf.write(dot_code)
-
-    # {{{ preprocess 'output_to'
-
-    if output_to is None:
-        with subprocess.Popen(["dot", "-T?"],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE
-                              ) as proc:
-            supported_formats = proc.stderr.read().decode()
-
-            if " x11 " in supported_formats:
-                output_to = "xwindow"
-            else:
-                output_to = "browser"
-
-    # }}}
-
-    if output_to == "xwindow":
-        subprocess.check_call(["dot", "-Tx11", dot_file_name], cwd=temp_dir)
-    elif output_to in ["browser", "svg"]:
-        svg_file_name = "code.svg"
-        subprocess.check_call(["dot", "-Tsvg", "-o", svg_file_name, dot_file_name],
-                              cwd=temp_dir)
-
-        full_svg_file_name = join(temp_dir, svg_file_name)
-        logger.info("show_dot_dependency_graph: svg written to '%s'",
-                full_svg_file_name)
-
-        if output_to == "svg":
-            return full_svg_file_name
-        else:
-            assert output_to == "browser"
-
-            from webbrowser import open as browser_open
-            browser_open("file://" + full_svg_file_name)
-    else:
-        raise ValueError("`output_to` can be one of 'xwindow' or 'browser',"
-                         f" got '{output_to}'")
-
+    from pytools.dot import show_dot
+    return show_dot(dot_code, output_to)
 # }}}
 
 # vim: fdm=marker
