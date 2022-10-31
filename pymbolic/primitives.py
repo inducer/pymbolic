@@ -187,6 +187,11 @@ class Expression(ABC):
 
     Expression objects are immutable.
 
+    .. versionchanged:: 2022.2
+
+        `PEP 634 <https://peps.python.org/pep-0634/>`__-style pattern matching
+        is now supported when Pymbolic is used under Python 3.10.
+
     .. attribute:: a
 
     .. attribute:: attr
@@ -230,6 +235,11 @@ class Expression(ABC):
     @abstractmethod
     def __getinitargs__(self):
         pass
+
+    @classmethod
+    @property
+    def __match_args__(cls):
+        return cls.init_arg_names
 
     @property
     def init_arg_names(self):
