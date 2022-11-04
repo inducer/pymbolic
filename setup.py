@@ -38,5 +38,8 @@ setup(name="pymbolic",
       python_requires="~=3.8",
       install_requires=[
           "pytools>=2",
-          "pytest>=2.3",
-          ])
+          ],
+      extras_require={
+          "test": ["pytest>=2.3"],
+          },
+      )
