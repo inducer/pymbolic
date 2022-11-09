@@ -21,7 +21,7 @@ THE SOFTWARE.
 """
 
 import ast
-from functools import lru_cache
+from functools import lru_cache, cached_property
 
 
 # This machinery applies AST rewriting to the mapper in a mildly brutal
@@ -270,6 +270,10 @@ def optimize_mapper(
         for name in dir(cls):
             if not name.startswith("__") or name == "__call__":
                 method = getattr(cls, name)
+                if isinstance(method, (property, cached_property)):
+                    # properties don't have *args, **kwargs
+                    continue
+
                 seen_module_names.add(method.__module__)
                 method_ast = _get_ast_for_method(method)
                 if name != method_ast.name:
