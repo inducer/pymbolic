@@ -325,7 +325,11 @@ def optimize_mapper(
 
         # }}}
 
-        code_str = ast.unparse(cls_ast)
+        code_str = (
+                # Incoming code *may* rely on deferred evaluation of annotations.
+                # Since we're not checking whether it does, turn it on just in case.
+                "from __future__ import annotations\n"
+                + ast.unparse(cls_ast))
         if print_modified_code_file:
             print(code_str, file=print_modified_code_file)
 
