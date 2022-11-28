@@ -23,6 +23,8 @@ jobs:
         -   name: "Main Script"
             run: |
                 curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
+                # FIXME Remove when we're upgrading to Python 3.10.
+                rm test/test_pattern_match.py
                 . ./prepare-and-run-flake8.sh pymbolic test experiments
 
     pylint:
@@ -70,7 +72,6 @@ jobs:
                 pip install symengine || true
 
                 test_py_project
-
 
     docs:
         name: Documentation

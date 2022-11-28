@@ -21,6 +21,7 @@ THE SOFTWARE.
 """
 
 from sys import intern
+from abc import ABC, abstractmethod
 import pymbolic.traits as traits
 
 
@@ -180,11 +181,16 @@ def disable_subscript_by_getitem():
     pass
 
 
-class Expression:
+class Expression(ABC):
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
     Expression objects are immutable.
+
+    .. versionchanged:: 2022.2
+
+        `PEP 634 <https://peps.python.org/pep-0634/>`__-style pattern matching
+        is now supported when Pymbolic is used under Python 3.10.
 
     .. attribute:: a
 
@@ -225,6 +231,15 @@ class Expression:
     """
 
     # {{{ init arg names (override by subclass)
+
+    @abstractmethod
+    def __getinitargs__(self):
+        pass
+
+    @classmethod
+    @property
+    def __match_args__(cls):
+        return cls.init_arg_names
 
     @property
     def init_arg_names(self):
@@ -538,9 +553,6 @@ class Expression:
         except AttributeError:
             self._hash_value = self.get_hash()
             return self._hash_value
-
-    def __getinitargs__(self):
-        raise NotImplementedError
 
     def __getstate__(self):
         return self.__getinitargs__()
