@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,9 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import ClassVar, Tuple, Mapping, Union, Optional, Callable, Any
+
 from sys import intern
 from abc import ABC, abstractmethod
+from typing import Sequence
 import pymbolic.traits as traits
+
+
+ExpressionT = Union["Expression", int, float, complex]
 
 
 __doc__ = """
@@ -181,6 +189,14 @@ def disable_subscript_by_getitem():
     pass
 
 
+class _AttributeLookupCreator:
+    def __init__(self, aggregate: ExpressionT) -> None:
+        self.aggregate = aggregate
+
+    def __getattr__(self, name: str) -> Lookup:
+        return Lookup(self.aggregate, name)
+
+
 class Expression(ABC):
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
@@ -238,14 +254,17 @@ class Expression(ABC):
 
     @classmethod
     @property
-    def __match_args__(cls):
+    def __match_args__(cls) -> Sequence[str]:
         return cls.init_arg_names
 
+    @classmethod
     @property
-    def init_arg_names(self):
+    def init_arg_names(cls) -> Sequence[str]:
         raise NotImplementedError
 
     # }}}
+
+    mapper_method: ClassVar[str]
 
     # {{{ arithmetic
 
@@ -459,14 +478,7 @@ class Expression(ABC):
     def a(self):
         """Provide a spelling ``expr.a.name`` for encoding attribute lookup.
         """
-        class AttributeLookupCreator:
-            def __init__(self, aggregate):
-                self.aggregate = aggregate
-
-            def __getattr__(self, name):
-                return Lookup(self.aggregate, name)
-
-        return AttributeLookupCreator(self)
+        return _AttributeLookupCreator(self)
 
     def __float__(self):
         from pymbolic.mapper.evaluator import evaluate_to_float
@@ -690,9 +702,9 @@ class Variable(Leaf):
     """
     .. attribute:: name
     """
-    init_arg_names = ("name",)
+    init_arg_names: ClassVar[Sequence[str, ...]] = ("name",)
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         assert name
         self.name = intern(name)
 
@@ -726,7 +738,7 @@ class DotWildcard(Leaf):
     """
     init_arg_names = ("name",)
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         assert isinstance(name, str)
         self.name = name
 
@@ -743,7 +755,7 @@ class StarWildcard(Leaf):
     """
     init_arg_names = ("name",)
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         assert isinstance(name, str)
         self.name = name
 
@@ -784,7 +796,9 @@ class Call(AlgebraicLeaf):
 
     init_arg_names = ("function", "parameters",)
 
-    def __init__(self, function, parameters):
+    def __init__(
+            self, function: ExpressionT, parameters: Tuple[ExpressionT, ...]
+            ) -> None:
         self.function = function
         self.parameters = parameters
 
@@ -826,7 +840,10 @@ class CallWithKwargs(AlgebraicLeaf):
 
     init_arg_names = ("function", "parameters", "kw_parameters")
 
-    def __init__(self, function, parameters, kw_parameters):
+    def __init__(self,
+                 function: ExpressionT,
+                 parameters: Tuple[ExpressionT, ...],
+                 kw_parameters: Mapping[str, ExpressionT]) -> None:
         self.function = function
         self.parameters = parameters
 
@@ -881,7 +898,7 @@ class Subscript(AlgebraicLeaf):
 
     init_arg_names = ("aggregate", "index",)
 
-    def __init__(self, aggregate, index):
+    def __init__(self, aggregate: ExpressionT, index: ExpressionT) -> None:
         self.aggregate = aggregate
         self.index = index
 
@@ -905,7 +922,7 @@ class Lookup(AlgebraicLeaf):
 
     init_arg_names = ("aggregate", "name",)
 
-    def __init__(self, aggregate, name):
+    def __init__(self, aggregate: ExpressionT, name: str) -> None:
         self.aggregate = aggregate
         self.name = name
 
@@ -922,7 +939,7 @@ class Lookup(AlgebraicLeaf):
 class _MultiChildExpression(Expression):
     init_arg_names = ("children",)
 
-    def __init__(self, children):
+    def __init__(self, children: Tuple[ExpressionT, ...]) -> None:
         assert isinstance(children, tuple)
 
         self.children = children
@@ -1023,7 +1040,7 @@ class Product(_MultiChildExpression):
 class QuotientBase(Expression):
     init_arg_names = ("numerator", "denominator",)
 
-    def __init__(self, numerator, denominator=1):
+    def __init__(self, numerator: ExpressionT, denominator: ExpressionT = 1) -> None:
         self.numerator = numerator
         self.denominator = denominator
 
@@ -1085,7 +1102,7 @@ class Power(Expression):
 
     init_arg_names = ("base", "exponent",)
 
-    def __init__(self, base, exponent):
+    def __init__(self, base: ExpressionT, exponent: ExpressionT) -> None:
         self.base = base
         self.exponent = exponent
 
@@ -1102,7 +1119,7 @@ class Power(Expression):
 class _ShiftOperator(Expression):
     init_arg_names = ("shiftee", "shift",)
 
-    def __init__(self, shiftee, shift):
+    def __init__(self, shiftee: ExpressionT, shift: ExpressionT) -> None:
         self.shiftee = shiftee
         self.shift = shift
 
@@ -1139,7 +1156,7 @@ class BitwiseNot(Expression):
 
     init_arg_names = ("child",)
 
-    def __init__(self, child):
+    def __init__(self, child: ExpressionT) -> None:
         self.child = child
 
     def __getinitargs__(self):
@@ -1209,7 +1226,7 @@ class Comparison(Expression):
             }
     name_to_operator = {name: op for op, name in operator_to_name.items()}
 
-    def __init__(self, left, operator, right):
+    def __init__(self, left: ExpressionT, operator: str, right: ExpressionT) -> None:
         """
         :arg operator: accepts the same values as :attr:`operator`, or the
             standard Python comparison operator names
@@ -1240,7 +1257,7 @@ class LogicalNot(Expression):
 
     init_arg_names = ("child",)
 
-    def __init__(self, child):
+    def __init__(self, child: ExpressionT) -> None:
         self.child = child
 
     def __getinitargs__(self):
@@ -1278,7 +1295,9 @@ class If(Expression):
 
     init_arg_names = ("condition", "then", "else_")
 
-    def __init__(self, condition, then, else_):
+    def __init__(
+            self, condition: ExpressionT, then: ExpressionT, else_: ExpressionT
+            ) -> None:
         self.condition = condition
         self.then = then
         self.else_ = else_
@@ -1292,10 +1311,14 @@ class If(Expression):
 class IfPositive(Expression):
     init_arg_names = ("criterion", "then", "else_")
 
-    def __init__(self, criterion, then, else_):
+    def __init__(self,
+                 criterion: ExpressionT,
+                 then: ExpressionT,
+                 else_: ExpressionT) -> None:
         from warnings import warn
-        warn("IfPositive is deprecated, use If( ... >0)", DeprecationWarning,
-                stacklevel=2)
+        warn("IfPositive is deprecated. "
+             "It will stop working in July 2023. "
+             "Use If( ... >0) instead.", DeprecationWarning, stacklevel=2)
 
         self.criterion = criterion
         self.then = then
@@ -1310,7 +1333,7 @@ class IfPositive(Expression):
 class _MinMaxBase(Expression):
     init_arg_names = ("children",)
 
-    def __init__(self, children):
+    def __init__(self, children: ExpressionT) -> None:
         self.children = children
 
     def __getinitargs__(self):
@@ -1328,88 +1351,6 @@ class Max(_MinMaxBase):
 
 
 # {{{ misc stuff
-
-class Vector(Expression):
-    """An immutable sequence that you can compute with."""
-
-    init_arg_names = ("children",)
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self.children = children
-
-        from warnings import warn
-        warn("pymbolic vectors are deprecated in favor of either "
-                "(a) numpy object arrays and "
-                "(b) pymbolic.geometric_algebra.MultiVector "
-                "(depending on the required semantics)",
-                DeprecationWarning)
-
-    def __bool__(self):
-        for i in self.children:
-            if is_nonzero(i):
-                return False
-        return True
-
-    __nonzero__ = __bool__
-
-    def __len__(self):
-        return len(self.children)
-
-    def __getitem__(self, index):
-        if is_constant(index):
-            return self.children[index]
-        else:
-            return Expression.__getitem__(self, index)
-
-    def __neg__(self):
-        return Vector(tuple([-x for x in self]))
-
-    def __add__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't add values of differing lengths")
-        return Vector(tuple([x+y for x, y in zip(self, other)]))
-
-    def __radd__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't add values of differing lengths")
-        return Vector(tuple([y+x for x, y in zip(self, other)]))
-
-    def __sub__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple([x-y for x, y in zip(self, other)]))
-
-    def __rsub__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple([y-x for x, y in zip(self, other)]))
-
-    def __mul__(self, other):
-        return Vector(tuple([x*other for x in self]))
-
-    def __rmul__(self, other):
-        return Vector(tuple([other*x for x in self]))
-
-    def __div__(self, other):
-        # Py2 only
-        import operator
-        return Vector(tuple([
-            operator.div(x, other) for x in self    # pylint: disable=no-member
-            ]))
-
-    def __truediv__(self, other):
-        import operator
-        return Vector(tuple([operator.truediv(x, other) for x in self]))
-
-    def __floordiv__(self, other):
-        return Vector(tuple([x//other for x in self]))
-
-    def __getinitargs__(self):
-        return self.children
-
-    mapper_method = intern("map_vector")
-
 
 class cse_scope:  # noqa
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
@@ -1451,7 +1392,8 @@ class CommonSubexpression(Expression):
 
     init_arg_names = ("child", "prefix", "scope")
 
-    def __init__(self, child, prefix=None, scope=None):
+    def __init__(self, child: ExpressionT, prefix: Optional[str] =None,
+                 scope: Optional[str] = None) -> None:
         """
         :arg scope: Defaults to :attr:`cse_scope.EVALUATION` if given as *None*.
         """
@@ -1479,11 +1421,14 @@ class CommonSubexpression(Expression):
 
 
 class Substitution(Expression):
-    """Work-alike of sympy's Subs."""
+    """Work-alike of :class:`sympy.core.Subs`."""
 
     init_arg_names = ("child", "variables", "values")
 
-    def __init__(self, child, variables, values):
+    def __init__(self,
+                 child: ExpressionT,
+                 variables: Tuple[str, ...],
+                 values: Tuple[ExpressionT, ...]) -> None:
         self.child = child
         self.variables = variables
         self.values = values
@@ -1495,11 +1440,11 @@ class Substitution(Expression):
 
 
 class Derivative(Expression):
-    """Work-alike of sympy's Derivative."""
+    """Work-alike of :class:`sympy.core.Derivative`."""
 
     init_arg_names = ("child", "variables")
 
-    def __init__(self, child, variables):
+    def __init__(self, child: ExpressionT, variables: Tuple[str, ...]):
         self.child = child
         self.variables = variables
 
@@ -1510,11 +1455,11 @@ class Derivative(Expression):
 
 
 class Slice(Expression):
-    """A slice expression as in a[1:7]."""
+    """A slice expression as in the ``1:7`` of a[1:7]."""
 
     init_arg_names = ("children",)
 
-    def __init__(self, children):
+    def __init__(self, children: Tuple[ExpressionT, ...]) -> None:
         assert isinstance(children, tuple)
         self.children = children
 
@@ -1530,14 +1475,14 @@ class Slice(Expression):
     __nonzero__ = __bool__
 
     @property
-    def start(self):
+    def start(self) -> Optional[ExpressionT]:
         if len(self.children) > 0:
             return self.children[0]
         else:
             return None
 
     @property
-    def stop(self):
+    def stop(self) -> Optional[ExpressionT]:
         if len(self.children) == 1:
             return self.children[0]
         elif len(self.children) > 1:
@@ -1546,7 +1491,7 @@ class Slice(Expression):
             return None
 
     @property
-    def step(self):
+    def step(self) -> Optional[ExpressionT]:
         if len(self.children) == 3:
             return self.children[2]
         else:
@@ -1578,7 +1523,7 @@ class NaN(Expression):
     """
     init_arg_names = ("data_type", )
 
-    def __init__(self, data_type=None):
+    def __init__(self, data_type: Optional[Callable[[float], Any]] = None) -> None:
         self.data_type = data_type
 
     def __getinitargs__(self):
