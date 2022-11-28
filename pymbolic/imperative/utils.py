@@ -141,9 +141,9 @@ def get_dot_dependency_graph(
 def show_dot(dot_code, output_to=None):
     from warnings import warn
     warn("pymbolic.imperative.utils.show_dot is deprecated, please "
-         "use pytools.dot.show_dot instead.", DeprecationWarning)
+         "use pytools.graphviz.show_dot instead.", DeprecationWarning)
 
-    from pytools.dot import show_dot
+    from pytools.graphviz import show_dot
     return show_dot(dot_code, output_to)
 # }}}
 
