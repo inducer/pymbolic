@@ -37,7 +37,7 @@ setup(name="pymbolic",
       packages=find_packages(),
       python_requires="~=3.8",
       install_requires=[
-          "pytools>2022.1.13",
+          "pytools>=2022.1.14",
           ],
       extras_require={
           "test": ["pytest>=2.3"],
