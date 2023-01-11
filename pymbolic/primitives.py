@@ -848,9 +848,7 @@ class CallWithKwargs(AlgebraicLeaf):
     def __getinitargs__(self):
         return (self.function,
                 self.parameters,
-                tuple(sorted(
-                    list(self.kw_parameters.items()),
-                    key=lambda item: item[0])))
+                tuple(sorted(self.kw_parameters.items(), key=lambda item: item[0])))
 
     def __setstate__(self, state):
         # CallWithKwargs must override __setstate__ because during pickling the
