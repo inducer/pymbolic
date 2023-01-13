@@ -66,6 +66,14 @@ def assert_parse_roundtrip(expr_str):
 # }}}
 
 
+EXPRESSION_COLLECTION = [
+    parse("(x[2]+y.data)*(x+z)**3"),
+    parse("(~x)//2 | (y >> 2) & (z << 3)"),
+    parse("x and (not y or z)"),
+    parse("x if not (y and z) else x+1"),
+]
+
+
 # {{{ test_integer_power
 
 def test_integer_power():
@@ -535,6 +543,35 @@ def test_compile():
     code = pickle.loads(pickle.dumps(code))
     assert code(3, 3) == 27
 
+# }}}
+
+
+# {{{ test_pickle
+
+def test_pickle():
+    from pickle import dumps, loads
+    for expr in EXPRESSION_COLLECTION:
+        pickled = loads(dumps(expr))
+        assert hash(expr) == hash(pickled)
+        assert expr == pickled
+
+
+class OldTimeyExpression(prim.Expression):
+    init_arg_names = ()
+
+    def __getinitargs__(self):
+        return ()
+
+
+def test_pickle_backward_compat():
+    from pickle import dumps, loads
+
+    expr = 3*OldTimeyExpression()
+    pickled = loads(dumps(expr))
+    with pytest.warns(DeprecationWarning):
+        assert hash(expr) == hash(pickled)
+    with pytest.warns(DeprecationWarning):
+        assert expr == pickled
 # }}}
 
 

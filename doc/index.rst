@@ -69,15 +69,11 @@ You can also easily define your own objects to use inside an expression:
 
 .. doctest::
 
-    >>> from pymbolic.primitives import Expression
-    >>> class FancyOperator(Expression):
-    ...     def __init__(self, operand):
-    ...         self.operand = operand
-    ...
-    ...     def __getinitargs__(self):
-    ...         return (self.operand,)
-    ...
-    ...     mapper_method = "map_fancy_operator"
+    >>> from pymbolic.primitives import Expression, expr_dataclass
+    >>>
+    >>> @expr_dataclass()
+    ... class FancyOperator(Expression):
+    ...     operand: Expression
     ...
     >>> u
     Power(Sum((Variable('x'), 1)), 5)
@@ -89,6 +85,8 @@ As a final example, we can now derive from *MyMapper* to multiply all
 
 .. doctest::
 
+    >>> FancyOperator.mapper_method
+    'map_fancy_operator'
     >>> class MyMapper2(MyMapper):
     ...     def map_fancy_operator(self, expr):
     ...         return 2*FancyOperator(self.rec(expr.operand))
