@@ -23,6 +23,8 @@ THE SOFTWARE.
 from sys import intern
 from typing import ClassVar, Dict, List, Tuple
 
+from immutabledict import immutabledict
+
 import pytools.lex
 from pytools import memoize_method
 
@@ -333,7 +335,8 @@ class Parser:
             args, kwargs = self.parse_arglist(pstate)
 
             if kwargs:
-                left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
+                left_exp = primitives.CallWithKwargs(
+                        left_exp, args, immutabledict(kwargs))
             else:
                 left_exp = primitives.Call(left_exp, args)
 
