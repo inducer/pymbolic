@@ -69,13 +69,13 @@ You can also easily define your own objects to use inside an expression:
 
 .. doctest::
 
-    >>> from pymbolic.primitives import Expression
-    >>> class FancyOperator(Expression):
-    ...     def __init__(self, operand):
-    ...         self.operand = operand
-    ...
-    ...     def __getinitargs__(self):
-    ...         return (self.operand,)
+    >>> from pymbolic.primitives import Expression, augment_expression_dataclass
+    >>> from dataclasses import dataclass
+    >>>
+    >>> @augment_expression_dataclass
+    ... @dataclass(frozen=True)
+    ... class FancyOperator(Expression):
+    ...     operand: Expression
     ...
     ...     mapper_method = "map_fancy_operator"
     ...
