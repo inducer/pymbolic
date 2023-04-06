@@ -171,6 +171,11 @@ Constants
 """
 
 
+# The upper bound for the number of nodes printed when repr
+# is called on a pymbolic object.
+SAFE_REPR_LIMIT = 10
+
+
 def disable_subscript_by_getitem():
     # The issue that was addressed by this could be fixed
     # in a much less ham-fisted manner, and thus this has been
@@ -492,7 +497,10 @@ class Expression(ABC):
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.make_stringifier()(self, PREC_NONE)
 
-    def _safe_repr(self, limit=10):
+    def _safe_repr(self, limit=None):
+        if limit is None:
+            limit = SAFE_REPR_LIMIT
+
         if limit <= 0:
             return "..."
 
