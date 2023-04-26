@@ -26,11 +26,10 @@ release = ver_dic["VERSION_TEXT"]
 exclude_patterns = ["_build"]
 
 intersphinx_mapping = {
-    "https://docs.python.org/3": None,
-    "https://numpy.org/doc/stable/": None,
-    "https://docs.makotemplates.org/en/latest/": None,
-    "https://docs.sympy.org/dev/": None,
-    "https://galgebra.readthedocs.io/en/latest/": None,
-    "https://matchpy.readthedocs.io/en/latest/": None,
+    "galgebra": ("https://galgebra.readthedocs.io/en/latest/", None),
+    "mako": ("https://docs.makotemplates.org/en/latest/", None),
+    "matchpy": ("https://matchpy.readthedocs.io/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "python": ("https://docs.python.org/3", None),
+    "sympy": ("https://docs.sympy.org/dev/", None),
 }
-
