@@ -96,6 +96,8 @@ def _test_from_pymbolic(mapper, sym, use_symengine):
         sym.Subs(x**2, (x,), (y,))
     deriv = sym.Derivative(x**2, x)
     assert mapper(prim.Derivative(x_**2, ("x",))) == deriv
+    floordiv = sym.floor(x / y)
+    assert mapper(prim.FloorDiv(x_, y_)) == floordiv
 
     if use_symengine:
         assert mapper(x_[0]) == sym.Function("Indexed")("x", 0)
