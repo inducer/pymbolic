@@ -213,7 +213,7 @@ class Expression(ABC):
     .. automethod:: make_stringifier
 
     .. automethod:: __eq__
-    .. automethod:: is_equal
+    .. automethod:: make_equality_mapper
     .. automethod:: __hash__
     .. automethod:: get_hash
     .. automethod:: __str__
@@ -534,18 +534,12 @@ class Expression(ABC):
     # {{{ hash/equality interface
 
     def __eq__(self, other):
-        """Provides equality testing with quick positive and negative paths
-        based on :func:`id` and :meth:`__hash__`.
+        """Provides equality testing with quick positive and negative paths.
 
         Subclasses should generally not override this method, but instead
-        provide an implementation of :meth:`is_equal`.
+        provide an implementation of :meth:`make_equality_mapper`.
         """
-        if self is other:
-            return True
-        elif hash(self) != hash(other):
-            return False
-        else:
-            return self.is_equal(other)
+        return self.make_equality_mapper()(self, other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -575,9 +569,18 @@ class Expression(ABC):
 
     # {{{ hash/equality backend
 
+    def make_equality_mapper(self):
+        from pymbolic.mapper.equality import EqualityMapper
+        return EqualityMapper()
+
     def is_equal(self, other):
-        return (type(other) == type(self)
-                and self.__getinitargs__() == other.__getinitargs__())
+        from warnings import warn
+        warn("'Expression.is_equal' is deprecated and will be removed in 2023. "
+                "To customize the equality check, subclass 'EqualityMapper' "
+                "and overwrite 'Expression.make_equality_mapper'",
+                DeprecationWarning, stacklevel=2)
+
+        return self.make_equality_mapper()(self, other)
 
     def get_hash(self):
         return hash((type(self).__name__,) + self.__getinitargs__())
@@ -1055,12 +1058,6 @@ class Quotient(QuotientBase):
     .. attribute:: numerator
     .. attribute:: denominator
     """
-
-    def is_equal(self, other):
-        from pymbolic.rational import Rational
-        return isinstance(other, (Rational, Quotient)) \
-               and (self.numerator == other.numerator) \
-               and (self.denominator == other.denominator)
 
     mapper_method = intern("map_quotient")
 

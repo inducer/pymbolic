@@ -824,7 +824,6 @@ def test_mapper_method_of_parent_class():
 
 # {{{ test_equality_complexity
 
-@pytest.mark.xfail
 def test_equality_complexity():
     # NOTE: https://github.com/inducer/pymbolic/issues/73
     from numpy.random import default_rng

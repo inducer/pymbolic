@@ -120,8 +120,8 @@ class Mapper:
         """
 
         raise UnsupportedExpressionError(
-                "{} cannot handle expressions of type {}".format(
-                    type(self), type(expr)))
+                "'{}' cannot handle expressions of type '{}'".format(
+                    type(self).__name__, type(expr).__name__))
 
     def __call__(self, expr, *args, **kwargs):
         """Dispatch *expr* to its corresponding mapper method. Pass on
@@ -169,7 +169,7 @@ class Mapper:
             return self.map_foreign(expr, *args, **kwargs)
 
     def map_algebraic_leaf(self, expr, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError(type(expr).__name__)
 
     def map_variable(self, expr, *args, **kwargs):
         return self.map_algebraic_leaf(expr, *args, **kwargs)
@@ -513,6 +513,7 @@ class IdentityMapper(Mapper):
         index = self.rec(expr.index, *args, **kwargs)
         if aggregate is expr.aggregate and index is expr.index:
             return expr
+
         return type(expr)(aggregate, index)
 
     def map_lookup(self, expr, *args, **kwargs):

@@ -92,6 +92,7 @@ jobs:
 
     downstream_tests:
         strategy:
+            fail-fast: false
             matrix:
                 downstream_project: [loopy, grudge, pytential, pytato]
             fail-fast: false
@@ -105,6 +106,11 @@ jobs:
             run: |
                 curl -L -O https://tiker.net/ci-support-v0
                 . ./ci-support-v0
-                test_downstream "$DOWNSTREAM_PROJECT"
+
+                if [[ "$DOWNSTREAM_PROJECT" == "grudge" && "$GITHUB_HEAD_REF" == "equality-mapper" ]]; then
+                    test_downstream "$DOWNSTREAM_PROJECT"
+                else
+                    test_downstream "https://github.com/alexfikl/$DOWNSTREAM_PROJECT.git@equality-mapper"
+                fi
 
 # vim: sw=4
