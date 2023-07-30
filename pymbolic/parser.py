@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import immutables
 import pytools.lex
 from pytools import memoize_method
 from sys import intern
@@ -330,7 +331,8 @@ class Parser:
             args, kwargs = self.parse_arglist(pstate)
 
             if kwargs:
-                left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
+                left_exp = primitives.CallWithKwargs(
+                        left_exp, args, immutables.Map(kwargs))
             else:
                 left_exp = primitives.Call(left_exp, args)
 
