@@ -576,7 +576,7 @@ class Expression(ABC):
     # {{{ hash/equality backend
 
     def is_equal(self, other):
-        return (type(other) == type(self)
+        return (type(other) is type(self)
                 and self.__getinitargs__() == other.__getinitargs__())
 
     def get_hash(self):
