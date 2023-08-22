@@ -21,6 +21,7 @@ THE SOFTWARE.
 """
 
 from sys import intern
+from abc import ABC, abstractmethod
 import pymbolic.traits as traits
 
 
@@ -170,6 +171,11 @@ Constants
 """
 
 
+# The upper bound for the number of nodes printed when repr
+# is called on a pymbolic object.
+SAFE_REPR_LIMIT = 10
+
+
 def disable_subscript_by_getitem():
     # The issue that was addressed by this could be fixed
     # in a much less ham-fisted manner, and thus this has been
@@ -180,11 +186,16 @@ def disable_subscript_by_getitem():
     pass
 
 
-class Expression:
+class Expression(ABC):
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
     Expression objects are immutable.
+
+    .. versionchanged:: 2022.2
+
+        `PEP 634 <https://peps.python.org/pep-0634/>`__-style pattern matching
+        is now supported when Pymbolic is used under Python 3.10.
 
     .. attribute:: a
 
@@ -225,6 +236,15 @@ class Expression:
     """
 
     # {{{ init arg names (override by subclass)
+
+    @abstractmethod
+    def __getinitargs__(self):
+        pass
+
+    @classmethod
+    @property
+    def __match_args__(cls):
+        return cls.init_arg_names
 
     @property
     def init_arg_names(self):
@@ -477,7 +497,10 @@ class Expression:
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.make_stringifier()(self, PREC_NONE)
 
-    def _safe_repr(self, limit=10):
+    def _safe_repr(self, limit=None):
+        if limit is None:
+            limit = SAFE_REPR_LIMIT
+
         if limit <= 0:
             return "..."
 
@@ -539,9 +562,6 @@ class Expression:
             self._hash_value = self.get_hash()
             return self._hash_value
 
-    def __getinitargs__(self):
-        raise NotImplementedError
-
     def __getstate__(self):
         return self.__getinitargs__()
 
@@ -556,7 +576,7 @@ class Expression:
     # {{{ hash/equality backend
 
     def is_equal(self, other):
-        return (type(other) == type(self)
+        return (type(other) is type(self)
                 and self.__getinitargs__() == other.__getinitargs__())
 
     def get_hash(self):
@@ -836,9 +856,7 @@ class CallWithKwargs(AlgebraicLeaf):
     def __getinitargs__(self):
         return (self.function,
                 self.parameters,
-                tuple(sorted(
-                    list(self.kw_parameters.items()),
-                    key=lambda item: item[0])))
+                tuple(sorted(self.kw_parameters.items(), key=lambda item: item[0])))
 
     def __setstate__(self, state):
         # CallWithKwargs must override __setstate__ because during pickling the

@@ -157,7 +157,7 @@ class MaximaParser(ParserBase):
                 pstate.advance()
 
                 if left_exp == primitives.Variable("matrix"):
-                    left_exp = np.array(list(list(row) for row in args))
+                    left_exp = np.array([list(row) for row in args])
                 else:
                     left_exp = primitives.Call(left_exp, args)
 
@@ -246,7 +246,7 @@ def _strify_assignments_and_expr(assignments, expr):
             return assignment
         if isinstance(assignment, tuple):
             name, value = assignment
-            return"{}: {}".format(name, strify(value))
+            return "{}: {}".format(name, strify(value))
         else:
             return strify(assignment)
 

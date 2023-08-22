@@ -35,8 +35,11 @@ setup(name="pymbolic",
       url="http://mathema.tician.de/software/pymbolic",
 
       packages=find_packages(),
-      python_requires="~=3.6",
+      python_requires="~=3.8",
       install_requires=[
-          "pytools>=2",
-          "pytest>=2.3",
-          ])
+          "pytools>=2022.1.14",
+          ],
+      extras_require={
+          "test": ["pytest>=2.3"],
+          },
+      )

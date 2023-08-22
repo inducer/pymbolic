@@ -156,6 +156,9 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
     def map_constant(self, expr):
         return self.sym.sympify(expr)
 
+    def map_floor_div(self, expr):
+        return self.sym.floor(self.rec(expr.numerator) / self.rec(expr.denominator))
+
     def map_call(self, expr):
         if isinstance(expr.function, prim.Variable):
             func_name = expr.function.name

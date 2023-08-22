@@ -127,6 +127,8 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         return self.rec(expr.shiftee) >> self.rec(expr.shift)
 
     def map_bitwise_not(self, expr):
+        # ??? Why, pylint, why ???
+        # pylint: disable=invalid-unary-operand-type
         return ~self.rec(expr.child)
 
     def map_bitwise_or(self, expr):

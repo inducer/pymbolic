@@ -64,53 +64,54 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
         self.include_cses = include_cses
 
-    def map_variable(self, expr):
+    def map_variable(self, expr, *args, **kwargs):
         return {expr}
 
-    def map_call(self, expr):
+    def map_call(self, expr, *args, **kwargs):
         if self.include_calls == "descend_args":
             return self.combine(
-                    [self.rec(child) for child in expr.parameters])
+                    [self.rec(child, *args, **kwargs) for child in expr.parameters])
         elif self.include_calls:
             return {expr}
         else:
-            return super().map_call(expr)
+            return super().map_call(expr, *args, **kwargs)
 
-    def map_call_with_kwargs(self, expr):
+    def map_call_with_kwargs(self, expr, *args, **kwargs):
         if self.include_calls == "descend_args":
             return self.combine(
-                    [self.rec(child) for child in expr.parameters]
-                    + [self.rec(val) for name, val in expr.kw_parameters.items()]
+                    [self.rec(child, *args, **kwargs) for child in expr.parameters]
+                    + [self.rec(val, *args, **kwargs) for name, val in
+                    expr.kw_parameters.items()]
                     )
         elif self.include_calls:
             return {expr}
         else:
-            return super().map_call_with_kwargs(expr)
+            return super().map_call_with_kwargs(expr, *args, **kwargs)
 
-    def map_lookup(self, expr):
+    def map_lookup(self, expr, *args, **kwargs):
         if self.include_lookups:
             return {expr}
         else:
-            return super().map_lookup(expr)
+            return super().map_lookup(expr, *args, **kwargs)
 
-    def map_subscript(self, expr):
+    def map_subscript(self, expr, *args, **kwargs):
         if self.include_subscripts:
             return {expr}
         else:
-            return super().map_subscript(expr)
+            return super().map_subscript(expr, *args, **kwargs)
 
-    def map_common_subexpression_uncached(self, expr):
+    def map_common_subexpression_uncached(self, expr, *args, **kwargs):
         if self.include_cses:
             return {expr}
         else:
-            return Collector.map_common_subexpression(self, expr)
+            return Collector.map_common_subexpression(self, expr, *args, **kwargs)
 
-    def map_slice(self, expr):
+    def map_slice(self, expr, *args, **kwargs):
         return self.combine(
-                [self.rec(child) for child in expr.children
+                [self.rec(child, *args, **kwargs) for child in expr.children
                     if child is not None])
 
-    def map_nan(self, expr):
+    def map_nan(self, expr, *args, **kwargs):
         return set()
 
 

@@ -938,6 +938,23 @@ def test_cached_mapper_differentiates_float_int():
 # }}}
 
 
+# {{{ test_mapper_optimizer
+
+def test_mapper_optimizer():
+    from testlib import Renamer, OptimizedRenamer, BIG_EXPR_STR
+    from pymbolic.mapper import CachedIdentityMapper
+
+    expr = parse(BIG_EXPR_STR)
+    expr = CachedIdentityMapper()(expr)  # remove duplicate nodes
+
+    result_ref = Renamer()(expr)
+    result_opt = OptimizedRenamer()(expr)
+
+    assert result_ref == result_opt
+
+# }}}
+
+
 def test_nodecount():
     from pymbolic.mapper.analysis import get_num_nodes
     expr = prim.Sum((4, 4.0))
@@ -987,6 +1004,18 @@ def test_subst_applier():
 
     result_actual, result_deferred = results
     assert result_actual == result_deferred
+
+
+def test_python_ast_interop_roundtrip():
+    from pymbolic.interop.ast import (ASTToPymbolic,
+                                      PymbolicToASTMapper)
+
+    ast2p = ASTToPymbolic()
+    p2ast = PymbolicToASTMapper()
+    ntests = 40
+    for i in range(ntests):
+        expr = generate_random_expression(seed=(5+i))
+        assert ast2p(p2ast(expr)) == expr
 
 
 if __name__ == "__main__":

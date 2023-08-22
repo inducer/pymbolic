@@ -31,7 +31,7 @@ from pymbolic.mapper import (
         Collector as CollectorBase,
         IdentityMapper as IdentityMapperBase,
         WalkMapper as WalkMapperBase,
-        CachingMapperMixin
+        CachedMapper,
         )
 from pymbolic.mapper.constant_folder import (
         ConstantFoldingMapper as ConstantFoldingMapperBase)
@@ -170,7 +170,11 @@ class Dimensionalizer(EvaluationMapper):
 
 # {{{ derivative binder
 
-class DerivativeSourceAndNablaComponentCollector(CachingMapperMixin, Collector):
+class DerivativeSourceAndNablaComponentCollector(CachedMapper, Collector):
+    def __init__(self) -> None:
+        Collector.__init__(self)
+        CachedMapper.__init__(self)
+
     def map_nabla(self, expr):
         raise RuntimeError("DerivativeOccurrenceMapper must be invoked after "
                 "Dimensionalizer--Nabla found, not allowed")
