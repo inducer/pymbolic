@@ -38,6 +38,7 @@ setup(name="pymbolic",
       python_requires="~=3.8",
       install_requires=[
           "pytools>=2022.1.14",
+          "immutables",
           ],
       extras_require={
           "test": ["pytest>=2.3"],

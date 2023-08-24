@@ -23,6 +23,7 @@ THE SOFTWARE.
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 import pymbolic.primitives as primitives
+import immutables
 
 __doc__ = """
 Basic dispatch
@@ -251,7 +252,7 @@ class CachedMapper(Mapper):
         # Must add 'type(expr)', to differentiate between python scalar types.
         # In Python, the following conditions are true: "hash(4) == hash(4.0)"
         # and "4 == 4.0", but their traversal results cannot be re-used.
-        return (type(expr), expr, args, tuple(sorted(kwargs.items())))
+        return (type(expr), expr, args, immutables.Map(kwargs))
 
     def __call__(self, expr, *args, **kwargs):
         result = self._cache.get(
