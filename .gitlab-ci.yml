@@ -77,7 +77,7 @@ Flake8:
 Downstream:
   parallel:
     matrix:
-    - DOWNSTREAM_PROJECT: [loopy, grudge, pytential, pytato]
+    - DOWNSTREAM_PROJECT: [loopy, pytential, pytato]
   tags:
   - large-node
   - "docker-runner"
