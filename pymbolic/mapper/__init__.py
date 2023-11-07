@@ -711,7 +711,7 @@ class WalkMapper(RecursiveMapper):
     visited subexpression.
 
     ``map_...`` methods are required to call :meth:`visit` *before*
-        descending to visit their chidlren.
+        descending to visit their children.
 
     .. method:: visit(expr, *args, **kwargs)
 

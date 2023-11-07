@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
+__copyright__ = "Copyright (C) 2023 University of Illinois Board of Trustees"
 
 __license__ = """
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,24 +21,18 @@ THE SOFTWARE.
 """
 
 
-from pymbolic.mapper import WalkMapper
+from pymbolic.mapper.persistent_hash import PersistentHashWalkMapper
 
 
-class PersistentHashWalkMapper(WalkMapper):
-    """A subclass of :class:`pymbolic.mapper.WalkMapper` for constructing
-    persistent hash keys for use with
-    :class:`pytools.persistent_dict.PersistentDict`.
-    """
+def test_persistent_hash_simple() -> None:
+    from testlib import generate_random_expression
+    import hashlib
+    expr = generate_random_expression(seed=(333))
 
-    def __init__(self, key_hash):
-        self.key_hash = key_hash
+    key_hash = hashlib.sha256()
 
-    def visit(self, expr):
-        self.key_hash.update(type(expr).__name__.encode("utf8"))
-        return True
+    phwm = PersistentHashWalkMapper(key_hash)
+    phwm(expr)
 
-    def map_variable(self, expr):
-        self.key_hash.update(expr.name.encode("utf8"))
-
-    def map_constant(self, expr):
-        self.key_hash.update(repr(expr).encode("utf8"))
+    assert key_hash.hexdigest() == \
+        "1a1cd91483015333f2a9b06ab049a8edabc72aafc1f9b6d7cd831a39068e50da"
