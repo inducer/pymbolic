@@ -85,6 +85,8 @@ class Rational(primitives.Expression):
     def __mul__(self, other):
         if not isinstance(other, Rational):
             newother = Rational(other)
+        else:
+            newother = other
 
         try:
             t = traits.common_traits(self.Numerator, newother.Numerator,
