@@ -46,7 +46,7 @@ def _generate_random_expr_inner(
 
     if context.current_depth >= context.max_depth:
         # force expression to be a leaf type
-        return context.rng.integers(0, 42)
+        return int(context.rng.integers(0, 42))
 
     bucket = context.rng.integers(0, 100) / 100.0
 
