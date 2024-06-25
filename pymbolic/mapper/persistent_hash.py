@@ -41,4 +41,11 @@ class PersistentHashWalkMapper(WalkMapper):
         self.key_hash.update(expr.name.encode("utf8"))
 
     def map_constant(self, expr):
+        import sys
+        if "numpy" in sys.modules:
+            import numpy as np
+            if isinstance(expr, np.generic):
+                # Makes a Python scalar from a numpy one.
+                expr = expr.item()
+
         self.key_hash.update(repr(expr).encode("utf8"))
