@@ -1,25 +1,15 @@
+from importlib import metadata
 from urllib.request import urlopen
+
 
 _conf_url = \
         "https://raw.githubusercontent.com/inducer/sphinxconfig/main/sphinxconfig.py"
 with urlopen(_conf_url) as _inf:
     exec(compile(_inf.read(), _conf_url, "exec"), globals())
 
-copyright = "2013-21, Andreas Kloeckner"
-
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-ver_dic = {}
-exec(
-    compile(open("../pymbolic/version.py").read(), "../pymbolic/version.py", "exec"),
-    ver_dic,
-)
-version = ".".join(str(x) for x in ver_dic["VERSION"])
-# The full version, including alpha/beta/rc tags.
-release = ver_dic["VERSION_TEXT"]
+copyright = "2013-24, Andreas Kloeckner"
+release = metadata.version("pymbolic")
+version = ".".join(release.split(".")[:2])
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
