@@ -61,14 +61,17 @@ preview = true
 
 [tool.ruff.lint]
 extend-select = [
-    "B", # flake8-bugbear
-    "C", # flake8-comprehensions
-    "E", # pycodestyle
-    "F", # pyflakes
+    "B",    # flake8-bugbear
+    "C",    # flake8-comprehensions
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "G",    # flake8-logging-format
     # "I",    # flake8-isort
-    "N", # pep8-naming
-    "Q", # flake8-quotes
-    "W", # pycodestyle
+    "N",    # pep8-naming
+    "Q",    # flake8-quotes
+    "RUF",  # ruff
+    "UP",   # pyupgrade
+    "W",    # pycodestyle
 ]
 extend-ignore = [
     "C90",  # McCabe complexity
@@ -76,6 +79,8 @@ extend-ignore = [
     "E241", # multiple spaces after comma
     "E242", # tab after comma
     "E402", # module level import not at the top of file
+    "UP031", # use f-strings instead of %
+    "UP032", # use f-strings instead of .format
 ]
 exclude = [
     "pymbolic/polynomial.py",

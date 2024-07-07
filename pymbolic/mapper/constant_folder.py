@@ -67,7 +67,7 @@ class ConstantFoldingMapperBase:
         if constants:
             from functools import reduce
             constant = reduce(op, constants)
-            return constructor(tuple([constant]+nonconstants))
+            return constructor((constant, *nonconstants))
         else:
             return constructor(tuple(nonconstants))
 

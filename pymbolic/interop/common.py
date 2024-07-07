@@ -109,7 +109,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
     def map_UnevaluatedExpr(self, expr):  # noqa
         return self.rec(expr.args[0])
 
-    def not_supported(self, expr):  # noqa
+    def not_supported(self, expr):
         if isinstance(expr, int):
             return expr
         elif getattr(expr, "is_Function", False):

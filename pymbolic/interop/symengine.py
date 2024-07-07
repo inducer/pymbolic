@@ -81,7 +81,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
             # For builtin functions
             return type(expr).__name__
 
-    def not_supported(self, expr):  # noqa
+    def not_supported(self, expr):
         from symengine.lib.symengine_wrapper import \
                 PyFunction                               # pylint: disable=E0611
         if isinstance(expr, PyFunction) and \

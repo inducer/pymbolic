@@ -23,6 +23,7 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
+from typing import ClassVar, Dict
 
 from pymbolic.geometric_algebra import MultiVector
 import pymbolic.geometric_algebra.primitives as prim
@@ -104,7 +105,7 @@ class EvaluationMapper(EvaluationMapperBase):
 
 
 class StringifyMapper(StringifyMapperBase):
-    AXES = {0: "x", 1: "y", 2: "z"}
+    AXES: ClassVar[Dict[int, str]] = {0: "x", 1: "y", 2: "z"}
 
     def map_nabla(self, expr, enclosing_prec):
         return f"∇[{expr.nabla_id}]"

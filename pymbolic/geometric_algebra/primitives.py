@@ -23,6 +23,8 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
+from typing import ClassVar, List
+
 from pymbolic.primitives import Expression, Variable
 
 
@@ -84,7 +86,7 @@ class Derivative:
     .. automethod:: dnabla
     .. automethod:: resolve
     """
-    _next_id = [0]
+    _next_id: ClassVar[List[int]] = [0]
 
     def __init__(self):
         self.my_id = f"id{self._next_id[0]}"

@@ -20,9 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from sys import intern
+from typing import ClassVar, Dict, List, Tuple
+
 import pytools.lex
 from pytools import memoize_method
-from sys import intern
+
 
 _imaginary = intern("imaginary")
 _float = intern("float")
@@ -91,7 +94,7 @@ _PREC_CALL = 250
 def _join_to_slice(left, right):
     from pymbolic.primitives import Slice
     if isinstance(right, Slice):
-        return Slice((left,) + right.children)
+        return Slice((left, *right.children))
     else:
         return Slice((left, right))
 
@@ -117,7 +120,7 @@ class FinalizedList(list, FinalizedContainer):
 
 
 class Parser:
-    lex_table = [
+    lex_table: ClassVar[List[Tuple[str, str]]] = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
             (_equal, pytools.lex.RE(r"==")),
@@ -182,7 +185,7 @@ class Parser:
             (_colon, pytools.lex.RE(r"\:")),
             ]
 
-    _COMP_TABLE = {
+    _COMP_TABLE: ClassVar[Dict[str, str]] = {
             _greater: ">",
             _greaterequal: ">=",
             _less: "<",
@@ -246,7 +249,7 @@ class Parser:
             left_exp = self.parse_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_minus):
             pstate.advance()
-            left_exp = -self.parse_expression(pstate, _PREC_UNARY)  # noqa pylint:disable=invalid-unary-operand-type
+            left_exp = -self.parse_expression(pstate, _PREC_UNARY)  # pylint:disable=invalid-unary-operand-type
         elif pstate.is_next(_not):
             pstate.advance()
             from pymbolic.primitives import LogicalNot
@@ -363,7 +366,7 @@ class Parser:
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Sum):
-                left_exp = primitives.Sum(left_exp.children + (right_exp,))
+                left_exp = primitives.Sum((*left_exp.children, right_exp))
             else:
                 left_exp = primitives.Sum((left_exp, right_exp))
 
@@ -374,13 +377,13 @@ class Parser:
             if isinstance(left_exp, primitives.Sum):
                 left_exp = primitives.Sum(left_exp.children + ((-right_exp),))  # noqa pylint:disable=invalid-unary-operand-type
             else:
-                left_exp = primitives.Sum((left_exp, -right_exp))  # noqa pylint:disable=invalid-unary-operand-type
+                left_exp = primitives.Sum((left_exp, -right_exp))  # pylint:disable=invalid-unary-operand-type
             did_something = True
         elif next_tag is _times and _PREC_TIMES > min_precedence:
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Product):
-                left_exp = primitives.Product(left_exp.children + (right_exp,))
+                left_exp = primitives.Product((*left_exp.children, right_exp))
             else:
                 left_exp = primitives.Product((left_exp, right_exp))
             did_something = True
@@ -494,7 +497,7 @@ class Parser:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
                 if isinstance(left_exp, (tuple, list)) \
                         and not isinstance(left_exp, FinalizedContainer):
-                    left_exp = left_exp + (new_el,)
+                    left_exp = (*left_exp, new_el)
                 else:
                     left_exp = (left_exp, new_el)
 

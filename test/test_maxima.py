@@ -118,7 +118,7 @@ def test_lax_round_trip(knl):
             knl.clean_eval_str_with_setup(k_setup, "result"))
 
     assert knl.clean_eval_expr_with_setup(
-            k_setup + [("result2", parsed)],
+            [*k_setup, ("result2", parsed)],
             "ratsimp(result-result2)") == 0
 
 
