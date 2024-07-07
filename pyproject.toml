@@ -42,13 +42,9 @@ numpy = [
     "numpy>=1.6",
 ]
 test = [
-    "flake8",
-    "flake8-bugbear",
-    "flake8-comprehensions",
-    "flake8-pyproject",
     "mypy",
-    "pep8-naming",
     "pytest",
+    "ruff"
 ]
 
 [project.urls]
@@ -60,15 +56,13 @@ include = [
     "pymbolic*",
 ]
 
-[tool.flake8]
-max-line-length = 85
-inline-quotes = "double"
-docstring-quotes = "double"
-multiline-quotes = "double"
-select = [
+[tool.ruff]
+preview = true
+
+[tool.ruff.lint]
+extend-select = [
     "B", # flake8-bugbear
     "C", # flake8-comprehensions
-    "D", # pydocstyle
     "E", # pycodestyle
     "F", # pyflakes
     # "I",    # flake8-isort
@@ -77,19 +71,20 @@ select = [
     "W", # pycodestyle
 ]
 extend-ignore = [
-    "E123", # closing bracket does not match indentation
-    "E126", # continuation line over-indented
-    "E127", # continuation line over-indented
-    "E128", # continuation line under-indented
+    "C90",  # McCabe complexity
     "E226", # missing whitespace around arithmetic operator
     "E241", # multiple spaces after comma
     "E242", # tab after comma
     "E402", # module level import not at the top of file
-    "W503", # line break before a binary operator
 ]
 exclude = [
     "pymbolic/polynomial.py",
 ]
-per-file-ignores = [
-    "experiments/traversal-benchmark.py:E501",
-]
+
+[tool.ruff.lint.per-file-ignores]
+"experiments/traversal-benchmark.py" = ["E501"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+docstring-quotes = "double"
+multiline-quotes = "double"

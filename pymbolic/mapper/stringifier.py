@@ -479,12 +479,12 @@ class CSESplittingStringifyMapperMixin:
     def map_common_subexpression(self, expr, enclosing_prec, *args, **kwargs):
         # This is here for compatibility, in case the constructor did not get called.
         try:
-            self.cse_to_name
+            self.cse_to_name  # noqa: B018
         except AttributeError:
             from warnings import warn
             warn("Constructor of CSESplittingStringifyMapperMixin did not get "
-                    "called. This is deprecated and will stop working in 2022.",
-                    DeprecationWarning)
+                 "called. This is deprecated and will stop working in 2022.",
+                 DeprecationWarning, stacklevel=2)
 
             self.cse_to_name = {}
             self.cse_names = set()

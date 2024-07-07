@@ -1059,7 +1059,7 @@ class MultiVector:
             for bits, coeff in self.data.items():
                 result[log_table[bits]] = coeff
         except KeyError:
-            raise ValueError("multivector is not a purely grade-1")
+            raise ValueError("multivector is not a purely grade-1") from None
 
         if dtype is not None:
             return result

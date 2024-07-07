@@ -1349,7 +1349,7 @@ class Vector(Expression):
                 "(a) numpy object arrays and "
                 "(b) pymbolic.geometric_algebra.MultiVector "
                 "(depending on the required semantics)",
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
 
     def __bool__(self):
         for i in self.children:

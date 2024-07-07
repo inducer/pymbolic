@@ -41,7 +41,7 @@ def traits(x):
         elif isinstance(x, int):
             return IntegerTraits()
         else:
-            raise NoTraitsError
+            raise NoTraitsError from None
 
 
 def common_traits(*args):

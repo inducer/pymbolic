@@ -133,9 +133,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(expr.op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
@@ -151,9 +150,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(expr.op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         return op_constructor(self.rec(expr.operand))
 
@@ -182,9 +180,8 @@ class ASTToPymbolic(ASTMapper):
             comp = self.comparison_op_map[type(op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         # FIXME: Support strung-together comparisons
         right, = expr.comparators
@@ -477,7 +474,7 @@ def to_evaluatable_python_function(expr: ExpressionT,
         except ImportError:
             raise RuntimeError("'to_evaluate_python_function' needs"
                                "astunparse for Py<3.9. Install via `pip"
-                               " install astunparse`")
+                               " install astunparse`") from None
     else:
         unparse = ast.unparse
 

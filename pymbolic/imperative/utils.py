@@ -142,7 +142,8 @@ def show_dot(dot_code, output_to=None):
     from warnings import warn
     warn("pymbolic.imperative.utils.show_dot is deprecated. "
          "It will stop working in July 2023. "
-         "Please use pytools.graphviz.show_dot instead.", DeprecationWarning)
+         "Please use pytools.graphviz.show_dot instead.",
+         DeprecationWarning, stacklevel=2)
 
     from pytools.graphviz import show_dot
     return show_dot(dot_code, output_to)
