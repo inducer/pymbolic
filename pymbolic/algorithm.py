@@ -155,7 +155,7 @@ def fft(x, sign=1,
                 "instead. wrap_intermediate will stop working in 2023.",
                 DeprecationWarning, stacklevel=2)
 
-        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined  # noqa: E501
+        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined
             return wrap_intermediate(x)
 
     if wrap_intermediate_with_level is None:
@@ -272,7 +272,7 @@ def csr_matrix_multiply(S, x):  # noqa
     result = numpy.empty_like(x)
 
     for i in range(h):
-        result[i] = sum(S.data[idx]*x[S.indices[idx]]  # noqa pylint:disable=unsupported-assignment-operation
+        result[i] = sum(S.data[idx]*x[S.indices[idx]]  # pylint:disable=unsupported-assignment-operation
                 for idx in range(S.indptr[i], S.indptr[i+1]))
 
     return result
@@ -326,7 +326,7 @@ def gaussian_elimination(mat, rhs):
     for i in range(m):
         g = gcd_many(*(
             [a for a in mat[i] if a]
-            +  # noqa: W504
+            +
             [a for a in rhs[i] if a]))
 
         mat[i] //= g

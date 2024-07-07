@@ -35,10 +35,13 @@ __doc__ = """
 # http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
 
 import re
-import pytools
+from sys import intern
+from typing import ClassVar, List, Tuple
+
 import numpy as np
 
-from sys import intern
+import pytools
+
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.parser import Parser as ParserBase, FinalizedTuple
 
@@ -92,11 +95,12 @@ class MaximaParser(ParserBase):
     imag_unit = intern("imag_unit")
     euler_number = intern("euler_number")
 
-    lex_table = [
+    lex_table: ClassVar[List[Tuple[str, str]]] = [
             (power_sym, pytools.lex.RE(r"\^")),
             (imag_unit, pytools.lex.RE(r"%i")),
             (euler_number, pytools.lex.RE(r"%e")),
-            ] + ParserBase.lex_table
+            *ParserBase.lex_table
+            ]
 
     def parse_prefix(self, pstate):
         pstate.expect_not_end()
@@ -212,7 +216,7 @@ class MaximaParser(ParserBase):
                 new_el = self.parse_expression(pstate, p._PREC_COMMA)
                 if isinstance(left_exp, tuple) \
                         and not isinstance(left_exp, FinalizedTuple):
-                    left_exp = left_exp + (new_el,)
+                    left_exp = (*left_exp, new_el)
                 else:
                     left_exp = (left_exp, new_el)
 

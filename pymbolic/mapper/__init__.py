@@ -22,8 +22,11 @@ THE SOFTWARE.
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict
-import pymbolic.primitives as primitives
+
 from immutabledict import immutabledict
+
+import pymbolic.primitives as primitives
+
 
 __doc__ = """
 Basic dispatch
@@ -305,23 +308,18 @@ class CombineMapper(RecursiveMapper):
         raise NotImplementedError
 
     def map_call(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.function, *args, **kwargs),)
-                + tuple([
-                    self.rec(child, *args, **kwargs) for child in expr.parameters
-                    ])
-                )
+        return self.combine((
+            self.rec(expr.function, *args, **kwargs),
+            *[self.rec(child, *args, **kwargs) for child in expr.parameters]
+            ))
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.function, *args, **kwargs),)
-                + tuple([
-                    self.rec(child, *args, **kwargs)
-                    for child in expr.parameters])
-                + tuple([
-                    self.rec(child, *args, **kwargs)
-                    for child in expr.kw_parameters.values()])
-                )
+        return self.combine((
+            self.rec(expr.function, *args, **kwargs),
+            *[self.rec(child, *args, **kwargs) for child in expr.parameters],
+            *[self.rec(child, *args, **kwargs)
+              for child in expr.kw_parameters.values()]
+            ))
 
     def map_subscript(self, expr, *args, **kwargs):
         return self.combine(
@@ -351,12 +349,10 @@ class CombineMapper(RecursiveMapper):
                 self.rec(expr.exponent, *args, **kwargs)))
 
     def map_polynomial(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.base, *args, **kwargs),)
-                + tuple([
-                    self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data
-                    ])
-                )
+        return self.combine((
+            self.rec(expr.base, *args, **kwargs),
+            *[self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data]
+            ))
 
     def map_left_shift(self, expr, *args, **kwargs):
         return self.combine((

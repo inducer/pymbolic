@@ -20,8 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import Mapper, CachedMapper
+from typing import ClassVar, Dict
+
 import pymbolic.primitives as p
+from pymbolic.mapper import Mapper, CachedMapper
+
 
 __doc__ = """
 .. _prec-constants:
@@ -161,7 +164,7 @@ class StringifyMapper(Mapper):
                     self.rec(ch, PREC_NONE, *args, **kwargs)
                     for ch in expr.parameters
                     ])
-                +  # noqa: W504
+                +
                 tuple([
                     "{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
                     for name, ch in expr.kw_parameters.items()
@@ -623,7 +626,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 
 class LaTeXMapper(StringifyMapper):
 
-    COMPARISON_OP_TO_LATEX = {
+    COMPARISON_OP_TO_LATEX: ClassVar[Dict[str, str]] = {
         "==": r"=",
         "!=": r"\ne",
         "<=": r"\le",
