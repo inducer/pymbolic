@@ -243,7 +243,7 @@ def optimize_mapper(
     def wrapper(cls):
         try:
             # Introduced in Py3.9
-            ast.unparse
+            ast.unparse  # noqa: B018
         except AttributeError:
             return cls
 

@@ -121,7 +121,7 @@ class StringifyMapper(StringifyMapperBase):
 class GraphvizMapper(GraphvizMapperBase):
     def map_derivative_source(self, expr):
         self.lines.append(
-                '{} [label="D[{}]\",shape=ellipse];'.format(
+                '{} [label="D[{}]",shape=ellipse];'.format(
                     self.get_id(expr), expr.nabla_id))
         if not self.visit(expr, node_printed=True):
             return

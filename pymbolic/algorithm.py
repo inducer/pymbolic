@@ -266,7 +266,7 @@ def sym_fft(x, sign=1):
 def csr_matrix_multiply(S, x):  # noqa
     """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
-    h, w = S.shape
+    h, _w = S.shape
 
     import numpy
     result = numpy.empty_like(x)
