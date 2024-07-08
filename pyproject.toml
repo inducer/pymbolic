@@ -82,9 +82,6 @@ extend-ignore = [
     "UP031", # use f-strings instead of %
     "UP032", # use f-strings instead of .format
 ]
-exclude = [
-    "pymbolic/polynomial.py",
-]
 
 [tool.ruff.lint.per-file-ignores]
 "experiments/traversal-benchmark.py" = ["E501"]
