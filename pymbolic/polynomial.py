@@ -29,11 +29,13 @@ from pymbolic.traits import traits, EuclideanRingTraits, FieldTraits
 
 
 def _sort_uniq(data):
-    def sortkey(xxx_todo_changeme): (exp, coeff) = xxx_todo_changeme; return exp
+    def sortkey(key):
+        exp, _coeff = key
+        return exp
+
     data.sort(key=sortkey)
 
     uniq_result = []
-    i = 0
     last_exp = None
     for exp, coeff in data:
         if last_exp == exp:
@@ -69,7 +71,10 @@ class LexicalMonomialOrder:
 
 
 class Polynomial(Expression):
-    def __init__(self, base, data=None, unit=1, var_less=LexicalMonomialOrder()):
+    def __init__(self, base, data=None, unit=1, var_less=None):
+        if var_less is None:
+            var_less = LexicalMonomialOrder()
+
         self.Base = base
         self.Unit = unit
         self.VarLess = var_less
@@ -94,9 +99,10 @@ class Polynomial(Expression):
         return len(self.Data) != 0
 
     def __eq__(self, other):
-        return isinstance(other, Polynomial) \
-               and (self.Base == other.Base) \
-               and (self.Data == other.Data)
+        return (isinstance(other, Polynomial)
+                and (self.Base == other.Base)
+                and (self.Data == other.Data))
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -197,18 +203,21 @@ class Polynomial(Expression):
     def __divmod__(self, other):
         if not isinstance(other, Polynomial):
             dm_list = [(exp, divmod(coeff, other)) for exp, coeff in self.Data]
-            return Polynomial(self.Base, [(exp, quot) for (exp, (quot, rem)) in dm_list]),\
-                   Polynomial(self.Base, [(exp, rem) for (exp, (quot, rem)) in dm_list])
+            return (
+                Polynomial(self.Base, [(exp, quot) for exp, (quot, _) in dm_list]),
+                Polynomial(self.Base, [(exp, rem) for exp, (_, rem) in dm_list]))
 
         if other.Base != self.Base:
             assert self.VarLess == other.VarLess
 
             if self.VarLess(self.Base, other.Base):
                 dm_list = [(exp, divmod(coeff, other)) for exp, coeff in self.Data]
-                return Polynomial(self.Base, [(exp, quot) for (exp, (quot, rem)) in dm_list]),\
-                        Polynomial(self.Base, [(exp, rem) for (exp, (quot, rem)) in dm_list])
+                return (
+                    Polynomial(self.Base, [(exp, quot) for exp, (quot, _) in dm_list]),
+                    Polynomial(self.Base, [(exp, rem) for exp, (_, rem) in dm_list]))
+
             else:
-                other_unit = Polynomial(other.Base, ((0,other.unit),), self.VarLess)
+                other_unit = Polynomial(other.Base, ((0, other.unit),), self.VarLess)
                 quot, rem = divmod(other_unit, other)
                 return quot * self, rem * self
 
@@ -220,9 +229,10 @@ class Polynomial(Expression):
         other_lead_coeff = other.Data[-1][1]
         other_lead_exp = other.Data[-1][0]
 
-
         coeffs_are_field = isinstance(traits(self.Unit), FieldTraits)
+
         from pymbolic.primitives import quotient
+
         while rem.degree >= other.degree:
             if coeffs_are_field:
                 coeff_factor = quotient(rem.Data[-1][1], other_lead_coeff)
@@ -347,11 +357,9 @@ if __name__ == "__main__":
         # NOT WORKING INTRODUCE TESTS
         u = (x+y)**5
         v = x+y
-        #u = x+1
-        #v = 3*x+1
+        # u = x+1
+        # v = 3*x+1
         q, r = divmod(u, v)
         print(q, "R", r)
         print(q*v)
         print("REASSEMBLY:", q*v + r)
-
-
