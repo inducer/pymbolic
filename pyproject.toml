@@ -91,3 +91,10 @@ extend-ignore = [
 inline-quotes = "double"
 docstring-quotes = "double"
 multiline-quotes = "double"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pytools"]
+known-local-folder = ["pymbolic"]
+lines-after-imports = 2
+combine-as-imports = true
+
