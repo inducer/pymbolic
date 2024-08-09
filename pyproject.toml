@@ -74,6 +74,7 @@ extend-select = [
     "W",    # pycodestyle
 ]
 extend-ignore = [
+    "C409", # remove comprehension within tuple call
     "C90",  # McCabe complexity
     "E226", # missing whitespace around arithmetic operator
     "E241", # multiple spaces after comma

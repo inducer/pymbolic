@@ -94,9 +94,9 @@ def get_dot_dependency_graph(
 
         if 0:
             for dep in stmt.then_depends_on:
-                annotation_dep_graph[(stmt.id, dep)] = "then"
+                annotation_dep_graph[stmt.id, dep] = "then"
             for dep in stmt.else_depends_on:
-                annotation_dep_graph[(stmt.id, dep)] = "else"
+                annotation_dep_graph[stmt.id, dep] = "else"
 
     # {{{ O(n^3) (i.e. slow) transitive reduction
 

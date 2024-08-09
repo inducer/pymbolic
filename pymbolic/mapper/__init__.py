@@ -1063,11 +1063,12 @@ class CSECachingMapperMixin(ABC):
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
+        key = (expr, *args)
         try:
-            return ccd[(expr, *args)]
+            return ccd[key]
         except KeyError:
             result = self.map_common_subexpression_uncached(expr, *args)
-            ccd[(expr, *args)] = result
+            ccd[key] = result
             return result
 
     @abstractmethod
