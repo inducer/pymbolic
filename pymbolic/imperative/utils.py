@@ -43,7 +43,7 @@ def get_dot_dependency_graph(
 
         # deprecated
         use_insn_ids=None,):
-    """Return a string in the `dot <http://graphviz.org/>`_ language depicting
+    """Return a string in the `dot <https://graphviz.org/>`__ language depicting
     dependencies among kernel statements.
 
     :arg statements: A sequence of statements, each of which is stringified by

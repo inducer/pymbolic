@@ -24,7 +24,7 @@ import pymbolic.mapper
 
 
 class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
-    """Because of `this numpy bug <https://github.com/numpy/numpy/issues/9438>`_,
+    """Because of `this numpy bug <https://github.com/numpy/numpy/issues/9438>`__,
     sized :mod:`numpy` number (i.e. ones with definite bit width, such as
     :class:`numpy.complex64`) have a low likelihood of surviving expression
     construction.
