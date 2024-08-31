@@ -5,17 +5,23 @@ This command should install :mod:`pymbolic`::
 
     pip install pymbolic
 
-You may need to run this with :command:`sudo`.
-If you don't already have `pip <https://pypi.python.org/pypi/pip>`_,
+You may need to run this with :command:`sudo` if you are not in a virtual environment
+(not recommended). If you don't already have `pip <https://pypi.org/project/pip>`__,
 run this beforehand::
 
-    curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-    python get-pip.py
+    python -m ensurepip
 
-For a more manual installation, download the source, unpack it,
-and say::
+For a more manual installation, download the source, unpack it, and run::
 
-    python setup.py install
+    pip install .
+
+This should also install all the required dependencies (see ``pyproject.toml``
+for a complete list).
+
+For development, you may want to install in `editable mode
+<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`__::
+
+    pip install --no-build-isolation --editable .[test]
 
 Why pymbolic when there's already sympy?
 ========================================
@@ -65,10 +71,10 @@ At any rate, to answer your question, here goes:
 
     This part is a bit of a red herring though, since this can be
     implemented for sympy (and, in fact, `I have
-    <https://github.com/inducer/pymbolic/blob/master/pymbolic/sympy_interface.py#L71>`_).
+    <https://github.com/inducer/pymbolic/blob/main/pymbolic/interop/sympy.py#L47>`__).
     Also, I noticed that sympy's codegen module implements something similar (e.g.
     `here
-    <https://github.com/sympy/sympy/blob/master/sympy/printing/fcode.py#L174>`_).
+    <https://github.com/sympy/sympy/blob/master/sympy/printing/fortran.py#L70>`__).
     The remaining issue is that most of sympy's behaviors aren't available to
     extend in this style.
 
@@ -98,7 +104,7 @@ Version 2015.3
 .. note::
 
     This version is currently under development. You can get snapshots from
-    Pymbolic's `git repository <https://github.com/inducer/pymbolic>`_
+    Pymbolic's `git repository <https://github.com/inducer/pymbolic>`__
 
 * Add :mod:`pymbolic.geometric_algebra`.
 * First documented version.
@@ -133,19 +139,13 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
-Frequently Asked Questions
-==========================
-
-The FAQ is maintained collaboratively on the
-`Wiki FAQ page <http://wiki.tiker.net/Pymbolic/FrequentlyAskedQuestions>`_.
-
 Glossary
 ========
 
 .. glossary::
 
     mix-in
-        See `Wikipedia article <https://en.wikipedia.org/wiki/Mixin>`_.
+        See `Wikipedia article <https://en.wikipedia.org/wiki/Mixin>`__.
 
         Be sure to mention the mix-in before the base classe being mixed in the
         list of base classes. This way, the mix-in can override base class

@@ -25,7 +25,7 @@ import numpy as np
 
 
 __doc__ = """
-See `Wikipedia <https://en.wikipedia.org/wiki/Geometric_algebra>`_ for an idea
+See `Wikipedia <https://en.wikipedia.org/wiki/Geometric_algebra>`__ for an idea
 of what this is.
 
 .. versionadded:: 2013.2
@@ -139,7 +139,7 @@ def permutation_sign(p):
 def bit_count(i):
     """Count the number of set bits in *i*."""
 
-    # nicked from http://wiki.python.org/moin/BitManipulation
+    # nicked from https://wiki.python.org/moin/BitManipulation
 
     count = 0
     while i:
@@ -408,11 +408,11 @@ class MultiVector:
 
         [DFM] L. Dorst, D. Fontijne, and S. Mann, `Geometric Algebra for Computer
         Science: An Object-Oriented Approach to Geometry
-        <https://books.google.com?isbn=0080553109>`_. Morgan Kaufmann, 2010.
+        <https://books.google.com?isbn=0080553109>`__. Morgan Kaufmann, 2010.
 
         [HS] D. Hestenes and G. Sobczyk, `Clifford Algebra to Geometric Calculus: A
         Unified Language for Mathematics and Physics
-        <https://books.google.com?isbn=9027725616>`_. Springer, 1987.
+        <https://books.google.com?isbn=9027725616>`__. Springer, 1987.
 
     The object behaves much like the corresponding :class:`galgebra.mv.Mv`
     object in :mod:`galgebra`, especially with respect to the supported

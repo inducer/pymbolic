@@ -28,7 +28,7 @@ from pytools import memoize
 def integer_power(x, n, one=1):
     """Compute :math:`x^n` using only multiplications.
 
-    See also the `C2 wiki <http://c2.com/cgi/wiki?IntegerPowerAlgorithm>`_.
+    See also the `C2 wiki <https://wiki.c2.com/?IntegerPowerAlgorithm>`__.
     """
 
     assert isinstance(n, int)
@@ -60,7 +60,7 @@ def extended_euclidean(q, r):
 
     See also the
     `Wikipedia article on the Euclidean algorithm
-    <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
+    <https://en.wikipedia.org/wiki/Euclidean_algorithm>`__.
     """
     import pymbolic.traits as traits
 
@@ -138,7 +138,7 @@ def fft(x, sign=1,
     where :math:`z = \exp(-2i\pi\operatorname{sign}/n)` and ``n == len(x)``.
     Works for all positive *n*.
 
-    See also `Wikipedia <http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm>`_.
+    See also `Wikipedia <https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm>`__.
     """
 
     # revision 293076305

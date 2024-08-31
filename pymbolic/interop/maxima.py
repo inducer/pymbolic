@@ -32,7 +32,7 @@ __doc__ = """
 """
 
 # Inspired by similar code in Sage at:
-# http://trac.sagemath.org/sage_trac/browser/sage/interfaces/maxima.py
+# https://github.com/sagemath/sage/blob/master/src/sage/interfaces/maxima.py
 
 import re
 from sys import intern

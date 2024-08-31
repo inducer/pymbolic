@@ -28,7 +28,7 @@ from pymbolic.mapper import WalkMapper
 
 
 class GraphvizMapper(WalkMapper):
-    """Produces code for `dot <http://graphviz.org>`_ that yields
+    """Produces code for `dot <https://graphviz.org>`__ that yields
     an expression tree of the traversed expression(s).
 
     .. automethod:: get_dot_code

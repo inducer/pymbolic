@@ -28,13 +28,13 @@ performs constant folding, and it can compile its expressions into Python
 bytecode for fast(er) execution.
 
 If you are looking for a full-blown Computer Algebra System, look at
-`sympy <http://pypi.python.org/pypi/sympy>`_ or
-`PyGinac <http://pyginac.sourceforge.net/>`_. If you are looking for a
+`sympy <https://pypi.org/project/sympy/>`__ or
+`PyGinac <https://pyginac.sourceforge.net/>`__. If you are looking for a
 basic, small and extensible set of symbolic operations, pymbolic may
 well be for you.
 
 Resources:
 
-* `documentation <http://documen.tician.de/pymbolic>`_
-* `download <http://pypi.python.org/pypi/pymbolic>`_ (via the package index)
-* `source code via git <http://github.com/inducer/pymbolic>`_ (also bug tracker)
+* `PyPI package <https://pypi.org/project/pymbolic/>`__
+* `Documentation <https://documen.tician.de/pymbolic/>`__
+* `Source code (GitHub) <https://github.com/inducer/pymbolic>`__

@@ -101,9 +101,9 @@ As a final example, we can now derive from *MyMapper* to multiply all
 Pymbolic around the web
 -----------------------
 
-* `download <http://pypi.python.org/pypi/pymbolic>`_ (via the package index)
-* `documentation <http://documen.tician.de/pymbolic>`_
-* `source code via git <http://github.com/inducer/pymbolic>`_ (also bug tracker)
+* `PyPI package <https://pypi.org/project/pymbolic/>`__
+* `Documentation <https://documen.tician.de/pymbolic/>`__
+* `Source code (GitHub) <https://github.com/inducer/pymbolic>`__
 
 Contents
 --------

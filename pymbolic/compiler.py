@@ -30,7 +30,7 @@ from pymbolic.mapper.stringifier import (
 class CompileMapper(StringifyMapper):
     def map_constant(self, expr, enclosing_prec):
         # work around numpy bug #1137 (locale-sensitive repr)
-        # http://projects.scipy.org/numpy/ticket/1137
+        # https://github.com/numpy/numpy/issues/1735
         try:
             import numpy
         except ImportError:
