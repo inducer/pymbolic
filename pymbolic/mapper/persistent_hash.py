@@ -49,3 +49,9 @@ class PersistentHashWalkMapper(WalkMapper):
                 expr = expr.item()
 
         self.key_hash.update(repr(expr).encode("utf8"))
+
+    def map_comparison(self, expr):
+        if self.visit(expr):
+            self.rec(expr.left)
+            self.key_hash.update(repr(expr.operator).encode("utf8"))
+            self.rec(expr.right)
