@@ -101,8 +101,12 @@ jobs:
             run: |
                 curl -L -O https://tiker.net/ci-support-v0
                 export EXTRA_INSTALL="pytest-monitor"
-                export CISUPPORT_PARALLEL_PYTEST=no
+                # export CISUPPORT_PARALLEL_PYTEST=no
                 export PYTEST_FLAGS="-v "
+
+                sed -i.bak '/libjemalloc/d' ./ci-support-v0
+                # sed -i.bak '/edit_requirements_txt_for_downstream_in_subdir$/d' ./ci-support-v0
+
                 . ./ci-support-v0
 
                 test_downstream "$DOWNSTREAM_PROJECT"
