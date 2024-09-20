@@ -100,7 +100,9 @@ jobs:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
             run: |
                 curl -L -O https://tiker.net/ci-support-v0
-                export PYTEST_FLAGS=-v
+                export EXTRA_INSTALL="pytest-monitor"
+                export CISUPPORT_PARALLEL_PYTEST=no
+                export PYTEST_FLAGS="-v "
                 . ./ci-support-v0
 
                 test_downstream "$DOWNSTREAM_PROJECT"
