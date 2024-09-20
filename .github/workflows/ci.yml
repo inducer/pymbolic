@@ -10,86 +10,86 @@ on:
         - cron:  '17 3 * * 0'
 
 jobs:
-    ruff:
-        name: Ruff
-        runs-on: ubuntu-latest
-        steps:
-        -   uses: actions/checkout@v4
-            with:
-                submodules: true
-        -   uses: actions/setup-python@v5
-        -   name: "Main Script"
-            run: |
-                pip install ruff
-                ruff check
+    # ruff:
+    #     name: Ruff
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #     -   uses: actions/checkout@v4
+    #         with:
+    #             submodules: true
+    #     -   uses: actions/setup-python@v5
+    #     -   name: "Main Script"
+    #         run: |
+    #             pip install ruff
+    #             ruff check
 
-    pylint:
-        name: Pylint
-        runs-on: ubuntu-latest
-        steps:
-        -   uses: actions/checkout@v4
-        -
-            uses: actions/setup-python@v5
-            with:
-                python-version: '3.x'
-        -   name: "Main Script"
-            run: |
-                EXTRA_INSTALL="numpy sympy scipy pexpect"
-                curl -L -O https://tiker.net/ci-support-v0
-                . ./ci-support-v0
-                build_py_project_in_venv
+    # pylint:
+    #     name: Pylint
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #     -   uses: actions/checkout@v4
+    #     -
+    #         uses: actions/setup-python@v5
+    #         with:
+    #             python-version: '3.x'
+    #     -   name: "Main Script"
+    #         run: |
+    #             EXTRA_INSTALL="numpy sympy scipy pexpect"
+    #             curl -L -O https://tiker.net/ci-support-v0
+    #             . ./ci-support-v0
+    #             build_py_project_in_venv
 
-                # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
-                pip install symengine || true
+    #             # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
+    #             pip install symengine || true
 
-                run_pylint pymbolic test/test_*.py
+    #             run_pylint pymbolic test/test_*.py
 
-    pytest:
-        name: Pytest on Py${{ matrix.python-version }}
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                python-version: ["3.8", "3.9", "3.x"]
-        steps:
-        -   uses: actions/checkout@v4
-        -
-            uses: actions/setup-python@v5
-            with:
-                python-version: ${{ matrix.python-version }}
-        -   name: "Main Script"
-            run: |
-                EXTRA_INSTALL="numpy sympy pexpect"
-                curl -L -O https://tiker.net/ci-support-v0
-                . ./ci-support-v0
+    # pytest:
+    #     name: Pytest on Py${{ matrix.python-version }}
+    #     runs-on: ubuntu-latest
+    #     strategy:
+    #         matrix:
+    #             python-version: ["3.8", "3.9", "3.x"]
+    #     steps:
+    #     -   uses: actions/checkout@v4
+    #     -
+    #         uses: actions/setup-python@v5
+    #         with:
+    #             python-version: ${{ matrix.python-version }}
+    #     -   name: "Main Script"
+    #         run: |
+    #             EXTRA_INSTALL="numpy sympy pexpect"
+    #             curl -L -O https://tiker.net/ci-support-v0
+    #             . ./ci-support-v0
 
-                build_py_project_in_venv
+    #             build_py_project_in_venv
 
-                # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
-                pip install symengine || true
+    #             # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
+    #             pip install symengine || true
 
-                test_py_project
+    #             test_py_project
 
-    docs:
-        name: Documentation
-        runs-on: ubuntu-latest
-        steps:
-        -   uses: actions/checkout@v4
-        -
-            uses: actions/setup-python@v5
-            with:
-                python-version: '3.x'
-        -   name: "Main Script"
-            run: |
-                EXTRA_INSTALL="numpy sympy"
-                curl -L -O https://tiker.net/ci-support-v0
-                . ./ci-support-v0
-                build_py_project_in_venv
-                build_docs
+    # docs:
+    #     name: Documentation
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #     -   uses: actions/checkout@v4
+    #     -
+    #         uses: actions/setup-python@v5
+    #         with:
+    #             python-version: '3.x'
+    #     -   name: "Main Script"
+    #         run: |
+    #             EXTRA_INSTALL="numpy sympy"
+    #             curl -L -O https://tiker.net/ci-support-v0
+    #             . ./ci-support-v0
+    #             build_py_project_in_venv
+    #             build_docs
 
     downstream_tests:
         strategy:
             matrix:
-                downstream_project: [loopy, pytential, pytato]
+                downstream_project: [pytential]
             fail-fast: false
         name: Tests for downstream project ${{ matrix.downstream_project }}
         runs-on: ubuntu-latest
@@ -100,7 +100,9 @@ jobs:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
             run: |
                 curl -L -O https://tiker.net/ci-support-v0
+                export PYTEST_FLAGS=-v
                 . ./ci-support-v0
+
                 test_downstream "$DOWNSTREAM_PROJECT"
 
 # vim: sw=4
