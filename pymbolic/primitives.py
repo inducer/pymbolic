@@ -745,6 +745,12 @@ def augment_expression_dataclass(cls: type[Expression]) -> type[Expression]:
         f"""
         from warnings import warn
 
+        # def {cls.__name__}__post_init__(self):
+        #     if hasattr(self, "name"):
+        #         self.name = intern(self.name)
+
+        # cls.__post_init__ = {cls.__name__}__post_init__
+
 
         def {cls.__name__}_eq(self, other):
             if self is other:
@@ -844,7 +850,8 @@ class Variable(Leaf):
     """
     name: str
 
-    # FIXME: Missing intern(): does it matter?
+    def __post_init__(self):
+        object.__setattr__(self, "name", intern(self.name))
 
     mapper_method = intern("map_variable")
 
