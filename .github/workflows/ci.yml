@@ -104,7 +104,7 @@ jobs:
                 export CISUPPORT_PARALLEL_PYTEST=no
                 export PYTEST_FLAGS="-v "
 
-                sed -i.bak '/libjemalloc/d' ./ci-support-v0
+                # sed -i.bak '/libjemalloc/d' ./ci-support-v0
                 # sed -i.bak '/edit_requirements_txt_for_downstream_in_subdir$/d' ./ci-support-v0
 
                 . ./ci-support-v0
