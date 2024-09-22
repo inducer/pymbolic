@@ -843,27 +843,27 @@ class Leaf(AlgebraicLeaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Variable(Leaf):
     """
     .. attribute:: name
     """
     name: str
 
-    def __post_init__(self):
-        object.__setattr__(self, "name", intern(self.name))
+    # def __post_init__(self):
+    #     object.__setattr__(self, "name", intern(self.name))
 
     mapper_method = intern("map_variable")
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Wildcard(Leaf):
     mapper_method = intern("map_wildcard")
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DotWildcard(Leaf):
     """
     A wildcard that can be substituted for a single expression.
@@ -874,7 +874,7 @@ class DotWildcard(Leaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class StarWildcard(Leaf):
     """
     A wildcard that can be substituted by a sequence of expressions of
@@ -886,7 +886,7 @@ class StarWildcard(Leaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class FunctionSymbol(AlgebraicLeaf):
     """Represents the name of a function.
 
@@ -900,7 +900,7 @@ class FunctionSymbol(AlgebraicLeaf):
 # {{{ structural primitives
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Call(AlgebraicLeaf):
     """A function invocation.
 
@@ -921,7 +921,7 @@ class Call(AlgebraicLeaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CallWithKwargs(AlgebraicLeaf):
     """A function invocation with keyword arguments.
 
@@ -950,7 +950,7 @@ class CallWithKwargs(AlgebraicLeaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Subscript(AlgebraicLeaf):
     """An array subscript.
 
@@ -975,7 +975,7 @@ class Subscript(AlgebraicLeaf):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Lookup(AlgebraicLeaf):
     """Access to an attribute of an *aggregate*, such as an
     attribute of a class.
@@ -992,7 +992,7 @@ class Lookup(AlgebraicLeaf):
 # {{{ arithmetic primitives
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Sum(Expression):
     """
     .. attribute:: children
@@ -1045,7 +1045,7 @@ class Sum(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Product(Expression):
     """
     .. attribute:: children
@@ -1089,7 +1089,7 @@ class Product(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class QuotientBase(Expression):
     numerator: ExpressionT
     denominator: ExpressionT
@@ -1109,7 +1109,7 @@ class QuotientBase(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Quotient(QuotientBase):
     """
     .. attribute:: numerator
@@ -1120,7 +1120,7 @@ class Quotient(QuotientBase):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class FloorDiv(QuotientBase):
     """
     .. attribute:: numerator
@@ -1131,7 +1131,7 @@ class FloorDiv(QuotientBase):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Remainder(QuotientBase):
     """
     .. attribute:: numerator
@@ -1142,7 +1142,7 @@ class Remainder(QuotientBase):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Power(Expression):
     """
     .. attribute:: base
@@ -1160,14 +1160,14 @@ class Power(Expression):
 # {{{ shift operators
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class _ShiftOperator(Expression):
     shiftee: ExpressionT
     shift: ExpressionT
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class LeftShift(_ShiftOperator):
     """
     .. attribute:: shiftee
@@ -1178,7 +1178,7 @@ class LeftShift(_ShiftOperator):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class RightShift(_ShiftOperator):
     """
     .. attribute:: shiftee
@@ -1193,7 +1193,7 @@ class RightShift(_ShiftOperator):
 # {{{ bitwise operators
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class BitwiseNot(Expression):
     """
     .. attribute:: child
@@ -1205,7 +1205,7 @@ class BitwiseNot(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class BitwiseOr(Expression):
     """
     .. attribute:: children
@@ -1219,7 +1219,7 @@ class BitwiseOr(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class BitwiseXor(Expression):
     """
     .. attribute:: children
@@ -1232,7 +1232,7 @@ class BitwiseXor(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class BitwiseAnd(Expression):
     """
     .. attribute:: children
@@ -1249,7 +1249,7 @@ class BitwiseAnd(Expression):
 # {{{ comparisons, logic, conditionals
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Comparison(Expression):
     """
     .. attribute:: left
@@ -1303,7 +1303,7 @@ class Comparison(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class LogicalNot(Expression):
     """
     .. attribute:: child
@@ -1315,7 +1315,7 @@ class LogicalNot(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class LogicalOr(Expression):
     """
     .. attribute:: children
@@ -1329,7 +1329,7 @@ class LogicalOr(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class LogicalAnd(Expression):
     """
     .. attribute:: children
@@ -1342,7 +1342,7 @@ class LogicalAnd(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class If(Expression):
     """
     .. attribute:: condition
@@ -1358,7 +1358,7 @@ class If(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Min(Expression):
     """
     .. attribute:: children
@@ -1371,7 +1371,7 @@ class Min(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Max(Expression):
     """
     .. attribute:: children
@@ -1412,7 +1412,7 @@ class cse_scope:  # noqa
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CommonSubexpression(Expression):
     """A helper for code generation and caching. Denotes a subexpression that
     should only be evaluated once. If, in code generation, it is assigned to
@@ -1453,7 +1453,7 @@ class CommonSubexpression(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Substitution(Expression):
     """Work-alike of sympy's Subs."""
 
@@ -1465,7 +1465,7 @@ class Substitution(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Derivative(Expression):
     """Work-alike of sympy's Derivative."""
 
@@ -1476,7 +1476,7 @@ class Derivative(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class Slice(Expression):
     """A slice expression as in a[1:7]."""
 
@@ -1517,7 +1517,7 @@ class Slice(Expression):
 
 
 @augment_expression_dataclass
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class NaN(Expression):
     """
     An expression node representing not-a-number as a floating point number.
