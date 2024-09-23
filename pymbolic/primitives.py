@@ -563,7 +563,7 @@ class Expression:
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
         """
-        from warnings import warn
+        # from warnings import warn
         # warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
         #      "Use equality comparison supplied by augment_expression_dataclass "
         #      "instead. "
@@ -582,7 +582,7 @@ class Expression:
     def __hash__(self):
         """Provides caching for hash values.
         """
-        from warnings import warn
+        # from warnings import warn
         # warn(f"Expression.__hash__ is used by {self.__class__}. This is deprecated. "
         #      "Use hash functions supplied by augment_expression_dataclass instead. "
         #      "This will stop working in 2025.",
