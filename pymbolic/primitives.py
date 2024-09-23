@@ -563,12 +563,12 @@ class Expression:
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
         """
-        # from warnings import warn
-        # warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
-        #      "Use equality comparison supplied by augment_expression_dataclass "
-        #      "instead. "
-        #      "This will stop working in 2025.",
-        #      DeprecationWarning, stacklevel=2)
+        from warnings import warn
+        warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
+             "Use equality comparison supplied by augment_expression_dataclass "
+             "instead. "
+             "This will stop working in 2025.",
+             DeprecationWarning, stacklevel=2)
         if self is other:
             return True
         elif hash(self) != hash(other):
@@ -582,11 +582,11 @@ class Expression:
     def __hash__(self):
         """Provides caching for hash values.
         """
-        # from warnings import warn
-        # warn(f"Expression.__hash__ is used by {self.__class__}. This is deprecated. "
-        #      "Use hash functions supplied by augment_expression_dataclass instead. "
-        #      "This will stop working in 2025.",
-        #      DeprecationWarning, stacklevel=2)
+        from warnings import warn
+        warn(f"Expression.__hash__ is used by {self.__class__}. This is deprecated. "
+             "Use hash functions supplied by augment_expression_dataclass instead. "
+             "This will stop working in 2025.",
+             DeprecationWarning, stacklevel=2)
 
         try:
             return self._hash_value
@@ -791,9 +791,9 @@ def augment_expression_dataclass(cls: type[Expression]) -> type[Expression]:
 
 
         def {cls.__name__}_init_arg_names(self):
-            # warn("__getinitargs__ is deprecated and will be removed in 2025. "
-            #         "Use dataclasses.fields instead.",
-            #         DeprecationWarning, stacklevel=2)
+            warn("__getinitargs__ is deprecated and will be removed in 2025. "
+                    "Use dataclasses.fields instead.",
+                    DeprecationWarning, stacklevel=2)
 
             return {fld_name_tuple}
 
@@ -801,9 +801,9 @@ def augment_expression_dataclass(cls: type[Expression]) -> type[Expression]:
 
 
         def {cls.__name__}_getinitargs(self):
-            # warn("__getinitargs__ is deprecated and will be removed in 2025. "
-            #         "Use dataclasses.fields instead.",
-            #         DeprecationWarning, stacklevel=2)
+            warn("__getinitargs__ is deprecated and will be removed in 2025. "
+                    "Use dataclasses.fields instead.",
+                    DeprecationWarning, stacklevel=2)
 
             return {attr_tuple}
 

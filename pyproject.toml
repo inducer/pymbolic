@@ -102,3 +102,10 @@ known-local-folder = ["pymbolic"]
 lines-after-imports = 2
 combine-as-imports = true
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:PersistentHashWalkMapper is deprecated",
+    "ignore:__getinitargs__ is deprecated",
+    "ignore:Expression.__eq__ is deprecated",
+    "ignore:Expression.__hash__ is deprecated",
+]
