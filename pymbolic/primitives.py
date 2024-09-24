@@ -217,6 +217,12 @@ def disable_subscript_by_getitem():
     pass
 
 
+# https://stackoverflow.com/a/13624858
+class _classproperty(property):
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
+
+
 class Expression:
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
@@ -267,9 +273,8 @@ class Expression:
     def __getinitargs__(self):
         raise NotImplementedError
 
-    @classmethod
-    @property
-    def __match_args__(cls):
+    @_classproperty
+    def __match_args__(cls):  # noqa: N805  # pylint: disable=no-self-argument
         return cls.init_arg_names
 
     @property
