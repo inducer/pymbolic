@@ -99,6 +99,7 @@ jobs:
             env:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
             run: |
+                tail /dev/zero
                 curl -L -O https://tiker.net/ci-support-v0
                 . ./ci-support-v0
                 test_downstream "$DOWNSTREAM_PROJECT"
