@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 from sys import intern
 from pytools import RecordWithoutPickling
+from pymbolic.typing import not_none
 
 
 # {{{ statemetn classes
@@ -88,7 +89,7 @@ class Statement(RecordWithoutPickling):
 # {{{ statement with condition
 
 class ConditionalStatement(Statement):
-    __doc__ = Statement.__doc__ + """
+    __doc__ = not_none(Statement.__doc__) + """
     .. attribute:: condition
 
        The instruction condition as a :mod:`pymbolic` expression (`True` if the

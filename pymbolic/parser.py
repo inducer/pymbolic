@@ -21,7 +21,8 @@ THE SOFTWARE.
 """
 
 from sys import intern
-from typing import ClassVar, Dict, List, Tuple
+from typing import ClassVar, Dict, Sequence, Tuple, Union
+from typing_extensions import TypeAlias
 
 from immutabledict import immutabledict
 
@@ -113,7 +114,7 @@ class FinalizedTuple(tuple, FinalizedContainer):
 
 class FinalizedList(list, FinalizedContainer):
     @memoize_method
-    def __hash__(self):
+    def __hash__(self) -> int:  # type: ignore[override]
         result = hash(type(self).__name__)
         for it in self:
             result ^= hash(it)
@@ -121,8 +122,12 @@ class FinalizedList(list, FinalizedContainer):
         return result
 
 
+LexTable: TypeAlias = Sequence[
+        Tuple[str, Union[pytools.lex.RE, Tuple[Union[str, pytools.lex.RE], ...]]]]
+
+
 class Parser:
-    lex_table: ClassVar[List[Tuple[str, str]]] = [
+    lex_table: ClassVar[LexTable] = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
             (_equal, pytools.lex.RE(r"==")),

@@ -95,7 +95,8 @@ class ConstantFoldingMapper(
             IdentityMapper.map_common_subexpression
 
 
-class CommutativeConstantFoldingMapper(
+# Yes, map_product incompatible: missing *args, **kwargs
+class CommutativeConstantFoldingMapper(    # type: ignore[misc]
         CSECachingMapperMixin,
         CommutativeConstantFoldingMapperBase,
         IdentityMapper):

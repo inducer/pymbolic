@@ -32,6 +32,7 @@ THE SOFTWARE.
 """
 
 
+from typing import Any
 from pymbolic.mapper import (RecursiveMapper, CSECachingMapperMixin,
                              CachedMapper)
 import operator as op
@@ -236,7 +237,7 @@ class CachedFloatEvaluationMapper(CachedEvaluationMapper):
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper):
+def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper) -> Any:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
@@ -246,7 +247,7 @@ def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper):
     return mapper_cls(context)(expression)
 
 
-def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context):
+def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context) -> Any:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
@@ -255,7 +256,7 @@ def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context):
 
 
 def evaluate_to_float(expression, context=None,
-                      mapper_cls=CachedFloatEvaluationMapper):
+                      mapper_cls=CachedFloatEvaluationMapper) -> Any:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
