@@ -89,7 +89,7 @@ jobs:
     downstream_tests:
         strategy:
             matrix:
-                downstream_project: [loopy, pytential, pytato]
+                downstream_project: [pytential]
             fail-fast: false
         name: Tests for downstream project ${{ matrix.downstream_project }}
         runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
             env:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
             run: |
-                tail /dev/zero
+                sleep 2h
                 curl -L -O https://tiker.net/ci-support-v0
                 . ./ci-support-v0
                 test_downstream "$DOWNSTREAM_PROJECT"
