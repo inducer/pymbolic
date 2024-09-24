@@ -36,14 +36,14 @@ __doc__ = """
 
 import re
 from sys import intern
-from typing import ClassVar, List, Tuple
+from typing import ClassVar
 
 import numpy as np
 
 import pytools
 
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.parser import Parser as ParserBase, FinalizedTuple
+from pymbolic.parser import Parser as ParserBase, FinalizedTuple, LexTable
 
 
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
@@ -95,7 +95,7 @@ class MaximaParser(ParserBase):
     imag_unit = intern("imag_unit")
     euler_number = intern("euler_number")
 
-    lex_table: ClassVar[List[Tuple[str, str]]] = [
+    lex_table: ClassVar[LexTable] = [
             (power_sym, pytools.lex.RE(r"\^")),
             (imag_unit, pytools.lex.RE(r"%i")),
             (euler_number, pytools.lex.RE(r"%e")),

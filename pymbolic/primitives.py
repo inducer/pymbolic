@@ -23,29 +23,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import re
 from dataclasses import dataclass, fields
 from sys import intern
-from typing import Any, Callable, ClassVar, Mapping, Tuple, Union, TYPE_CHECKING
+from typing import (
+    Any, Callable, ClassVar, Mapping, TYPE_CHECKING, NoReturn, TypeVar, cast)
 from warnings import warn
+from typing_extensions import TypeIs, dataclass_transform
 
-import pymbolic.traits as traits
-
+from . import traits
+from .typing import ExpressionT, NumberT, ScalarT
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
-
-# FIXME: This is a lie. Many more constant types (e.g. numpy and such)
-# are in practical use and completely fine. We cannot really add in numpy
-# as a special case (because pymbolic doesn't have a hard numpy dependency),
-# and there isn't a usable numerical tower that we could rely on. As such,
-# code abusing what constants are allowable will have to type-ignore those
-# statements. Better ideas would be most welcome.
-#
-# References:
-# https://github.com/python/mypy/issues/3186
-# https://discuss.python.org/t/numeric-generics-where-do-we-go-from-pep-3141-and-present-day-mypy/17155/14
-_ConstantT = Union[int, float, complex]
-ExpressionT = Union[_ConstantT, "Expression", Tuple["ExpressionT", ...]]
 
 
 __doc__ = """
@@ -199,6 +189,29 @@ Constants
 .. autoclass:: NaN
     :undoc-members:
     :members: mapper_method
+
+Outside references
+------------------
+
+.. class:: DataclassInstance
+
+    An instance of a :func:`~dataclasses.dataclass`.
+
+.. class:: _T
+
+    A type variable.
+
+.. currentmodule:: numpy
+
+.. class:: bool_
+
+    Deprecated alias for :class:`numpy.bool`.
+
+.. currentmodule:: typing_extensions
+
+.. class:: TypeIs
+
+    See :data:`typing_extensions.TypeIs`.
 """
 
 
@@ -218,9 +231,22 @@ def disable_subscript_by_getitem():
 
 
 # https://stackoverflow.com/a/13624858
-class _classproperty(property):
+class _classproperty(property):  # noqa: N801
     def __get__(self, owner_self, owner_cls):
         return self.fget(owner_cls)
+
+
+class _AttributeLookupCreator:
+    def __init__(self, aggregate: ExpressionT):
+        self.aggregate = aggregate
+
+    def __getattr__(self, name: str) -> Lookup:
+        return Lookup(self.aggregate, name)
+
+
+@dataclass(frozen=True)
+class EmptyOK:
+    child: ExpressionT
 
 
 class Expression:
@@ -268,6 +294,8 @@ class Expression:
     .. automethod:: ge
     """
 
+    mapper_method: ClassVar[str]
+
     # {{{ init arg names (override by subclass)
 
     def __getinitargs__(self):
@@ -278,14 +306,14 @@ class Expression:
         return cls.init_arg_names
 
     @property
-    def init_arg_names(self):
+    def init_arg_names(self) -> tuple[str, ...]:
         raise NotImplementedError
 
     # }}}
 
     # {{{ arithmetic
 
-    def __add__(self, other):
+    def __add__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
         if is_nonzero(other):
@@ -299,7 +327,7 @@ class Expression:
         else:
             return self
 
-    def __radd__(self, other):
+    def __radd__(self, other: object) -> ExpressionT:
         assert is_constant(other)
         if is_nonzero(other):
             if self:
@@ -309,16 +337,16 @@ class Expression:
         else:
             return self
 
-    def __sub__(self, other):
+    def __sub__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
         if is_nonzero(other):
-            return self.__add__(-other)
+            return self.__add__(-cast(NumberT, other))
         else:
             return self
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: object) -> ExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -327,10 +355,11 @@ class Expression:
         else:
             return -self
 
-    def __mul__(self, other):
+    def __mul__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other - 1):
             return self
         elif is_zero(other):
@@ -338,7 +367,7 @@ class Expression:
         else:
             return Product((self, other))
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: object) -> ExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -349,16 +378,17 @@ class Expression:
         else:
             return Product((other, self))
 
-    def __div__(self, other):
+    def __div__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return self
         return quotient(self, other)
     __truediv__ = __div__
 
-    def __rdiv__(self, other):
+    def __rdiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -367,15 +397,16 @@ class Expression:
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return self
         return FloorDiv(self, other)
 
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -383,31 +414,33 @@ class Expression:
             return other
         return FloorDiv(other, self)
 
-    def __mod__(self, other):
+    def __mod__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return 0
         return Remainder(self, other)
 
-    def __rmod__(self, other):
+    def __rmod__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
         return Remainder(other, self)
 
-    def __pow__(self, other):
+    def __pow__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other):  # exponent zero
             return 1
         elif is_zero(other-1):  # exponent one
             return self
         return Power(self, other)
 
-    def __rpow__(self, other):
+    def __rpow__(self, other: object) -> ExpressionT:
         assert is_constant(other)
 
         if is_zero(other):  # base zero
@@ -420,92 +453,129 @@ class Expression:
 
     # {{{ shifts
 
-    def __lshift__(self, other):
+    def __lshift__(self, other: object) -> LeftShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return LeftShift(self, other)
 
-    def __rlshift__(self, other):
+    def __rlshift__(self, other: object) -> LeftShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return LeftShift(other, self)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other: object) -> RightShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return RightShift(self, other)
 
-    def __rrshift__(self, other):
+    def __rrshift__(self, other: object) -> RightShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return RightShift(other, self)
 
     # }}}
 
     # {{{ bitwise operators
 
-    def __invert__(self):
+    def __invert__(self) -> BitwiseNot:
         return BitwiseNot(self)
 
-    def __or__(self, other):
+    def __or__(self, other: object) -> BitwiseOr:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseOr((self, other))
 
-    def __ror__(self, other):
+    def __ror__(self, other: object) -> BitwiseOr:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseOr((other, self))
 
-    def __xor__(self, other):
+    def __xor__(self, other: object) -> BitwiseXor:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseXor((self, other))
 
-    def __rxor__(self, other):
+    def __rxor__(self, other: object) -> BitwiseXor:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseXor((other, self))
 
-    def __and__(self, other):
+    def __and__(self, other: object) -> BitwiseAnd:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseAnd((self, other))
 
-    def __rand__(self, other):
+    def __rand__(self, other: object) -> BitwiseAnd:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseAnd((other, self))
 
     # }}}
 
     # {{{ misc
 
-    def __neg__(self):
+    def __neg__(self) -> ExpressionT:
         return -1*self
 
-    def __pos__(self):
+    def __pos__(self) -> ExpressionT:
         return self
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
         if kwargs:
             from immutabledict import immutabledict
             return CallWithKwargs(self, args, immutabledict(kwargs))
         else:
             return Call(self, args)
 
-    def index(self, subscript):
-        """Return an expression representing ``self[subscript]``.
+    if not TYPE_CHECKING:
+        def index(self, subscript: Expression) -> Expression:
+            """Return an expression representing ``self[subscript]``.
 
-        .. versionadded:: 2014.3
-        """
+            .. versionadded:: 2014.3
+            """
+
+            warn("Expression.index(i) is deprecated and will be removed in 2H2025. "
+                 "Use 'expr[i] 'instead.", DeprecationWarning, stacklevel=2)
+
+            return self[subscript]
+
+    def __getitem__(self, subscript: ExpressionT | EmptyOK) -> Expression:
+        """Return an expression representing ``self[subscript]``. """
+
+        if isinstance(subscript, EmptyOK):
+            return Subscript(self, subscript.child)
 
         if subscript == ():
+            warn("Expression.__getitem__ called with an empty tuple as an index. "
+                 "This still returns just the aggregate (not a Subscript), "
+                 "but this behavior will change in 2026. To avoid this warning "
+                 "(and return a Subscript unconditionally), wrap the subscript "
+                 "in pymbolic.primitives.EmptyOK.", DeprecationWarning, stacklevel=2)
             return self
-        else:
-            return Subscript(self, subscript)
+        return Subscript(self, subscript)
 
-    __getitem__ = index
-
-    def attr(self, name):
+    def attr(self, name: str) -> Lookup:
         """Return a :class:`Lookup` for *name* in *self*.
         """
         return Lookup(self, name)
 
     @property
-    def a(self):
+    def a(self) -> _AttributeLookupCreator:
         """Provide a spelling ``expr.a.name`` for encoding attribute lookup.
         """
-        class AttributeLookupCreator:
-            def __init__(self, aggregate):
-                self.aggregate = aggregate
+        return _AttributeLookupCreator(self)
 
-            def __getattr__(self, name):
-                return Lookup(self.aggregate, name)
-
-        return AttributeLookupCreator(self)
-
-    def __float__(self):
+    def __float__(self) -> float:
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
@@ -521,7 +591,7 @@ class Expression:
         from pymbolic.mapper.stringifier import StringifyMapper
         return StringifyMapper()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use the :meth:`make_stringifier` to return a human-readable
         string representation of *self*.
         """
@@ -529,7 +599,7 @@ class Expression:
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.make_stringifier()(self, PREC_NONE)
 
-    def _safe_repr(self, limit=None):
+    def _safe_repr(self, limit: int | None = None) -> str:
         if limit is None:
             limit = SAFE_REPR_LIMIT
 
@@ -567,14 +637,14 @@ class Expression:
     # with pytest which bufered all the warnings.
     _deprecation_warnings_issued: ClassVar[set[tuple[type[Expression], str]]] = set()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
         """
         depr_key = (type(self), "__eq__")
         if depr_key not in self._deprecation_warnings_issued:
             warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
-                 "Use equality comparison supplied by augment_expression_dataclass "
+                 "Use equality comparison supplied by expr_dataclass"
                  "instead. "
                  "This will stop working in 2025.",
                  DeprecationWarning, stacklevel=2)
@@ -587,10 +657,10 @@ class Expression:
         else:
             return self.is_equal(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Provides caching for hash values.
         """
         depr_key = (type(self), "__hash__")
@@ -606,13 +676,13 @@ class Expression:
         try:
             return self._hash_value
         except AttributeError:
-            self._hash_value = self.get_hash()
+            self._hash_value: int = self.get_hash()
             return self._hash_value
 
-    def __getstate__(self):
+    def __getstate__(self) -> tuple[Any]:
         return self.__getinitargs__()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         # Can't use trivial pickling: _hash_value cache must stay unset
         assert len(self.init_arg_names) == len(state), type(self)
         for name, value in zip(self.init_arg_names, state):
@@ -622,32 +692,32 @@ class Expression:
 
     # {{{ hash/equality backend
 
-    def is_equal(self, other):
+    def is_equal(self, other) -> bool:
         return (type(other) is type(self)
                 and self.__getinitargs__() == other.__getinitargs__())
 
-    def get_hash(self):
+    def get_hash(self) -> int:
         return hash((type(self).__name__, *self.__getinitargs__()))
 
     # }}}
 
     # {{{ logical op constructors
 
-    def not_(self):
+    def not_(self) -> LogicalNot:
         """Return *self* wrapped in a :class:`LogicalNot`.
 
         .. versionadded:: 2015.2
         """
         return LogicalNot(self)
 
-    def and_(self, other):
+    def and_(self, other) -> LogicalAnd:
         """Return :class:`LogicalAnd` between *self* and *other*.
 
         .. versionadded:: 2015.2
         """
         return LogicalAnd((self, other))
 
-    def or_(self, other):
+    def or_(self, other) -> LogicalOr:
         """Return :class:`LogicalOr` between *self* and *other*.
 
         .. versionadded:: 2015.2
@@ -658,42 +728,42 @@ class Expression:
 
     # {{{ comparison constructors
 
-    def eq(self, other):
+    def eq(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "==", other)
 
-    def ne(self, other):
+    def ne(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "!=", other)
 
-    def le(self, other):
+    def le(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "<=", other)
 
-    def lt(self, other):
+    def lt(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "<", other)
 
-    def ge(self, other):
+    def ge(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, ">=", other)
 
-    def gt(self, other):
+    def gt(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
@@ -706,21 +776,21 @@ class Expression:
 
     # /!\ Don't be tempted to resolve these to Comparison.
 
-    def __le__(self, other):
+    def __le__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
     # }}}
 
-    def __abs__(self):
+    def __abs__(self) -> Expression:
         return Call(Variable("abs"), (self,))
 
     def __iter__(self):
@@ -1045,10 +1115,11 @@ class Subscript(AlgebraicLeaf):
         a tuple.
     """
     aggregate: ExpressionT
+
     index: ExpressionT
 
     @property
-    def index_tuple(self):
+    def index_tuple(self) -> tuple[ExpressionT, ...]:
         if isinstance(self.index, tuple):
             return self.index
         else:
@@ -1554,7 +1625,7 @@ class NaN(Expression):
 
 # {{{ intelligent factory functions
 
-def make_variable(var_or_string: Expression | str) -> Variable:
+def make_variable(var_or_string: Variable | str) -> Variable:
     if isinstance(var_or_string, str):
         return Variable(intern(var_or_string))
     else:
@@ -1661,7 +1732,7 @@ def quotient(numerator, denominator):
 
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
-VALID_CONSTANT_CLASSES = (int, float, complex)
+VALID_CONSTANT_CLASSES: tuple[type, ...] = (int, float, complex)
 VALID_OPERANDS = (Expression,)
 
 try:
@@ -1671,11 +1742,11 @@ except ImportError:
     pass
 
 
-def is_constant(value):
+def is_constant(value: object) -> TypeIs[ScalarT]:
     return isinstance(value, VALID_CONSTANT_CLASSES)
 
 
-def is_valid_operand(value):
+def is_valid_operand(value: object) -> TypeIs[ExpressionT]:
     return isinstance(value, VALID_OPERANDS) or is_constant(value)
 
 

@@ -288,7 +288,9 @@ class PymbolicToASTMapper(CachedMapper):
     def map_call(self, expr: p.Call) -> ast.expr:
         return ast.Call(
             func=self.rec(expr.function),
-            args=[self.rec(param) for param in expr.parameters])
+            args=[self.rec(param) for param in expr.parameters],
+            keywords=[],
+        )
 
     def map_call_with_kwargs(self, expr) -> ast.expr:
         return ast.Call(
@@ -354,7 +356,7 @@ class PymbolicToASTMapper(CachedMapper):
                                            ast.BitAnd())
 
     def map_logical_not(self, expr) -> ast.expr:
-        return ast.UnaryOp(self.rec(expr.child), ast.Not())
+        return ast.UnaryOp(ast.Not(), self.rec(expr.child))
 
     def map_logical_or(self, expr) -> ast.expr:
         return ast.BoolOp(ast.Or(), [self.rec(child)
@@ -376,6 +378,7 @@ class PymbolicToASTMapper(CachedMapper):
                          orelse=self.rec(expr.else_))
 
     def map_nan(self, expr: p.NaN) -> ast.expr:
+        assert expr.data_type is not None
         if isinstance(expr.data_type(float("nan")), float):
             return ast.Call(
                 ast.Name(id="float"),
