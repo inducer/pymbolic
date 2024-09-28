@@ -35,3 +35,4 @@ version: 2022.1
 doi: 10.5281/zenodo.6533945
 date-released: 2022-05-08
 url: "https://github.com/inducer/pymbolic"
+license: MIT

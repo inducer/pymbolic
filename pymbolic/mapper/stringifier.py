@@ -20,8 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import Mapper, CachedMapper
+from typing import ClassVar, Dict
+
 import pymbolic.primitives as p
+from pymbolic.mapper import Mapper, CachedMapper
+
 
 __doc__ = """
 .. _prec-constants:
@@ -161,7 +164,7 @@ class StringifyMapper(Mapper):
                     self.rec(ch, PREC_NONE, *args, **kwargs)
                     for ch in expr.parameters
                     ])
-                +  # noqa: W504
+                +
                 tuple([
                     "{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
                     for name, ch in expr.kw_parameters.items()
@@ -479,12 +482,12 @@ class CSESplittingStringifyMapperMixin:
     def map_common_subexpression(self, expr, enclosing_prec, *args, **kwargs):
         # This is here for compatibility, in case the constructor did not get called.
         try:
-            self.cse_to_name
+            self.cse_to_name  # noqa: B018
         except AttributeError:
             from warnings import warn
             warn("Constructor of CSESplittingStringifyMapperMixin did not get "
-                    "called. This is deprecated and will stop working in 2022.",
-                    DeprecationWarning)
+                 "called. This is deprecated and will stop working in 2022.",
+                 DeprecationWarning, stacklevel=2)
 
             self.cse_to_name = {}
             self.cse_names = set()
@@ -623,7 +626,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 
 class LaTeXMapper(StringifyMapper):
 
-    COMPARISON_OP_TO_LATEX = {
+    COMPARISON_OP_TO_LATEX: ClassVar[Dict[str, str]] = {
         "==": r"=",
         "!=": r"\ne",
         "<=": r"\le",

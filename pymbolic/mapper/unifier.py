@@ -391,7 +391,7 @@ class UnidirectionalUnifier(UnifierBase):
                     return
                 for subset in map(set, subsets(s, len(s) - k + 1)):
                     for partition in partitions(s - subset, k - 1):
-                        yield [subset] + partition
+                        yield [subset, *partition]
 
             for partition in partitions(
                     other_leftovers, len(plain_var_candidates)):
@@ -410,9 +410,10 @@ class UnidirectionalUnifier(UnifierBase):
                     # urecs was not merged in, do it here.
                     yield from unify_many(urecs, result)
 
-        for urec in match_children(
-                UnificationRecord([]), 0, set(range(len(other.children)))):
-            yield urec
+        yield from match_children(
+            UnificationRecord([]),
+            0,
+            set(range(len(other.children))))
 
     def map_sum(self, expr, other, unis):
         from pymbolic.primitives import flattened_sum

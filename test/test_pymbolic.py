@@ -456,7 +456,7 @@ def test_geometric_algebra(dims):
         assert (c << c.I.rev()).close_to(c | c.I.rev())
 
         # inverse
-        for div in list(b.gen_blades()) + [vec1, vec1.I]:
+        for div in [*b.gen_blades(), vec1, vec1.I]:
             assert (div.inv()*div).close_to(1)
             assert (div*div.inv()).close_to(1)
             assert ((1/div)*div).close_to(1)
@@ -543,7 +543,7 @@ def test_compile():
 def test_unifier():
     from pymbolic import var
     from pymbolic.mapper.unifier import UnidirectionalUnifier
-    a, b, c, d, e, f = [var(s) for s in "abcdef"]
+    a, b, c, d, e, f = (var(s) for s in "abcdef")
 
     def match_found(records, eqns):
         for record in records:
@@ -586,7 +586,7 @@ def test_long_sympy_mapping():
     sp = pytest.importorskip("sympy")
     from pymbolic.interop.sympy import SympyToPymbolicMapper
     SympyToPymbolicMapper()(sp.sympify(int(10**20)))
-    SympyToPymbolicMapper()(sp.sympify(int(10)))
+    SympyToPymbolicMapper()(sp.sympify(10))
 
 # }}}
 
@@ -664,10 +664,10 @@ def test_latex_mapper():
                      "-output-directory=%s" % latex_dir,
                      tex_file_path],
                     universal_newlines=True)
-        except OSError:  # FIXME: Should be FileNotFoundError on Py3
+        except FileNotFoundError:
             pytest.skip("latex command not found")
         except subprocess.CalledProcessError as err:
-            raise AssertionError(str(err.output))
+            raise AssertionError(str(err.output)) from None
 
     finally:
         shutil.rmtree(latex_dir)

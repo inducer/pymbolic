@@ -20,8 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from sys import intern
 from abc import ABC, abstractmethod
+from sys import intern
+from typing import ClassVar, Dict
+
 import pymbolic.traits as traits
 
 
@@ -260,7 +262,7 @@ class Expression(ABC):
         if is_nonzero(other):
             if self:
                 if isinstance(other, Sum):
-                    return Sum((self,) + other.children)
+                    return Sum((self, *other.children))
                 else:
                     return Sum((self, other))
             else:
@@ -580,7 +582,7 @@ class Expression(ABC):
                 and self.__getinitargs__() == other.__getinitargs__())
 
     def get_hash(self):
-        return hash((type(self).__name__,) + self.__getinitargs__())
+        return hash((type(self).__name__, *self.__getinitargs__()))
 
     # }}}
 
@@ -952,7 +954,7 @@ class Sum(_MultiChildExpression):
             return Sum(self.children + other.children)
         if not other:
             return self
-        return Sum(self.children + (other,))
+        return Sum((*self.children, other))
 
     def __radd__(self, other):
         if not is_constant(other):
@@ -962,7 +964,7 @@ class Sum(_MultiChildExpression):
             return Sum(other.children + self.children)
         if not other:
             return self
-        return Sum((other,) + self.children)
+        return Sum((other, *self.children))
 
     def __sub__(self, other):
         if not is_valid_operand(other):
@@ -970,7 +972,7 @@ class Sum(_MultiChildExpression):
 
         if not other:
             return self
-        return Sum(self.children + (-other,))
+        return Sum((*self.children, -other))
 
     def __bool__(self):
         if len(self.children) == 0:
@@ -1002,7 +1004,7 @@ class Product(_MultiChildExpression):
             return 0
         if is_zero(other-1):
             return self
-        return Product(self.children + (other,))
+        return Product((*self.children, other))
 
     def __rmul__(self, other):
         if not is_constant(other):
@@ -1013,7 +1015,7 @@ class Product(_MultiChildExpression):
             return 0
         if is_zero(other-1):
             return self
-        return Product((other,) + self.children)
+        return Product((other, *self.children))
 
     def __bool__(self):
         for i in self.children:
@@ -1205,7 +1207,7 @@ class Comparison(Expression):
 
     init_arg_names = ("left", "operator", "right")
 
-    operator_to_name = {
+    operator_to_name: ClassVar[Dict[str, str]] = {
             "==": "eq",
             "!=": "ne",
             ">=": "ge",
@@ -1213,7 +1215,9 @@ class Comparison(Expression):
             "<=": "le",
             "<": "lt",
             }
-    name_to_operator = {name: op for op, name in operator_to_name.items()}
+    name_to_operator: ClassVar[Dict[str, str]] = {
+        name: op for op, name in operator_to_name.items()
+    }
 
     def __init__(self, left, operator, right):
         """
@@ -1349,7 +1353,7 @@ class Vector(Expression):
                 "(a) numpy object arrays and "
                 "(b) pymbolic.geometric_algebra.MultiVector "
                 "(depending on the required semantics)",
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
 
     def __bool__(self):
         for i in self.children:

@@ -29,23 +29,6 @@ Python 3 Conda:
     reports:
       junit: test/pytest.xml
 
-Python 3 Conda Apple:
-  script: |
-    # That's where homebrew lives, and it has the curl that doesn't cause
-    # cert errors from the OS being too old.
-    export PATH="/usr/local/opt/curl/bin:$PATH"
-
-    CONDA_ENVIRONMENT=.test-py3.yml
-    curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-and-test-py-project-within-miniconda.sh
-    . ./build-and-test-py-project-within-miniconda.sh
-  tags:
-  - apple
-  except:
-  - tags
-  artifacts:
-    reports:
-      junit: test/pytest.xml
-
 Pylint:
   script:
   - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
@@ -65,19 +48,19 @@ Documentation:
   tags:
   - linux
 
-Flake8:
-  script:
-  - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
-  - . ./prepare-and-run-flake8.sh pymbolic test experiments
+Ruff:
+  script: |
+    pipx install ruff
+    ruff check
   tags:
-  - python3
+  - docker-runner
   except:
   - tags
 
 Downstream:
   parallel:
     matrix:
-    - DOWNSTREAM_PROJECT: [loopy, grudge, pytential, pytato]
+    - DOWNSTREAM_PROJECT: [loopy, pytential, pytato]
   tags:
   - large-node
   - "docker-runner"

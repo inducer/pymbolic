@@ -43,7 +43,7 @@ def get_dot_dependency_graph(
 
         # deprecated
         use_insn_ids=None,):
-    """Return a string in the `dot <http://graphviz.org/>`_ language depicting
+    """Return a string in the `dot <https://graphviz.org/>`__ language depicting
     dependencies among kernel statements.
 
     :arg statements: A sequence of statements, each of which is stringified by
@@ -94,9 +94,9 @@ def get_dot_dependency_graph(
 
         if 0:
             for dep in stmt.then_depends_on:
-                annotation_dep_graph[(stmt.id, dep)] = "then"
+                annotation_dep_graph[stmt.id, dep] = "then"
             for dep in stmt.else_depends_on:
-                annotation_dep_graph[(stmt.id, dep)] = "else"
+                annotation_dep_graph[stmt.id, dep] = "else"
 
     # {{{ O(n^3) (i.e. slow) transitive reduction
 
@@ -142,7 +142,8 @@ def show_dot(dot_code, output_to=None):
     from warnings import warn
     warn("pymbolic.imperative.utils.show_dot is deprecated. "
          "It will stop working in July 2023. "
-         "Please use pytools.graphviz.show_dot instead.", DeprecationWarning)
+         "Please use pytools.graphviz.show_dot instead.",
+         DeprecationWarning, stacklevel=2)
 
     from pytools.graphviz import show_dot
     return show_dot(dot_code, output_to)

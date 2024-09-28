@@ -25,7 +25,7 @@ from pymbolic.mapper import WalkMapper
 
 
 class PersistentHashWalkMapper(WalkMapper):
-    """A subclass of :class:`loopy.symbolic.WalkMapper` for constructing
+    """A subclass of :class:`pymbolic.mapper.WalkMapper` for constructing
     persistent hash keys for use with
     :class:`pytools.persistent_dict.PersistentDict`.
     """
@@ -41,4 +41,17 @@ class PersistentHashWalkMapper(WalkMapper):
         self.key_hash.update(expr.name.encode("utf8"))
 
     def map_constant(self, expr):
+        import sys
+        if "numpy" in sys.modules:
+            import numpy as np
+            if isinstance(expr, np.generic):
+                # Makes a Python scalar from a numpy one.
+                expr = expr.item()
+
         self.key_hash.update(repr(expr).encode("utf8"))
+
+    def map_comparison(self, expr):
+        if self.visit(expr):
+            self.rec(expr.left)
+            self.key_hash.update(repr(expr.operator).encode("utf8"))
+            self.rec(expr.right)

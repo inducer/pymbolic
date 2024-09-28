@@ -46,7 +46,7 @@ def _get_def_from_ast_container(container, name, node_type):
 
 @lru_cache
 def _get_ast_for_file(filename):
-    with open(filename, "r") as inf:
+    with open(filename) as inf:
         return ast.parse(inf.read(), filename)
 
 
@@ -243,7 +243,7 @@ def optimize_mapper(
     def wrapper(cls):
         try:
             # Introduced in Py3.9
-            ast.unparse
+            ast.unparse  # noqa: B018
         except AttributeError:
             return cls
 

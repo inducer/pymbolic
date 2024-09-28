@@ -22,7 +22,11 @@ THE SOFTWARE.
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict
+
+from immutabledict import immutabledict
+
 import pymbolic.primitives as primitives
+
 
 __doc__ = """
 Basic dispatch
@@ -251,7 +255,7 @@ class CachedMapper(Mapper):
         # Must add 'type(expr)', to differentiate between python scalar types.
         # In Python, the following conditions are true: "hash(4) == hash(4.0)"
         # and "4 == 4.0", but their traversal results cannot be re-used.
-        return (type(expr), expr, args, tuple(sorted(kwargs.items())))
+        return (type(expr), expr, args, immutabledict(kwargs))
 
     def __call__(self, expr, *args, **kwargs):
         result = self._cache.get(
@@ -304,23 +308,18 @@ class CombineMapper(RecursiveMapper):
         raise NotImplementedError
 
     def map_call(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.function, *args, **kwargs),)
-                + tuple([
-                    self.rec(child, *args, **kwargs) for child in expr.parameters
-                    ])
-                )
+        return self.combine((
+            self.rec(expr.function, *args, **kwargs),
+            *[self.rec(child, *args, **kwargs) for child in expr.parameters]
+            ))
 
     def map_call_with_kwargs(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.function, *args, **kwargs),)
-                + tuple([
-                    self.rec(child, *args, **kwargs)
-                    for child in expr.parameters])
-                + tuple([
-                    self.rec(child, *args, **kwargs)
-                    for child in expr.kw_parameters.values()])
-                )
+        return self.combine((
+            self.rec(expr.function, *args, **kwargs),
+            *[self.rec(child, *args, **kwargs) for child in expr.parameters],
+            *[self.rec(child, *args, **kwargs)
+              for child in expr.kw_parameters.values()]
+            ))
 
     def map_subscript(self, expr, *args, **kwargs):
         return self.combine(
@@ -350,12 +349,10 @@ class CombineMapper(RecursiveMapper):
                 self.rec(expr.exponent, *args, **kwargs)))
 
     def map_polynomial(self, expr, *args, **kwargs):
-        return self.combine(
-                (self.rec(expr.base, *args, **kwargs),)
-                + tuple([
-                    self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data
-                    ])
-                )
+        return self.combine((
+            self.rec(expr.base, *args, **kwargs),
+            *[self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data]
+            ))
 
     def map_left_shift(self, expr, *args, **kwargs):
         return self.combine((
@@ -710,7 +707,7 @@ class WalkMapper(RecursiveMapper):
     visited subexpression.
 
     ``map_...`` methods are required to call :meth:`visit` *before*
-        descending to visit their chidlren.
+        descending to visit their children.
 
     .. method:: visit(expr, *args, **kwargs)
 
@@ -1066,11 +1063,12 @@ class CSECachingMapperMixin(ABC):
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
+        key = (expr, *args)
         try:
-            return ccd[(expr, *args)]
+            return ccd[key]
         except KeyError:
             result = self.map_common_subexpression_uncached(expr, *args)
-            ccd[(expr, *args)] = result
+            ccd[key] = result
             return result
 
     @abstractmethod

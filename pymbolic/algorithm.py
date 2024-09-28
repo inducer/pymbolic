@@ -28,7 +28,7 @@ from pytools import memoize
 def integer_power(x, n, one=1):
     """Compute :math:`x^n` using only multiplications.
 
-    See also the `C2 wiki <http://c2.com/cgi/wiki?IntegerPowerAlgorithm>`_.
+    See also the `C2 wiki <https://wiki.c2.com/?IntegerPowerAlgorithm>`__.
     """
 
     assert isinstance(n, int)
@@ -60,7 +60,7 @@ def extended_euclidean(q, r):
 
     See also the
     `Wikipedia article on the Euclidean algorithm
-    <https://en.wikipedia.org/wiki/Euclidean_algorithm>`_.
+    <https://en.wikipedia.org/wiki/Euclidean_algorithm>`__.
     """
     import pymbolic.traits as traits
 
@@ -138,7 +138,7 @@ def fft(x, sign=1,
     where :math:`z = \exp(-2i\pi\operatorname{sign}/n)` and ``n == len(x)``.
     Works for all positive *n*.
 
-    See also `Wikipedia <http://en.wikipedia.org/wiki/Cooley-Tukey_FFT_algorithm>`_.
+    See also `Wikipedia <https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm>`__.
     """
 
     # revision 293076305
@@ -155,7 +155,7 @@ def fft(x, sign=1,
                 "instead. wrap_intermediate will stop working in 2023.",
                 DeprecationWarning, stacklevel=2)
 
-        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined  # noqa: E501
+        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined
             return wrap_intermediate(x)
 
     if wrap_intermediate_with_level is None:
@@ -266,13 +266,13 @@ def sym_fft(x, sign=1):
 def csr_matrix_multiply(S, x):  # noqa
     """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
-    h, w = S.shape
+    h, _w = S.shape
 
     import numpy
     result = numpy.empty_like(x)
 
     for i in range(h):
-        result[i] = sum(S.data[idx]*x[S.indices[idx]]  # noqa pylint:disable=unsupported-assignment-operation
+        result[i] = sum(S.data[idx]*x[S.indices[idx]]  # pylint:disable=unsupported-assignment-operation
                 for idx in range(S.indptr[i], S.indptr[i+1]))
 
     return result
@@ -326,7 +326,7 @@ def gaussian_elimination(mat, rhs):
     for i in range(m):
         g = gcd_many(*(
             [a for a in mat[i] if a]
-            +  # noqa: W504
+            +
             [a for a in rhs[i] if a]))
 
         mat[i] //= g

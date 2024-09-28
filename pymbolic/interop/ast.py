@@ -24,8 +24,9 @@ THE SOFTWARE.
 """
 
 import ast
+from typing import Any, ClassVar, Dict, List, Tuple, Type
+
 import pymbolic.primitives as p
-from typing import Tuple, List, Any
 from pymbolic.typing import ExpressionT, ScalarT
 from pymbolic.mapper import CachedMapper
 
@@ -112,7 +113,7 @@ def _neg(x):
 
 class ASTToPymbolic(ASTMapper):
 
-    bin_op_map = {
+    bin_op_map: ClassVar[Dict[Type[ast.operator], Any]] = {
             ast.Add: _add,
             ast.Sub: _sub,
             ast.Mult: _mult,
@@ -133,13 +134,12 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(expr.op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
-    unary_op_map = {
+    unary_op_map: ClassVar[Dict[Type[ast.unaryop], Any]] = {
             ast.Invert: _neg,
             ast.Not: p.LogicalNot,
             # ast.UAdd:
@@ -151,9 +151,8 @@ class ASTToPymbolic(ASTMapper):
             op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(expr.op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         return op_constructor(self.rec(expr.operand))
 
@@ -161,7 +160,7 @@ class ASTToPymbolic(ASTMapper):
         # (expr test, expr body, expr orelse)
         return p.If(self.rec(expr.test), self.rec(expr.body), self.rec(expr.orelse))
 
-    comparison_op_map = {
+    comparison_op_map: ClassVar[Dict[Type[ast.cmpop], str]] = {
             ast.Eq: "==",
             ast.NotEq: "!=",
             ast.Lt: "<",
@@ -182,9 +181,8 @@ class ASTToPymbolic(ASTMapper):
             comp = self.comparison_op_map[type(op)]
         except KeyError:
             raise NotImplementedError(
-                    "{} does not know how to map operator '{}'".format(
-                        type(self).__name__,
-                        type(op).__name__))
+                f"{type(self).__name__} does not know how to map operator "
+                f"'{type(expr.op).__name__}'") from None
 
         # FIXME: Support strung-together comparisons
         right, = expr.comparators
@@ -282,15 +280,10 @@ class PymbolicToASTMapper(CachedMapper):
         return self._map_multi_children_op(expr.children, ast.Mult())
 
     def map_constant(self, expr: ScalarT) -> ast.expr:
-        import sys
         if isinstance(expr, bool):
             return ast.NameConstant(expr)
         else:
-            # needed because of https://bugs.python.org/issue36280
-            if sys.version_info < (3, 8):
-                return ast.Num(expr)
-            else:
-                return ast.Constant(expr, None)
+            return ast.Constant(expr, None)
 
     def map_call(self, expr: p.Call) -> ast.expr:
         return ast.Call(
@@ -477,7 +470,7 @@ def to_evaluatable_python_function(expr: ExpressionT,
         except ImportError:
             raise RuntimeError("'to_evaluate_python_function' needs"
                                "astunparse for Py<3.9. Install via `pip"
-                               " install astunparse`")
+                               " install astunparse`") from None
     else:
         unparse = ast.unparse
 

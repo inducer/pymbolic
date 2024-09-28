@@ -76,7 +76,7 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
         try:
             return self.context[expr.name]
         except KeyError:
-            raise UnknownVariableError(expr.name)
+            raise UnknownVariableError(expr.name) from None
 
     def map_call(self, expr):
         return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])
