@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "pymbolic"
-version = "2022.2"
+version = "2024.1"
 description = "A package for symbolic computation"
 readme = "README.rst"
 license = { text = "MIT" }
@@ -32,8 +32,8 @@ dependencies = [
     "astunparse; python_version<='3.9'",
     "immutabledict",
     "pytools>=2022.1.14",
-    # for dataclass_transform with TypeAlias
-    "typing-extensions>=4; python_version<'3.10'",
+    # for dataclass_transform, TypeAlias
+    "typing-extensions>=4; python_version<'3.13'",
 ]
 
 [project.optional-dependencies]
