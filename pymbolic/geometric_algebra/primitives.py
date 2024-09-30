@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
 __license__ = """
@@ -23,9 +26,10 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import ClassVar, List
+from typing import ClassVar, Hashable
 
-from pymbolic.primitives import Expression, Variable
+from pymbolic.primitives import Expression, Variable, expr_dataclass
+from pymbolic.typing import ExpressionT
 
 
 class MultiVectorVariable(Variable):
@@ -40,42 +44,21 @@ class _GeometricCalculusExpression(Expression):
         return StringifyMapper
 
 
+@expr_dataclass()
 class NablaComponent(_GeometricCalculusExpression):
-    def __init__(self, ambient_axis, nabla_id):
-        self.ambient_axis = ambient_axis
-        self.nabla_id = nabla_id
-
-    def __getinitargs__(self):
-        return (self.ambient_axis, self.nabla_id)
-
-    mapper_method = "map_nabla_component"
+    ambient_axis: int
+    nabla_id: Hashable
 
 
+@expr_dataclass()
 class Nabla(_GeometricCalculusExpression):
-    def __init__(self, nabla_id):
-        self.nabla_id = nabla_id
-
-    def __getinitargs__(self):
-        return (self.nabla_id,)
-
-    def __getitem__(self, index):
-        if not isinstance(index, int):
-            raise TypeError("Nabla subscript must be an integer")
-
-        return NablaComponent(index, self.nabla_id)
-
-    mapper_method = "map_nabla"
+    nabla_id: Hashable
 
 
+@expr_dataclass()
 class DerivativeSource(_GeometricCalculusExpression):
-    def __init__(self, operand, nabla_id=None):
-        self.operand = operand
-        self.nabla_id = nabla_id
-
-    def __getinitargs__(self):
-        return (self.operand, self.nabla_id)
-
-    mapper_method = "map_derivative_source"
+    operand: ExpressionT
+    nabla_id: Hashable
 
 
 class Derivative:
@@ -86,7 +69,7 @@ class Derivative:
     .. automethod:: dnabla
     .. automethod:: resolve
     """
-    _next_id: ClassVar[List[int]] = [0]
+    _next_id: ClassVar[list[int]] = [0]
 
     def __init__(self):
         self.my_id = f"id{self._next_id[0]}"
@@ -97,8 +80,9 @@ class Derivative:
         return Nabla(self.my_id)
 
     def dnabla(self, ambient_dim):
-        from pymbolic.geometric_algebra import MultiVector
         from pytools.obj_array import make_obj_array
+
+        from pymbolic.geometric_algebra import MultiVector
         return MultiVector(make_obj_array(
             [NablaComponent(axis, self.my_id)
                 for axis in range(ambient_dim)]))

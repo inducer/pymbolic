@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,19 +23,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pytest
+import logging
 from functools import reduce
+
+import pytest
+from testlib import generate_random_expression
+
+from pytools.lex import ParseError
 
 import pymbolic.primitives as prim
 from pymbolic import parse
-from pytools.lex import ParseError
-from testlib import generate_random_expression
-
-
 from pymbolic.mapper import IdentityMapper, WalkMapper
-from pymbolic.mapper.dependency import DependencyMapper, CachedDependencyMapper
+from pymbolic.mapper.dependency import CachedDependencyMapper, DependencyMapper
 
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +47,7 @@ def assert_parsed_same_as_python(expr_str):
     expr_str, = expr_str.split("\n")
 
     import ast
+
     from pymbolic.interop.ast import ASTToPymbolic
     ast2p = ASTToPymbolic()
 
@@ -66,6 +71,14 @@ def assert_parse_roundtrip(expr_str):
 # }}}
 
 
+EXPRESSION_COLLECTION = [
+    parse("(x[2]+y.data)*(x+z)**3"),
+    parse("(~x)//2 | (y >> 2) & (z << 3)"),
+    parse("x and (not y or z)"),
+    parse("x if not (y and z) else x+1"),
+]
+
+
 # {{{ test_integer_power
 
 def test_integer_power():
@@ -85,7 +98,7 @@ def test_integer_power():
 # {{{ test_expand
 
 def test_expand():
-    from pymbolic import var, expand
+    from pymbolic import expand, var
 
     x = var("x")
     u = (x+1)**5
@@ -97,7 +110,7 @@ def test_expand():
 # {{{ test_substitute
 
 def test_substitute():
-    from pymbolic import parse, substitute, evaluate
+    from pymbolic import evaluate, parse, substitute
     u = parse("5+x.min**2")
     xmin = parse("x.min")
     assert evaluate(substitute(u, {xmin: 25})) == 630
@@ -151,9 +164,7 @@ def test_sympy_interaction():
 
     s1_expr = 1/f(x/sp.sqrt(x**2+y**2)).diff(x, 5)  # pylint:disable=not-callable
 
-    from pymbolic.interop.sympy import (
-            SympyToPymbolicMapper,
-            PymbolicToSympyMapper)
+    from pymbolic.interop.sympy import PymbolicToSympyMapper, SympyToPymbolicMapper
     s2p = SympyToPymbolicMapper()
     p2s = PymbolicToSympyMapper()
 
@@ -214,8 +225,8 @@ def test_fft():
     logger.info("fft: %s", fft(vars))
     traced_fft = sym_fft(vars)
 
-    from pymbolic.mapper.stringifier import PREC_NONE
     from pymbolic.mapper.c_code import CCodeMapper
+    from pymbolic.mapper.stringifier import PREC_NONE
     ccm = CCodeMapper()
 
     code = [ccm(tfi, PREC_NONE) for tfi in traced_fft]
@@ -393,6 +404,7 @@ def test_geometric_algebra(dims):
     pytest.importorskip("numpy")
 
     import numpy as np
+
     from pymbolic.geometric_algebra import MultiVector as MV  # noqa
 
     vec1 = MV(np.random.randn(dims))
@@ -526,7 +538,7 @@ def test_ast_interop():
 # {{{ test_compile
 
 def test_compile():
-    from pymbolic import parse, compile
+    from pymbolic import compile, parse
     code = compile(parse("x ** y"), ["x", "y"])
     assert code(2, 5) == 32
 
@@ -535,6 +547,35 @@ def test_compile():
     code = pickle.loads(pickle.dumps(code))
     assert code(3, 3) == 27
 
+# }}}
+
+
+# {{{ test_pickle
+
+def test_pickle():
+    from pickle import dumps, loads
+    for expr in EXPRESSION_COLLECTION:
+        pickled = loads(dumps(expr))
+        assert hash(expr) == hash(pickled)
+        assert expr == pickled
+
+
+class OldTimeyExpression(prim.Expression):
+    init_arg_names = ()
+
+    def __getinitargs__(self):
+        return ()
+
+
+def test_pickle_backward_compat():
+    from pickle import dumps, loads
+
+    expr = 3*OldTimeyExpression()
+    pickled = loads(dumps(expr))
+    with pytest.warns(DeprecationWarning):
+        assert hash(expr) == hash(pickled)
+    with pytest.warns(DeprecationWarning):
+        assert expr == pickled
 # }}}
 
 
@@ -644,9 +685,9 @@ def test_latex_mapper():
 
     # Run LaTeX and ensure the file compiles.
     import os
-    import tempfile
-    import subprocess
     import shutil
+    import subprocess
+    import tempfile
 
     latex_dir = tempfile.mkdtemp("pymbolic")
 
@@ -685,7 +726,7 @@ def test_flop_counter():
     subexpr = prim.CommonSubexpression(3 * (x**2 + y + z))
     expr = 3*subexpr + subexpr
 
-    from pymbolic.mapper.flop_counter import FlopCounter, CSEAwareFlopCounter
+    from pymbolic.mapper.flop_counter import CSEAwareFlopCounter, FlopCounter
     assert FlopCounter()(expr) == 4 * 2 + 2
 
     assert CSEAwareFlopCounter()(expr) == 4 + 2
@@ -748,8 +789,8 @@ def test_differentiator_flags_for_nonsmooth_and_discontinuous():
 # {{{ test_diff_cse
 
 def test_diff_cse():
-    from pymbolic.mapper.differentiator import differentiate
     from pymbolic import evaluate_kw
+    from pymbolic.mapper.differentiator import differentiate
 
     m = prim.Variable("math")
 
@@ -759,8 +800,8 @@ def test_diff_cse():
 
     diff_result = differentiate(expr, x)
 
-    from functools import partial
     import math
+    from functools import partial
     my_eval = partial(evaluate_kw, math=math)
 
     x0 = 5
@@ -891,8 +932,10 @@ class InCacheVerifier(WalkMapper):
 
 
 def test_cached_mapper_memoizes():
-    from testlib import (AlwaysFlatteningIdentityMapper,
-                         AlwaysFlatteningCachedIdentityMapper)
+    from testlib import (
+        AlwaysFlatteningCachedIdentityMapper,
+        AlwaysFlatteningIdentityMapper,
+    )
     ntests = 40
     for i in range(ntests):
         expr = generate_random_expression(seed=(5+i))
@@ -941,7 +984,8 @@ def test_cached_mapper_differentiates_float_int():
 # {{{ test_mapper_optimizer
 
 def test_mapper_optimizer():
-    from testlib import Renamer, OptimizedRenamer, BIG_EXPR_STR
+    from testlib import BIG_EXPR_STR, OptimizedRenamer, Renamer
+
     from pymbolic.mapper import CachedIdentityMapper
 
     expr = parse(BIG_EXPR_STR)
@@ -973,8 +1017,7 @@ def test_nodecount():
 
 
 def test_python_ast_interop_roundtrip():
-    from pymbolic.interop.ast import (ASTToPymbolic,
-                                      PymbolicToASTMapper)
+    from pymbolic.interop.ast import ASTToPymbolic, PymbolicToASTMapper
 
     ast2p = ASTToPymbolic()
     p2ast = PymbolicToASTMapper()

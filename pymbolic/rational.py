@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,6 +24,7 @@ THE SOFTWARE.
 """
 
 from sys import intern
+
 import pymbolic.primitives as primitives
 import pymbolic.traits as traits
 

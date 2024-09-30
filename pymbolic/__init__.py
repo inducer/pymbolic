@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -23,38 +26,72 @@ THE SOFTWARE.
 
 from pymbolic.version import VERSION_TEXT as __version__  # noqa
 
-import pymbolic.parser
-import pymbolic.compiler
+from . import parser
+from . import compiler
 
-import pymbolic.mapper.evaluator
-import pymbolic.mapper.stringifier
-import pymbolic.mapper.dependency
-import pymbolic.mapper.substitutor
-import pymbolic.mapper.differentiator
-import pymbolic.mapper.distributor
-import pymbolic.mapper.flattener
-import pymbolic.primitives
+from .mapper import evaluator
+from .mapper import stringifier
+from .mapper import dependency
+from .mapper import substitutor
+from .mapper import differentiator
+from .mapper import distributor
+from .mapper import flattener
+from . import primitives
 
-from pymbolic.polynomial import Polynomial  # noqa
+from .polynomial import Polynomial
 
-var = pymbolic.primitives.Variable
-variables = pymbolic.primitives.variables
-flattened_sum = pymbolic.primitives.flattened_sum
-subscript = pymbolic.primitives.subscript
-flattened_product = pymbolic.primitives.flattened_product
-quotient = pymbolic.primitives.quotient
-linear_combination = pymbolic.primitives.linear_combination
-cse = pymbolic.primitives.make_common_subexpression
-make_sym_vector = pymbolic.primitives.make_sym_vector
+from .primitives import Variable as var  # noqa: N813
+from .primitives import variables
+from .primitives import flattened_sum
+from .primitives import subscript
+from .primitives import flattened_product
+from .primitives import quotient
+from .primitives import linear_combination
+from .primitives import make_common_subexpression as cse
+from .primitives import make_sym_vector
+from .primitives import disable_subscript_by_getitem
+from .parser import parse
+from .mapper.evaluator import evaluate
+from .mapper.evaluator import evaluate_kw
+from .compiler import compile
+from .mapper.substitutor import substitute
+from .mapper.differentiator import differentiate as diff
+from .mapper.differentiator import differentiate
+from .mapper.distributor import distribute as expand
+from .mapper.distributor import distribute
+from .mapper.flattener import flatten
 
-disable_subscript_by_getitem = pymbolic.primitives.disable_subscript_by_getitem
 
-parse = pymbolic.parser.parse
-evaluate = pymbolic.mapper.evaluator.evaluate
-evaluate_kw = pymbolic.mapper.evaluator.evaluate_kw
-compile = pymbolic.compiler.compile
-substitute = pymbolic.mapper.substitutor.substitute
-diff = differentiate = pymbolic.mapper.differentiator.differentiate
-expand = pymbolic.mapper.distributor.distribute
-distribute = pymbolic.mapper.distributor.distribute
-flatten = pymbolic.mapper.flattener.flatten
+__all__ = (
+    "Polynomial",
+    "compile",
+    "compiler",
+    "cse",
+    "dependency",
+    "diff",
+    "differentiate",
+    "differentiator",
+    "disable_subscript_by_getitem",
+    "distribute",
+    "distributor",
+    "evaluate",
+    "evaluate_kw",
+    "evaluator",
+    "expand",
+    "flatten",
+    "flattened_product",
+    "flattened_sum",
+    "flattener",
+    "linear_combination",
+    "make_sym_vector",
+    "parse",
+    "parser",
+    "primitives",
+    "quotient",
+    "stringifier",
+    "subscript",
+    "substitute",
+    "substitutor",
+    "var",
+    "variables",
+)

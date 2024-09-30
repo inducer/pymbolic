@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,8 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pytools import memoize, memoize_method
 import numpy as np
+
+from pytools import memoize, memoize_method
 
 
 __doc__ = """
@@ -536,6 +540,7 @@ class MultiVector:
         # {{{ normalize data to bitmaps, if needed
 
         from pytools import single_valued
+
         from pymbolic.primitives import is_zero
         if data and single_valued(isinstance(k, tuple) for k in data.keys()):
             # data is in non-normalized non-bits tuple form

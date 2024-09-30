@@ -1,4 +1,6 @@
 """Fusion and other user-facing code transforms"""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2015 Matt Wala, Andreas Kloeckner"
 

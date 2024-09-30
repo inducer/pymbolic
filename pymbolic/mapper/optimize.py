@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2022 University of Illinois Board of Trustees"
 
 __license__ = """
@@ -21,7 +24,7 @@ THE SOFTWARE.
 """
 
 import ast
-from functools import lru_cache, cached_property
+from functools import cached_property, lru_cache
 
 
 # This machinery applies AST rewriting to the mapper in a mildly brutal
@@ -127,8 +130,18 @@ class _RecInliner(ast.NodeTransformer):
                 and node.func.value.id == "self"
                 and node.func.attr == "rec"):
 
-            from ast import (IfExp, Name, NamedExpr, Compare, IsNot, Constant,
-                             Load, Store, Attribute, Call)
+            from ast import (
+                Attribute,
+                Call,
+                Compare,
+                Constant,
+                IfExp,
+                IsNot,
+                Load,
+                Name,
+                NamedExpr,
+                Store,
+            )
             expr = node.args[0]
             self_sym = Name(id="self", ctx=Load())
             fallback_call = _replace(

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,6 +24,7 @@ THE SOFTWARE.
 """
 
 import pytest
+
 from pymbolic.interop.maxima import MaximaKernel
 
 
@@ -136,8 +140,8 @@ def test_parse_matrix(knl):
 
 @pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_diff():
-    from pymbolic.interop.maxima import diff
     from pymbolic import parse
+    from pymbolic.interop.maxima import diff
     diff(parse("sqrt(x**2+y**2)"), parse("x"))
 
 

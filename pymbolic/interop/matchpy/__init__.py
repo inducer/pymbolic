@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 """
 Interoperability with :mod:`matchpy.functions` for pattern-matching and
 term-rewriting.
@@ -38,22 +41,26 @@ THE SOFTWARE.
 """
 
 
-import numpy as np
 import abc
-import pymbolic.primitives as p
-
-from typing import (Union, ClassVar, Optional, Iterator, Mapping,
-                    Generic, TypeVar, Tuple, Iterable, Callable)
-from dataclasses import dataclass, fields, field
-
-from matchpy import (Operation, Arity, Expression, Atom as BaseAtom,
-                     Wildcard as BaseWildcard, ReplacementRule)
-from numbers import Number
+from dataclasses import dataclass, field, fields
 from functools import partial
+from typing import Callable, ClassVar, Generic, Iterable, Iterator, Mapping, TypeVar
+
+from matchpy import (
+    Arity,
+    Atom as BaseAtom,
+    Expression,
+    Operation,
+    ReplacementRule,
+    Wildcard as BaseWildcard,
+)
+from typing_extensions import TypeAlias
+
+import pymbolic.primitives as p
+from pymbolic.typing import ScalarT
 
 
-ScalarT = Union[Number, int, np.bool_, bool]
-ExprT = Expression
+ExprT: TypeAlias = Expression
 ConstantT = TypeVar("ConstantT")
 ToMatchpyT = Callable[[p.Expression], ExprT]
 FromMatchpyT = Callable[[ExprT], p.Expression]
@@ -70,7 +77,7 @@ non_operand_field = partial(field, metadata=_NOT_OPERAND_METADATA)
 @op_dataclass
 class _Constant(BaseAtom, Generic[ConstantT]):
     value: ConstantT
-    variable_name: Optional[str] = None
+    variable_name: str | None = None
 
     @property
     def head(self):
@@ -89,7 +96,7 @@ class _Constant(BaseAtom, Generic[ConstantT]):
 
 @op_dataclass
 class Scalar(_Constant[ScalarT]):
-    _mapper_method: [str] = "map_scalar"
+    _mapper_method: str = "map_scalar"
 
 
 @op_dataclass
@@ -104,8 +111,8 @@ class ComparisonOp(_Constant[str]):
 
 @op_dataclass
 class TupleOp(Operation):
-    _operands: Tuple[ExprT, ...]
-    variable_name: Optional[str] = non_operand_field(default=None)
+    _operands: tuple[ExprT, ...]
+    variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.variadic
     name: ClassVar[str] = "tuple"
@@ -129,7 +136,7 @@ class PymbolicOp(abc.ABC, Operation):
         pass
 
     @property
-    def operands(self) -> Tuple[Expression]:
+    def operands(self) -> tuple[Expression, ...]:
         return tuple(getattr(self, field.name)
                      for field in fields(self)
                      if not field.metadata.get("not_an_operand", False))
@@ -150,7 +157,7 @@ class PymbolicOp(abc.ABC, Operation):
 class Variable(PymbolicOp):
     id: Id
     arity: ClassVar[Arity] = Arity.unary
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
     _mapper_method: ClassVar[str] = "map_variable"
 
 
@@ -158,7 +165,7 @@ class Variable(PymbolicOp):
 class Call(PymbolicOp):
     function: ExprT
     args: TupleOp
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.binary
     _mapper_method: ClassVar[str] = "map_call"
@@ -168,7 +175,7 @@ class Call(PymbolicOp):
 class Subscript(PymbolicOp):
     aggregate: ExprT
     indices: TupleOp
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.binary
     _mapper_method: ClassVar[str] = "map_subscript"
@@ -182,7 +189,7 @@ class _BinaryOp(PymbolicOp):
     x2: ExprT
 
     arity: ClassVar[Arity] = Arity.binary
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
 
 @op_dataclass
@@ -224,8 +231,8 @@ variadic_op_dataclass = dataclass(init=False, frozen=True, repr=True)
 
 @variadic_op_dataclass
 class _VariadicCommAssocOp(PymbolicOp):
-    children: Tuple[ExprT, ...]
-    variable_name: Optional[str] = non_operand_field(default=None)
+    children: tuple[ExprT, ...]
+    variable_name: str | None = non_operand_field(default=None)
 
     commutative: ClassVar[bool] = True
     associative: ClassVar[bool] = True
@@ -236,7 +243,7 @@ class _VariadicCommAssocOp(PymbolicOp):
         object.__setattr__(self, "variable_name", variable_name)
 
     @property
-    def operands(self) -> Tuple[ExprT, ...]:
+    def operands(self) -> tuple[ExprT, ...]:
         return self.children
 
 
@@ -283,7 +290,7 @@ class BitwiseXor(_VariadicCommAssocOp):
 class _UnaryOp(PymbolicOp):
     x: ExprT
     arity: ClassVar[Arity] = Arity.unary
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
 
 @op_dataclass
@@ -303,7 +310,7 @@ class Comparison(PymbolicOp):
     left: ExprT
     operator: ComparisonOp
     right: ExprT
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.ternary
     _mapper_method: ClassVar[str] = "map_comparison"
@@ -314,7 +321,7 @@ class If(PymbolicOp):
     condition: ExprT
     then: ExprT
     else_: ExprT
-    variable_name: Optional[str] = non_operand_field(default=None)
+    variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.ternary
     _mapper_method: ClassVar[str] = "map_if"
@@ -325,16 +332,16 @@ class Wildcard(BaseWildcard):
     # {{{ FIXME: This should go into matchpy itself.
 
     @classmethod
-    def dot(cls, name=None) -> "Wildcard":
+    def dot(cls, name=None) -> Wildcard:
         return cls(min_count=1, fixed_size=True, variable_name=name)
 
     @classmethod
-    def star(cls, name=None) -> "Wildcard":
+    def star(cls, name=None) -> Wildcard:
         # FIXME: This should go into matchpy itself.
         return cls(min_count=0, fixed_size=False, variable_name=name)
 
     @classmethod
-    def plus(cls, name=None) -> "Wildcard":
+    def plus(cls, name=None) -> Wildcard:
         # FIXME: This should go into matchpy itself.
         return cls(min_count=1, fixed_size=False, variable_name=name)
 
@@ -343,7 +350,7 @@ class Wildcard(BaseWildcard):
 # }}}
 
 
-def _get_operand_at_path(expr: PymbolicOp, path: Tuple[int, ...]) -> PymbolicOp:
+def _get_operand_at_path(expr: PymbolicOp, path: tuple[int, ...]) -> PymbolicOp:
     result = expr
 
     while path:
@@ -355,12 +362,12 @@ def _get_operand_at_path(expr: PymbolicOp, path: Tuple[int, ...]) -> PymbolicOp:
 
 def match(subject: p.Expression,
           pattern: p.Expression,
-          to_matchpy_expr: Optional[ToMatchpyT] = None,
-          from_matchpy_expr: Optional[FromMatchpyT] = None
-          ) -> Iterator[Mapping[str, Union[p.Expression, ScalarT]]]:
-    from matchpy import match, Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+          to_matchpy_expr: ToMatchpyT | None = None,
+          from_matchpy_expr: FromMatchpyT | None = None
+          ) -> Iterator[Mapping[str, p.Expression | ScalarT]]:
+    from matchpy import Pattern, match
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -378,14 +385,14 @@ def match(subject: p.Expression,
 
 def match_anywhere(subject: p.Expression,
                    pattern: p.Expression,
-                   to_matchpy_expr: Optional[ToMatchpyT] = None,
-                   from_matchpy_expr: Optional[FromMatchpyT] = None
-                   ) -> Iterator[Tuple[Mapping[str, Union[p.Expression, ScalarT]],
-                                       Union[p.Expression, ScalarT]]
+                   to_matchpy_expr: ToMatchpyT | None = None,
+                   from_matchpy_expr: FromMatchpyT | None = None
+                   ) -> Iterator[tuple[Mapping[str, p.Expression | ScalarT],
+                                       p.Expression | ScalarT]
                                  ]:
-    from matchpy import match_anywhere, Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+    from matchpy import Pattern, match_anywhere
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -404,17 +411,20 @@ def match_anywhere(subject: p.Expression,
 
 def make_replacement_rule(pattern: p.Expression,
                           replacement: Callable[..., p.Expression],
-                          to_matchpy_expr: Optional[ToMatchpyT] = None,
-                          from_matchpy_expr: Optional[FromMatchpyT] = None
+                          to_matchpy_expr: ToMatchpyT | None = None,
+                          from_matchpy_expr: FromMatchpyT | None = None
                           ) -> ReplacementRule:
     """
     Returns a :class:`matchpy.functions.ReplacementRule` from the objects
     declared via :mod:`pymbolic.primitives` instances.
     """
     from matchpy import Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper,
-                         ToFromReplacement)
+
+    from .tofrom import (
+        FromMatchpyExpressionMapper,
+        ToFromReplacement,
+        ToMatchpyExpressionMapper,
+    )
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -429,13 +439,14 @@ def make_replacement_rule(pattern: p.Expression,
 
 def replace_all(expression: p.Expression,
                 rules: Iterable[ReplacementRule],
-                to_matchpy_expr: Optional[ToMatchpyT] = None,
-                from_matchpy_expr: Optional[FromMatchpyT] = None
-                ) -> Union[p.Expression, Tuple[p.Expression, ...]]:
+                to_matchpy_expr: ToMatchpyT | None = None,
+                from_matchpy_expr: FromMatchpyT | None = None
+                ) -> p.Expression | tuple[p.Expression, ...]:
     import collections.abc as abc
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+
     from matchpy import replace_all
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
