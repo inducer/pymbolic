@@ -27,7 +27,7 @@ from functools import lru_cache, cached_property
 # This machinery applies AST rewriting to the mapper in a mildly brutal
 # manner, and as such it requires some attention from the user to
 # make sure all transformations applied are valid. A good way to do
-# this is to look at the generated code by settting print_modified_code_file
+# this is to look at the generated code by setting print_modified_code_file
 # to sys.stdout or the like.
 
 # Note that this machinery is intentionally generic enough so as to also

@@ -113,7 +113,7 @@ class Derivative:
 
     @staticmethod
     def resolve(expr):
-        # This method will need to be overriden by codes using this
+        # This method will need to be overridden by codes using this
         # infrastructure to use the appropriate subclass of DerivativeBinder.
 
         from pymbolic.geometric_algebra.mapper import DerivativeBinder
