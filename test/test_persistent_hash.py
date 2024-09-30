@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2023 University of Illinois Board of Trustees"
 
 __license__ = """
@@ -25,8 +28,9 @@ from pymbolic.mapper.persistent_hash import PersistentHashWalkMapper
 
 
 def test_persistent_hash_simple() -> None:
-    from testlib import generate_random_expression
     import hashlib
+
+    from testlib import generate_random_expression
     expr = generate_random_expression(seed=(333))
 
     key_hash = hashlib.sha256()

@@ -2,6 +2,8 @@
 .. autoclass:: ConstantFoldingMapper
 .. autoclass:: CommutativeConstantFoldingMapper
 """
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -26,9 +28,9 @@ THE SOFTWARE.
 """
 
 from pymbolic.mapper import (
-        IdentityMapper,
-        CSECachingMapperMixin,
-        )
+    CSECachingMapperMixin,
+    IdentityMapper,
+)
 
 
 class ConstantFoldingMapperBase:
@@ -72,16 +74,18 @@ class ConstantFoldingMapperBase:
             return constructor(tuple(nonconstants))
 
     def map_sum(self, expr):
-        from pymbolic.primitives import Sum, flattened_sum
         import operator
+
+        from pymbolic.primitives import Sum, flattened_sum
 
         return self.fold(expr, Sum, operator.add, flattened_sum)
 
 
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
     def map_product(self, expr):
-        from pymbolic.primitives import Product, flattened_product
         import operator
+
+        from pymbolic.primitives import Product, flattened_product
 
         return self.fold(expr, Product, operator.mul, flattened_product)
 

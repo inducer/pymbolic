@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import CombineMapper, CachedMapper
+from pymbolic.mapper import CachedMapper, CombineMapper
 
 
 class FlopCounterBase(CombineMapper):

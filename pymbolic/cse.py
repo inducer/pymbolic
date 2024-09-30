@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -22,6 +25,7 @@ THE SOFTWARE.
 
 import pymbolic.primitives as prim
 from pymbolic.mapper import IdentityMapper, WalkMapper
+
 
 COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
 

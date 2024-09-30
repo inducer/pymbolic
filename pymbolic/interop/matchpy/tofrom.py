@@ -1,13 +1,16 @@
-import numpy as np
-import pymbolic.primitives as p
-import pymbolic.interop.matchpy as m
-import multiset
+from __future__ import annotations
 
-from typing import Any, Callable
 from dataclasses import dataclass
+from typing import Any, Callable
+
+import multiset
+import numpy as np
 from matchpy import Expression as MatchpyExpression
-from pymbolic.mapper import Mapper as BasePymMapper
+
+import pymbolic.interop.matchpy as m
+import pymbolic.primitives as p
 from pymbolic.interop.matchpy.mapper import Mapper as BaseMatchPyMapper
+from pymbolic.mapper import Mapper as BasePymMapper
 
 
 # {{{ to matchpy

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,7 +24,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 from immutabledict import immutabledict
 
@@ -238,7 +241,7 @@ class CachedMapper(Mapper):
     .. automethod:: get_cache_key
     """
     def __init__(self):
-        self._cache: Dict[Any, Any] = {}
+        self._cache: dict[Any, Any] = {}
         Mapper.__init__(self)
 
     def get_cache_key(self, expr, *args, **kwargs):

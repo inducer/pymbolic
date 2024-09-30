@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -223,7 +226,7 @@ def sym_fft(x, sign=1):
     wrappers at opportune points.
     """
 
-    from pymbolic.mapper import IdentityMapper, CSECachingMapperMixin
+    from pymbolic.mapper import CSECachingMapperMixin, IdentityMapper
 
     class NearZeroKiller(CSECachingMapperMixin, IdentityMapper):
         map_common_subexpression_uncached = \

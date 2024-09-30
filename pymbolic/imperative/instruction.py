@@ -1,4 +1,6 @@
 """Instruction types"""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2015 Matt Wala, Andreas Kloeckner"
 
@@ -29,5 +31,9 @@ warn("pymbolic.imperative.instruction was imported. This has been renamed "
         "to pymbolic.imperative.statement", DeprecationWarning, stacklevel=1)
 
 from pymbolic.imperative.statement import (  # noqa: F401
-        Instruction, ConditionalInstruction, Assignment, ConditionalAssignment,
-        Nop)
+        Assignment,
+        ConditionalAssignment,
+        ConditionalInstruction,
+        Instruction,
+        Nop,
+)

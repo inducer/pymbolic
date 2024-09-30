@@ -27,12 +27,22 @@ import re
 from dataclasses import dataclass, fields
 from sys import intern
 from typing import (
-    Any, Callable, ClassVar, Mapping, TYPE_CHECKING, NoReturn, TypeVar, cast)
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Mapping,
+    NoReturn,
+    TypeVar,
+    cast,
+)
 from warnings import warn
+
 from typing_extensions import TypeIs, dataclass_transform
 
 from . import traits
 from .typing import ExpressionT, NumberT, ScalarT
+
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance

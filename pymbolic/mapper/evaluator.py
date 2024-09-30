@@ -8,6 +8,8 @@
 .. autofunction:: evaluate_kw
 .. autofunction:: evaluate_to_float
 """
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -32,11 +34,11 @@ THE SOFTWARE.
 """
 
 
-from typing import Any
-from pymbolic.mapper import (RecursiveMapper, CSECachingMapperMixin,
-                             CachedMapper)
 import operator as op
 from functools import reduce
+from typing import Any
+
+from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, RecursiveMapper
 
 
 class UnknownVariableError(Exception):

@@ -1,6 +1,8 @@
 """
 .. autoclass:: TermCollector
 """
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -54,7 +56,7 @@ class TermCollector(IdentityMapper):
 
         The argument `product' has to be fully expanded already.
         """
-        from pymbolic.primitives import Product, Power, AlgebraicLeaf
+        from pymbolic.primitives import AlgebraicLeaf, Power, Product
 
         def base(term):
             if isinstance(term, Power):

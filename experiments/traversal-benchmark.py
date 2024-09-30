@@ -3,9 +3,9 @@
 import sys
 
 from pymbolic import parse
-from pymbolic.primitives import Variable
 from pymbolic.mapper import CachedIdentityMapper
 from pymbolic.mapper.optimize import optimize_mapper
+from pymbolic.primitives import Variable
 
 
 code = ("(-1)*((cse_577[_pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) % 4302160) // 10, 0],"

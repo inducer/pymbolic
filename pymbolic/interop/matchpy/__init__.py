@@ -42,16 +42,21 @@ THE SOFTWARE.
 
 
 import abc
-import pymbolic.primitives as p
-
-from typing_extensions import TypeAlias
-from typing import (ClassVar, Iterator, Mapping,
-                    Generic, TypeVar, Iterable, Callable)
-from dataclasses import dataclass, fields, field
-
-from matchpy import (Operation, Arity, Expression, Atom as BaseAtom,
-                     Wildcard as BaseWildcard, ReplacementRule)
+from dataclasses import dataclass, field, fields
 from functools import partial
+from typing import Callable, ClassVar, Generic, Iterable, Iterator, Mapping, TypeVar
+
+from matchpy import (
+    Arity,
+    Atom as BaseAtom,
+    Expression,
+    Operation,
+    ReplacementRule,
+    Wildcard as BaseWildcard,
+)
+from typing_extensions import TypeAlias
+
+import pymbolic.primitives as p
 from pymbolic.typing import ScalarT
 
 
@@ -360,9 +365,9 @@ def match(subject: p.Expression,
           to_matchpy_expr: ToMatchpyT | None = None,
           from_matchpy_expr: FromMatchpyT | None = None
           ) -> Iterator[Mapping[str, p.Expression | ScalarT]]:
-    from matchpy import match, Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+    from matchpy import Pattern, match
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -385,9 +390,9 @@ def match_anywhere(subject: p.Expression,
                    ) -> Iterator[tuple[Mapping[str, p.Expression | ScalarT],
                                        p.Expression | ScalarT]
                                  ]:
-    from matchpy import match_anywhere, Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+    from matchpy import Pattern, match_anywhere
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -414,9 +419,12 @@ def make_replacement_rule(pattern: p.Expression,
     declared via :mod:`pymbolic.primitives` instances.
     """
     from matchpy import Pattern
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper,
-                         ToFromReplacement)
+
+    from .tofrom import (
+        FromMatchpyExpressionMapper,
+        ToFromReplacement,
+        ToMatchpyExpressionMapper,
+    )
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()
@@ -435,9 +443,10 @@ def replace_all(expression: p.Expression,
                 from_matchpy_expr: FromMatchpyT | None = None
                 ) -> p.Expression | tuple[p.Expression, ...]:
     import collections.abc as abc
-    from .tofrom import (ToMatchpyExpressionMapper,
-                         FromMatchpyExpressionMapper)
+
     from matchpy import replace_all
+
+    from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
         to_matchpy_expr = ToMatchpyExpressionMapper()

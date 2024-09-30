@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = """
 Copyright (C) 2017 Matt Wala
 """
@@ -22,11 +25,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.interop.common import (
-    SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
+import symengine
 
 import pymbolic.primitives as prim
-import symengine
+from pymbolic.interop.common import PymbolicToSympyLikeMapper, SympyLikeToPymbolicMapper
 
 
 __doc__ = """
@@ -82,8 +84,7 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
             return type(expr).__name__
 
     def not_supported(self, expr):
-        from symengine.lib.symengine_wrapper import \
-                PyFunction                               # pylint: disable=E0611
+        from symengine.lib.symengine_wrapper import PyFunction  # pylint: disable=E0611
         if isinstance(expr, PyFunction) and \
                 self.function_name(expr) == "CSE":       # pylint: disable=E0611
             sympy_expr = expr._sympy_()

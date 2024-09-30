@@ -1,6 +1,8 @@
 """
 .. autoclass:: CCodeMapper
 """
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -25,8 +27,12 @@ THE SOFTWARE.
 """
 
 from pymbolic.mapper.stringifier import (
-        SimplifyingSortingStringifyMapper, PREC_UNARY,
-        PREC_LOGICAL_AND, PREC_LOGICAL_OR, PREC_NONE)
+    PREC_LOGICAL_AND,
+    PREC_LOGICAL_OR,
+    PREC_NONE,
+    PREC_UNARY,
+    SimplifyingSortingStringifyMapper,
+)
 
 
 class CCodeMapper(SimplifyingSortingStringifyMapper):
@@ -111,8 +117,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
                     self, x, enclosing_prec)
 
     def map_call(self, expr, enclosing_prec):
+        from pymbolic.mapper.stringifier import PREC_CALL, PREC_NONE
         from pymbolic.primitives import Variable
-        from pymbolic.mapper.stringifier import PREC_NONE, PREC_CALL
         if isinstance(expr.function, Variable):
             func = expr.function.name
         else:
@@ -140,8 +146,7 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
         # Let's see how bad of an idea this is--sane people would only
         # apply this to integers, right?
 
-        from pymbolic.mapper.stringifier import (
-                PREC_PRODUCT, PREC_POWER)
+        from pymbolic.mapper.stringifier import PREC_POWER, PREC_PRODUCT
         return self.format("(%s/%s)",
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER))  # analogous to ^{-1}
