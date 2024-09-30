@@ -1551,7 +1551,24 @@ class CommonSubexpression(Expression):
 
 @expr_dataclass()
 class Substitution(Expression):
-    """Work-alike of sympy's Subs."""
+    """A (deferred) substitution applicable to a subexpression.
+
+    See also sympy's ``Subs``.
+
+    .. attribute:: child
+
+        The sub-:class:`Expression` to which the substitution is to be applied.
+
+    .. attribute:: variables
+
+        A sequence of string identifiers of the variables to be replaced with
+        their corresponding entry in :attr:`values`.
+
+    .. attribute:: values
+
+        A sequence of sub-:class:`Expression` objects corresponding to each
+        string identifier in :attr:`variables`.
+    """
 
     child: ExpressionT
     variables: tuple[str, ...]

@@ -1016,6 +1016,40 @@ def test_nodecount():
     assert get_num_nodes(expr) == 12
 
 
+def test_subst_applier():
+    x = prim.Variable("x")
+    y = prim.Variable("y")
+    z = prim.Variable("z")
+
+    from pymbolic.mapper.substitutor import substitute as subst_actual
+
+    def subst_deferred(expr, **kwargs):
+        variables = []
+        values = []
+        for name, value in kwargs.items():
+            variables.append(name)
+            values.append(value)
+        return prim.Substitution(expr, variables, values)
+
+    from pymbolic.mapper.subst_applier import SubstitutionApplier
+    sapp = SubstitutionApplier()
+
+    results = []
+    for subst in [subst_actual, subst_deferred]:
+        expr = subst(x + y, x=5*y)
+        print(expr)
+        expr = subst(subst(expr**2, y=z) - subst(expr, y=x), x=y)
+        print(expr)
+        expr = sapp(expr)
+        print(expr)
+
+        results.append(sapp(expr))
+        print("--------")
+
+    result_actual, result_deferred = results
+    assert result_actual == result_deferred
+
+
 def test_python_ast_interop_roundtrip():
     from pymbolic.interop.ast import ASTToPymbolic, PymbolicToASTMapper
 
