@@ -1,4 +1,6 @@
 """Instruction types"""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2015 Matt Wala, Andreas Kloeckner"
 
@@ -23,7 +25,10 @@ THE SOFTWARE.
 """
 
 from sys import intern
+
 from pytools import RecordWithoutPickling
+
+from pymbolic.typing import not_none
 
 
 # {{{ statemetn classes
@@ -88,7 +93,7 @@ class Statement(RecordWithoutPickling):
 # {{{ statement with condition
 
 class ConditionalStatement(Statement):
-    __doc__ = Statement.__doc__ + """
+    __doc__ = not_none(Statement.__doc__) + """
     .. attribute:: condition
 
        The instruction condition as a :mod:`pymbolic` expression (`True` if the
@@ -135,7 +140,7 @@ class Assignment(Statement):
                 **kwargs)
 
     def get_written_variables(self):
-        from pymbolic.primitives import Variable, Subscript
+        from pymbolic.primitives import Subscript, Variable
         if isinstance(self.lhs, Variable):
             return frozenset([self.lhs.name])
         elif isinstance(self.lhs, Subscript):

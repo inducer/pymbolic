@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,7 +24,10 @@ THE SOFTWARE.
 """
 
 from sys import intern
-from typing import ClassVar, Dict, List, Tuple
+from typing import ClassVar, Sequence, Tuple, Union
+
+from immutabledict import immutabledict
+from typing_extensions import TypeAlias
 
 import pytools.lex
 from pytools import memoize_method
@@ -111,7 +117,7 @@ class FinalizedTuple(tuple, FinalizedContainer):
 
 class FinalizedList(list, FinalizedContainer):
     @memoize_method
-    def __hash__(self):
+    def __hash__(self) -> int:  # type: ignore[override]
         result = hash(type(self).__name__)
         for it in self:
             result ^= hash(it)
@@ -119,8 +125,12 @@ class FinalizedList(list, FinalizedContainer):
         return result
 
 
+LexTable: TypeAlias = Sequence[
+        Tuple[str, Union[pytools.lex.RE, Tuple[Union[str, pytools.lex.RE], ...]]]]
+
+
 class Parser:
-    lex_table: ClassVar[List[Tuple[str, str]]] = [
+    lex_table: ClassVar[LexTable] = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
             (_equal, pytools.lex.RE(r"==")),
@@ -185,7 +195,7 @@ class Parser:
             (_colon, pytools.lex.RE(r"\:")),
             ]
 
-    _COMP_TABLE: ClassVar[Dict[str, str]] = {
+    _COMP_TABLE: ClassVar[dict[str, str]] = {
             _greater: ">",
             _greaterequal: ">=",
             _less: "<",
@@ -333,7 +343,8 @@ class Parser:
             args, kwargs = self.parse_arglist(pstate)
 
             if kwargs:
-                left_exp = primitives.CallWithKwargs(left_exp, args, kwargs)
+                left_exp = primitives.CallWithKwargs(
+                        left_exp, args, immutabledict(kwargs))
             else:
                 left_exp = primitives.Call(left_exp, args)
 

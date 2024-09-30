@@ -1,6 +1,8 @@
 """
 .. autoclass:: DifferentiationMapper
 """
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -25,9 +27,9 @@ THE SOFTWARE.
 """
 
 import pymbolic
-import pymbolic.primitives as primitives
 import pymbolic.mapper
 import pymbolic.mapper.evaluator
+import pymbolic.primitives as primitives
 
 
 def map_math_functions_by_name(i, func, pars, allowed_nonsmoothness="none"):

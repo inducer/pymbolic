@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -36,14 +39,14 @@ __doc__ = """
 
 import re
 from sys import intern
-from typing import ClassVar, List, Tuple
+from typing import ClassVar
 
 import numpy as np
 
 import pytools
 
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.parser import Parser as ParserBase, FinalizedTuple
+from pymbolic.parser import FinalizedTuple, LexTable, Parser as ParserBase
 
 
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
@@ -95,7 +98,7 @@ class MaximaParser(ParserBase):
     imag_unit = intern("imag_unit")
     euler_number = intern("euler_number")
 
-    lex_table: ClassVar[List[Tuple[str, str]]] = [
+    lex_table: ClassVar[LexTable] = [
             (power_sym, pytools.lex.RE(r"\^")),
             (imag_unit, pytools.lex.RE(r"%i")),
             (euler_number, pytools.lex.RE(r"%e")),
@@ -105,7 +108,7 @@ class MaximaParser(ParserBase):
     def parse_prefix(self, pstate):
         pstate.expect_not_end()
 
-        from pymbolic.parser import _openbracket, _closebracket
+        from pymbolic.parser import _closebracket, _openbracket
         if pstate.is_next(_openbracket):
             pstate.advance()
             left_exp = self.parse_expression(pstate)
@@ -139,8 +142,8 @@ class MaximaParser(ParserBase):
             pstate.expected("terminal")
 
     def parse_postfix(self, pstate, min_precedence, left_exp):
-        import pymbolic.primitives as primitives
         import pymbolic.parser as p
+        import pymbolic.primitives as primitives
 
         did_something = False
 

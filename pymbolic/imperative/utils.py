@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = """
 Copyright (C) 2013 Andreas Kloeckner
 Copyright (C) 2014 Matt Wala
@@ -24,6 +27,8 @@ THE SOFTWARE.
 """
 
 import logging
+
+
 logger = logging.getLogger(__name__)
 
 

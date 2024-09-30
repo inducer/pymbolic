@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,10 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import ClassVar, Dict
+from typing import ClassVar
 
 import pymbolic.primitives as p
-from pymbolic.mapper import Mapper, CachedMapper
+from pymbolic.mapper import CachedMapper, Mapper
 
 
 __doc__ = """
@@ -563,7 +566,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 
     def map_sum(self, expr, enclosing_prec, *args, **kwargs):
         def get_neg_product(expr):
-            from pymbolic.primitives import is_zero, Product
+            from pymbolic.primitives import Product, is_zero
 
             if isinstance(expr, Product) \
                     and len(expr.children) and is_zero(expr.children[0]+1):
@@ -626,7 +629,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 
 class LaTeXMapper(StringifyMapper):
 
-    COMPARISON_OP_TO_LATEX: ClassVar[Dict[str, str]] = {
+    COMPARISON_OP_TO_LATEX: ClassVar[dict[str, str]] = {
         "==": r"=",
         "!=": r"\ne",
         "<=": r"\le",

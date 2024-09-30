@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "pymbolic"
-version = "2022.2"
+version = "2024.1"
 description = "A package for symbolic computation"
 readme = "README.rst"
 license = { text = "MIT" }
@@ -32,6 +32,8 @@ dependencies = [
     "astunparse; python_version<='3.9'",
     "immutabledict",
     "pytools>=2022.1.14",
+    # for dataclass_transform, TypeAlias
+    "typing-extensions>=4; python_version<'3.13'",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +58,10 @@ include = [
     "pymbolic*",
 ]
 
+[tool.setuptools.package-dir]
+# https://github.com/Infleqtion/client-superstaq/pull/715
+"" = "."
+
 [tool.ruff]
 preview = true
 
@@ -66,7 +72,7 @@ extend-select = [
     "E",    # pycodestyle
     "F",    # pyflakes
     "G",    # flake8-logging-format
-    # "I",    # flake8-isort
+    "I",    # flake8-isort
     "N",    # pep8-naming
     "Q",    # flake8-quotes
     "RUF",  # ruff
@@ -86,8 +92,31 @@ extend-ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "experiments/traversal-benchmark.py" = ["E501"]
+"doc/conf.py" = ["I002"]
+"experiments/*.py" = ["I002"]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
 docstring-quotes = "double"
 multiline-quotes = "double"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pytools"]
+known-local-folder = ["pymbolic"]
+lines-after-imports = 2
+combine-as-imports = true
+required-imports = ["from __future__ import annotations"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sympy.*",
+    "symengine.*",
+    "matchpy.*",
+    "multiset.*",
+    "pexpect.*",
+]
+ignore_missing_imports = true

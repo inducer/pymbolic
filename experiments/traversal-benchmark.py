@@ -3,9 +3,9 @@
 import sys
 
 from pymbolic import parse
-from pymbolic.primitives import Variable
 from pymbolic.mapper import CachedIdentityMapper
 from pymbolic.mapper.optimize import optimize_mapper
+from pymbolic.primitives import Variable
 
 
 code = ("(-1)*((cse_577[_pt_data_48[((iface_ensm15*1075540 + iel_ensm15*10 + idof_ensm15) % 4302160) // 10, 0],"
@@ -128,9 +128,11 @@ if __name__ == "__main__":
         t_end = time()
         print(f"Took: {t_end-t_start} secs.")
     else:
-        import vmprof
-        with open("test.prof", "w+b") as fd:
-            vmprof.enable(fd.fileno())
+        import pyinstrument
+        from pyinstrument.renderers import SpeedscopeRenderer
+        prof = pyinstrument.Profiler()
+        with prof:
             for _ in range(10_000):
                 main()
-            vmprof.disable()
+        with open("ss.json", "w") as outf:
+            outf.write(prof.output(SpeedscopeRenderer(show_all=True)))

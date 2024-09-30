@@ -1,4 +1,6 @@
 """Imperative program representation: transformations"""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2015 Matt Wala, Andreas Kloeckner"
 
@@ -85,8 +87,7 @@ def disambiguate_identifiers(statements_a, statements_b,
             unclash = vng(clash)
             subst_b[clash] = var(unclash)
 
-    from pymbolic.mapper.substitutor import (
-            make_subst_func, SubstitutionMapper)
+    from pymbolic.mapper.substitutor import SubstitutionMapper, make_subst_func
     subst_map = SubstitutionMapper(make_subst_func(subst_b))
 
     statements_b = [

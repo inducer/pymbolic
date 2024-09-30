@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = """
 Copyright (C) 2015 Andreas Kloeckner
 Copyright (C) 2022 Kaushik Kulkarni
@@ -24,11 +27,12 @@ THE SOFTWARE.
 """
 
 import ast
-from typing import Any, ClassVar, Dict, List, Tuple, Type
+from typing import Any, ClassVar
 
 import pymbolic.primitives as p
-from pymbolic.typing import ExpressionT, ScalarT
 from pymbolic.mapper import CachedMapper
+from pymbolic.typing import ExpressionT, ScalarT
+
 
 __doc__ = r'''
 
@@ -113,7 +117,7 @@ def _neg(x):
 
 class ASTToPymbolic(ASTMapper):
 
-    bin_op_map: ClassVar[Dict[Type[ast.operator], Any]] = {
+    bin_op_map: ClassVar[dict[type[ast.operator], Any]] = {
             ast.Add: _add,
             ast.Sub: _sub,
             ast.Mult: _mult,
@@ -139,7 +143,7 @@ class ASTToPymbolic(ASTMapper):
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
-    unary_op_map: ClassVar[Dict[Type[ast.unaryop], Any]] = {
+    unary_op_map: ClassVar[dict[type[ast.unaryop], Any]] = {
             ast.Invert: _neg,
             ast.Not: p.LogicalNot,
             # ast.UAdd:
@@ -160,7 +164,7 @@ class ASTToPymbolic(ASTMapper):
         # (expr test, expr body, expr orelse)
         return p.If(self.rec(expr.test), self.rec(expr.body), self.rec(expr.orelse))
 
-    comparison_op_map: ClassVar[Dict[Type[ast.cmpop], str]] = {
+    comparison_op_map: ClassVar[dict[type[ast.cmpop], str]] = {
             ast.Eq: "==",
             ast.NotEq: "!=",
             ast.Lt: "<",
@@ -264,7 +268,7 @@ class PymbolicToASTMapper(CachedMapper):
         return ast.Name(id=expr.name)
 
     def _map_multi_children_op(self,
-                               children: Tuple[ExpressionT, ...],
+                               children: tuple[ExpressionT, ...],
                                op_type: ast.operator) -> ast.expr:
         rec_children = [self.rec(child) for child in children]
         result = rec_children[-1]
@@ -288,7 +292,9 @@ class PymbolicToASTMapper(CachedMapper):
     def map_call(self, expr: p.Call) -> ast.expr:
         return ast.Call(
             func=self.rec(expr.function),
-            args=[self.rec(param) for param in expr.parameters])
+            args=[self.rec(param) for param in expr.parameters],
+            keywords=[],
+        )
 
     def map_call_with_kwargs(self, expr) -> ast.expr:
         return ast.Call(
@@ -354,7 +360,7 @@ class PymbolicToASTMapper(CachedMapper):
                                            ast.BitAnd())
 
     def map_logical_not(self, expr) -> ast.expr:
-        return ast.UnaryOp(self.rec(expr.child), ast.Not())
+        return ast.UnaryOp(ast.Not(), self.rec(expr.child))
 
     def map_logical_or(self, expr) -> ast.expr:
         return ast.BoolOp(ast.Or(), [self.rec(child)
@@ -364,10 +370,10 @@ class PymbolicToASTMapper(CachedMapper):
         return ast.BoolOp(ast.And(), [self.rec(child)
                                      for child in expr.children])
 
-    def map_list(self, expr: List[Any]) -> ast.expr:
+    def map_list(self, expr: list[Any]) -> ast.expr:
         return ast.List([self.rec(el) for el in expr])
 
-    def map_tuple(self, expr: Tuple[Any, ...]) -> ast.expr:
+    def map_tuple(self, expr: tuple[Any, ...]) -> ast.expr:
         return ast.Tuple([self.rec(el) for el in expr])
 
     def map_if(self, expr: p.If) -> ast.expr:
@@ -376,6 +382,7 @@ class PymbolicToASTMapper(CachedMapper):
                          orelse=self.rec(expr.else_))
 
     def map_nan(self, expr: p.NaN) -> ast.expr:
+        assert expr.data_type is not None
         if isinstance(expr.data_type(float("nan")), float):
             return ast.Call(
                 ast.Name(id="float"),
@@ -462,6 +469,7 @@ def to_evaluatable_python_function(expr: ExpressionT,
             return S // 32 + E % 32
     """
     import sys
+
     from pymbolic.mapper.dependency import CachedDependencyMapper
 
     if sys.version_info < (3, 9):

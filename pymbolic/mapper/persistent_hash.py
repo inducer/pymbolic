@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,6 +24,8 @@ THE SOFTWARE.
 """
 
 
+from warnings import warn
+
 from pymbolic.mapper import WalkMapper
 
 
@@ -32,6 +37,12 @@ class PersistentHashWalkMapper(WalkMapper):
 
     def __init__(self, key_hash):
         self.key_hash = key_hash
+
+        warn("PersistentHashWalkMapper is deprecated. "
+             "Since they are dataclasses, expression objects should now "
+             "support persistent hashing natively without any help. "
+             "It will be removed in 2026.",
+             DeprecationWarning, stacklevel=2)
 
     def visit(self, expr):
         self.key_hash.update(type(expr).__name__.encode("utf8"))

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2022 Kaushik Kulkarni"
 
 __license__ = """
@@ -21,8 +24,8 @@ THE SOFTWARE.
 """
 
 
-import pymbolic.primitives as p
 import pymbolic.interop.matchpy as m
+import pymbolic.primitives as p
 
 
 def test_replace_with_variadic_op():
@@ -81,6 +84,7 @@ def test_replace_with_ternary_ops():
 
 def test_make_subexpr_subst():
     from functools import reduce
+
     from pymbolic import parse
     from pymbolic.mapper.flattener import flatten
 

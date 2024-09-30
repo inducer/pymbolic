@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2022 Kaushik Kulkarni"
 
 __license__ = """
@@ -21,12 +24,14 @@ THE SOFTWARE.
 """
 
 
+from dataclasses import dataclass, replace
+
 import numpy as np
 
-import pymbolic.primitives as prim
-from dataclasses import dataclass, replace
 from pytools import UniqueNameGenerator
-from pymbolic.mapper import IdentityMapper, CachedIdentityMapper
+
+import pymbolic.primitives as prim
+from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 from pymbolic.mapper.optimize import optimize_mapper
 
 

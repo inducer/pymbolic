@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2017 Matt Wala"
 
 __license__ = """
@@ -21,7 +24,9 @@ THE SOFTWARE.
 """
 
 import pytest
+
 import pymbolic.primitives as prim
+
 
 x_, y_, i_, j_ = (prim.Variable(s) for s in "x y i j".split())
 
@@ -156,8 +161,10 @@ def test_pymbolic_to_sympy_roundtrip():
 
 def test_pymbolic_to_symengine_roundtrip():
     sym = pytest.importorskip("symengine")
-    from pymbolic.interop.symengine import (PymbolicToSymEngineMapper,
-            SymEngineToPymbolicMapper)
+    from pymbolic.interop.symengine import (
+        PymbolicToSymEngineMapper,
+        SymEngineToPymbolicMapper,
+    )
     forward = PymbolicToSymEngineMapper()
     backward = SymEngineToPymbolicMapper()
 

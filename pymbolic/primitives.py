@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -20,11 +23,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from abc import ABC, abstractmethod
+import re
+from dataclasses import dataclass, fields
 from sys import intern
-from typing import ClassVar, Dict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Mapping,
+    NoReturn,
+    TypeVar,
+    cast,
+)
+from warnings import warn
 
-import pymbolic.traits as traits
+from typing_extensions import TypeIs, dataclass_transform
+
+from . import traits
+from .typing import ExpressionT, NumberT, ScalarT
+
+
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
 
 __doc__ = """
@@ -32,6 +53,14 @@ Expression base class
 ---------------------
 
 .. autoclass:: Expression
+
+.. class:: ExpressionT
+
+    A type that can be used in type annotations whenever an expression
+    is desired. A :class:`typing.Union` of :class:`Expression` and
+    built-in scalar types.
+
+.. autofunction:: expr_dataclass
 
 Sums, products and such
 -----------------------
@@ -170,6 +199,29 @@ Constants
 .. autoclass:: NaN
     :undoc-members:
     :members: mapper_method
+
+Outside references
+------------------
+
+.. class:: DataclassInstance
+
+    An instance of a :func:`~dataclasses.dataclass`.
+
+.. class:: _T
+
+    A type variable.
+
+.. currentmodule:: numpy
+
+.. class:: bool_
+
+    Deprecated alias for :class:`numpy.bool`.
+
+.. currentmodule:: typing_extensions
+
+.. class:: TypeIs
+
+    See :data:`typing_extensions.TypeIs`.
 """
 
 
@@ -188,7 +240,26 @@ def disable_subscript_by_getitem():
     pass
 
 
-class Expression(ABC):
+# https://stackoverflow.com/a/13624858
+class _classproperty(property):  # noqa: N801
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
+
+
+class _AttributeLookupCreator:
+    def __init__(self, aggregate: ExpressionT):
+        self.aggregate = aggregate
+
+    def __getattr__(self, name: str) -> Lookup:
+        return Lookup(self.aggregate, name)
+
+
+@dataclass(frozen=True)
+class EmptyOK:
+    child: ExpressionT
+
+
+class Expression:
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`Sum`, :class:`Product` and other expressions.
 
@@ -210,14 +281,10 @@ class Expression(ABC):
 
     .. method:: __getitem__
 
-    .. method:: __getinitargs__
-
     .. automethod:: make_stringifier
 
     .. automethod:: __eq__
-    .. automethod:: is_equal
     .. automethod:: __hash__
-    .. automethod:: get_hash
     .. automethod:: __str__
     .. automethod:: __repr__
 
@@ -237,26 +304,26 @@ class Expression(ABC):
     .. automethod:: ge
     """
 
+    mapper_method: ClassVar[str]
+
     # {{{ init arg names (override by subclass)
 
-    @abstractmethod
     def __getinitargs__(self):
-        pass
+        raise NotImplementedError
 
-    @classmethod
-    @property
-    def __match_args__(cls):
+    @_classproperty
+    def __match_args__(cls):  # noqa: N805  # pylint: disable=no-self-argument
         return cls.init_arg_names
 
     @property
-    def init_arg_names(self):
+    def init_arg_names(self) -> tuple[str, ...]:
         raise NotImplementedError
 
     # }}}
 
     # {{{ arithmetic
 
-    def __add__(self, other):
+    def __add__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
         if is_nonzero(other):
@@ -270,7 +337,7 @@ class Expression(ABC):
         else:
             return self
 
-    def __radd__(self, other):
+    def __radd__(self, other: object) -> ExpressionT:
         assert is_constant(other)
         if is_nonzero(other):
             if self:
@@ -280,16 +347,16 @@ class Expression(ABC):
         else:
             return self
 
-    def __sub__(self, other):
+    def __sub__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
         if is_nonzero(other):
-            return self.__add__(-other)
+            return self.__add__(-cast(NumberT, other))
         else:
             return self
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: object) -> ExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -298,10 +365,11 @@ class Expression(ABC):
         else:
             return -self
 
-    def __mul__(self, other):
+    def __mul__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other - 1):
             return self
         elif is_zero(other):
@@ -309,7 +377,7 @@ class Expression(ABC):
         else:
             return Product((self, other))
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: object) -> ExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -320,16 +388,17 @@ class Expression(ABC):
         else:
             return Product((other, self))
 
-    def __div__(self, other):
+    def __div__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return self
         return quotient(self, other)
     __truediv__ = __div__
 
-    def __rdiv__(self, other):
+    def __rdiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -338,15 +407,16 @@ class Expression(ABC):
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return self
         return FloorDiv(self, other)
 
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -354,31 +424,33 @@ class Expression(ABC):
             return other
         return FloorDiv(other, self)
 
-    def __mod__(self, other):
+    def __mod__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other-1):
             return 0
         return Remainder(self, other)
 
-    def __rmod__(self, other):
+    def __rmod__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
         return Remainder(other, self)
 
-    def __pow__(self, other):
+    def __pow__(self, other: object) -> ExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
+        other = cast(NumberT, other)
         if is_zero(other):  # exponent zero
             return 1
         elif is_zero(other-1):  # exponent one
             return self
         return Power(self, other)
 
-    def __rpow__(self, other):
+    def __rpow__(self, other: object) -> ExpressionT:
         assert is_constant(other)
 
         if is_zero(other):  # base zero
@@ -391,91 +463,129 @@ class Expression(ABC):
 
     # {{{ shifts
 
-    def __lshift__(self, other):
+    def __lshift__(self, other: object) -> LeftShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return LeftShift(self, other)
 
-    def __rlshift__(self, other):
+    def __rlshift__(self, other: object) -> LeftShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return LeftShift(other, self)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other: object) -> RightShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return RightShift(self, other)
 
-    def __rrshift__(self, other):
+    def __rrshift__(self, other: object) -> RightShift:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return RightShift(other, self)
 
     # }}}
 
     # {{{ bitwise operators
 
-    def __invert__(self):
+    def __invert__(self) -> BitwiseNot:
         return BitwiseNot(self)
 
-    def __or__(self, other):
+    def __or__(self, other: object) -> BitwiseOr:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseOr((self, other))
 
-    def __ror__(self, other):
+    def __ror__(self, other: object) -> BitwiseOr:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseOr((other, self))
 
-    def __xor__(self, other):
+    def __xor__(self, other: object) -> BitwiseXor:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseXor((self, other))
 
-    def __rxor__(self, other):
+    def __rxor__(self, other: object) -> BitwiseXor:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseXor((other, self))
 
-    def __and__(self, other):
+    def __and__(self, other: object) -> BitwiseAnd:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseAnd((self, other))
 
-    def __rand__(self, other):
+    def __rand__(self, other: object) -> BitwiseAnd:
+        if not is_valid_operand(other):
+            return NotImplemented
+
         return BitwiseAnd((other, self))
 
     # }}}
 
     # {{{ misc
 
-    def __neg__(self):
+    def __neg__(self) -> ExpressionT:
         return -1*self
 
-    def __pos__(self):
+    def __pos__(self) -> ExpressionT:
         return self
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
         if kwargs:
-            return CallWithKwargs(self, args, kwargs)
+            from immutabledict import immutabledict
+            return CallWithKwargs(self, args, immutabledict(kwargs))
         else:
             return Call(self, args)
 
-    def index(self, subscript):
-        """Return an expression representing ``self[subscript]``.
+    if not TYPE_CHECKING:
+        def index(self, subscript: Expression) -> Expression:
+            """Return an expression representing ``self[subscript]``.
 
-        .. versionadded:: 2014.3
-        """
+            .. versionadded:: 2014.3
+            """
+
+            warn("Expression.index(i) is deprecated and will be removed in 2H2025. "
+                 "Use 'expr[i] 'instead.", DeprecationWarning, stacklevel=2)
+
+            return self[subscript]
+
+    def __getitem__(self, subscript: ExpressionT | EmptyOK) -> Expression:
+        """Return an expression representing ``self[subscript]``. """
+
+        if isinstance(subscript, EmptyOK):
+            return Subscript(self, subscript.child)
 
         if subscript == ():
+            warn("Expression.__getitem__ called with an empty tuple as an index. "
+                 "This still returns just the aggregate (not a Subscript), "
+                 "but this behavior will change in 2026. To avoid this warning "
+                 "(and return a Subscript unconditionally), wrap the subscript "
+                 "in pymbolic.primitives.EmptyOK.", DeprecationWarning, stacklevel=2)
             return self
-        else:
-            return Subscript(self, subscript)
+        return Subscript(self, subscript)
 
-    __getitem__ = index
-
-    def attr(self, name):
+    def attr(self, name: str) -> Lookup:
         """Return a :class:`Lookup` for *name* in *self*.
         """
         return Lookup(self, name)
 
     @property
-    def a(self):
+    def a(self) -> _AttributeLookupCreator:
         """Provide a spelling ``expr.a.name`` for encoding attribute lookup.
         """
-        class AttributeLookupCreator:
-            def __init__(self, aggregate):
-                self.aggregate = aggregate
+        return _AttributeLookupCreator(self)
 
-            def __getattr__(self, name):
-                return Lookup(self.aggregate, name)
-
-        return AttributeLookupCreator(self)
-
-    def __float__(self):
+    def __float__(self) -> float:
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
@@ -491,7 +601,7 @@ class Expression(ABC):
         from pymbolic.mapper.stringifier import StringifyMapper
         return StringifyMapper()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Use the :meth:`make_stringifier` to return a human-readable
         string representation of *self*.
         """
@@ -499,7 +609,7 @@ class Expression(ABC):
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.make_stringifier()(self, PREC_NONE)
 
-    def _safe_repr(self, limit=None):
+    def _safe_repr(self, limit: int | None = None) -> str:
         if limit is None:
             limit = SAFE_REPR_LIMIT
 
@@ -525,23 +635,31 @@ class Expression(ABC):
 
         return f"{self.__class__.__name__}({initargs_str})"
 
-    def __repr__(self):
-        """Provides a default :func:`repr` based on
-        the Python pickling interface :meth:`__getinitargs__`.
-        """
+    def __repr__(self) -> str:
         return self._safe_repr()
 
     # }}}
 
     # {{{ hash/equality interface
 
-    def __eq__(self, other):
+    # This custom warning deduplication mechanism became necessary because the
+    # sheer amount of warnings ended up leading to out-of-memory situations
+    # with pytest which bufered all the warnings.
+    _deprecation_warnings_issued: ClassVar[set[tuple[type[Expression], str]]] = set()
+
+    def __eq__(self, other) -> bool:
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
-
-        Subclasses should generally not override this method, but instead
-        provide an implementation of :meth:`is_equal`.
         """
+        depr_key = (type(self), "__eq__")
+        if depr_key not in self._deprecation_warnings_issued:
+            warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
+                 "Use equality comparison supplied by expr_dataclass"
+                 "instead. "
+                 "This will stop working in 2025.",
+                 DeprecationWarning, stacklevel=2)
+            self._deprecation_warnings_issued.add(depr_key)
+
         if self is other:
             return True
         elif hash(self) != hash(other):
@@ -549,60 +667,67 @@ class Expression(ABC):
         else:
             return self.is_equal(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Provides caching for hash values.
-
-        Subclasses should generally not override this method, but instead
-        provide an implementation of :meth:`get_hash`.
         """
+        depr_key = (type(self), "__hash__")
+        if depr_key not in self._deprecation_warnings_issued:
+            warn(f"Expression.__hash__ is used by {self.__class__}. "
+                 "This is deprecated. "
+                 "Use hash functions supplied by expr_dataclass instead. "
+                 "This will stop working in 2025.",
+                 DeprecationWarning, stacklevel=2)
+
+            self._deprecation_warnings_issued.add(depr_key)
+
         try:
             return self._hash_value
         except AttributeError:
-            self._hash_value = self.get_hash()
+            self._hash_value: int = self.get_hash()
             return self._hash_value
 
-    def __getstate__(self):
+    def __getstate__(self) -> tuple[Any]:
         return self.__getinitargs__()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         # Can't use trivial pickling: _hash_value cache must stay unset
         assert len(self.init_arg_names) == len(state), type(self)
         for name, value in zip(self.init_arg_names, state):
-            setattr(self, name, value)
+            object.__setattr__(self, name, value)
 
     # }}}
 
     # {{{ hash/equality backend
 
-    def is_equal(self, other):
+    def is_equal(self, other) -> bool:
         return (type(other) is type(self)
                 and self.__getinitargs__() == other.__getinitargs__())
 
-    def get_hash(self):
+    def get_hash(self) -> int:
         return hash((type(self).__name__, *self.__getinitargs__()))
 
     # }}}
 
     # {{{ logical op constructors
 
-    def not_(self):
+    def not_(self) -> LogicalNot:
         """Return *self* wrapped in a :class:`LogicalNot`.
 
         .. versionadded:: 2015.2
         """
         return LogicalNot(self)
 
-    def and_(self, other):
+    def and_(self, other) -> LogicalAnd:
         """Return :class:`LogicalAnd` between *self* and *other*.
 
         .. versionadded:: 2015.2
         """
         return LogicalAnd((self, other))
 
-    def or_(self, other):
+    def or_(self, other) -> LogicalOr:
         """Return :class:`LogicalOr` between *self* and *other*.
 
         .. versionadded:: 2015.2
@@ -613,42 +738,42 @@ class Expression(ABC):
 
     # {{{ comparison constructors
 
-    def eq(self, other):
+    def eq(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "==", other)
 
-    def ne(self, other):
+    def ne(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "!=", other)
 
-    def le(self, other):
+    def le(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "<=", other)
 
-    def lt(self, other):
+    def lt(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, "<", other)
 
-    def ge(self, other):
+    def ge(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
         """
         return Comparison(self, ">=", other)
 
-    def gt(self, other):
+    def gt(self, other) -> Comparison:
         """Return a :class:`Comparison` comparing *self* to *other*.
 
         .. versionadded:: 2015.2
@@ -661,21 +786,21 @@ class Expression(ABC):
 
     # /!\ Don't be tempted to resolve these to Comparison.
 
-    def __le__(self, other):
+    def __le__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> NoReturn:
         raise TypeError("expressions don't have an order")
 
     # }}}
 
-    def __abs__(self):
+    def __abs__(self) -> Expression:
         return Call(Variable("abs"), (self,))
 
     def __iter__(self):
@@ -683,6 +808,212 @@ class Expression(ABC):
         raise TypeError("expression types are not iterable")
 
 
+# {{{ dataclasses support
+
+# https://stackoverflow.com/a/1176023
+_CAMEL_TO_SNAKE_RE = re.compile(
+    r"""
+        (?<=[a-z])      # preceded by lowercase
+        (?=[A-Z])       # followed by uppercase
+        |               #   OR
+        (?<=[A-Z])      # preceded by lowercase
+        (?=[A-Z][a-z])  # followed by uppercase, then lowercase
+    """,
+    re.X,
+)
+
+
+def _augment_expression_dataclass(
+            cls: type[DataclassInstance],
+        ) -> None:
+    attr_tuple = ", ".join(f"self.{fld.name}" for fld in fields(cls))
+    if attr_tuple:
+        attr_tuple = f"({attr_tuple},)"
+    else:
+        attr_tuple = "()"
+
+    fld_name_tuple = ", ".join(f"'{fld.name}'" for fld in fields(cls))
+    if fld_name_tuple:
+        fld_name_tuple = f"({fld_name_tuple},)"
+    else:
+        fld_name_tuple = "()"
+
+    comparison = " and ".join(
+            f"self.{fld.name} == other.{fld.name}"
+            for fld in fields(cls))
+
+    if not comparison:
+        comparison = "True"
+
+    from pytools.codegen import remove_common_indentation
+    augment_code = remove_common_indentation(
+        f"""
+        from warnings import warn
+        from dataclasses import is_dataclass
+
+
+        def {cls.__name__}_eq(self, other):
+            if self is other:
+                return True
+            if self.__class__ is not other.__class__:
+                return False
+            if hash(self) != hash(other):
+                return False
+            if self.__class__ is not cls and self.init_arg_names != {fld_name_tuple}:
+                warn(f"{{self.__class__}} is derived from {cls}, which is now "
+                    f"a dataclass. {{self.__class__}} should be converted to being "
+                    "a dataclass as well. Non-dataclass subclasses "
+                    "will stop working in 2025.",
+                    DeprecationWarning)
+
+                return self.is_equal(other)
+
+            return self.__class__ == other.__class__ and {comparison}
+
+        cls.__eq__ = {cls.__name__}_eq
+
+
+        def {cls.__name__}_hash(self):
+            try:
+                return self._hash_value
+            except AttributeError:
+                pass
+
+            if self.__class__ is not cls and self.init_arg_names != {fld_name_tuple}:
+                warn(f"{{self.__class__}} is derived from {cls}, which is now "
+                    f"a dataclass. {{self.__class__}} should be converted to being "
+                    "a dataclass as well. Non-dataclass subclasses "
+                    "will stop working in 2025.",
+                    DeprecationWarning)
+
+                hash_val = self.get_hash()
+            else:
+                hash_val = hash({attr_tuple})
+
+            object.__setattr__(self, "_hash_value", hash_val)
+            return hash_val
+
+        cls.__hash__ = {cls.__name__}_hash
+
+
+        def {cls.__name__}_init_arg_names(self):
+            depr_key = (type(self), "init_arg_names")
+            if depr_key not in self._deprecation_warnings_issued:
+                warn("__getinitargs__ is deprecated and will be removed in 2025. "
+                        "Use dataclasses.fields instead.",
+                        DeprecationWarning, stacklevel=2)
+
+                self._deprecation_warnings_issued.add(depr_key)
+
+            return {fld_name_tuple}
+
+        cls.init_arg_names = property({cls.__name__}_init_arg_names)
+
+
+        def {cls.__name__}_getinitargs(self):
+            depr_key = (type(self), "__getinitargs__")
+            if depr_key not in self._deprecation_warnings_issued:
+                warn("__getinitargs__ is deprecated and will be removed in 2025. "
+                        "Use dataclasses.fields instead.",
+                        DeprecationWarning, stacklevel=2)
+
+                self._deprecation_warnings_issued.add(depr_key)
+
+            return {attr_tuple}
+
+        cls.__getinitargs__ = {cls.__name__}_getinitargs
+
+
+        def {cls.__name__}_getstate(self):
+            # We might get called on a non-dataclass subclass.
+            if "_is_expr_dataclass" not in self.__class__.__dict__:
+                from pymbolic.primitives import Expression
+                return Expression.__getstate__(self)
+
+            return {attr_tuple}
+
+        cls.__getstate__ = {cls.__name__}_getstate
+
+
+        def {cls.__name__}_setstate(self, state):
+            # We might get called on a non-dataclass subclass.
+            if "_is_expr_dataclass" not in self.__class__.__dict__:
+                from pymbolic.primitives import Expression
+                return Expression.__setstate__(self, state)
+
+            for name, value in zip({fld_name_tuple}, state):
+                object.__setattr__(self, name, value)
+
+        cls.__setstate__ = {cls.__name__}_setstate
+        """)
+
+    exec_dict = {"cls": cls, "_MODULE_SOURCE_CODE": augment_code}
+    exec(compile(augment_code,
+                 f"<dataclass augmentation code for {cls}>", "exec"),
+         exec_dict)
+
+    # set a marker to detect classes whose subclasses may not be expr_dataclasses
+    # type ignore because we don't want to announce the existence of this to the world.
+    cls._is_expr_dataclass = True  # type: ignore[attr-defined]
+
+    # {{{ assign mapper_method
+
+    assert issubclass(cls, Expression)
+
+    snake_clsname = _CAMEL_TO_SNAKE_RE.sub("_", cls.__name__).lower()
+    default_mapper_method_name = f"map_{snake_clsname}"
+
+    # This covers two cases: the class does not have the attribute in the first
+    # place, or it inherits a value but does not set it itself.
+    sets_mapper_method = "mapper_method" in cls.__dict__
+
+    if sets_mapper_method:
+        if default_mapper_method_name == cls.mapper_method:
+            warn(f"Explicit mapper_method on {cls} not needed, default matches "
+                 "explicit assignment. Just delete the explicit assignment.",
+                 stacklevel=3)
+
+    if not sets_mapper_method:
+        cls.mapper_method = intern(default_mapper_method_name)
+
+    # }}}
+
+
+_T = TypeVar("_T")
+
+
+@dataclass_transform(frozen_default=True)
+def expr_dataclass(init: bool = True) -> Callable[[type[_T]], type[_T]]:
+    """A class decorator that makes the class a :func:`~dataclasses.dataclass`
+    while also adding functionality needed for :class:`Expression` nodes.
+    Specifically, it adds cached hashing, equality comparisons
+    with ``self is other`` shortcuts as well as some methods/attributes
+    for backward compatibility (e.g. ``__getinitargs__``, ``init_arg_names``)
+
+    It also adds a :attr:`Expression.mapper_method` based on the class name
+    if not already present. If :attr:`~Expression.mapper_method` is inherited,
+    it will be viewed as unset and replaced.
+
+    .. versionadded:: 2024.1
+    """
+    def map_cls(cls: type[_T]) -> type[_T]:
+        # Frozen dataclasses (empirically) have a ~20% speed penalty in pymbolic,
+        # and their frozen-ness is arguably a debug feature.
+        dc_cls = dataclass(init=init, frozen=__debug__, repr=False)(cls)
+
+        # FIXME: I'm not sure how to tell mypy that dc_cls is type[DataclassInstance]
+        # It should just understand that?
+        _augment_expression_dataclass(
+                  dc_cls,  # type: ignore[arg-type]
+                  )
+        return dc_cls
+
+    return map_cls
+
+# }}}
+
+
+@expr_dataclass()
 class AlgebraicLeaf(Expression):
     """An expression that serves as a leaf for arithmetic evaluation.
     This may end up having child nodes still, but they're not reached by
@@ -690,79 +1021,44 @@ class AlgebraicLeaf(Expression):
     pass
 
 
+@expr_dataclass()
 class Leaf(AlgebraicLeaf):
     """An expression that is irreducible, i.e. has no Expression-type parts
     whatsoever."""
     pass
 
 
+@expr_dataclass()
 class Variable(Leaf):
     """
     .. attribute:: name
     """
-    init_arg_names = ("name",)
-
-    def __init__(self, name):
-        assert name
-        self.name = intern(name)
-
-    def __getinitargs__(self):
-        return self.name,
-
-    def __lt__(self, other):
-        if isinstance(other, Variable):
-            return self.name.__lt__(other.name)
-        else:
-            return NotImplemented
-
-    def __setstate__(self, val):
-        super().__setstate__(val)
-
-        self.name = intern(self.name)
-
-    mapper_method = intern("map_variable")
+    name: str
 
 
+@expr_dataclass()
 class Wildcard(Leaf):
-    def __getinitargs__(self):
-        return ()
-
-    mapper_method = intern("map_wildcard")
+    pass
 
 
+@expr_dataclass()
 class DotWildcard(Leaf):
     """
     A wildcard that can be substituted for a single expression.
     """
-    init_arg_names = ("name",)
-
-    def __init__(self, name):
-        assert isinstance(name, str)
-        self.name = name
-
-    def __getinitargs__(self):
-        return self.name,
-
-    mapper_method = intern("map_dot_wildcard")
+    name: str
 
 
+@expr_dataclass()
 class StarWildcard(Leaf):
     """
     A wildcard that can be substituted by a sequence of expressions of
     non-negative length.
     """
-    init_arg_names = ("name",)
-
-    def __init__(self, name):
-        assert isinstance(name, str)
-        self.name = name
-
-    def __getinitargs__(self):
-        return self.name,
-
-    mapper_method = intern("map_star_wildcard")
+    name: str
 
 
+@expr_dataclass()
 class FunctionSymbol(AlgebraicLeaf):
     """Represents the name of a function.
 
@@ -770,14 +1066,10 @@ class FunctionSymbol(AlgebraicLeaf):
     allow `Call` to check the number of arguments.
     """
 
-    def __getinitargs__(self):
-        return ()
-
-    mapper_method = intern("map_function_symbol")
-
 
 # {{{ structural primitives
 
+@expr_dataclass()
 class Call(AlgebraicLeaf):
     """A function invocation.
 
@@ -791,29 +1083,11 @@ class Call(AlgebraicLeaf):
         of which is a :class:`Expression` or a constant.
 
     """
-
-    init_arg_names = ("function", "parameters",)
-
-    def __init__(self, function, parameters):
-        self.function = function
-        self.parameters = parameters
-
-        try:
-            arg_count = self.function.arg_count
-        except AttributeError:
-            pass
-        else:
-            if len(self.parameters) != arg_count:
-                raise TypeError(
-                        f"{self.function} called with wrong number of arguments "
-                        f"(need {arg_count}, got {len(parameters)})")
-
-    def __getinitargs__(self):
-        return self.function, self.parameters
-
-    mapper_method = intern("map_call")
+    function: ExpressionT
+    parameters: tuple[ExpressionT, ...]
 
 
+@expr_dataclass()
 class CallWithKwargs(AlgebraicLeaf):
     """A function invocation with keyword arguments.
 
@@ -834,48 +1108,12 @@ class CallWithKwargs(AlgebraicLeaf):
         constructor.
     """
 
-    init_arg_names = ("function", "parameters", "kw_parameters")
-
-    def __init__(self, function, parameters, kw_parameters):
-        self.function = function
-        self.parameters = parameters
-
-        if isinstance(kw_parameters, dict):
-            self.kw_parameters = kw_parameters
-        else:
-            self.kw_parameters = dict(kw_parameters)
-
-        try:
-            arg_count = self.function.arg_count
-        except AttributeError:
-            pass
-        else:
-            if len(self.parameters) != arg_count:
-                raise TypeError(
-                        f"{self.function} called with wrong number of arguments "
-                        f"(need {arg_count}, got {len(parameters)})")
-
-    def __getinitargs__(self):
-        return (self.function,
-                self.parameters,
-                tuple(sorted(self.kw_parameters.items(), key=lambda item: item[0])))
-
-    def __setstate__(self, state):
-        # CallWithKwargs must override __setstate__ because during pickling the
-        # kw_parameters are converted to tuple, which needs to be converted
-        # back to dict.
-        assert len(self.init_arg_names) == len(state)
-        function, parameters, kw_parameters = state
-
-        self.function = function
-        self.parameters = parameters
-        if not isinstance(kw_parameters, dict):
-            kw_parameters = dict(kw_parameters)
-        self.kw_parameters = kw_parameters
-
-    mapper_method = intern("map_call_with_kwargs")
+    function: ExpressionT
+    parameters: tuple[ExpressionT, ...]
+    kw_parameters: Mapping[str, ExpressionT]
 
 
+@expr_dataclass()
 class Subscript(AlgebraicLeaf):
     """An array subscript.
 
@@ -886,65 +1124,41 @@ class Subscript(AlgebraicLeaf):
         Return :attr:`index` wrapped in a single-element tuple, if it is not already
         a tuple.
     """
+    aggregate: ExpressionT
 
-    init_arg_names = ("aggregate", "index",)
-
-    def __init__(self, aggregate, index):
-        self.aggregate = aggregate
-        self.index = index
-
-    def __getinitargs__(self):
-        return self.aggregate, self.index
+    index: ExpressionT
 
     @property
-    def index_tuple(self):
+    def index_tuple(self) -> tuple[ExpressionT, ...]:
         if isinstance(self.index, tuple):
             return self.index
         else:
             return (self.index,)
 
-    mapper_method = intern("map_subscript")
 
-
+@expr_dataclass()
 class Lookup(AlgebraicLeaf):
     """Access to an attribute of an *aggregate*, such as an
     attribute of a class.
     """
 
-    init_arg_names = ("aggregate", "name",)
-
-    def __init__(self, aggregate, name):
-        self.aggregate = aggregate
-        self.name = name
-
-    def __getinitargs__(self):
-        return self.aggregate, self.name
-
-    mapper_method = intern("map_lookup")
+    aggregate: ExpressionT
+    name: str
 
 # }}}
 
 
 # {{{ arithmetic primitives
 
-class _MultiChildExpression(Expression):
-    init_arg_names = ("children",)
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-
-        self.children = children
-
-    def __getinitargs__(self):
-        return self.children,
-
-
-class Sum(_MultiChildExpression):
+@expr_dataclass()
+class Sum(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
+
+    children: tuple[ExpressionT, ...]
 
     def __add__(self, other):
         if not is_valid_operand(other):
@@ -985,15 +1199,16 @@ class Sum(_MultiChildExpression):
 
     __nonzero__ = __bool__
 
-    mapper_method = intern("map_sum")
 
-
-class Product(_MultiChildExpression):
+@expr_dataclass()
+class Product(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
+
+    children: tuple[ExpressionT, ...]
 
     def __mul__(self, other):
         if not is_valid_operand(other):
@@ -1025,18 +1240,11 @@ class Product(_MultiChildExpression):
 
     __nonzero__ = __bool__
 
-    mapper_method = intern("map_product")
 
-
+@expr_dataclass()
 class QuotientBase(Expression):
-    init_arg_names = ("numerator", "denominator",)
-
-    def __init__(self, numerator, denominator=1):
-        self.numerator = numerator
-        self.denominator = denominator
-
-    def __getinitargs__(self):
-        return self.numerator, self.denominator
+    numerator: ExpressionT
+    denominator: ExpressionT
 
     @property
     def num(self):
@@ -1052,144 +1260,116 @@ class QuotientBase(Expression):
     __nonzero__ = __bool__
 
 
+@expr_dataclass()
 class Quotient(QuotientBase):
     """
     .. attribute:: numerator
     .. attribute:: denominator
     """
 
-    def is_equal(self, other):
-        from pymbolic.rational import Rational
-        return isinstance(other, (Rational, Quotient)) \
-               and (self.numerator == other.numerator) \
-               and (self.denominator == other.denominator)
 
-    mapper_method = intern("map_quotient")
-
-
+@expr_dataclass()
 class FloorDiv(QuotientBase):
     """
     .. attribute:: numerator
     .. attribute:: denominator
     """
 
-    mapper_method = intern("map_floor_div")
 
-
+@expr_dataclass()
 class Remainder(QuotientBase):
     """
     .. attribute:: numerator
     .. attribute:: denominator
     """
 
-    mapper_method = intern("map_remainder")
 
-
+@expr_dataclass()
 class Power(Expression):
     """
     .. attribute:: base
     .. attribute:: exponent
     """
 
-    init_arg_names = ("base", "exponent",)
-
-    def __init__(self, base, exponent):
-        self.base = base
-        self.exponent = exponent
-
-    def __getinitargs__(self):
-        return self.base, self.exponent
-
-    mapper_method = intern("map_power")
+    base: ExpressionT
+    exponent: ExpressionT
 
 # }}}
 
 
 # {{{ shift operators
 
+@expr_dataclass()
 class _ShiftOperator(Expression):
-    init_arg_names = ("shiftee", "shift",)
-
-    def __init__(self, shiftee, shift):
-        self.shiftee = shiftee
-        self.shift = shift
-
-    def __getinitargs__(self):
-        return self.shiftee, self.shift
+    shiftee: ExpressionT
+    shift: ExpressionT
 
 
+@expr_dataclass()
 class LeftShift(_ShiftOperator):
     """
     .. attribute:: shiftee
     .. attribute:: shift
     """
 
-    mapper_method = intern("map_left_shift")
 
-
+@expr_dataclass()
 class RightShift(_ShiftOperator):
     """
     .. attribute:: shiftee
     .. attribute:: shift
     """
 
-    mapper_method = intern("map_right_shift")
-
 # }}}
 
 
 # {{{ bitwise operators
 
+@expr_dataclass()
 class BitwiseNot(Expression):
     """
     .. attribute:: child
     """
 
-    init_arg_names = ("child",)
-
-    def __init__(self, child):
-        self.child = child
-
-    def __getinitargs__(self):
-        return (self.child,)
-
-    mapper_method = intern("map_bitwise_not")
+    child: ExpressionT
 
 
-class BitwiseOr(_MultiChildExpression):
+@expr_dataclass()
+class BitwiseOr(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
 
-    mapper_method = intern("map_bitwise_or")
+    children: tuple[ExpressionT, ...]
 
 
-class BitwiseXor(_MultiChildExpression):
+@expr_dataclass()
+class BitwiseXor(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
+    children: tuple[ExpressionT, ...]
 
-    mapper_method = intern("map_bitwise_xor")
 
-
-class BitwiseAnd(_MultiChildExpression):
+@expr_dataclass()
+class BitwiseAnd(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
-
-    mapper_method = intern("map_bitwise_and")
+    children: tuple[ExpressionT, ...]
 
 # }}}
 
 
 # {{{ comparisons, logic, conditionals
 
+@expr_dataclass()
 class Comparison(Expression):
     """
     .. attribute:: left
@@ -1203,11 +1383,16 @@ class Comparison(Expression):
 
         Unlike other expressions, comparisons are not implicitly constructed by
         comparing :class:`Expression` objects. See :meth:`Expression.eq`.
+
+    .. attribute:: operator_to_name
+    .. attribute:: name_to_operator
     """
 
-    init_arg_names = ("left", "operator", "right")
+    left: ExpressionT
+    operator: str
+    right: ExpressionT
 
-    operator_to_name: ClassVar[Dict[str, str]] = {
+    operator_to_name: ClassVar[dict[str, str]] = {
             "==": "eq",
             "!=": "ne",
             ">=": "ge",
@@ -1215,70 +1400,57 @@ class Comparison(Expression):
             "<=": "le",
             "<": "lt",
             }
-    name_to_operator: ClassVar[Dict[str, str]] = {
+    name_to_operator: ClassVar[dict[str, str]] = {
         name: op for op, name in operator_to_name.items()
     }
 
-    def __init__(self, left, operator, right):
-        """
-        :arg operator: accepts the same values as :attr:`operator`, or the
-            standard Python comparison operator names
+    def __post_init__(self):
+        # FIXME Yuck, gross
+        if self.operator not in self.operator_to_name:
+            if self.operator in self.name_to_operator:
+                warn("Passing operators by name is deprecated and will stop working "
+                     "in 2025. "
+                     "Use the name_to_operator class attribute to translate in "
+                     "calling code instead.",
+                     DeprecationWarning, stacklevel=3)
 
-        .. versionchanged:: 2020.2
-
-            Now also accepts Python operator names.
-        """
-        self.left = left
-        self.right = right
-
-        operator = self.name_to_operator.get(operator, operator)
-
-        if operator not in self.operator_to_name:
-            raise RuntimeError(f"invalid operator: '{operator}'")
-        self.operator = operator
-
-    def __getinitargs__(self):
-        return self.left, self.operator, self.right
-
-    mapper_method = intern("map_comparison")
+                object.__setattr__(
+                        self, "operator", self.name_to_operator[self.operator])
+            else:
+                raise RuntimeError(f"invalid operator: '{self.operator}'")
 
 
+@expr_dataclass()
 class LogicalNot(Expression):
     """
     .. attribute:: child
     """
 
-    init_arg_names = ("child",)
-
-    def __init__(self, child):
-        self.child = child
-
-    def __getinitargs__(self):
-        return (self.child,)
-
-    mapper_method = intern("map_logical_not")
+    child: ExpressionT
 
 
-class LogicalOr(_MultiChildExpression):
+@expr_dataclass()
+class LogicalOr(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
 
-    mapper_method = intern("map_logical_or")
+    children: tuple[ExpressionT, ...]
 
 
-class LogicalAnd(_MultiChildExpression):
+@expr_dataclass()
+class LogicalAnd(Expression):
     """
     .. attribute:: children
 
         A :class:`tuple`.
     """
+    children: tuple[ExpressionT, ...]
 
-    mapper_method = intern("map_logical_and")
 
-
+@expr_dataclass()
 class If(Expression):
     """
     .. attribute:: condition
@@ -1286,140 +1458,34 @@ class If(Expression):
     .. attribute:: else_
     """
 
-    init_arg_names = ("condition", "then", "else_")
-
-    def __init__(self, condition, then, else_):
-        self.condition = condition
-        self.then = then
-        self.else_ = else_
-
-    def __getinitargs__(self):
-        return self.condition, self.then, self.else_
-
-    mapper_method = intern("map_if")
+    condition: ExpressionT
+    then: ExpressionT
+    else_: ExpressionT
 
 
-class IfPositive(Expression):
-    init_arg_names = ("criterion", "then", "else_")
+@expr_dataclass()
+class Min(Expression):
+    """
+    .. attribute:: children
 
-    def __init__(self, criterion, then, else_):
-        from warnings import warn
-        warn("IfPositive is deprecated, use If( ... >0)", DeprecationWarning,
-                stacklevel=2)
-
-        self.criterion = criterion
-        self.then = then
-        self.else_ = else_
-
-    def __getinitargs__(self):
-        return self.criterion, self.then, self.else_
-
-    mapper_method = intern("map_if_positive")
+        A :class:`tuple`.
+    """
+    children: tuple[ExpressionT, ...]
 
 
-class _MinMaxBase(Expression):
-    init_arg_names = ("children",)
+@expr_dataclass()
+class Max(Expression):
+    """
+    .. attribute:: children
 
-    def __init__(self, children):
-        self.children = children
-
-    def __getinitargs__(self):
-        return (self.children,)
-
-
-class Min(_MinMaxBase):
-    mapper_method = intern("map_min")
-
-
-class Max(_MinMaxBase):
-    mapper_method = intern("map_max")
+        A :class:`tuple`.
+    """
+    children: tuple[ExpressionT, ...]
 
 # }}}
 
 
 # {{{ misc stuff
-
-class Vector(Expression):
-    """An immutable sequence that you can compute with."""
-
-    init_arg_names = ("children",)
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self.children = children
-
-        from warnings import warn
-        warn("pymbolic vectors are deprecated in favor of either "
-                "(a) numpy object arrays and "
-                "(b) pymbolic.geometric_algebra.MultiVector "
-                "(depending on the required semantics)",
-                DeprecationWarning, stacklevel=2)
-
-    def __bool__(self):
-        for i in self.children:
-            if is_nonzero(i):
-                return False
-        return True
-
-    __nonzero__ = __bool__
-
-    def __len__(self):
-        return len(self.children)
-
-    def __getitem__(self, index):
-        if is_constant(index):
-            return self.children[index]
-        else:
-            return Expression.__getitem__(self, index)
-
-    def __neg__(self):
-        return Vector(tuple([-x for x in self]))
-
-    def __add__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't add values of differing lengths")
-        return Vector(tuple([x+y for x, y in zip(self, other)]))
-
-    def __radd__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't add values of differing lengths")
-        return Vector(tuple([y+x for x, y in zip(self, other)]))
-
-    def __sub__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple([x-y for x, y in zip(self, other)]))
-
-    def __rsub__(self, other):
-        if len(other) != len(self):
-            raise ValueError("can't subtract values of differing lengths")
-        return Vector(tuple([y-x for x, y in zip(self, other)]))
-
-    def __mul__(self, other):
-        return Vector(tuple([x*other for x in self]))
-
-    def __rmul__(self, other):
-        return Vector(tuple([other*x for x in self]))
-
-    def __div__(self, other):
-        # Py2 only
-        import operator
-        return Vector(tuple([
-            operator.div(x, other) for x in self    # pylint: disable=no-member
-            ]))
-
-    def __truediv__(self, other):
-        import operator
-        return Vector(tuple([operator.truediv(x, other) for x in self]))
-
-    def __floordiv__(self, other):
-        return Vector(tuple([x//other for x in self]))
-
-    def __getinitargs__(self):
-        return self.children
-
-    mapper_method = intern("map_vector")
-
 
 class cse_scope:  # noqa
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
@@ -1445,6 +1511,7 @@ class cse_scope:  # noqa
     GLOBAL = "pymbolic_global"
 
 
+@expr_dataclass()
 class CommonSubexpression(Expression):
     """A helper for code generation and caching. Denotes a subexpression that
     should only be evaluated once. If, in code generation, it is assigned to
@@ -1459,21 +1526,17 @@ class CommonSubexpression(Expression):
     See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example.
     """
 
-    init_arg_names = ("child", "prefix", "scope")
+    child: ExpressionT
+    prefix: str | None = None
+    scope: str = cse_scope.EVALUATION
 
-    def __init__(self, child, prefix=None, scope=None):
-        """
-        :arg scope: Defaults to :attr:`cse_scope.EVALUATION` if given as *None*.
-        """
-        if scope is None:
-            scope = cse_scope.EVALUATION
-
-        self.child = child
-        self.prefix = prefix
-        self.scope = scope
-
-    def __getinitargs__(self):
-        return (self.child, self.prefix, self.scope)
+    def __post_init__(self):
+        if self.scope is None:
+            warn("CommonSubexpression.scope set to None. "
+                 "This is deprecated and will stop working in 2024. "
+                "Use cse_scope.EVALUATION explicitly instead.",
+                 DeprecationWarning, stacklevel=3)
+            object.__setattr__(self, "scope", cse_scope.EVALUATION)
 
     def get_extra_properties(self):
         """Return a dictionary of extra kwargs to be passed to the
@@ -1485,9 +1548,8 @@ class CommonSubexpression(Expression):
 
         return {}
 
-    mapper_method = intern("map_common_subexpression")
 
-
+@expr_dataclass()
 class Substitution(Expression):
     """A (deferred) substitution applicable to a subexpression.
 
@@ -1508,51 +1570,27 @@ class Substitution(Expression):
         string identifier in :attr:`variables`.
     """
 
-    init_arg_names = ("child", "variables", "values")
-
-    def __init__(self, child, variables, values):
-        self.child = child
-        self.variables = variables
-        self.values = values
-
-        if len(variables) != len(values):
-            raise ValueError("variables and values must have the same length")
-
-    def __getinitargs__(self):
-        return (self.child, self.variables, self.values)
-
-    mapper_method = intern("map_substitution")
+    child: ExpressionT
+    variables: tuple[str, ...]
+    values: tuple[ExpressionT, ...]
 
 
+@expr_dataclass()
 class Derivative(Expression):
     """Work-alike of sympy's Derivative."""
 
-    init_arg_names = ("child", "variables")
-
-    def __init__(self, child, variables):
-        self.child = child
-        self.variables = variables
-
-    def __getinitargs__(self):
-        return (self.child, self.variables)
-
-    mapper_method = intern("map_derivative")
+    child: ExpressionT
+    variables: tuple[str, ...]
 
 
+@expr_dataclass()
 class Slice(Expression):
     """A slice expression as in a[1:7]."""
 
-    init_arg_names = ("children",)
-
-    def __init__(self, children):
-        assert isinstance(children, tuple)
-        self.children = children
-
-        if len(children) > 3:
-            raise ValueError("slice with more than three arguments")
-
-    def __getinitargs__(self):
-        return (self.children,)
+    children: (tuple[()]
+        | tuple[ExpressionT]
+        | tuple[ExpressionT, ExpressionT]
+        | tuple[ExpressionT, ExpressionT, ExpressionT])
 
     def __bool__(self):
         return True
@@ -1582,9 +1620,8 @@ class Slice(Expression):
         else:
             return None
 
-    mapper_method = intern("map_slice")
 
-
+@expr_dataclass()
 class NaN(Expression):
     """
     An expression node representing not-a-number as a floating point number.
@@ -1606,13 +1643,7 @@ class NaN(Expression):
         type.  It must also be suitable for use as the second argument of
         :func:`isinstance`.
     """
-    init_arg_names = ("data_type", )
-
-    def __init__(self, data_type=None):
-        self.data_type = data_type
-
-    def __getinitargs__(self):
-        return (self.data_type, )
+    data_type: Callable[[float], Any] | None = None
 
     mapper_method = intern("map_nan")
 
@@ -1621,9 +1652,9 @@ class NaN(Expression):
 
 # {{{ intelligent factory functions
 
-def make_variable(var_or_string):
-    if not isinstance(var_or_string, Expression):
-        return Variable(var_or_string)
+def make_variable(var_or_string: Variable | str) -> Variable:
+    if isinstance(var_or_string, str):
+        return Variable(intern(var_or_string))
     else:
         return var_or_string
 
@@ -1728,7 +1759,7 @@ def quotient(numerator, denominator):
 
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
-VALID_CONSTANT_CLASSES = (int, float, complex)
+VALID_CONSTANT_CLASSES: tuple[type, ...] = (int, float, complex)
 VALID_OPERANDS = (Expression,)
 
 try:
@@ -1738,11 +1769,11 @@ except ImportError:
     pass
 
 
-def is_constant(value):
+def is_constant(value: object) -> TypeIs[ScalarT]:
     return isinstance(value, VALID_CONSTANT_CLASSES)
 
 
-def is_valid_operand(value):
+def is_valid_operand(value: object) -> TypeIs[ExpressionT]:
     return isinstance(value, VALID_OPERANDS) or is_constant(value)
 
 
@@ -1881,7 +1912,7 @@ def make_sym_vector(name, components, var_factory=Variable):
 
     from pytools.obj_array import flat_obj_array
     vfld = var_factory(name)
-    return flat_obj_array(*[vfld.index(i) for i in components])
+    return flat_obj_array(*[vfld[i] for i in components])
 
 
 def make_sym_array(name, shape, var_factory=Variable):
