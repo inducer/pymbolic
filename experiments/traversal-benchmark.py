@@ -128,9 +128,11 @@ if __name__ == "__main__":
         t_end = time()
         print(f"Took: {t_end-t_start} secs.")
     else:
-        import vmprof
-        with open("test.prof", "w+b") as fd:
-            vmprof.enable(fd.fileno())
+        import pyinstrument
+        from pyinstrument.renderers import SpeedscopeRenderer
+        prof = pyinstrument.Profiler()
+        with prof:
             for _ in range(10_000):
                 main()
-            vmprof.disable()
+        with open("ss.json", "w") as outf:
+            outf.write(prof.output(SpeedscopeRenderer(show_all=True)))
