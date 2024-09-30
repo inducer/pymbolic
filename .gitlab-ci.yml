@@ -45,7 +45,7 @@ Mypy:
     curl -L -O https://tiker.net/ci-support-v0
     . ./ci-support-v0
     build_py_project_in_venv
-    python -m pip install mypy
+    python -m pip install mypy numpy
     ./run-mypy.sh
   tags:
   - python3
