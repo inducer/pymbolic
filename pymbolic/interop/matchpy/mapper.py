@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+from typing import Any, Callable
+
 from pymbolic.interop.matchpy import PymbolicOp
-from typing import Any, Dict, Callable
 
 
 class Mapper:
     def __init__(self) -> None:
-        self.cache: Dict[PymbolicOp, Any] = {}
+        self.cache: dict[PymbolicOp, Any] = {}
 
     def rec(self, expr: PymbolicOp) -> Any:
         if expr in self.cache:

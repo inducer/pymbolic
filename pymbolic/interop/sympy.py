@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = """
 Copyright (C) 2017 Matt Wala
 Copyright (C) 2009-2013 Andreas Kloeckner
@@ -23,12 +26,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.interop.common import (
-    SympyLikeToPymbolicMapper, PymbolicToSympyLikeMapper)
+import sympy
 
 import pymbolic.primitives as prim
-
-import sympy
+from pymbolic.interop.common import PymbolicToSympyLikeMapper, SympyLikeToPymbolicMapper
 
 
 __doc__ = """

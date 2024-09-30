@@ -1,4 +1,6 @@
 """Imperative program representation"""
+from __future__ import annotations
+
 
 __copyright__ = "Copyright (C) 2015 Matt Wala, Andreas Kloeckner"
 

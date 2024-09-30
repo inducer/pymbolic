@@ -2,6 +2,7 @@
 .. autoclass:: DistributeMapper
 .. autofunction:: distribute
 """
+from __future__ import annotations
 
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
@@ -30,7 +31,7 @@ import pymbolic
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
 from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
-from pymbolic.primitives import Sum, Product, is_zero
+from pymbolic.primitives import Product, Sum, is_zero
 
 
 class DistributeMapper(IdentityMapper):

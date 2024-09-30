@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
 __license__ = """
@@ -23,7 +26,7 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import ClassVar, Hashable, List
+from typing import ClassVar, Hashable
 
 from pymbolic.primitives import Expression, Variable, expr_dataclass
 from pymbolic.typing import ExpressionT
@@ -66,7 +69,7 @@ class Derivative:
     .. automethod:: dnabla
     .. automethod:: resolve
     """
-    _next_id: ClassVar[List[int]] = [0]
+    _next_id: ClassVar[list[int]] = [0]
 
     def __init__(self):
         self.my_id = f"id{self._next_id[0]}"
@@ -77,8 +80,9 @@ class Derivative:
         return Nabla(self.my_id)
 
     def dnabla(self, ambient_dim):
-        from pymbolic.geometric_algebra import MultiVector
         from pytools.obj_array import make_obj_array
+
+        from pymbolic.geometric_algebra import MultiVector
         return MultiVector(make_obj_array(
             [NablaComponent(axis, self.my_id)
                 for axis in range(ambient_dim)]))

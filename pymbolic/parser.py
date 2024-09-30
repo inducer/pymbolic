@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,10 +24,10 @@ THE SOFTWARE.
 """
 
 from sys import intern
-from typing import ClassVar, Dict, Sequence, Tuple, Union
-from typing_extensions import TypeAlias
+from typing import ClassVar, Sequence, Tuple, Union
 
 from immutabledict import immutabledict
+from typing_extensions import TypeAlias
 
 import pytools.lex
 from pytools import memoize_method
@@ -192,7 +195,7 @@ class Parser:
             (_colon, pytools.lex.RE(r"\:")),
             ]
 
-    _COMP_TABLE: ClassVar[Dict[str, str]] = {
+    _COMP_TABLE: ClassVar[dict[str, str]] = {
             _greater: ">",
             _greaterequal: ">=",
             _less: "<",

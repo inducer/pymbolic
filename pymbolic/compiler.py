@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
 __license__ = """
@@ -21,10 +24,9 @@ THE SOFTWARE.
 """
 
 import math
+
 import pymbolic
-from pymbolic.mapper.stringifier import (
-        StringifyMapper, PREC_NONE,
-        PREC_SUM, PREC_POWER)
+from pymbolic.mapper.stringifier import PREC_NONE, PREC_POWER, PREC_SUM, StringifyMapper
 
 
 class CompileMapper(StringifyMapper):

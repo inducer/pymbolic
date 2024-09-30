@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import sys
+
 
 collect_ignore = []
 if sys.version_info < (3, 10):

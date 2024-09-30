@@ -72,7 +72,7 @@ extend-select = [
     "E",    # pycodestyle
     "F",    # pyflakes
     "G",    # flake8-logging-format
-    # "I",    # flake8-isort
+    "I",    # flake8-isort
     "N",    # pep8-naming
     "Q",    # flake8-quotes
     "RUF",  # ruff
@@ -88,11 +88,12 @@ extend-ignore = [
     "E402", # module level import not at the top of file
     "UP031", # use f-strings instead of %
     "UP032", # use f-strings instead of .format
-    "I001",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "experiments/traversal-benchmark.py" = ["E501"]
+"doc/conf.py" = ["I002"]
+"experiments/*.py" = ["I002"]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
 
 __license__ = """
@@ -23,27 +26,26 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import ClassVar, Dict
+from typing import ClassVar
 
-from pymbolic.geometric_algebra import MultiVector
 import pymbolic.geometric_algebra.primitives as prim
+from pymbolic.geometric_algebra import MultiVector
 from pymbolic.mapper import (
-        CombineMapper as CombineMapperBase,
-        Collector as CollectorBase,
-        IdentityMapper as IdentityMapperBase,
-        WalkMapper as WalkMapperBase,
-        CachedMapper,
-        )
+    CachedMapper,
+    Collector as CollectorBase,
+    CombineMapper as CombineMapperBase,
+    IdentityMapper as IdentityMapperBase,
+    WalkMapper as WalkMapperBase,
+)
 from pymbolic.mapper.constant_folder import (
-        ConstantFoldingMapper as ConstantFoldingMapperBase)
-from pymbolic.mapper.graphviz import (
-        GraphvizMapper as GraphvizMapperBase)
+    ConstantFoldingMapper as ConstantFoldingMapperBase,
+)
+from pymbolic.mapper.evaluator import EvaluationMapper as EvaluationMapperBase
+from pymbolic.mapper.graphviz import GraphvizMapper as GraphvizMapperBase
 from pymbolic.mapper.stringifier import (
-        StringifyMapper as StringifyMapperBase,
-        PREC_NONE
-        )
-from pymbolic.mapper.evaluator import (
-        EvaluationMapper as EvaluationMapperBase)
+    PREC_NONE,
+    StringifyMapper as StringifyMapperBase,
+)
 
 
 class IdentityMapper(IdentityMapperBase):
@@ -105,7 +107,7 @@ class EvaluationMapper(EvaluationMapperBase):
 
 
 class StringifyMapper(StringifyMapperBase):
-    AXES: ClassVar[Dict[int, str]] = {0: "x", 1: "y", 2: "z"}
+    AXES: ClassVar[dict[int, str]] = {0: "x", 1: "y", 2: "z"}
 
     def map_nabla(self, expr, enclosing_prec):
         return f"∇[{expr.nabla_id}]"
