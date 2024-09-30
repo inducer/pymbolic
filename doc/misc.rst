@@ -147,6 +147,6 @@ Glossary
     mix-in
         See `Wikipedia article <https://en.wikipedia.org/wiki/Mixin>`__.
 
-        Be sure to mention the mix-in before the base classe being mixed in the
+        Be sure to mention the mix-in before the base class being mixed in the
         list of base classes. This way, the mix-in can override base class
         behavior.

@@ -129,36 +129,36 @@ class Polynomial(Expression):
             else:
                 return other.__add__(self)
 
-        iself = 0
-        iother = 0
+        i_self = 0
+        i_other = 0
 
         result = []
-        while iself < len(self.Data) and iother < len(other.Data):
-            exp_self = self.Data[iself][0]
-            exp_other = other.Data[iother][0]
+        while i_self < len(self.Data) and i_other < len(other.Data):
+            exp_self = self.Data[i_self][0]
+            exp_other = other.Data[i_other][0]
             if exp_self == exp_other:
-                coeff = self.Data[iself][1] + other.Data[iother][1]
+                coeff = self.Data[i_self][1] + other.Data[i_other][1]
                 if coeff:
                     result.append((exp_self, coeff))
-                iself += 1
-                iother += 1
+                i_self += 1
+                i_other += 1
             elif exp_self > exp_other:
-                result.append((exp_other, other.Data[iother][1]))
-                iother += 1
+                result.append((exp_other, other.Data[i_other][1]))
+                i_other += 1
             elif exp_self < exp_other:
-                result.append((exp_self, self.Data[iself][1]))
-                iself += 1
+                result.append((exp_self, self.Data[i_self][1]))
+                i_self += 1
 
         # we have exhausted at least one list, exhaust the other
-        while iself < len(self.Data):
-            exp_self = self.Data[iself][0]
-            result.append((exp_self, self.Data[iself][1]))
-            iself += 1
+        while i_self < len(self.Data):
+            exp_self = self.Data[i_self][0]
+            result.append((exp_self, self.Data[i_self][1]))
+            i_self += 1
 
-        while iother < len(other.Data):
-            exp_other = other.Data[iother][0]
-            result.append((exp_other, other.Data[iother][1]))
-            iother += 1
+        while i_other < len(other.Data):
+            exp_other = other.Data[i_other][0]
+            result.append((exp_other, other.Data[i_other][1]))
+            i_other += 1
 
         return Polynomial(self.Base, tuple(result))
 

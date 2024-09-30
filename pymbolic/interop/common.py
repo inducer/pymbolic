@@ -134,7 +134,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         return prim.Comparison(left, operator, right)
 
     map_Equality = partial(_comparison_operator, operator="==")  # noqa: N815
-    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815
+    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815  # spellchecker: disable-line
     map_GreaterThan = partial(_comparison_operator, operator=">=")  # noqa: N815
     map_LessThan = partial(_comparison_operator, operator="<=")  # noqa: N815
     map_StrictGreaterThan = partial(_comparison_operator, operator=">")  # noqa: N815
@@ -199,7 +199,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         if expr.operator == "==":
             return self.sym.Equality(left, right)
         elif expr.operator == "!=":
-            return self.sym.Unequality(left, right)
+            return self.sym.Unequality(left, right)  # spellchecker: disable-line
         elif expr.operator == "<":
             return self.sym.StrictLessThan(left, right)
         elif expr.operator == ">":
