@@ -44,15 +44,16 @@ class CCodeMapper(SimplifyingSortingStringifyMapper):
     .. doctest::
 
         >>> import pymbolic.primitives as p
+        >>> CSE = p.make_common_subexpression
         >>> x = p.Variable("x")
-        >>> CSE = p.CommonSubexpression
         >>> u = CSE(3*x**2-5, "u")
         >>> expr = u/(u+3)*(u+5)
         >>> print(expr)
         (CSE(3*x**2 + -5) / (CSE(3*x**2 + -5) + 3))*(CSE(3*x**2 + -5) + 5)
 
-    Notice that if we were to directly generate code from this, the
-    subexpression *u* would be evaluated multiple times.
+    Notice that if we were to directly generate this code without the added
+    `CSE`, the subexpression *u* would be evaluated multiple times. Wrapping the
+    expression as above avoids this unnecessary cost.
 
     .. doctest::
 

@@ -120,7 +120,8 @@ class CSEMapper(IdentityMapper):
             if type(result) is prim.CommonSubexpression:
                 result = result.child
 
-            return type(expr)(result, expr.prefix, **expr.get_extra_properties())
+            return type(expr)(result, expr.prefix, expr.scope,
+                              **expr.get_extra_properties())
 
     def map_substitution(self, expr):
         return type(expr)(

@@ -92,7 +92,8 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
                 self.rec(expr.args[0]), sympy_expr.prefix, sympy_expr.scope)
         elif isinstance(expr, symengine.Function) and \
                 self.function_name(expr) == "CSE":
-            return prim.CommonSubexpression(self.rec(expr.args[0]))
+            return prim.CommonSubexpression(
+                self.rec(expr.args[0]), scope=prim.cse_scope.EVALUATION)
         return SympyLikeToPymbolicMapper.not_supported(self, expr)
 
 # }}}
