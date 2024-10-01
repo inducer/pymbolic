@@ -707,8 +707,7 @@ class Expression:
         depr_key = (type(self), "__eq__")
         if depr_key not in self._deprecation_warnings_issued:
             warn(f"Expression.__eq__ is used by {self.__class__}. This is deprecated. "
-                 "Use equality comparison supplied by expr_dataclass"
-                 "instead. "
+                 "Use equality comparison supplied by expr_dataclass instead. "
                  "This will stop working in 2025.",
                  DeprecationWarning, stacklevel=2)
             self._deprecation_warnings_issued.add(depr_key)
@@ -954,8 +953,9 @@ def _augment_expression_dataclass(
         def {cls.__name__}_init_arg_names(self):
             depr_key = (type(self), "init_arg_names")
             if depr_key not in self._deprecation_warnings_issued:
-                warn("__getinitargs__ is deprecated and will be removed in 2025. "
-                        "Use dataclasses.fields instead.",
+                warn("Attribute 'init_arg_names' of {cls} is deprecated and will "
+                        "not have a default implementation starting from 2025. "
+                        "Use 'dataclasses.fields' instead.",
                         DeprecationWarning, stacklevel=2)
 
                 self._deprecation_warnings_issued.add(depr_key)
@@ -968,8 +968,9 @@ def _augment_expression_dataclass(
         def {cls.__name__}_getinitargs(self):
             depr_key = (type(self), "__getinitargs__")
             if depr_key not in self._deprecation_warnings_issued:
-                warn("__getinitargs__ is deprecated and will be removed in 2025. "
-                        "Use dataclasses.fields instead.",
+                warn("Method '__getinitargs__' of {cls} is deprecated and will "
+                        "not have a default implementation starting from 2025. "
+                        "Use 'dataclasses.fields' instead.",
                         DeprecationWarning, stacklevel=2)
 
                 self._deprecation_warnings_issued.add(depr_key)
