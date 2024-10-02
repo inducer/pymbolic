@@ -57,6 +57,7 @@ ScalarT: TypeAlias = Union[NumberT, BoolT]
 
 
 _ScalarOrExpression = Union[ScalarT, "Expression"]
+ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
 ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple[_ScalarOrExpression, ...]]
 
 

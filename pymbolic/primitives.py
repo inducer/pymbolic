@@ -42,7 +42,7 @@ from immutabledict import immutabledict
 from typing_extensions import TypeIs, dataclass_transform
 
 from . import traits
-from .typing import ExpressionT, NumberT, ScalarT
+from .typing import ArithmeticExpressionT, ExpressionT, NumberT, ScalarT
 
 
 if TYPE_CHECKING:
@@ -324,8 +324,8 @@ class Expression:
 
     # {{{ arithmetic
 
-    def __add__(self, other: object) -> ExpressionT:
-        if not is_valid_operand(other):
+    def __add__(self, other: object) -> ArithmeticExpressionT:
+        if not is_arithmetic_expression(other):
             return NotImplemented
         if is_nonzero(other):
             if self:
@@ -338,8 +338,8 @@ class Expression:
         else:
             return self
 
-    def __radd__(self, other: object) -> ExpressionT:
-        assert is_constant(other)
+    def __radd__(self, other: object) -> ArithmeticExpressionT:
+        assert is_number(other)
         if is_nonzero(other):
             if self:
                 return Sum((other, self))
@@ -348,7 +348,7 @@ class Expression:
         else:
             return self
 
-    def __sub__(self, other: object) -> ExpressionT:
+    def __sub__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -357,7 +357,7 @@ class Expression:
         else:
             return self
 
-    def __rsub__(self, other: object) -> ExpressionT:
+    def __rsub__(self, other: object) -> ArithmeticExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -366,7 +366,7 @@ class Expression:
         else:
             return -self
 
-    def __mul__(self, other: object) -> ExpressionT:
+    def __mul__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -378,7 +378,7 @@ class Expression:
         else:
             return Product((self, other))
 
-    def __rmul__(self, other: object) -> ExpressionT:
+    def __rmul__(self, other: object) -> ArithmeticExpressionT:
         if not is_constant(other):
             return NotImplemented
 
@@ -389,7 +389,7 @@ class Expression:
         else:
             return Product((other, self))
 
-    def __div__(self, other: object) -> ExpressionT:
+    def __div__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -399,7 +399,7 @@ class Expression:
         return quotient(self, other)
     __truediv__ = __div__
 
-    def __rdiv__(self, other: object) -> ExpressionT:
+    def __rdiv__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -408,7 +408,7 @@ class Expression:
         return quotient(other, self)
     __rtruediv__ = __rdiv__
 
-    def __floordiv__(self, other: object) -> ExpressionT:
+    def __floordiv__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -417,15 +417,15 @@ class Expression:
             return self
         return FloorDiv(self, other)
 
-    def __rfloordiv__(self, other: object) -> ExpressionT:
-        if not is_valid_operand(other):
+    def __rfloordiv__(self, other: object) -> ArithmeticExpressionT:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         if is_zero(self-1):
             return other
         return FloorDiv(other, self)
 
-    def __mod__(self, other: object) -> ExpressionT:
+    def __mod__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -434,13 +434,13 @@ class Expression:
             return 0
         return Remainder(self, other)
 
-    def __rmod__(self, other: object) -> ExpressionT:
+    def __rmod__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
         return Remainder(other, self)
 
-    def __pow__(self, other: object) -> ExpressionT:
+    def __pow__(self, other: object) -> ArithmeticExpressionT:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -451,7 +451,7 @@ class Expression:
             return self
         return Power(self, other)
 
-    def __rpow__(self, other: object) -> ExpressionT:
+    def __rpow__(self, other: object) -> ArithmeticExpressionT:
         assert is_constant(other)
 
         if is_zero(other):  # base zero
@@ -535,10 +535,10 @@ class Expression:
 
     # {{{ misc
 
-    def __neg__(self) -> ExpressionT:
+    def __neg__(self) -> ArithmeticExpressionT:
         return -1*self
 
-    def __pos__(self) -> ExpressionT:
+    def __pos__(self) -> ArithmeticExpressionT:
         return self
 
     def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
@@ -1755,11 +1755,13 @@ def quotient(numerator, denominator):
 global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES: tuple[type, ...] = (int, float, complex)
+_BOOL_CLASSES: tuple[type, ...] = (bool,)
 VALID_OPERANDS = (Expression,)
 
 try:
     import numpy
     VALID_CONSTANT_CLASSES += (numpy.number, numpy.bool_)
+    _BOOL_CLASSES += (numpy.bool_, )
 except ImportError:
     pass
 
@@ -1768,8 +1770,17 @@ def is_constant(value: object) -> TypeIs[ScalarT]:
     return isinstance(value, VALID_CONSTANT_CLASSES)
 
 
+def is_number(value: object) -> TypeIs[NumberT]:
+    return (not isinstance(value, _BOOL_CLASSES)
+        and isinstance(value, VALID_CONSTANT_CLASSES))
+
+
 def is_valid_operand(value: object) -> TypeIs[ExpressionT]:
     return isinstance(value, VALID_OPERANDS) or is_constant(value)
+
+
+def is_arithmetic_expression(value: object) -> TypeIs[ArithmeticExpressionT]:
+    return not isinstance(value, _BOOL_CLASSES) and is_valid_operand(value)
 
 
 def register_constant_class(class_):
