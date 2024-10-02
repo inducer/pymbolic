@@ -1,3 +1,21 @@
+"""
+.. currentmodule:: pymbolic
+
+Typing helpers
+--------------
+
+.. autoclass:: BoolT
+.. autoclass:: NumberT
+.. autoclass:: ScalarT
+.. autoclass:: ArithmeticExpressionT
+
+    A narrower type alias than :class:`ExpressionT` that is returned by
+    arithmetic operators, to allow continue doing arithmetic with the result
+    of arithmetic.
+
+.. autoclass:: ExpressionT
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple, TypeVar, Union
@@ -55,9 +73,12 @@ else:
 NumberT: TypeAlias = Union[IntegerT, InexactNumberT]
 ScalarT: TypeAlias = Union[NumberT, BoolT]
 
+# FIXME: This only allows nesting tuples one-deep. When attempting to fix this, there
+# are complaints about recursive type aliases.
 
 _ScalarOrExpression = Union[ScalarT, "Expression"]
 ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
+
 ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple[_ScalarOrExpression, ...]]
 
 

@@ -84,11 +84,11 @@ PREC_NONE = 0
 class StringifyMapper(Mapper):
     """A mapper to turn an expression tree into a string.
 
-    :class:`pymbolic.primitives.Expression.__str__` is often implemented using
+    :class:`pymbolic.Expression.__str__` is often implemented using
     this mapper.
 
-    When it encounters an unsupported :class:`pymbolic.primitives.Expression`
-    subclass, it calls its :meth:`pymbolic.primitives.Expression.make_stringifier`
+    When it encounters an unsupported :class:`pymbolic.Expression`
+    subclass, it calls its :meth:`pymbolic.Expression.make_stringifier`
     method to get a :class:`StringifyMapper` that potentially does.
     """
 

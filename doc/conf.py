@@ -24,4 +24,10 @@ intersphinx_mapping = {
     "sympy": ("https://docs.sympy.org/dev/", None),
     "typing_extensions":
         ("https://typing-extensions.readthedocs.io/en/latest/", None),
+    "immutabledict":
+        ("https://immutabledict.corenting.fr/", None)
+}
+autodoc_type_aliases = {
+    "ExpressionT": "ExpressionT",
+    "ArithmeticExpressionT": "ArithmeticExpressionT",
 }
