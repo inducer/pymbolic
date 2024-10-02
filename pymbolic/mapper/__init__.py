@@ -49,7 +49,7 @@ Basic dispatch
     .. rubric:: Handling objects that don't declare mapper methods
 
     In particular, this includes many non-subclasses of
-    :class:`pymbolic.primitives.Expression`.
+    :class:`pymbolic.Expression`.
 
     .. automethod:: map_foreign
 
@@ -113,16 +113,16 @@ class UnsupportedExpressionError(ValueError):
 # {{{ mapper base
 
 class Mapper:
-    """A visitor for trees of :class:`pymbolic.primitives.Expression`
+    """A visitor for trees of :class:`pymbolic.Expression`
     subclasses. Each expression-derived object is dispatched to the
-    method named by the :attr:`pymbolic.primitives.Expression.mapper_method`
+    method named by the :attr:`pymbolic.Expression.mapper_method`
     attribute and if not found, the methods named by the class attribute
     *mapper_method* in the method resolution order of the object.
     """
 
     def handle_unsupported_expression(self, expr, *args, **kwargs):
         """Mapper method that is invoked for
-        :class:`pymbolic.primitives.Expression` subclasses for which a mapper
+        :class:`pymbolic.Expression` subclasses for which a mapper
         method does not exist in this mapper.
         """
 
