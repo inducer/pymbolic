@@ -38,6 +38,7 @@ from typing import (
 )
 from warnings import warn
 
+from immutabledict import immutabledict
 from typing_extensions import TypeIs, dataclass_transform
 
 from . import traits
@@ -1111,6 +1112,17 @@ class CallWithKwargs(AlgebraicLeaf):
     function: ExpressionT
     parameters: tuple[ExpressionT, ...]
     kw_parameters: Mapping[str, ExpressionT]
+
+    def __post_init__(self):
+        try:
+            hash(self.kw_parameters)
+        except Exception:
+            warn("CallWithKwargs created with non-hashable kw_parameters. "
+                 "This is deprecated and will stop working in 2025. "
+                 "If you need an immutable mapping, try the immutabledcit package.",
+                 DeprecationWarning, stacklevel=3
+             )
+            object.__setattr__(self, "kw_parameters", immutabledict(self.kw_parameters))
 
 
 @expr_dataclass()
