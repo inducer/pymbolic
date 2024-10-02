@@ -40,16 +40,20 @@ from . import primitives
 
 from .polynomial import Polynomial
 
-from .primitives import Variable as var  # noqa: N813
-from .primitives import variables
-from .primitives import flattened_sum
-from .primitives import subscript
-from .primitives import flattened_product
-from .primitives import quotient
-from .primitives import linear_combination
-from .primitives import make_common_subexpression as cse
-from .primitives import make_sym_vector
-from .primitives import disable_subscript_by_getitem
+from .primitives import (Variable as var,  # noqa: N813
+    Variable,
+    Expression,
+    variables,
+    flattened_sum,
+    subscript,
+    flattened_product,
+    quotient,
+    linear_combination,
+    make_common_subexpression as cse,
+    make_sym_vector,
+    disable_subscript_by_getitem,
+    expr_dataclass,
+)
 from .parser import parse
 from .mapper.evaluator import evaluate
 from .mapper.evaluator import evaluate_kw
@@ -60,10 +64,18 @@ from .mapper.differentiator import differentiate
 from .mapper.distributor import distribute as expand
 from .mapper.distributor import distribute
 from .mapper.flattener import flatten
+from .typing import NumberT, ScalarT, ArithmeticExpressionT, ExpressionT, BoolT
 
 
 __all__ = (
+    "ArithmeticExpressionT",
+    "BoolT",
+    "Expression",
+    "ExpressionT",
+    "NumberT",
     "Polynomial",
+    "ScalarT",
+    "Variable",
     "compile",
     "compiler",
     "cse",
@@ -78,6 +90,7 @@ __all__ = (
     "evaluate_kw",
     "evaluator",
     "expand",
+    "expr_dataclass",
     "flatten",
     "flattened_product",
     "flattened_sum",
