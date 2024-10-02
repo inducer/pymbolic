@@ -496,9 +496,9 @@ class IdentityMapper(Mapper):
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
             ])
-        kw_parameters = {
+        kw_parameters = immutabledict({
                 key: self.rec(val, *args, **kwargs)
-                for key, val in expr.kw_parameters.items()}
+                for key, val in expr.kw_parameters.items()})
 
         if (function is expr.function
             and all(child is orig_child for child, orig_child in
