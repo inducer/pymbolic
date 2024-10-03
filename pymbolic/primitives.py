@@ -878,6 +878,7 @@ _CAMEL_TO_SNAKE_RE = re.compile(
 
 def _augment_expression_dataclass(
             cls: type[DataclassInstance],
+            hash: bool,
         ) -> None:
     attr_tuple = ", ".join(f"self.{fld.name}" for fld in fields(cls))
     if attr_tuple:
@@ -946,7 +947,8 @@ def _augment_expression_dataclass(
             object.__setattr__(self, "_hash_value", hash_val)
             return hash_val
 
-        cls.__hash__ = {cls.__name__}_hash
+        if {hash}:
+            cls.__hash__ = {cls.__name__}_hash
 
 
         def {cls.__name__}_init_arg_names(self):
@@ -1036,7 +1038,10 @@ _T = TypeVar("_T")
 
 
 @dataclass_transform(frozen_default=True)
-def expr_dataclass(init: bool = True) -> Callable[[type[_T]], type[_T]]:
+def expr_dataclass(
+            init: bool = True,
+            hash: bool = True
+        ) -> Callable[[type[_T]], type[_T]]:
     """A class decorator that makes the class a :func:`~dataclasses.dataclass`
     while also adding functionality needed for :class:`Expression` nodes.
     Specifically, it adds cached hashing, equality comparisons
@@ -1052,12 +1057,15 @@ def expr_dataclass(init: bool = True) -> Callable[[type[_T]], type[_T]]:
     def map_cls(cls: type[_T]) -> type[_T]:
         # Frozen dataclasses (empirically) have a ~20% speed penalty in pymbolic,
         # and their frozen-ness is arguably a debug feature.
-        dc_cls = dataclass(init=init, frozen=__debug__, repr=False)(cls)
+
+        # We provide __eq__/__hash__ below, don't redundantly generate it.
+        dc_cls = dataclass(init=init, eq=False, frozen=__debug__, repr=False)(cls)
 
         # FIXME: I'm not sure how to tell mypy that dc_cls is type[DataclassInstance]
         # It should just understand that?
         _augment_expression_dataclass(
                   dc_cls,  # type: ignore[arg-type]
+                  hash=hash
                   )
         return dc_cls
 
