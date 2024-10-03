@@ -73,13 +73,10 @@ else:
 NumberT: TypeAlias = Union[IntegerT, InexactNumberT]
 ScalarT: TypeAlias = Union[NumberT, BoolT]
 
-# FIXME: This only allows nesting tuples one-deep. When attempting to fix this, there
-# are complaints about recursive type aliases.
-
 _ScalarOrExpression = Union[ScalarT, "Expression"]
 ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
 
-ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple[_ScalarOrExpression, ...]]
+ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple["ExpressionT", ...]]
 
 
 T = TypeVar("T")
