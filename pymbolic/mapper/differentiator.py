@@ -84,8 +84,9 @@ class DifferentiationMapper(pymbolic.mapper.RecursiveMapper,
         >>> x = p.Variable("x")
         >>> expr = x*(x+5)**3/(x-1)**2
 
+        >>> from pymbolic import flatten
         >>> from pymbolic.mapper.differentiator import DifferentiationMapper as DM
-        >>> print(DM(x)(expr))
+        >>> print(flatten(DM(x)(expr)))
         (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) / (x + -1)**2**2
     """  # noqa: E501
 
@@ -245,6 +246,7 @@ def differentiate(expression,
                   allowed_nonsmoothness="none"):
     if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
         variable = primitives.make_variable(variable)
-    return DifferentiationMapper(
+    from pymbolic import flatten
+    return flatten(DifferentiationMapper(
         variable, func_mapper, allowed_nonsmoothness=allowed_nonsmoothness
-        )(expression)
+        )(expression))
