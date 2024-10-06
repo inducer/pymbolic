@@ -923,7 +923,8 @@ def _augment_expression_dataclass(
 
             return self.__class__ == other.__class__ and {comparison}
 
-        cls.__eq__ = {cls.__name__}_eq
+        if {hash}:
+            cls.__eq__ = {cls.__name__}_eq
 
 
         def {cls.__name__}_hash(self):
