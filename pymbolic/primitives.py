@@ -903,6 +903,8 @@ class _HasMapperMethod(Protocol):
 
 def _augment_expression_dataclass(
             cls: type[DataclassInstance],
+            *,
+            generate_eq: bool,
             generate_hash: bool,
         ) -> None:
     attr_tuple = ", ".join(f"self.{fld.name}" for fld in fields(cls))
@@ -926,9 +928,11 @@ def _augment_expression_dataclass(
 
     from pytools.codegen import remove_common_indentation
     augment_code = remove_common_indentation(
-        f"""
+        """
         from warnings import warn
         from dataclasses import is_dataclass
+        """
+        + (f"""
 
 
         def {cls.__name__}_eq(self, other):
@@ -951,6 +955,8 @@ def _augment_expression_dataclass(
             return self.__class__ == other.__class__ and {comparison}
 
         cls.__eq__ = {cls.__name__}_eq
+        """ if generate_eq else "")
+        + (f"""
 
 
         def {cls.__name__}_hash(self):
@@ -973,8 +979,9 @@ def _augment_expression_dataclass(
             object.__setattr__(self, "_hash_value", hash_val)
             return hash_val
 
-        if {generate_hash}:
-            cls.__hash__ = {cls.__name__}_hash
+        cls.__hash__ = {cls.__name__}_hash
+        """ if generate_hash else "")
+        + f"""
 
 
         def {cls.__name__}_init_arg_names(self):
@@ -1068,6 +1075,7 @@ _T = TypeVar("_T")
 @dataclass_transform(frozen_default=True)
 def expr_dataclass(
             init: bool = True,
+            eq: bool = True,
             hash: bool = True,
         ) -> Callable[[type[_T]], type[_T]]:
     r"""A class decorator that makes the class a :func:`~dataclasses.dataclass`
@@ -1096,7 +1104,8 @@ def expr_dataclass(
         # It should just understand that?
         _augment_expression_dataclass(
                   dc_cls,  # type: ignore[arg-type]
-                  generate_hash=hash,
+                  generate_eq=eq and "__eq__" not in cls.__dict__,
+                  generate_hash=hash and "__hash__" not in cls.__dict__,
                   )
         return dc_cls
 
