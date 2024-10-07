@@ -417,9 +417,6 @@ class PymbolicToASTMapper(CachedMapper):
     def map_comparison(self, expr: p.Comparison) -> ast.expr:
         raise NotImplementedError
 
-    def map_polynomial(self, expr) -> ast.expr:
-        raise NotImplementedError
-
     def map_wildcard(self, expr) -> ast.expr:
         raise NotImplementedError
 

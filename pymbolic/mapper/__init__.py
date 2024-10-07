@@ -284,12 +284,9 @@ class CachedMapper(Mapper):
 # }}}
 
 
-RecursiveMapper = Mapper
-
-
 # {{{ combine mapper
 
-class CombineMapper(RecursiveMapper):
+class CombineMapper(Mapper):
     """A mapper whose goal it is to *combine* all branches of the expression
     tree into one final result. The default implementation of all mapper
     methods simply recurse (:meth:`Mapper.rec`) on all branches emanating from
@@ -704,7 +701,7 @@ class CachedIdentityMapper(CachedMapper, IdentityMapper):
 
 # {{{ walk mapper
 
-class WalkMapper(RecursiveMapper):
+class WalkMapper(Mapper):
     """A mapper whose default mapper method implementations simply recurse
     without propagating any result. Also calls :meth:`visit` for each
     visited subexpression.
@@ -960,7 +957,7 @@ class CachedWalkMapper(CachedMapper, WalkMapper):
 
 # {{{ callback mapper
 
-class CallbackMapper(RecursiveMapper):
+class CallbackMapper(Mapper):
     def __init__(self, function, fallback_mapper):
         self.function = function
         self.fallback_mapper = fallback_mapper
@@ -1079,5 +1076,15 @@ class CSECachingMapperMixin(ABC):
         pass
 
 # }}}
+
+
+def __getattr__(name: str) -> object:
+    if name == "RecursiveMapper":
+        warn("RecursiveMapper is deprecated. Use Mapper instead. "
+             "RecursiveMapper will go away in 2026.",
+             DeprecationWarning, stacklevel=2)
+        return Mapper
+
+    return None
 
 # vim: foldmethod=marker
