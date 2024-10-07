@@ -191,7 +191,7 @@ class _RecInliner(ast.NodeTransformer):
                         args=[expr],
                         keywords=[])
                 cache_key_expr = ast.Tuple([expr_type, expr], ctx=Load())
-                nic = Name(id="_NOT_IN_CACHE", ctx=Load())
+                nic = Name(id="_NotInCache", ctx=Load())
 
                 result_expr = IfExp(
                         test=Compare(

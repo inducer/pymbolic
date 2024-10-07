@@ -38,7 +38,7 @@ from typing import (
 from warnings import warn
 
 from immutabledict import immutabledict
-from typing_extensions import TypeIs, dataclass_transform
+from typing_extensions import TypeAlias, TypeIs, dataclass_transform
 
 from . import traits
 from .typing import ArithmeticExpressionT, ExpressionT, NumberT, ScalarT
@@ -1650,6 +1650,12 @@ class Derivative(Expression):
     variables: tuple[str, ...]
 
 
+SliceChildrenT: TypeAlias = (tuple[()]
+        | tuple[ExpressionT | None]
+        | tuple[ExpressionT | None, ExpressionT | None]
+        | tuple[ExpressionT | None, ExpressionT | None, ExpressionT | None])
+
+
 @expr_dataclass()
 class Slice(Expression):
     """A slice expression as in a[1:7].
@@ -1661,10 +1667,7 @@ class Slice(Expression):
     .. autoproperty:: step
     """
 
-    children: (tuple[()]
-        | tuple[ExpressionT]
-        | tuple[ExpressionT, ExpressionT]
-        | tuple[ExpressionT, ExpressionT, ExpressionT])
+    children: SliceChildrenT
 
     def __bool__(self):
         return True
