@@ -38,14 +38,14 @@ import operator as op
 from functools import reduce
 from typing import Any
 
-from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, RecursiveMapper
+from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper
 
 
 class UnknownVariableError(Exception):
     pass
 
 
-class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
+class EvaluationMapper(Mapper, CSECachingMapperMixin):
     """Example usage:
 
     .. doctest::
