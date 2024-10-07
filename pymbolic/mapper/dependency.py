@@ -2,6 +2,7 @@
 .. autoclass:: DependencyMapper
 .. autoclass:: CachedDependencyMapper
 """
+
 from __future__ import annotations
 
 
@@ -27,10 +28,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin
+from typing import AbstractSet
+
+from typing_extensions import TypeAlias
+
+import pymbolic.primitives as p
+from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin, P
 
 
-class DependencyMapper(CSECachingMapperMixin, Collector):
+DependenciesT: TypeAlias = AbstractSet[p.AlgebraicLeaf | p.CommonSubexpression]
+
+
+class DependencyMapper(
+    CSECachingMapperMixin[DependenciesT, P],
+    Collector[p.AlgebraicLeaf | p.CommonSubexpression, P],
+):
     """Maps an expression to the :class:`set` of expressions it
     is based on. The ``include_*`` arguments to the constructor
     determine which types of objects occur in this output set.
@@ -38,12 +50,14 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
     instances are included.
     """
 
-    def __init__(self,
-            include_subscripts=True,
-            include_lookups=True,
-            include_calls=True,
-            include_cses=False,
-            composite_leaves=None):
+    def __init__(
+        self,
+        include_subscripts: bool = True,
+        include_lookups: bool = True,
+        include_calls: bool = True,
+        include_cses: bool = False,
+        composite_leaves: bool | None = None,
+    ):
         """
         :arg composite_leaves: Setting this is equivalent to setting
             all preceding ``include_*`` flags.
@@ -66,68 +80,92 @@ class DependencyMapper(CSECachingMapperMixin, Collector):
 
         self.include_cses = include_cses
 
-    def map_variable(self, expr, *args, **kwargs):
+    def map_variable(
+        self, expr: p.Variable, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         return {expr}
 
-    def map_call(self, expr, *args, **kwargs):
+    def map_call(
+        self, expr: p.Call, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         if self.include_calls == "descend_args":
-            return self.combine(
-                    [self.rec(child, *args, **kwargs) for child in expr.parameters])
+            return self.combine([
+                self.rec(child, *args, **kwargs) for child in expr.parameters
+            ])
         elif self.include_calls:
             return {expr}
         else:
             return super().map_call(expr, *args, **kwargs)
 
-    def map_call_with_kwargs(self, expr, *args, **kwargs):
+    def map_call_with_kwargs(
+        self, expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         if self.include_calls == "descend_args":
             return self.combine(
-                    [self.rec(child, *args, **kwargs) for child in expr.parameters]
-                    + [self.rec(val, *args, **kwargs) for name, val in
-                    expr.kw_parameters.items()]
-                    )
+                [self.rec(child, *args, **kwargs) for child in expr.parameters]
+                + [
+                    self.rec(val, *args, **kwargs)
+                    for name, val in expr.kw_parameters.items()
+                ]
+            )
         elif self.include_calls:
             return {expr}
         else:
             return super().map_call_with_kwargs(expr, *args, **kwargs)
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_lookup(
+        self, expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         if self.include_lookups:
             return {expr}
         else:
             return super().map_lookup(expr, *args, **kwargs)
 
-    def map_subscript(self, expr, *args, **kwargs):
+    def map_subscript(
+        self, expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         if self.include_subscripts:
             return {expr}
         else:
             return super().map_subscript(expr, *args, **kwargs)
 
-    def map_common_subexpression_uncached(self, expr, *args, **kwargs):
+    def map_common_subexpression_uncached(
+        self, expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
         if self.include_cses:
             return {expr}
         else:
-            return Collector.map_common_subexpression(self, expr, *args, **kwargs)
+            # FIXME: These look like mypy bugs, revisit
+            return Collector.map_common_subexpression(self, expr, *args, **kwargs)  # type: ignore[return-value, arg-type]
 
-    def map_slice(self, expr, *args, **kwargs):
-        return self.combine(
-                [self.rec(child, *args, **kwargs) for child in expr.children
-                    if child is not None])
+    def map_slice(
+        self, expr: p.Slice, *args: P.args, **kwargs: P.kwargs
+    ) -> DependenciesT:
+        return self.combine([
+            self.rec(child, *args, **kwargs)
+            for child in expr.children
+            if child is not None
+        ])
 
-    def map_nan(self, expr, *args, **kwargs):
+    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> DependenciesT:
         return set()
 
 
 class CachedDependencyMapper(CachedMapper, DependencyMapper):
-    def __init__(self,
-                 include_subscripts=True,
-                 include_lookups=True,
-                 include_calls=True,
-                 include_cses=False,
-                 composite_leaves=None):
+    def __init__(
+        self,
+        include_subscripts=True,
+        include_lookups=True,
+        include_calls=True,
+        include_cses=False,
+        composite_leaves=None,
+    ):
         CachedMapper.__init__(self)
-        DependencyMapper.__init__(self,
-                                  include_subscripts=include_subscripts,
-                                  include_lookups=include_lookups,
-                                  include_calls=include_calls,
-                                  include_cses=include_cses,
-                                  composite_leaves=composite_leaves)
+        DependencyMapper.__init__(
+            self,
+            include_subscripts=include_subscripts,
+            include_lookups=include_lookups,
+            include_calls=include_calls,
+            include_cses=include_cses,
+            composite_leaves=composite_leaves,
+        )

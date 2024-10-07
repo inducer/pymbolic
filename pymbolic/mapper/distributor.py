@@ -27,14 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import cast
+
 import pymbolic
+import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
 from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
-from pymbolic.primitives import Product, Sum, is_zero
+from pymbolic.typing import ArithmeticExpressionT, ExpressionT
 
 
-class DistributeMapper(IdentityMapper):
+class DistributeMapper(IdentityMapper[[]]):
     """Example usage:
 
     .. doctest::
@@ -47,7 +50,7 @@ class DistributeMapper(IdentityMapper):
         7*x**6 + 21*x**5 + 21*x**2 + 35*x**3 + 1 + 35*x**4 + 7*x + x**7
     """
 
-    def __init__(self, collector=None, const_folder=None):
+    def __init__(self, collector=None, const_folder=None) -> None:
         if collector is None:
             collector = TermCollector()
         if const_folder is None:
@@ -61,19 +64,19 @@ class DistributeMapper(IdentityMapper):
 
     def map_sum(self, expr):
         res = IdentityMapper.map_sum(self, expr)
-        if isinstance(res, Sum):
+        if isinstance(res, p.Sum):
             return self.collect(res)
         else:
             return res
 
-    def map_product(self, expr):
+    def map_product(self, expr: p.Product) -> ExpressionT:
         def dist(prod):
-            if not isinstance(prod, Product):
+            if not isinstance(prod, p.Product):
                 return prod
 
             leading = []
             for i in prod.children:
-                if isinstance(i, Sum):
+                if isinstance(i, p.Sum):
                     break
                 else:
                     leading.append(i)
@@ -84,10 +87,10 @@ class DistributeMapper(IdentityMapper):
                 return result
             else:
                 sum = prod.children[len(leading)]
-                assert isinstance(sum, Sum)
+                assert isinstance(sum, p.Sum)
                 rest = prod.children[len(leading)+1:]
                 if rest:
-                    rest = dist(Product(rest))
+                    rest = dist(p.Product(rest))
                 else:
                     rest = 1
 
@@ -100,7 +103,7 @@ class DistributeMapper(IdentityMapper):
         return dist(IdentityMapper.map_product(self, expr))
 
     def map_quotient(self, expr):
-        if is_zero(expr.numerator - 1):
+        if p.is_zero(expr.numerator - 1):
             return expr
         else:
             # not the smartest thing we can do, but at least *something*
@@ -109,18 +112,19 @@ class DistributeMapper(IdentityMapper):
                     self.rec(expr.numerator)
                     ])
 
-    def map_power(self, expr):
+    def map_power(self, expr: p.Power) -> ExpressionT:
         from pymbolic.primitives import Sum
 
         newbase = self.rec(expr.base)
-        if isinstance(expr.base, Product):
+        if isinstance(newbase, p.Product):
             return self.rec(pymbolic.flattened_product([
-                child**expr.exponent for child in newbase
+                cast(ArithmeticExpressionT, child)**expr.exponent
+                    for child in newbase.children
                 ]))
 
         if isinstance(expr.exponent, int):
             if isinstance(newbase, Sum):
-                return self.map_product(
+                return self.rec(
                         pymbolic.flattened_product(
                             expr.exponent*(newbase,)))
             else:
@@ -129,7 +133,7 @@ class DistributeMapper(IdentityMapper):
             return IdentityMapper.map_power(self, expr)
 
 
-def distribute(expr, parameters=None, commutative=True):
+def distribute(expr: ExpressionT, parameters=None, commutative=True) -> ExpressionT:
     if parameters is None:
         parameters = frozenset()
     if commutative:

@@ -27,13 +27,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from collections.abc import Callable
+
 from pymbolic.mapper import (
     CSECachingMapperMixin,
     IdentityMapper,
+    Mapper,
 )
+from pymbolic.primitives import Product, Sum, is_arithmetic_expression
+from pymbolic.typing import ArithmeticExpressionT, ExpressionT
 
 
-class ConstantFoldingMapperBase:
+class ConstantFoldingMapperBase(Mapper[ExpressionT, []]):
     def is_constant(self, expr):
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))
@@ -45,15 +50,27 @@ class ConstantFoldingMapperBase:
         except ValueError:
             return None
 
-    def fold(self, expr, klass, op, constructor):
+    def fold(self,
+             expr: Sum | Product,
+             op: Callable[
+                 [ArithmeticExpressionT, ArithmeticExpressionT],
+                 ArithmeticExpressionT],
+             constructor: Callable[
+                     [tuple[ArithmeticExpressionT, ...]],
+                     ArithmeticExpressionT],
+         ) -> ExpressionT:
+        klass = type(expr)
 
-        constants = []
-        nonconstants = []
+        constants: list[ArithmeticExpressionT] = []
+        nonconstants: list[ArithmeticExpressionT] = []
 
         queue = list(expr.children)
         while queue:
-            child = self.rec(queue.pop(0))  # pylint:disable=no-member
+            child = self.rec(queue.pop(0))
+            assert is_arithmetic_expression(child)
+
             if isinstance(child, klass):
+                assert isinstance(child, (Sum, Product))
                 queue = list(child.children) + queue
             else:
                 if self.is_constant(child):
@@ -73,37 +90,36 @@ class ConstantFoldingMapperBase:
         else:
             return constructor(tuple(nonconstants))
 
-    def map_sum(self, expr):
+    def map_sum(self, expr: Sum) -> ExpressionT:
         import operator
 
-        from pymbolic.primitives import Sum, flattened_sum
+        from pymbolic.primitives import flattened_sum
 
-        return self.fold(expr, Sum, operator.add, flattened_sum)
+        return self.fold(expr, operator.add, flattened_sum)
 
 
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
     def map_product(self, expr):
         import operator
 
-        from pymbolic.primitives import Product, flattened_product
+        from pymbolic.primitives import flattened_product
 
-        return self.fold(expr, Product, operator.mul, flattened_product)
+        return self.fold(expr, operator.mul, flattened_product)
 
 
 class ConstantFoldingMapper(
-        CSECachingMapperMixin,
+        CSECachingMapperMixin[ExpressionT, []],
         ConstantFoldingMapperBase,
-        IdentityMapper):
+        IdentityMapper[[]]):
 
     map_common_subexpression_uncached = \
             IdentityMapper.map_common_subexpression
 
 
-# Yes, map_product incompatible: missing *args, **kwargs
-class CommutativeConstantFoldingMapper(    # type: ignore[misc]
-        CSECachingMapperMixin,
+class CommutativeConstantFoldingMapper(
+        CSECachingMapperMixin[ExpressionT, []],
         CommutativeConstantFoldingMapperBase,
-        IdentityMapper):
+        IdentityMapper[[]]):
 
     map_common_subexpression_uncached = \
             IdentityMapper.map_common_subexpression

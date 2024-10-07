@@ -31,10 +31,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import cast
 
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import ArithmeticExpressionT, ArithmeticOrExpressionT, ExpressionT
 
 
 class FlattenMapper(IdentityMapper[[]]):
@@ -50,16 +51,19 @@ class FlattenMapper(IdentityMapper[[]]):
     """
     def map_sum(self, expr: p.Sum) -> ExpressionT:
         from pymbolic.primitives import flattened_sum
-        return flattened_sum([self.rec(ch) for ch in expr.children])
+        return flattened_sum([
+                             cast(ArithmeticExpressionT, self.rec(ch))
+                             for ch in expr.children])
 
     def map_product(self, expr: p.Product) -> ExpressionT:
         from pymbolic.primitives import flattened_product
-        return flattened_product([self.rec(ch) for ch in expr.children])
+        return flattened_product([
+                                 cast(ArithmeticExpressionT, self.rec(ch))
+                                 for ch in expr.children])
 
     def map_quotient(self, expr: p.Quotient) -> ExpressionT:
-        r_num = self.rec(expr.numerator)
-        r_den = self.rec(expr.denominator)
-        assert p.is_arithmetic_expression(r_den)
+        r_num = self.rec_arith(expr.numerator)
+        r_den = self.rec_arith(expr.denominator)
         if p.is_zero(r_num):
             return 0
         if p.is_zero(r_den - 1):
@@ -68,9 +72,8 @@ class FlattenMapper(IdentityMapper[[]]):
         return expr.__class__(r_num, r_den)
 
     def map_floor_div(self, expr: p.FloorDiv) -> ExpressionT:
-        r_num = self.rec(expr.numerator)
-        r_den = self.rec(expr.denominator)
-        assert p.is_arithmetic_expression(r_den)
+        r_num = self.rec_arith(expr.numerator)
+        r_den = self.rec_arith(expr.denominator)
         if p.is_zero(r_num):
             return 0
         if p.is_zero(r_den - 1):
@@ -79,8 +82,8 @@ class FlattenMapper(IdentityMapper[[]]):
         return expr.__class__(r_num, r_den)
 
     def map_remainder(self, expr: p.Remainder) -> ExpressionT:
-        r_num = self.rec(expr.numerator)
-        r_den = self.rec(expr.denominator)
+        r_num = self.rec_arith(expr.numerator)
+        r_den = self.rec_arith(expr.denominator)
         assert p.is_arithmetic_expression(r_den)
         if p.is_zero(r_num):
             return 0
@@ -90,10 +93,8 @@ class FlattenMapper(IdentityMapper[[]]):
         return expr.__class__(r_num, r_den)
 
     def map_power(self, expr: p.Power) -> ExpressionT:
-        r_base = self.rec(expr.base)
-        r_exp = self.rec(expr.exponent)
-
-        assert p.is_arithmetic_expression(r_exp)
+        r_base = self.rec_arith(expr.base)
+        r_exp = self.rec_arith(expr.exponent)
 
         if p.is_zero(r_exp - 1):
             return r_base
@@ -101,5 +102,5 @@ class FlattenMapper(IdentityMapper[[]]):
         return expr.__class__(r_base, r_exp)
 
 
-def flatten(expr):
-    return FlattenMapper()(expr)
+def flatten(expr: ArithmeticOrExpressionT) -> ArithmeticOrExpressionT:
+    return cast(ArithmeticOrExpressionT, FlattenMapper()(expr))

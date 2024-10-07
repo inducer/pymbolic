@@ -129,15 +129,15 @@ class _RecInliner(ast.NodeTransformer):
         self.inline_rec = inline_rec
         self.inline_cache = inline_cache
 
-    def visit_Call(self, node):  # noqa: N802
-        node = self.generic_visit(node)
+    def visit_Call(self, node: ast.Call) -> ast.AST:  # noqa: N802
+        node = cast(ast.Call, self.generic_visit(node))
 
-        result_expr = node
+        result_expr: ast.expr = node
 
         if (isinstance(node.func, ast.Attribute)
                 and isinstance(node.func.value, ast.Name)
                 and node.func.value.id == "self"
-                and node.func.attr == "rec"):
+                and node.func.attr in ["rec", "rec_arith"]):
 
             from ast import (
                 Attribute,
@@ -191,7 +191,7 @@ class _RecInliner(ast.NodeTransformer):
                         args=[expr],
                         keywords=[])
                 cache_key_expr = ast.Tuple([expr_type, expr], ctx=Load())
-                nic = Name(id="_NOT_IN_CACHE", ctx=Load())
+                nic = Name(id="_NotInCache", ctx=Load())
 
                 result_expr = IfExp(
                         test=Compare(
