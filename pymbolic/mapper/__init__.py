@@ -984,43 +984,6 @@ class CallbackMapper(Mapper):
 
 # {{{ caching mixins
 
-class CachingMapperMixin:
-    def __init__(self):
-        super().__init__()
-        self.result_cache = {}
-
-        from warnings import warn
-        warn("CachingMapperMixin is deprecated and will be removed "
-                "in version 2023.x. Use CachedMapper instead.",
-                DeprecationWarning, stacklevel=2)
-
-    def rec(self, expr):
-        try:
-            return self.result_cache[expr]
-        except TypeError:
-            # not hashable, oh well
-            method_name = getattr(expr, "mapper_method", None)
-            if method_name is not None:
-                method = getattr(self, method_name, None)
-                if method is not None:
-                    return method(expr, )
-            return super().rec(expr)
-        except KeyError:
-            method_name = getattr(expr, "mapper_method", None)
-            if method_name is not None:
-                method = getattr(self, method_name, None)
-                if method is not None:
-                    result = method(expr, )
-                    self.result_cache[expr] = result
-                    return result
-
-            result = super().rec(expr)
-            self.result_cache[expr] = result
-            return result
-
-    __call__ = rec
-
-
 class CSECachingMapperMixin(ABC):
     """A :term:`mix-in` that helps
     subclassed mappers implement caching for
