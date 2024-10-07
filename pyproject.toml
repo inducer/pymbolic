@@ -32,8 +32,9 @@ dependencies = [
     "astunparse; python_version<='3.9'",
     "immutabledict",
     "pytools>=2022.1.14",
-    # for dataclass_transform, TypeAlias
-    "typing-extensions>=4",
+    # for dataclass_transform, TypeAlias, deprecated
+    "typing-extensions>=4.5",
+    "useful-types",
 ]
 
 [project.optional-dependencies]

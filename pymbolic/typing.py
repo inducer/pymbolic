@@ -4,18 +4,23 @@
 Typing helpers
 --------------
 
-.. autodata:: BoolT
-.. autodata:: NumberT
-.. autodata:: ScalarT
-.. autodata:: ArithmeticExpressionT
+.. autoclass:: BoolT
+.. autoclass:: NumberT
+.. autoclass:: ScalarT
+.. autoclass:: ArithmeticExpressionT
 
     A narrower type alias than :class:`ExpressionT` that is returned by
     arithmetic operators, to allow continue doing arithmetic with the result
     of arithmetic.
 
-    >
+.. autoclass:: ExpressionT
 
-.. autodata:: ExpressionT
+.. currentmodule:: pymbolic.typing
+
+.. autoclass:: ArithmeticOrExpressionT
+
+    A type variable that can be either :data:`ArithmeticExpressionT`
+    or :data:`ExpressionT`.
 """
 
 from __future__ import annotations
@@ -79,6 +84,11 @@ _ScalarOrExpression = Union[ScalarT, "Expression"]
 ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
 
 ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple["ExpressionT", ...]]
+
+ArithmeticOrExpressionT = TypeVar(
+                "ArithmeticOrExpressionT",
+                ArithmeticExpressionT,
+                ExpressionT)
 
 
 T = TypeVar("T")

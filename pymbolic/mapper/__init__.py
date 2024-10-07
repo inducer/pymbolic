@@ -24,16 +24,40 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from collections.abc import Mapping
+from typing import (
+    TYPE_CHECKING,
+    AbstractSet,
+    Callable,
+    Generic,
+    Hashable,
+    Iterable,
+    TypeVar,
+    cast,
+)
+from warnings import warn
 
 from immutabledict import immutabledict
+from typing_extensions import Concatenate, ParamSpec, TypeAlias, TypeIs
 
-import pymbolic.primitives as primitives
+import pymbolic.primitives as p
+from pymbolic.typing import ArithmeticExpressionT, ExpressionT
+
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from pymbolic.geometric_algebra import MultiVector
+    from pymbolic.rational import Rational
 
 
 __doc__ = """
 Basic dispatch
 --------------
+
+.. class:: ResultT
+
+    A type variable for the result returned by a :class:`Mapper`.
 
 .. autoclass:: Mapper
 
@@ -96,14 +120,20 @@ Base classes for mappers with memoization support
 """
 
 
-try:
-    import numpy
+if TYPE_CHECKING:
+    import numpy as np
 
-    def is_numpy_array(val):
-        return isinstance(val, numpy.ndarray)
-except ImportError:
-    def is_numpy_array(ary):
-        return False
+    def is_numpy_array(val) -> TypeIs[np.ndarray]:
+        return isinstance(val, np.ndarray)
+else:
+    try:
+        import numpy as np
+
+        def is_numpy_array(val):
+            return isinstance(val, np.ndarray)
+    except ImportError:
+        def is_numpy_array(ary):
+            return False
 
 
 class UnsupportedExpressionError(ValueError):
@@ -112,15 +142,28 @@ class UnsupportedExpressionError(ValueError):
 
 # {{{ mapper base
 
-class Mapper:
+ResultT = TypeVar("ResultT")
+
+# This ParamSpec could be marked contravariant (just like Callable is contravariant
+# in its arguments). As of mypy 1.14/Py3.13 (Nov 2024), mypy complains of as-yet
+# undefined semantics, so it's probably too soon.
+P = ParamSpec("P")
+
+
+class Mapper(Generic[ResultT, P]):
     """A visitor for trees of :class:`pymbolic.Expression`
     subclasses. Each expression-derived object is dispatched to the
     method named by the :attr:`pymbolic.Expression.mapper_method`
     attribute and if not found, the methods named by the class attribute
     *mapper_method* in the method resolution order of the object.
+
+    ..automethod:: handle_unsupported_expression
+    ..automethod:: __call__
+    ..automethod:: rec
     """
 
-    def handle_unsupported_expression(self, expr, *args, **kwargs):
+    def handle_unsupported_expression(self,
+            expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Mapper method that is invoked for
         :class:`pymbolic.Expression` subclasses for which a mapper
         method does not exist in this mapper.
@@ -130,7 +173,8 @@ class Mapper:
                 "{} cannot handle expressions of type {}".format(
                     type(self), type(expr)))
 
-    def __call__(self, expr, *args, **kwargs):
+    def __call__(self,
+             expr: ExpressionT, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Dispatch *expr* to its corresponding mapper method. Pass on
         ``*args`` and ``**kwargs`` unmodified.
 
@@ -148,7 +192,7 @@ class Mapper:
                 result = method(expr, *args, **kwargs)
                 return result
 
-        if isinstance(expr, primitives.Expression):
+        if isinstance(expr, p.Expression):
             for cls in type(expr).__mro__[1:]:
                 method_name = getattr(cls, "mapper_method", None)
                 if method_name:
@@ -162,8 +206,9 @@ class Mapper:
 
     rec = __call__
 
-    def rec_fallback(self, expr, *args, **kwargs):
-        if isinstance(expr, primitives.Expression):
+    def rec_fallback(self,
+            expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        if isinstance(expr, p.Expression):
             for cls in type(expr).__mro__[1:]:
                 method_name = getattr(cls, "mapper_method", None)
                 if method_name:
@@ -175,76 +220,188 @@ class Mapper:
         else:
             return self.map_foreign(expr, *args, **kwargs)
 
-    def map_algebraic_leaf(self, expr, *args, **kwargs):
+    def map_algebraic_leaf(self,
+            expr: p.AlgebraicLeaf,
+            *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_variable(self, expr, *args, **kwargs):
+    def map_variable(self,
+            expr: p.Variable, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_subscript(self, expr, *args, **kwargs):
+    def map_subscript(self,
+            expr: p.Subscript, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_call(self, expr, *args, **kwargs):
+    def map_call(self,
+            expr: p.Call, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_call_with_kwargs(self,
+            expr: p.CallWithKwargs,
+            *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_if_positive(self, expr, *args, **kwargs):
+    def map_lookup(self,
+            expr: p.Lookup, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_rational(self, expr, *args, **kwargs):
-        return self.map_quotient(expr, *args, **kwargs)
-
-    def map_quotient(self, expr, *args, **kwargs):
+    def map_if(self,
+            expr: p.If, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_constant(self, expr, *args, **kwargs):
+    def map_sum(self,
+            expr: p.Sum, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_list(self, expr, *args, **kwargs):
+    def map_product(self,
+            expr: p.Product, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_tuple(self, expr, *args, **kwargs):
+    def map_rational(self,
+            expr: Rational, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_numpy_array(self, expr, *args, **kwargs):
+    def map_quotient(self,
+            expr: p.Quotient, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
-    def map_nan(self, expr, *args, **kwargs):
+    def map_floor_div(self,
+            expr: p.FloorDiv, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_remainder(self,
+            expr: p.Remainder, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_constant(self,
+            expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_comparison(self,
+            expr: p.Comparison, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_min(self,
+            expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_max(self,
+            expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_list(self,
+            expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_tuple(self,
+            expr: tuple[ExpressionT, ...],
+            *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_numpy_array(self,
+            expr: np.ndarray, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_left_shift(self,
+            expr: p.LeftShift, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_right_shift(self,
+                expr: p.RightShift, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_bitwise_not(self,
+                expr: p.BitwiseNot, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_bitwise_or(self,
+                expr: p.BitwiseOr, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_bitwise_and(self,
+                expr: p.BitwiseAnd, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_bitwise_xor(self,
+                expr: p.BitwiseXor, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_logical_not(self,
+                expr: p.LogicalNot, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_logical_or(self,
+                expr: p.LogicalOr, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_logical_and(self,
+                expr: p.LogicalAnd, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    def map_nan(self,
+                expr: p.NaN,
+                *args: P.args,
+                **kwargs: P.kwargs
+            ) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
 
-    def map_foreign(self, expr, *args, **kwargs):
+    def map_foreign(self,
+                expr: object,
+                *args: P.args,
+                **kwargs: P.kwargs
+            ) -> ResultT:
         """Mapper method dispatch for non-:mod:`pymbolic` objects."""
 
-        if isinstance(expr, primitives.VALID_CONSTANT_CLASSES):
+        if isinstance(expr, p.VALID_CONSTANT_CLASSES):
             return self.map_constant(expr, *args, **kwargs)
         elif is_numpy_array(expr):
             return self.map_numpy_array(expr, *args, **kwargs)
-        elif isinstance(expr, list):
-            return self.map_list(expr, *args, **kwargs)
         elif isinstance(expr, tuple):
             return self.map_tuple(expr, *args, **kwargs)
+        elif isinstance(expr, list):
+            warn("List found in expression graph. "
+                 "This is deprecated and will stop working in 2025. "
+                 "Use tuples instead.", DeprecationWarning, stacklevel=2
+             )
+            return self.map_list(expr, *args, **kwargs)
         else:
             raise ValueError(
                     "{} encountered invalid foreign object: {}".format(
                         self.__class__, repr(expr)))
 
 
-_NOT_IN_CACHE = object()
+class _NotInCache:
+    pass
 
 
-class CachedMapper(Mapper):
+CacheKeyT: TypeAlias = Hashable
+
+
+class CachedMapper(Mapper[ResultT, P]):
     """
     A mapper that memoizes the mapped result for the expressions traversed.
 
     .. automethod:: get_cache_key
     """
-    def __init__(self):
-        self._cache: dict[Any, Any] = {}
+    def __init__(self) -> None:
+        self._cache: dict[CacheKeyT, ResultT] = {}
         Mapper.__init__(self)
 
-    def get_cache_key(self, expr, *args, **kwargs):
+    def get_cache_key(self,
+              expr: ExpressionT,
+              *args: P.args,
+              **kwargs: P.kwargs
+          ) -> CacheKeyT:
         """
         Returns the key corresponding to which the result of a mapper method is
         stored in the cache.
@@ -260,16 +417,23 @@ class CachedMapper(Mapper):
         # and "4 == 4.0", but their traversal results cannot be re-used.
         return (type(expr), expr, args, immutabledict(kwargs))
 
-    def __call__(self, expr, *args, **kwargs):
+    def __call__(self,
+                 expr: ExpressionT,
+                 *args: P.args,
+                 **kwargs: P.kwargs
+             ) -> ResultT:
         result = self._cache.get(
                 (cache_key := self.get_cache_key(expr, *args, **kwargs)),
-                _NOT_IN_CACHE)
-        if result is not _NOT_IN_CACHE:
+                _NotInCache)
+        if not isinstance(result, type):
             return result
 
         method_name = getattr(expr, "mapper_method", None)
         if method_name is not None:
-            method = getattr(self, method_name, None)
+            method = cast(
+                Callable[Concatenate[ExpressionT, P], ResultT],
+                getattr(self, method_name, None)
+                )
             if method is not None:
                 result = method(expr, *args, **kwargs)
                 self._cache[cache_key] = result
@@ -286,7 +450,7 @@ class CachedMapper(Mapper):
 
 # {{{ combine mapper
 
-class CombineMapper(Mapper):
+class CombineMapper(Mapper[ResultT, P]):
     """A mapper whose goal it is to *combine* all branches of the expression
     tree into one final result. The default implementation of all mapper
     methods simply recurse (:meth:`Mapper.rec`) on all branches emanating from
@@ -304,16 +468,19 @@ class CombineMapper(Mapper):
     :class:`pymbolic.mapper.dependency.DependencyMapper` is another example.
     """
 
-    def combine(self, values):
+    def combine(self, values: Iterable[ResultT]) -> ResultT:
         raise NotImplementedError
 
-    def map_call(self, expr, *args, **kwargs):
+    def map_call(self,
+            expr: p.Call, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
             self.rec(expr.function, *args, **kwargs),
             *[self.rec(child, *args, **kwargs) for child in expr.parameters]
             ))
 
-    def map_call_with_kwargs(self, expr, *args, **kwargs):
+    def map_call_with_kwargs(self,
+            expr: p.CallWithKwargs,
+            *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
             self.rec(expr.function, *args, **kwargs),
             *[self.rec(child, *args, **kwargs) for child in expr.parameters],
@@ -321,87 +488,141 @@ class CombineMapper(Mapper):
               for child in expr.kw_parameters.values()]
             ))
 
-    def map_subscript(self, expr, *args, **kwargs):
+    def map_subscript(self,
+            expr: p.Subscript, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine(
                 [self.rec(expr.aggregate, *args, **kwargs),
                     self.rec(expr.index, *args, **kwargs)])
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_lookup(self,
+            expr: p.Lookup, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.rec(expr.aggregate, *args, **kwargs)
 
-    def map_sum(self, expr, *args, **kwargs):
+    def map_sum(self,
+            expr: p.Sum, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine(self.rec(child, *args, **kwargs)
                 for child in expr.children)
 
-    map_product = map_sum
+    def map_product(self,
+            expr: p.Product, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
 
-    def map_quotient(self, expr, *args, **kwargs):
+    def map_quotient(self,
+            expr: p.Quotient, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
             self.rec(expr.numerator, *args, **kwargs),
             self.rec(expr.denominator, *args, **kwargs)))
 
-    map_floor_div = map_quotient
-    map_remainder = map_quotient
+    def map_floor_div(self,
+            expr: p.FloorDiv, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine((
+            self.rec(expr.numerator, *args, **kwargs),
+            self.rec(expr.denominator, *args, **kwargs)))
 
-    def map_power(self, expr, *args, **kwargs):
+    def map_remainder(self,
+            expr: p.Remainder, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine((
+            self.rec(expr.numerator, *args, **kwargs),
+            self.rec(expr.denominator, *args, **kwargs)))
+
+    def map_power(self,
+            expr: p.Power, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
                 self.rec(expr.base, *args, **kwargs),
                 self.rec(expr.exponent, *args, **kwargs)))
 
-    def map_polynomial(self, expr, *args, **kwargs):
-        return self.combine((
-            self.rec(expr.base, *args, **kwargs),
-            *[self.rec(coeff, *args, **kwargs) for exp, coeff in expr.data]
-            ))
-
-    def map_left_shift(self, expr, *args, **kwargs):
+    def map_left_shift(self,
+            expr: p.LeftShift, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
             self.rec(expr.shiftee, *args, **kwargs),
             self.rec(expr.shift, *args, **kwargs)))
 
-    map_right_shift = map_left_shift
+    def map_right_shift(self,
+            expr: p.RightShift, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine((
+            self.rec(expr.shiftee, *args, **kwargs),
+            self.rec(expr.shift, *args, **kwargs)))
 
-    def map_bitwise_not(self, expr, *args, **kwargs):
+    def map_bitwise_not(self,
+            expr: p.BitwiseNot, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.rec(expr.child, *args, **kwargs)
-    map_bitwise_or = map_sum
-    map_bitwise_xor = map_sum
-    map_bitwise_and = map_sum
 
-    map_logical_not = map_bitwise_not
-    map_logical_and = map_sum
-    map_logical_or = map_sum
+    def map_bitwise_or(self,
+            expr: p.BitwiseOr, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
 
-    def map_comparison(self, expr, *args, **kwargs):
+    def map_bitwise_and(self,
+            expr: p.BitwiseAnd, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
+
+    def map_bitwise_xor(self,
+            expr: p.BitwiseXor, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
+
+    def map_logical_not(self,
+            expr: p.LogicalNot, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.rec(expr.child, *args, **kwargs)
+
+    def map_logical_or(self,
+            expr: p.LogicalOr, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
+
+    def map_logical_and(self,
+            expr: p.LogicalAnd, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
+
+    def map_comparison(self,
+            expr: p.Comparison, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine((
             self.rec(expr.left, *args, **kwargs),
             self.rec(expr.right, *args, **kwargs)))
 
-    map_max = map_sum
-    map_min = map_sum
+    def map_max(self,
+            expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
 
-    def map_list(self, expr, *args, **kwargs):
+    def map_min(self,
+            expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs)
+                for child in expr.children)
+
+    def map_tuple(self,
+                expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
         return self.combine(self.rec(child, *args, **kwargs) for child in expr)
 
-    map_tuple = map_list
+    def map_list(self,
+                expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs) for child in expr)
 
-    def map_numpy_array(self, expr, *args, **kwargs):
+    def map_numpy_array(self,
+                expr: np.ndarray, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
         return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)
 
-    def map_multivector(self, expr, *args, **kwargs):
+    def map_multivector(self,
+                expr: MultiVector[ArithmeticExpressionT],
+                *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
         return self.combine(
                 self.rec(coeff, *args, **kwargs)
                 for bits, coeff in expr.data.items())
 
-    def map_common_subexpression(self, expr, *args, **kwargs):
+    def map_common_subexpression(self,
+                expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
         return self.rec(expr.child, *args, **kwargs)
 
-    def map_if_positive(self, expr, *args, **kwargs):
-        return self.combine([
-            self.rec(expr.criterion, *args, **kwargs),
-            self.rec(expr.then, *args, **kwargs),
-            self.rec(expr.else_, *args, **kwargs)])
-
-    def map_if(self, expr, *args, **kwargs):
+    def map_if(self,
+            expr: p.If, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.combine([
             self.rec(expr.condition, *args, **kwargs),
             self.rec(expr.then, *args, **kwargs),
@@ -416,7 +637,10 @@ class CachedCombineMapper(CachedMapper, CombineMapper):
 
 # {{{ collector
 
-class Collector(CombineMapper):
+CollectedT = TypeVar("CollectedT")
+
+
+class Collector(CombineMapper[AbstractSet[CollectedT], P]):
     """A subclass of :class:`CombineMapper` for the common purpose of
     collecting data derived from an expression in a set that gets 'unioned'
     across children at each non-leaf node in the expression tree.
@@ -426,19 +650,36 @@ class Collector(CombineMapper):
     .. versionadded:: 2014.3
     """
 
-    def combine(self, values):
+    def combine(self,
+                values: Iterable[AbstractSet[CollectedT]]
+            ) -> AbstractSet[CollectedT]:
         import operator
         from functools import reduce
         return reduce(operator.or_, values, set())
 
-    def map_constant(self, expr, *args, **kwargs):
+    def map_constant(self, expr: object,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
-    map_variable = map_constant
-    map_wildcard = map_constant
-    map_dot_wildcard = map_constant
-    map_star_wildcard = map_constant
-    map_function_symbol = map_constant
+    def map_variable(self, expr: p.Variable,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+        return set()
+
+    def map_wildcard(self, expr: p.Wildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+        return set()
+
+    def map_dot_wildcard(self, expr: p.DotWildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+        return set()
+
+    def map_star_wildcard(self, expr: p.StarWildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+        return set()
+
+    def map_function_symbol(self, expr: p.FunctionSymbol,
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+        return set()
 
 
 class CachedCollector(CachedMapper, Collector):
@@ -449,34 +690,59 @@ class CachedCollector(CachedMapper, Collector):
 
 # {{{ identity mapper
 
-class IdentityMapper(Mapper):
+class IdentityMapper(Mapper[ExpressionT, P]):
     """A :class:`Mapper` whose default mapper methods
     make a deep copy of each subexpression.
 
     See :ref:`custom-manipulation` for an example of the
     manipulations that can be implemented this way.
+
+    .. automethod:: rec_arith
     """
-    def map_constant(self, expr, *args, **kwargs):
+
+    def rec_arith(self,
+                expr: ArithmeticExpressionT, *args: P.args, **kwargs: P.kwargs
+            ) -> ArithmeticExpressionT:
+        res = self.rec(expr, *args, **kwargs)
+        assert p.is_arithmetic_expression(res)
+        return res
+
+    def map_constant(self,
+                expr: object, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        # leaf -- no need to rebuild
+        assert p.is_valid_operand(expr)
+        return expr
+
+    def map_variable(self,
+                expr: p.Variable, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         # leaf -- no need to rebuild
         return expr
 
-    def map_variable(self, expr, *args, **kwargs):
-        # leaf -- no need to rebuild
+    def map_wildcard(self,
+                expr: p.Wildcard, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         return expr
 
-    def map_wildcard(self, expr, *args, **kwargs):
+    def map_dot_wildcard(self,
+                expr: p.DotWildcard, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         return expr
 
-    def map_dot_wildcard(self, expr, *args, **kwargs):
+    def map_star_wildcard(self,
+                expr: p.StarWildcard, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         return expr
 
-    def map_star_wildcard(self, expr, *args, **kwargs):
+    def map_function_symbol(self,
+                expr: p.FunctionSymbol, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         return expr
 
-    def map_function_symbol(self, expr, *args, **kwargs):
-        return expr
-
-    def map_call(self, expr, *args, **kwargs):
+    def map_call(self,
+                expr: p.Call, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
@@ -488,12 +754,14 @@ class IdentityMapper(Mapper):
 
         return type(expr)(function, parameters)
 
-    def map_call_with_kwargs(self, expr, *args, **kwargs):
+    def map_call_with_kwargs(self,
+                expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
             ])
-        kw_parameters = immutabledict({
+        kw_parameters: Mapping[str, ExpressionT] = immutabledict({
                 key: self.rec(val, *args, **kwargs)
                 for key, val in expr.kw_parameters.items()})
 
@@ -505,20 +773,26 @@ class IdentityMapper(Mapper):
             return expr
         return type(expr)(function, parameters, kw_parameters)
 
-    def map_subscript(self, expr, *args, **kwargs):
+    def map_subscript(self,
+                expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
         index = self.rec(expr.index, *args, **kwargs)
         if aggregate is expr.aggregate and index is expr.index:
             return expr
         return type(expr)(aggregate, index)
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_lookup(self,
+                expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
         if aggregate is expr.aggregate:
             return expr
         return type(expr)(aggregate, expr.name)
 
-    def map_sum(self, expr, *args, **kwargs):
+    def map_sum(self,
+                expr: p.Sum, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children)):
@@ -526,41 +800,81 @@ class IdentityMapper(Mapper):
 
         return type(expr)(tuple(children))
 
-    map_product = map_sum
+    def map_product(self,
+                expr: p.Product, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
 
-    def map_quotient(self, expr, *args, **kwargs):
-        numerator = self.rec(expr.numerator, *args, **kwargs)
-        denominator = self.rec(expr.denominator, *args, **kwargs)
+        return type(expr)(tuple(children))
+
+    def map_quotient(self,
+                expr: p.Quotient, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        numerator = self.rec_arith(expr.numerator, *args, **kwargs)
+        denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
             return expr
         return expr.__class__(numerator, denominator)
 
-    map_floor_div = map_quotient
-    map_remainder = map_quotient
+    def map_floor_div(self,
+                expr: p.FloorDiv, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        numerator = self.rec_arith(expr.numerator, *args, **kwargs)
+        denominator = self.rec_arith(expr.denominator, *args, **kwargs)
+        if numerator is expr.numerator and denominator is expr.denominator:
+            return expr
+        return expr.__class__(numerator, denominator)
 
-    def map_power(self, expr, *args, **kwargs):
-        base = self.rec(expr.base, *args, **kwargs)
-        exponent = self.rec(expr.exponent, *args, **kwargs)
+    def map_remainder(self,
+                expr: p.Remainder, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        numerator = self.rec_arith(expr.numerator, *args, **kwargs)
+        denominator = self.rec_arith(expr.denominator, *args, **kwargs)
+        if numerator is expr.numerator and denominator is expr.denominator:
+            return expr
+        return expr.__class__(numerator, denominator)
+
+    def map_power(self,
+                expr: p.Power, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        base = self.rec_arith(expr.base, *args, **kwargs)
+        exponent = self.rec_arith(expr.exponent, *args, **kwargs)
         if base is expr.base and exponent is expr.exponent:
             return expr
         return expr.__class__(base, exponent)
 
-    def map_left_shift(self, expr, *args, **kwargs):
+    def map_left_shift(self,
+                expr: p.LeftShift, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         shiftee = self.rec(expr.shiftee, *args, **kwargs)
         shift = self.rec(expr.shift, *args, **kwargs)
         if shiftee is expr.shiftee and shift is expr.shift:
             return expr
         return type(expr)(shiftee, shift)
 
-    map_right_shift = map_left_shift
+    def map_right_shift(self,
+                expr: p.RightShift, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        shiftee = self.rec(expr.shiftee, *args, **kwargs)
+        shift = self.rec(expr.shift, *args, **kwargs)
+        if shiftee is expr.shiftee and shift is expr.shift:
+            return expr
+        return type(expr)(shiftee, shift)
 
-    def map_bitwise_not(self, expr, *args, **kwargs):
+    def map_bitwise_not(self,
+                expr: p.BitwiseNot, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
         return type(expr)(child)
 
-    def map_bitwise_or(self, expr, *args, **kwargs):
+    def map_bitwise_or(self,
+                expr: p.BitwiseOr, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children)):
@@ -568,14 +882,57 @@ class IdentityMapper(Mapper):
 
         return type(expr)(tuple(children))
 
-    map_bitwise_xor = map_bitwise_or
-    map_bitwise_and = map_bitwise_or
+    def map_bitwise_and(self,
+                expr: p.BitwiseAnd, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
 
-    map_logical_not = map_bitwise_not
-    map_logical_or = map_bitwise_or
-    map_logical_and = map_bitwise_or
+        return type(expr)(tuple(children))
 
-    def map_comparison(self, expr, *args, **kwargs):
+    def map_bitwise_xor(self,
+                expr: p.BitwiseXor, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
+
+        return type(expr)(tuple(children))
+
+    def map_logical_not(self,
+                expr: p.LogicalNot, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        child = self.rec(expr.child, *args, **kwargs)
+        if child is expr.child:
+            return expr
+        return type(expr)(child)
+
+    def map_logical_or(self,
+                expr: p.LogicalOr, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
+
+        return type(expr)(tuple(children))
+
+    def map_logical_and(self,
+                expr: p.LogicalAnd, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
+
+        return type(expr)(tuple(children))
+
+    def map_comparison(self,
+                expr: p.Comparison, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         left = self.rec(expr.left, *args, **kwargs)
         right = self.rec(expr.right, *args, **kwargs)
         if left is expr.left and right is expr.right:
@@ -583,10 +940,16 @@ class IdentityMapper(Mapper):
 
         return type(expr)(left, expr.operator, right)
 
-    def map_list(self, expr, *args, **kwargs):
-        return [self.rec(child, *args, **kwargs) for child in expr]
+    def map_list(self,
+                expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
 
-    def map_tuple(self, expr, *args, **kwargs):
+        # True fact: lists aren't expressions
+        return [self.rec(child, *args, **kwargs) for child in expr]  # type: ignore[return-value]
+
+    def map_tuple(self,
+                expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         children = [self.rec(child, *args, **kwargs) for child in expr]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr)):
@@ -594,21 +957,28 @@ class IdentityMapper(Mapper):
 
         return tuple(children)
 
-    def map_numpy_array(self, expr, *args, **kwargs):
+    def map_numpy_array(self,
+                expr: np.ndarray, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
+
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         for i in numpy.ndindex(expr.shape):
             result[i] = self.rec(expr[i], *args, **kwargs)
-        return result
 
-    def map_multivector(self, expr, *args, **kwargs):
+        # True fact: ndarrays aren't expressions
+        return result  # type: ignore[return-value]
+
+    def map_multivector(self,
+                expr: MultiVector[ArithmeticExpressionT],
+                *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionT:
         return expr.map(lambda ch: self.rec(ch, *args, **kwargs))
 
-    def map_common_subexpression(self, expr, *args, **kwargs):
-        from pymbolic.primitives import is_zero
+    def map_common_subexpression(self,
+                expr: p.CommonSubexpression,
+                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         result = self.rec(expr.child, *args, **kwargs)
-        if is_zero(result):
-            return 0
         if result is expr.child:
             return expr
 
@@ -618,7 +988,9 @@ class IdentityMapper(Mapper):
                 expr.scope,
                 **expr.get_extra_properties())
 
-    def map_substitution(self, expr, *args, **kwargs):
+    def map_substitution(self,
+                 expr: p.Substitution,
+                 *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         child = self.rec(expr.child, *args, **kwargs)
         values = tuple([self.rec(v, *args, **kwargs) for v in expr.values])
         if child is expr.child and all(val is orig_val
@@ -627,36 +999,29 @@ class IdentityMapper(Mapper):
 
         return type(expr)(child, expr.variables, values)
 
-    def map_derivative(self, expr, *args, **kwargs):
+    def map_derivative(self,
+                expr: p.Derivative,
+                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
 
         return type(expr)(child, expr.variables)
 
-    def map_slice(self, expr, *args, **kwargs):
-        children = tuple([
+    def map_slice(self,
+                expr: p.Slice,
+                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+        children: p.SliceChildrenT = cast(p.SliceChildrenT, tuple([
             None if child is None else self.rec(child, *args, **kwargs)
             for child in expr.children
-            ])
+            ]))
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children)):
             return expr
 
         return type(expr)(children)
 
-    def map_if_positive(self, expr, *args, **kwargs):
-        criterion = self.rec(expr.criterion, *args, **kwargs)
-        then = self.rec(expr.then, *args, **kwargs)
-        else_ = self.rec(expr.else_, *args, **kwargs)
-        if criterion is expr.criterion \
-                and then is expr.then \
-                and else_ is expr.else_:
-            return expr
-
-        return type(expr)(criterion, then, else_)
-
-    def map_if(self, expr, *args, **kwargs):
+    def map_if(self, expr: p.If, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         condition = self.rec(expr.condition, *args, **kwargs)
         then = self.rec(expr.then, *args, **kwargs)
         else_ = self.rec(expr.else_, *args, **kwargs)
@@ -667,7 +1032,7 @@ class IdentityMapper(Mapper):
 
         return type(expr)(condition, then, else_)
 
-    def map_min(self, expr, *args, **kwargs):
+    def map_min(self, expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         children = tuple([
             self.rec(child, *args, **kwargs) for child in expr.children
             ])
@@ -677,14 +1042,22 @@ class IdentityMapper(Mapper):
 
         return type(expr)(children)
 
-    map_max = map_min
+    def map_max(self, expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+        children = tuple([
+            self.rec(child, *args, **kwargs) for child in expr.children
+            ])
+        if all(child is orig_child
+                for child, orig_child in zip(children, expr.children)):
+            return expr
 
-    def map_nan(self, expr, *args, **kwargs):
+        return type(expr)(children)
+
+    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
         # Leaf node -- don't recurse
         return expr
 
 
-class CachedIdentityMapper(CachedMapper, IdentityMapper):
+class CachedIdentityMapper(CachedMapper[ExpressionT, P], IdentityMapper[P]):
     pass
 
 # }}}
@@ -692,7 +1065,7 @@ class CachedIdentityMapper(CachedMapper, IdentityMapper):
 
 # {{{ walk mapper
 
-class WalkMapper(Mapper):
+class WalkMapper(Mapper[None, P]):
     """A mapper whose default mapper method implementations simply recurse
     without propagating any result. Also calls :meth:`visit` for each
     visited subexpression.
@@ -709,21 +1082,39 @@ class WalkMapper(Mapper):
         Is called after a node's children are visited.
     """
 
-    def map_constant(self, expr, *args, **kwargs):
+    def map_constant(self, expr: object, *args: P.args, **kwargs: P.kwargs) -> None:
         self.visit(expr, *args, **kwargs)
         self.post_visit(expr, *args, **kwargs)
 
-    def map_variable(self, expr, *args, **kwargs):
+    def map_variable(self, expr: p.Variable, *args: P.args, **kwargs: P.kwargs) -> None:
         self.visit(expr, *args, **kwargs)
         self.post_visit(expr, *args, **kwargs)
 
-    map_wildcard = map_variable
-    map_dot_wildcard = map_variable
-    map_star_wildcard = map_variable
-    map_function_symbol = map_variable
-    map_nan = map_variable
+    def map_wildcard(self, expr: p.Wildcard, *args: P.args, **kwargs: P.kwargs) -> None:
+        self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
 
-    def map_call(self, expr, *args, **kwargs):
+    def map_dot_wildcard(self,
+            expr: p.DotWildcard, *args: P.args, **kwargs: P.kwargs) -> None:
+        self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_star_wildcard(self,
+            expr: p.StarWildcard, *args: P.args, **kwargs: P.kwargs) -> None:
+        self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_function_symbol(self,
+            expr: p.FunctionSymbol, *args: P.args, **kwargs: P.kwargs) -> None:
+        self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_nan(self,
+            expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> None:
+        self.visit(expr, *args, **kwargs)
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_call(self, expr: p.Call, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -733,7 +1124,9 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_call_with_kwargs(self, expr, *args, **kwargs):
+    def map_call_with_kwargs(self,
+                expr: p.CallWithKwargs,
+                *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -746,7 +1139,9 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_subscript(self, expr, *args, **kwargs):
+    def map_subscript(self,
+                expr: p.Subscript,
+                *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -755,7 +1150,8 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_lookup(self, expr, *args, **kwargs):
+    def map_lookup(self,
+                expr: p.Lookup, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -763,7 +1159,7 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_sum(self, expr, *args, **kwargs):
+    def map_sum(self, expr: p.Sum, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -772,9 +1168,16 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_product = map_sum
+    def map_product(self, expr: p.Product, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_quotient(self, expr, *args, **kwargs):
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_quotient(self, expr: p.Quotient, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -783,10 +1186,27 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_floor_div = map_quotient
-    map_remainder = map_quotient
+    def map_floor_div(self,
+            expr: p.FloorDiv, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_power(self, expr, *args, **kwargs):
+        self.rec(expr.numerator, *args, **kwargs)
+        self.rec(expr.denominator, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_remainder(self,
+            expr: p.Remainder, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        self.rec(expr.numerator, *args, **kwargs)
+        self.rec(expr.denominator, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_power(self, expr: p.Power, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -795,7 +1215,8 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_list(self, expr, *args, **kwargs):
+    def map_tuple(self,
+            expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -804,9 +1225,8 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_tuple = map_list
-
-    def map_numpy_array(self, expr, *args, **kwargs):
+    def map_numpy_array(self,
+            expr: np.ndarray, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -816,16 +1236,19 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_multivector(self, expr, *args, **kwargs):
+    def map_multivector(self,
+            expr: MultiVector[ArithmeticExpressionT],
+            *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
         for _bits, coeff in expr.data.items():
-            self.rec(coeff)
+            self.rec(coeff, *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_common_subexpression(self, expr, *args, **kwargs):
+    def map_common_subexpression(self,
+            expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -833,7 +1256,8 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_left_shift(self, expr, *args, **kwargs):
+    def map_left_shift(self,
+            expr: p.LeftShift, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -842,9 +1266,18 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_right_shift = map_left_shift
+    def map_right_shift(self,
+            expr: p.RightShift, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_bitwise_not(self, expr, *args, **kwargs):
+        self.rec(expr.shift, *args, **kwargs)
+        self.rec(expr.shiftee, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_bitwise_not(self,
+            expr: p.BitwiseNot, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -852,11 +1285,37 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_bitwise_or = map_sum
-    map_bitwise_xor = map_sum
-    map_bitwise_and = map_sum
+    def map_bitwise_or(self,
+                expr: p.BitwiseOr, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_comparison(self, expr, *args, **kwargs):
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_bitwise_xor(self,
+                expr: p.BitwiseXor, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_bitwise_and(self,
+                expr: p.BitwiseAnd, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_comparison(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -865,11 +1324,36 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_logical_not = map_bitwise_not
-    map_logical_and = map_sum
-    map_logical_or = map_sum
+    def map_logical_not(self,
+            expr: p.LogicalNot, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_if(self, expr, *args, **kwargs):
+        self.rec(expr.child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_logical_or(self,
+                expr: p.LogicalOr, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_logical_and(self,
+                expr: p.LogicalAnd, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_if(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -879,7 +1363,7 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_if_positive(self, expr, *args, **kwargs):
+    def map_if_positive(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -889,11 +1373,28 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    map_min = map_sum
-    map_max = map_sum
+    def map_min(self,
+                expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
 
-    def map_substitution(self, expr, *args, **kwargs):
-        if not self.visit(expr):
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_max(self,
+                expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    def map_substitution(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
             return
 
         self.rec(expr.child, *args, **kwargs)
@@ -902,7 +1403,7 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_derivative(self, expr, *args, **kwargs):
+    def map_derivative(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -910,7 +1411,7 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_slice(self, expr, *args, **kwargs):
+    def map_slice(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -923,10 +1424,10 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def visit(self, expr, *args, **kwargs):
+    def visit(self, expr, *args: P.args, **kwargs: P.kwargs) -> bool:
         return True
 
-    def post_visit(self, expr, *args, **kwargs):
+    def post_visit(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
         pass
 
 
@@ -938,6 +1439,7 @@ class CachedWalkMapper(CachedMapper, WalkMapper):
 
 # {{{ callback mapper
 
+# FIXME: Is it worth typing this?
 class CallbackMapper(Mapper):
     def __init__(self, function, fallback_mapper):
         self.function = function
@@ -984,7 +1486,7 @@ class CallbackMapper(Mapper):
 
 # {{{ caching mixins
 
-class CSECachingMapperMixin(ABC):
+class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
     """A :term:`mix-in` that helps
     subclassed mappers implement caching for
     :class:`pymbolic.primitives.CommonSubexpression`
@@ -999,23 +1501,28 @@ class CSECachingMapperMixin(ABC):
     This method deliberately does not support extra arguments in mapper
     dispatch, to avoid spurious dependencies of the cache on these arguments.
     """
+    _cse_cache_dict: dict[tuple[ExpressionT, P.args, P.kwargs], ResultT]
 
-    def map_common_subexpression(self, expr, *args):
+    def map_common_subexpression(self,
+                expr: p.CommonSubexpression,
+                *args: P.args, **kwargs: P.kwargs) -> ResultT:
         try:
             ccd = self._cse_cache_dict
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
-        key = (expr, *args)
+        key: tuple[ExpressionT, P.args, P.kwargs] = (expr, args, immutabledict(kwargs))
         try:
             return ccd[key]
         except KeyError:
-            result = self.map_common_subexpression_uncached(expr, *args)
+            result = self.map_common_subexpression_uncached(expr, *args, **kwargs)
             ccd[key] = result
             return result
 
     @abstractmethod
-    def map_common_subexpression_uncached(self, expr, *args):
+    def map_common_subexpression_uncached(self,
+                expr: p.CommonSubexpression,
+                *args: P.args, **kwargs: P.kwargs) -> ResultT:
         pass
 
 # }}}

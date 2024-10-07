@@ -4,7 +4,16 @@
 .. autofunction:: make_subst_func
 .. autofunction:: substitute
 
+.. autoclass:: Callable[[AlgebraicLeaf], ExpressionT | None]
+
+References
+----------
+
+.. class:: SupportsGetItem
+
+    A protocol with a ``__getitem__`` method.
 """
+
 from __future__ import annotations
 
 
@@ -29,12 +38,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+from typing import Any, Callable
+
+from useful_types import SupportsGetItem, SupportsItems
 
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
+from pymbolic.primitives import AlgebraicLeaf
+from pymbolic.typing import ExpressionT
 
 
-class SubstitutionMapper(IdentityMapper):
-    def __init__(self, subst_func):
+class SubstitutionMapper(IdentityMapper[[]]):
+    def __init__(
+        self, subst_func: Callable[[AlgebraicLeaf], ExpressionT | None]
+    ) -> None:
         self.subst_func = subst_func
 
     def map_variable(self, expr):
@@ -59,17 +75,26 @@ class SubstitutionMapper(IdentityMapper):
             return IdentityMapper.map_lookup(self, expr)
 
 
-class CachedSubstitutionMapper(CachedIdentityMapper,
-                               SubstitutionMapper):
-    def __init__(self, subst_func):
-        CachedIdentityMapper.__init__(self)
+class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
+    def __init__(
+        self, subst_func: Callable[[AlgebraicLeaf], ExpressionT | None]
+    ) -> None:
+        # FIXME Mypy says:
+        # error: Argument 1 to "__init__" of "CachedMapper" has incompatible type
+        # "CachedSubstitutionMapper"; expected "CachedMapper[ResultT, P]"  [arg-type]
+        # This seems spurious?
+        CachedIdentityMapper.__init__(self)  # type: ignore[arg-type]
         SubstitutionMapper.__init__(self, subst_func)
 
 
-def make_subst_func(variable_assignments):
+def make_subst_func(
+    # "Any" here avoids the whole Mapping variance disaster
+    # e.g. https://github.com/python/typing/issues/445
+    variable_assignments: SupportsGetItem[Any, ExpressionT],
+) -> Callable[[AlgebraicLeaf], ExpressionT | None]:
     import pymbolic.primitives as primitives
 
-    def subst_func(var):
+    def subst_func(var: AlgebraicLeaf) -> ExpressionT | None:
         try:
             return variable_assignments[var]
         except KeyError:
@@ -84,15 +109,23 @@ def make_subst_func(variable_assignments):
     return subst_func
 
 
-def substitute(expression, variable_assignments=None,
-               mapper_cls=CachedSubstitutionMapper, **kwargs):
+def substitute(
+    expression: ExpressionT,
+    variable_assignments: SupportsItems[AlgebraicLeaf | str, ExpressionT] | None = None,
+    mapper_cls=CachedSubstitutionMapper,
+    **kwargs: ExpressionT,
+):
     """
     :arg mapper_cls: A :class:`type` of the substitution mapper
         whose instance applies the substitution.
     """
     if variable_assignments is None:
-        variable_assignments = {}
-    variable_assignments = variable_assignments.copy()
-    variable_assignments.update(kwargs)
+        # "Any" here avoids pointless grief about variance
+        # e.g. https://github.com/python/typing/issues/445
+        v_ass_copied: dict[Any, ExpressionT] = {}
+    else:
+        v_ass_copied = dict(variable_assignments.items())
 
-    return mapper_cls(make_subst_func(variable_assignments))(expression)
+    v_ass_copied.update(kwargs)
+
+    return mapper_cls(make_subst_func(v_ass_copied))(expression)

@@ -31,7 +31,7 @@ from typing import Any, ClassVar
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper
-from pymbolic.typing import ExpressionT, ScalarT
+from pymbolic.typing import ExpressionT
 
 
 __doc__ = r'''
@@ -263,7 +263,7 @@ class ASTToPymbolic(ASTMapper):
 
 # {{{ PymbolicToASTMapper
 
-class PymbolicToASTMapper(CachedMapper):
+class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
     def map_variable(self, expr) -> ast.expr:
         return ast.Name(id=expr.name)
 
@@ -283,7 +283,7 @@ class PymbolicToASTMapper(CachedMapper):
     def map_product(self, expr: p.Product) -> ast.expr:
         return self._map_multi_children_op(expr.children, ast.Mult())
 
-    def map_constant(self, expr: ScalarT) -> ast.expr:
+    def map_constant(self, expr: object) -> ast.expr:
         if isinstance(expr, bool):
             return ast.NameConstant(expr)
         else:
@@ -393,7 +393,7 @@ class PymbolicToASTMapper(CachedMapper):
             raise NotImplementedError("Non-float nan not implemented")
 
     def map_slice(self, expr: p.Slice) -> ast.expr:
-        return ast.Slice(*[self.rec(child)
+        return ast.Slice(*[None if child is None else self.rec(child)
                            for child in expr.children])
 
     def map_numpy_array(self, expr) -> ast.expr:
