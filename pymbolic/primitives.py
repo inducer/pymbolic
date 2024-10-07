@@ -1611,7 +1611,7 @@ class Slice(Expression):
 
 
 @expr_dataclass()
-class NaN(Expression):
+class NaN(AlgebraicLeaf):
     """
     An expression node representing not-a-number as a floating point number.
     Unlike, :data:`math.nan`, all instances of :class:`NaN` compare equal, as
