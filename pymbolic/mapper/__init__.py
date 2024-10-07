@@ -545,15 +545,6 @@ class IdentityMapper(Mapper):
             return expr
         return expr.__class__(base, exponent)
 
-    def map_polynomial(self, expr, *args, **kwargs):
-        base = self.rec(expr.base, *args, **kwargs)
-        data = ((exp, self.rec(coeff, *args, **kwargs))
-                                  for exp, coeff in expr.data)
-        if base is expr.base and all(
-                t[1] is orig_t[1] for t, orig_t in zip(data, expr.data)):
-            return expr
-        return expr.__class__(base, data)
-
     def map_left_shift(self, expr, *args, **kwargs):
         shiftee = self.rec(expr.shiftee, *args, **kwargs)
         shift = self.rec(expr.shift, *args, **kwargs)
@@ -804,16 +795,6 @@ class WalkMapper(Mapper):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def map_polynomial(self, expr, *args, **kwargs):
-        if not self.visit(expr, *args, **kwargs):
-            return
-
-        self.rec(expr.base, *args, **kwargs)
-        for _exp, coeff in expr.data:
-            self.rec(coeff, *args, **kwargs)
-
-        self.post_visit(expr, *args, **kwargs)
-
     def map_list(self, expr, *args, **kwargs):
         if not self.visit(expr, *args, **kwargs):
             return
@@ -990,7 +971,6 @@ class CallbackMapper(Mapper):
     map_logical_or = map_constant
     map_logical_and = map_constant
 
-    map_polynomial = map_constant
     map_list = map_constant
     map_tuple = map_constant
     map_numpy_array = map_constant

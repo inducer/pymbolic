@@ -54,7 +54,6 @@ class CSETagMapper(IdentityMapper):
     map_floor_div = map_call
     map_remainder = map_call
     map_power = map_call
-    map_polynomial = map_call
 
     map_left_shift = map_call
     map_right_shift = map_call

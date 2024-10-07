@@ -252,12 +252,6 @@ class StringifyMapper(Mapper):
                     self.rec(expr.exponent, PREC_POWER, *args, **kwargs)),
                 enclosing_prec, PREC_POWER)
 
-    def map_polynomial(self, expr, enclosing_prec, *args, **kwargs):
-        from pymbolic.primitives import flattened_sum
-        return self.rec(flattened_sum(
-            [coeff*expr.base**exp for exp, coeff in expr.data[::-1]]),
-            enclosing_prec, *args, **kwargs)
-
     def map_left_shift(self, expr, enclosing_prec, *args, **kwargs):
         return self.parenthesize_if_needed(
                 # +1 to address
