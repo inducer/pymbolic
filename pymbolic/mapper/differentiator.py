@@ -194,28 +194,6 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
             return log(f) * f**g * dg + \
                     g * f**(g-1) * df
 
-    def map_polynomial(self, expr, *args):
-        # (a(x)*f(x))^n)' = a'(x)f(x)^n + a(x)f'(x)*n*f(x)^(n-1)
-        deriv_coeff = []
-        deriv_base = []
-
-        dbase = self.rec(expr.base, *args)
-
-        for exp, coeff in expr.data:
-            dcoeff = self.rec(coeff, *args)
-            if dcoeff:
-                deriv_coeff.append((exp, dcoeff))
-            if dbase and exp > 0:
-                deriv_base.append((exp-1, exp*dbase*self.rec_undiff(coeff, *args)))
-
-        from pymbolic import Polynomial
-
-        return (
-                Polynomial(self.rec_undiff(expr.base, *args),
-                        tuple(deriv_coeff), expr.unit)
-                + Polynomial(self.rec_undiff(expr.base, *args),
-                    tuple(deriv_base), expr.unit))
-
     def map_numpy_array(self, expr, *args):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)

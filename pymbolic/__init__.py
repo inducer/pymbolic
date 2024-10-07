@@ -38,8 +38,6 @@ from .mapper import distributor
 from .mapper import flattener
 from . import primitives
 
-from .polynomial import Polynomial
-
 from .primitives import (Variable as var,  # noqa: N813
     Variable,
     Expression,
@@ -73,7 +71,6 @@ __all__ = (
     "Expression",
     "ExpressionT",
     "NumberT",
-    "Polynomial",
     "ScalarT",
     "Variable",
     "compile",

@@ -26,7 +26,7 @@ THE SOFTWARE.
 import math
 
 import pymbolic
-from pymbolic.mapper.stringifier import PREC_NONE, PREC_POWER, PREC_SUM, StringifyMapper
+from pymbolic.mapper.stringifier import PREC_NONE, StringifyMapper
 
 
 class CompileMapper(StringifyMapper):
@@ -44,34 +44,6 @@ class CompileMapper(StringifyMapper):
                 expr = complex(expr)
 
         return repr(expr)
-
-    def map_polynomial(self, expr, enclosing_prec):
-        # Use Horner's scheme to evaluate the polynomial
-
-        sbase = self(expr.base, PREC_POWER)
-
-        def stringify_exp(exp):
-            if exp == 0:
-                return ""
-            elif exp == 1:
-                return f"*{sbase}"
-            else:
-                return f"*{sbase}**{exp}"
-
-        result = ""
-        rev_data = expr.data[::-1]
-        for i, (exp, coeff) in enumerate(rev_data):
-            if i+1 < len(rev_data):
-                next_exp = rev_data[i+1][0]
-            else:
-                next_exp = 0
-            result = "({}+{}){}".format(result, self(coeff, PREC_SUM),
-                    stringify_exp(exp-next_exp))
-
-        if enclosing_prec > PREC_SUM and len(expr.data) > 1:
-            return f"({result})"
-        else:
-            return result
 
     def map_numpy_array(self, expr, enclosing_prec):
         def stringify_leading_dimension(ary):
