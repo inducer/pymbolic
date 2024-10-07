@@ -73,7 +73,7 @@ def map_math_functions_by_name(i, func, pars, allowed_nonsmoothness="none"):
         raise RuntimeError("unrecognized function, cannot differentiate")
 
 
-class DifferentiationMapper(pymbolic.mapper.RecursiveMapper,
+class DifferentiationMapper(pymbolic.mapper.Mapper,
         pymbolic.mapper.CSECachingMapperMixin):
     """Example usage:
 

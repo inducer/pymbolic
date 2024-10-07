@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pymbolic.mapper import RecursiveMapper
+from pymbolic.mapper import Mapper
 from pymbolic.primitives import Variable
 
 
@@ -92,7 +92,7 @@ def unify_many(unis1, uni2):
     return result
 
 
-class UnifierBase(RecursiveMapper):
+class UnifierBase(Mapper):
     # The idea of the algorithm here is that the unifier accumulates a set of
     # unification possibilities (:class:`UnificationRecord`) as it descends the
     # expression tree. :func:`unify_many` above then checks if these possibilities
