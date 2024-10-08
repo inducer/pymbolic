@@ -33,7 +33,7 @@ dependencies = [
     "immutabledict",
     "pytools>=2022.1.14",
     # for dataclass_transform, TypeAlias
-    "typing-extensions>=4; python_version<'3.13'",
+    "typing-extensions>=4",
 ]
 
 [project.optional-dependencies]
