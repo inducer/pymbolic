@@ -29,6 +29,7 @@ from typing import Any
 from immutabledict import immutabledict
 
 import pymbolic.primitives as primitives
+from typing import Generic, TypeVar, Any, Dict
 
 
 __doc__ = """
@@ -94,6 +95,8 @@ Base classes for mappers with memoization support
 
 .. autoclass:: CachedWalkMapper
 """
+
+CachedMapperT = TypeVar("CachedMapperT")  # used in CachedMapper
 
 
 try:
@@ -287,6 +290,34 @@ class CachedMapper(Mapper):
 RecursiveMapper = Mapper
 
 
+# {{{ CachedMapper
+
+class CachedMapper(Mapper, Generic[CachedMapperT]):
+    """Mapper class that maps each subexpression exactly once. This loses some
+    information compared to :class:`Mapper` as a subexpression is visited only from
+    one of its predecessors.
+    """
+
+    def __init__(self) -> None:
+        self._cache: Dict[CachedMapperT, Any] = {}
+
+    def cache_key(self, expr: CachedMapperT) -> Any:
+        return expr
+
+    # type-ignore-reason: incompatible with super class
+    # type: ignore[override]
+    def rec(self, expr: CachedMapperT, *args, **kwargs) -> Any:
+        key = self.cache_key(expr)
+        try:
+            return self._cache[key]
+        except KeyError:
+            result = super().rec(expr, *args, **kwargs)  # type: ignore[type-var]
+            self._cache[key] = result
+            return result
+
+# }}}
+
+
 # {{{ combine mapper
 
 class CombineMapper(RecursiveMapper):
@@ -452,7 +483,7 @@ class CachedCollector(CachedMapper, Collector):
 
 # {{{ identity mapper
 
-class IdentityMapper(Mapper):
+class IdentityMapper(CachedMapper):
     """A :class:`Mapper` whose default mapper methods
     make a deep copy of each subexpression.
 

@@ -40,6 +40,7 @@ class CSEWalkMapper(WalkMapper):
 class CSETagMapper(IdentityMapper):
     def __init__(self, walk_mapper):
         self.subexpr_histogram = walk_mapper.subexpr_histogram
+        super().__init__()
 
     def map_call(self, expr):
         if self.subexpr_histogram.get(expr, 0) > 1:
