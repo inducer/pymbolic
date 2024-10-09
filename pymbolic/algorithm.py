@@ -251,10 +251,12 @@ def sym_fft(x, sign=1):
 
     def wrap_intermediate(x):
         if len(x) > 1:
-            from pymbolic.primitives import CommonSubexpression
+            from pymbolic.primitives import CommonSubexpression, cse_scope
+
             result = numpy.empty(len(x), dtype=object)
             for i, x_i in enumerate(x):
-                result[i] = CommonSubexpression(x_i)
+                result[i] = CommonSubexpression(x_i, scope=cse_scope.EVALUATION)
+
             return result
         else:
             return x
