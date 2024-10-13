@@ -1618,17 +1618,20 @@ class cse_scope:  # noqa
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
 
     .. attribute:: EVALUATION
+        :type: str
 
         The evaluated result lives for the duration of the evaluation of the
         current expression and is discarded thereafter.
 
     .. attribute:: EXPRESSION
+        :type: str
 
         The evaluated result lives for the lifetime of the current expression
         (across multiple evaluations with multiple parameters) and is discarded
         when the expression is.
 
     .. attribute:: GLOBAL
+        :type: str
 
         The evaluated result lives until the execution context dies.
     """
