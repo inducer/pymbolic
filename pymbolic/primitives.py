@@ -59,36 +59,84 @@ Expression base class
 
 .. autofunction:: expr_dataclass
 
-Sums, products and such
------------------------
-
 .. autoclass:: Variable
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
+Expressions
+-----------
+
 .. currentmodule:: pymbolic.primitives
 
+.. autoclass:: AlgebraicLeaf
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: Leaf
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: Wildcard
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: DotWildcard
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: StarWildcard
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+Function Calls
+--------------
+
 .. autoclass:: Call
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: CallWithKwargs
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: Subscript
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: Lookup
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
+Sums, products and such
+-----------------------
+
 .. autoclass:: Sum
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: Product
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: Min
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
+.. autoclass:: Max
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -105,6 +153,7 @@ Sums, products and such
     :members: mapper_method
 
 .. autoclass:: Power
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -123,18 +172,22 @@ Bitwise operators
 -----------------
 
 .. autoclass:: BitwiseNot
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: BitwiseOr
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: BitwiseXor
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: BitwiseAnd
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -142,22 +195,27 @@ Comparisons and logic
 ---------------------
 
 .. autoclass:: Comparison
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: LogicalNot
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: LogicalAnd
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: LogicalOr
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
 .. autoclass:: If
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -165,11 +223,15 @@ Slices
 ----------
 
 .. autoclass:: Slice
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
 
 Code generation helpers
 -----------------------
 
 .. autoclass:: CommonSubexpression
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -182,7 +244,14 @@ Symbolic derivatives and substitution
 Inspired by similar functionality in :mod:`sympy`.
 
 .. autoclass:: Substitution
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
+
 .. autoclass:: Derivative
+    :show-inheritance:
+    :undoc-members:
+    :members: mapper_method
 
 Helper functions
 ----------------
@@ -209,6 +278,7 @@ Constants
 ---------
 
 .. autoclass:: NaN
+    :show-inheritance:
     :undoc-members:
     :members: mapper_method
 
@@ -1099,21 +1169,18 @@ class Variable(Leaf):
 
 @expr_dataclass()
 class Wildcard(Leaf):
-    pass
+    """A general wildcard that can be used to substitute expressions."""
 
 
 @expr_dataclass()
 class DotWildcard(Leaf):
-    """
-    A wildcard that can be substituted for a single expression.
-    """
+    """A wildcard that can be substituted for a single expression."""
     name: str
 
 
 @expr_dataclass()
 class StarWildcard(Leaf):
-    """
-    A wildcard that can be substituted by a sequence of expressions of
+    """A wildcard that can be substituted by a sequence of expressions of
     non-negative length.
     """
     name: str
@@ -1184,10 +1251,9 @@ class CallWithKwargs(AlgebraicLeaf):
 
 @expr_dataclass()
 class Subscript(AlgebraicLeaf):
-    """An array subscript.
-    """
-    aggregate: ExpressionT
+    """An array subscript."""
 
+    aggregate: ExpressionT
     index: ExpressionT
 
     @property
@@ -1205,9 +1271,7 @@ class Subscript(AlgebraicLeaf):
 
 @expr_dataclass()
 class Lookup(AlgebraicLeaf):
-    """Access to an attribute of an *aggregate*, such as an
-    attribute of a class.
-    """
+    """Access to an attribute of an *aggregate*, such as an attribute of a class."""
 
     aggregate: ExpressionT
     name: str
@@ -1221,6 +1285,11 @@ class Lookup(AlgebraicLeaf):
 class Sum(Expression):
     """
     .. autoattribute:: children
+
+    .. automethod:: __add__
+    .. automethod:: __radd__
+    .. automethod:: __sub__
+    .. automethod:: __bool__
     """
 
     children: tuple[ExpressionT, ...]
@@ -1269,6 +1338,10 @@ class Sum(Expression):
 class Product(Expression):
     """
     .. autoattribute:: children
+
+    .. automethod:: __mul__
+    .. automethod:: __rmul__
+    .. automethod:: __bool__
     """
 
     children: tuple[ExpressionT, ...]
@@ -1305,6 +1378,22 @@ class Product(Expression):
 
 
 @expr_dataclass()
+class Min(Expression):
+    """
+    .. autoattribute:: children
+    """
+    children: tuple[ExpressionT, ...]
+
+
+@expr_dataclass()
+class Max(Expression):
+    """
+    .. autoattribute:: children
+    """
+    children: tuple[ExpressionT, ...]
+
+
+@expr_dataclass()
 class QuotientBase(Expression):
     numerator: ExpressionT
     denominator: ExpressionT
@@ -1325,7 +1414,8 @@ class QuotientBase(Expression):
 
 @expr_dataclass()
 class Quotient(QuotientBase):
-    """
+    """Bases: :class:`~pymbolic.Expression`
+
     .. autoattribute:: numerator
     .. autoattribute:: denominator
     """
@@ -1333,7 +1423,8 @@ class Quotient(QuotientBase):
 
 @expr_dataclass()
 class FloorDiv(QuotientBase):
-    """
+    """Bases: :class:`~pymbolic.Expression`
+
     .. autoattribute:: numerator
     .. autoattribute:: denominator
     """
@@ -1341,7 +1432,8 @@ class FloorDiv(QuotientBase):
 
 @expr_dataclass()
 class Remainder(QuotientBase):
-    """
+    """Bases: :class:`~pymbolic.Expression`
+
     .. autoattribute:: numerator
     .. autoattribute:: denominator
     """
@@ -1370,7 +1462,8 @@ class _ShiftOperator(Expression):
 
 @expr_dataclass()
 class LeftShift(_ShiftOperator):
-    """
+    """Bases: :class:`~pymbolic.Expression`.
+
     .. autoattribute:: shiftee
     .. autoattribute:: shift
     """
@@ -1378,7 +1471,8 @@ class LeftShift(_ShiftOperator):
 
 @expr_dataclass()
 class RightShift(_ShiftOperator):
-    """
+    """Bases: :class:`~pymbolic.Expression`.
+
     .. autoattribute:: shiftee
     .. autoattribute:: shift
     """
@@ -1515,22 +1609,6 @@ class If(Expression):
     then: ExpressionT
     else_: ExpressionT
 
-
-@expr_dataclass()
-class Min(Expression):
-    """
-    .. autoattribute:: children
-    """
-    children: tuple[ExpressionT, ...]
-
-
-@expr_dataclass()
-class Max(Expression):
-    """
-    .. autoattribute:: children
-    """
-    children: tuple[ExpressionT, ...]
-
 # }}}
 
 
@@ -1631,6 +1709,10 @@ class Slice(Expression):
     """A slice expression as in a[1:7].
 
     .. autoattribute:: children
+
+    .. autoproperty:: start
+    .. autoproperty:: stop
+    .. autoproperty:: step
     """
 
     children: (tuple[()]
