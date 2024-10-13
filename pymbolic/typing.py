@@ -4,16 +4,18 @@
 Typing helpers
 --------------
 
-.. autoclass:: BoolT
-.. autoclass:: NumberT
-.. autoclass:: ScalarT
-.. autoclass:: ArithmeticExpressionT
+.. autodata:: BoolT
+.. autodata:: NumberT
+.. autodata:: ScalarT
+.. autodata:: ArithmeticExpressionT
 
     A narrower type alias than :class:`ExpressionT` that is returned by
     arithmetic operators, to allow continue doing arithmetic with the result
     of arithmetic.
 
-.. autoclass:: ExpressionT
+    >
+
+.. autodata:: ExpressionT
 """
 
 from __future__ import annotations
