@@ -723,7 +723,7 @@ def test_flop_counter():
     y = prim.Variable("y")
     z = prim.Variable("z")
 
-    subexpr = prim.CommonSubexpression(3 * (x**2 + y + z))
+    subexpr = prim.make_common_subexpression(3 * (x**2 + y + z))
     expr = 3*subexpr + subexpr
 
     from pymbolic.mapper.flop_counter import CSEAwareFlopCounter, FlopCounter
@@ -795,7 +795,7 @@ def test_diff_cse():
     m = prim.Variable("math")
 
     x = prim.Variable("x")
-    cse = prim.CommonSubexpression(x**2 + 1)
+    cse = prim.make_common_subexpression(x**2 + 1)
     expr = m.attr("exp")(cse)*m.attr("sin")(cse**2)
 
     diff_result = differentiate(expr, x)
@@ -1009,7 +1009,7 @@ def test_nodecount():
     y = prim.Variable("y")
     z = prim.Variable("z")
 
-    subexpr = prim.CommonSubexpression(4 * (x**2 + y + z))
+    subexpr = prim.make_common_subexpression(4 * (x**2 + y + z))
     expr = 3*subexpr + subexpr + subexpr + subexpr
     expr = expr + expr + expr
 
