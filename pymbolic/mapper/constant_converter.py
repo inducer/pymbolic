@@ -54,6 +54,7 @@ class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
         self.complex_type = complex_type
 
         self.integer_type = integer_type
+        super().__init__()
 
     def map_constant(self, expr):
         if expr.imag:

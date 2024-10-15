@@ -82,6 +82,7 @@ class CSEMapper(IdentityMapper):
         self.get_key = get_key
 
         self.canonical_subexprs = {}
+        super().__init__()
 
     def get_cse(self, expr, key=None):
         if key is None:

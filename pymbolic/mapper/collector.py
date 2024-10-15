@@ -42,6 +42,7 @@ class TermCollector(IdentityMapper):
         if parameters is None:
             parameters = set()
         self.parameters = parameters
+        super().__init__()
 
     def get_dependencies(self, expr):
         from pymbolic.mapper.dependency import DependencyMapper
