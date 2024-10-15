@@ -38,14 +38,14 @@ import operator as op
 from functools import reduce
 from typing import Any
 
-from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, RecursiveMapper
+from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper
 
 
 class UnknownVariableError(Exception):
     pass
 
 
-class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
+class EvaluationMapper(Mapper, CSECachingMapperMixin):
     """Example usage:
 
     .. doctest::
@@ -151,21 +151,6 @@ class EvaluationMapper(RecursiveMapper, CSECachingMapperMixin):
 
     def map_logical_and(self, expr):
         return all(self.rec(ch) for ch in expr.children)
-
-    def map_polynomial(self, expr):
-        # evaluate using Horner's scheme
-        result = 0
-        rev_data = expr.data[::-1]
-        ev_base = self.rec(expr.base)
-
-        for i, (exp, coeff) in enumerate(rev_data):
-            if i+1 < len(rev_data):
-                next_exp = rev_data[i+1][0]
-            else:
-                next_exp = 0
-            result = (result+coeff)*ev_base**(exp-next_exp)
-
-        return result
 
     def map_list(self, expr):
         return [self.rec(child) for child in expr]
