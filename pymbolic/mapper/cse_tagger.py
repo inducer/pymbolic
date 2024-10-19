@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 
 from pymbolic.mapper import IdentityMapper, WalkMapper
-from pymbolic.primitives import CommonSubexpression
+from pymbolic.primitives import CommonSubexpression, cse_scope
 
 
 class CSEWalkMapper(WalkMapper):
@@ -43,10 +43,9 @@ class CSETagMapper(IdentityMapper):
 
     def map_call(self, expr):
         if self.subexpr_histogram.get(expr, 0) > 1:
-            return CommonSubexpression(expr)
+            return CommonSubexpression(expr, scope=cse_scope.EVALUATION)
         else:
-            return getattr(IdentityMapper, expr.mapper_method)(
-                    self, expr)
+            return getattr(IdentityMapper, expr.mapper_method)(self, expr)
 
     map_sum = map_call
     map_product = map_call
