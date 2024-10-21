@@ -23,9 +23,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from abc import ABC, abstractmethod
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, Dict, Generic, Sequence, TypeVar, cast
+
 import numpy as np
 
 from pytools import memoize, memoize_method
+
+from pymbolic.primitives import expr_dataclass
+from pymbolic.typing import ArithmeticExpressionT
 
 
 __doc__ = """
@@ -49,6 +57,10 @@ Spaces
 
 Multivectors
 ------------
+
+.. class:: CoeffT
+
+    A type variable for coefficients of :class:`MultiVector`. Requires some arithmetic.
 
 .. autoclass:: MultiVector
 
@@ -178,16 +190,20 @@ def canonical_reordering_sign(a_bits, b_bits):
 
 # {{{ space
 
+@dataclass(frozen=True, init=False)
 class Space:
     """
-    .. attribute :: basis_names
+    .. autoattribute :: basis_names
+    .. autoattribute :: metric_matrix
+    """
 
-        A sequence of names of basis vectors.
+    basis_names: Sequence[str]
+    "A sequence of names of basis vectors."
 
-    .. attribute :: metric_matrix
-
-        A *(dims,dims)*-shaped matrix, whose *(i,j)*-th entry represents the
-        inner product of basis vector *i* and basis vector *j*.
+    metric_matrix: np.ndarray
+    """
+    A *(dims,dims)*-shaped matrix, whose *(i,j)*-th entry represents the
+    inner product of basis vector *i* and basis vector *j*.
     """
 
     def __init__(self, basis=None, metric_matrix=None):
@@ -217,15 +233,12 @@ class Space:
                 and all(dim == len(basis) for dim in metric_matrix.shape)):
             raise ValueError("metric_matrix has the wrong shape")
 
-        self.basis_names = basis
-        self.metric_matrix = metric_matrix
+        object.__setattr__(self, "basis_names", basis)
+        object.__setattr__(self, "metric_matrix", metric_matrix)
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> int:
         return len(self.basis_names)
-
-    def __getinitargs__(self):
-        return (self.basis_names, self.metric_matrix)
 
     @memoize_method
     def bits_and_sign(self, basis_indices):
@@ -277,6 +290,9 @@ def get_euclidean_space(n):
 # }}}
 
 
+CoeffT = TypeVar("CoeffT", bound=ArithmeticExpressionT)
+
+
 # {{{ blade product weights
 
 def _shared_metric_coeff(shared_bits, space):
@@ -294,8 +310,18 @@ def _shared_metric_coeff(shared_bits, space):
     return result
 
 
-class _GAProduct:
-    pass
+class _GAProduct(ABC, Generic[CoeffT]):
+    @staticmethod
+    @abstractmethod
+    def generic_blade_product_weight(a_bits: int, b_bits: int, space: Space) -> CoeffT:
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space
+            ) -> CoeffT:
+        ...
 
 
 class _OuterProduct(_GAProduct):
@@ -388,25 +414,23 @@ class _ScalarProduct(_GAProduct):
 
 # {{{ multivector
 
-def _cast_or_ni(obj, space):
+def _cast_to_mv(obj: Any, space: Space) -> MultiVector:
     if isinstance(obj, MultiVector):
         return obj
     else:
         return MultiVector(obj, space)
 
 
-class MultiVector:
+@expr_dataclass(init=False, hash=False)
+class MultiVector(Generic[CoeffT]):
     r"""An immutable multivector type. Its implementation follows [DFM].
     It is pickleable, and not picky about what data is used as coefficients.
     It supports :class:`pymbolic.primitives.Expression` objects of course,
     but it can take just about any other scalar-ish coefficients.
 
-    .. attribute:: data
+    .. autoattribute:: data
 
-        A mapping from a basis vector bitmap (indicating blades) to coefficients.
-        (see [DFM], Chapter 19 for idea and rationale)
-
-    .. attribute:: space
+    .. autoattribute:: space
 
     See the following literature:
 
@@ -496,9 +520,22 @@ class MultiVector:
 
     """
 
+    data: Mapping[int, CoeffT]
+    """A mapping from a basis vector bitmap (indicating blades) to coefficients.
+    (see [DFM], Chapter 19 for idea and rationale)
+    """
+
+    space: Space
+
+    mapper_method = "map_multivector"
+
     # {{{ construction
 
-    def __init__(self, data, space=None):
+    def __init__(
+                self,
+                data: Mapping[tuple[int, ...] | int, CoeffT] | np.ndarray | CoeffT,
+                space: Space | None = None
+            ) -> None:
         """
         :arg data: This may be one of the following:
 
@@ -523,12 +560,11 @@ class MultiVector:
                 raise ValueError("only numpy vectors (not higher-rank objects) "
                         "are supported for 'data'")
             dimensions, = data.shape
-            data = {
-                    (i,): xi for i, xi in enumerate(data)}
+            data = {(i,): xi for i, xi in enumerate(data)}
         elif isinstance(data, dict):
             pass
         else:
-            data = {0: data}
+            data = {0: cast(CoeffT, data)}
 
         if space is None:
             space = get_euclidean_space(dimensions)
@@ -544,33 +580,27 @@ class MultiVector:
         from pymbolic.primitives import is_zero
         if data and single_valued(isinstance(k, tuple) for k in data.keys()):
             # data is in non-normalized non-bits tuple form
-            new_data = {}
+            new_data: dict[int, CoeffT] = {}
             for basis_indices, coeff in data.items():
                 bits, sign = space.bits_and_sign(basis_indices)
-                new_coeff = new_data.setdefault(bits, 0) + sign*coeff
+                new_coeff = new_data.setdefault(bits, cast(CoeffT, 0)) + sign*coeff
 
                 if is_zero(new_coeff):
                     del new_data[bits]
                 else:
                     new_data[bits] = new_coeff
-
-            data = new_data
+        else:
+            new_data = cast(Dict[int, CoeffT], data)
 
         # }}}
 
         # assert that multivectors don't get nested
-        assert not any(isinstance(coeff, MultiVector)
-                for coeff in data.values())
+        assert not any(isinstance(coeff, MultiVector) for coeff in new_data.values())
 
-        self.space = space
-        self.data = data
+        object.__setattr__(self, "space", space)
+        object.__setattr__(self, "data", new_data)
 
     # }}}
-
-    def __getinitargs__(self):
-        return (self.data, self.space)
-
-    mapper_method = "map_multivector"
 
     # {{{ stringification
 
@@ -630,16 +660,14 @@ class MultiVector:
 
     # {{{ additive operators
 
-    def __neg__(self):
+    def __neg__(self) -> MultiVector:
         return MultiVector(
                 {bits: -coeff
                     for bits, coeff in self.data.items()},
                 self.space)
 
-    def __add__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+    def __add__(self, other) -> MultiVector:
+        other = _cast_to_mv(other, self.space)
 
         if self.space is not other.space:
             raise ValueError("can only add multivectors from identical spaces")
@@ -649,7 +677,8 @@ class MultiVector:
         from pymbolic.primitives import is_zero
         new_data = {}
         for bits in all_bits:
-            new_coeff = self.data.get(bits, 0) + other.data.get(bits, 0)
+            new_coeff = (self.data.get(bits, cast(CoeffT, 0))
+                + other.data.get(bits, cast(CoeffT, 0)))
 
             if not is_zero(new_coeff):
                 new_data[bits] = new_coeff
@@ -669,7 +698,10 @@ class MultiVector:
 
     # {{{ multiplicative operators
 
-    def _generic_product(self, other, product_class):
+    def _generic_product(self,
+                    other: MultiVector,
+                    product_class: _GAProduct
+                ) -> MultiVector:
         """
         :arg product_class: A subclass of :class:`_GAProduct`.
         """
@@ -684,7 +716,7 @@ class MultiVector:
                     "from identical spaces")
 
         from pymbolic.primitives import is_zero
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for sbits, scoeff in self.data.items():
             for obits, ocoeff in other.data.items():
                 new_bits = sbits ^ obits
@@ -695,7 +727,7 @@ class MultiVector:
                     coeff = (weight
                             * canonical_reordering_sign(sbits, obits)
                             * scoeff * ocoeff)
-                    new_coeff = new_data.setdefault(new_bits, 0) + coeff
+                    new_coeff = new_data.setdefault(new_bits, cast(CoeffT, 0)) + coeff
                     if is_zero(new_coeff):
                         del new_data[new_bits]
                     else:
@@ -704,9 +736,7 @@ class MultiVector:
         return MultiVector(new_data, self.space)
 
     def __mul__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _GeometricProduct)
 
@@ -715,9 +745,7 @@ class MultiVector:
                 ._generic_product(self, _GeometricProduct)
 
     def __xor__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _OuterProduct)
 
@@ -726,9 +754,7 @@ class MultiVector:
                 ._generic_product(self, _OuterProduct)
 
     def __or__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _InnerProduct)
 
@@ -737,9 +763,7 @@ class MultiVector:
                 ._generic_product(self, _InnerProduct)
 
     def __lshift__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _LeftContractionProduct)
 
@@ -748,9 +772,7 @@ class MultiVector:
                 ._generic_product(self, _LeftContractionProduct)
 
     def __rshift__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _RightContractionProduct)
 
@@ -764,10 +786,7 @@ class MultiVector:
         Often written :math:`A*B`.
         """
 
-        other_new = _cast_or_ni(other, self.space)
-        if other_new is NotImplemented:
-            raise NotImplementedError(
-                    f"scalar product between multivector and '{type(other)}'")
+        other_new = _cast_to_mv(other, self.space)
 
         return self._generic_product(other_new, _ScalarProduct).as_scalar()
 
@@ -791,9 +810,7 @@ class MultiVector:
     def __truediv__(self, other):
         """Return ``self*(1/other)``.
         """
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self*other.inv()
 
@@ -913,9 +930,7 @@ class MultiVector:
     __nonzero__ = __bool__
 
     def __eq__(self, other):
-        other = _cast_or_ni(other, self.space)
-        if other is NotImplemented:
-            return NotImplemented
+        other = _cast_to_mv(other, self.space)
 
         return self.data == other.data
 
