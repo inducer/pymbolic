@@ -294,6 +294,10 @@ References
 
     An instance of a :func:`~dataclasses.dataclass`.
 
+.. class:: ArithmeticExpressionT
+
+    See :class:`pymbolic.ArithmeticExpressionT`
+
 .. class:: _T
 
     A type variable.
@@ -478,19 +482,19 @@ class Expression:
         return Product((other, self))
 
     def __truediv__(self, other: object) -> Quotient:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Quotient(self, other)
 
     def __rtruediv__(self, other: object) -> Quotient:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Quotient(other, self)
 
     def __floordiv__(self, other: object) -> FloorDiv:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return FloorDiv(self, other)
@@ -502,25 +506,25 @@ class Expression:
         return FloorDiv(other, self)
 
     def __mod__(self, other: object) -> Remainder:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Remainder(self, other)
 
     def __rmod__(self, other: object) -> Remainder:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Remainder(other, self)
 
     def __pow__(self, other: object) -> Power:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Power(self, other)
 
     def __rpow__(self, other: object) -> Power:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Power(other, self)
@@ -1338,8 +1342,8 @@ class Max(Expression):
 
 @expr_dataclass()
 class QuotientBase(Expression):
-    numerator: ExpressionT
-    denominator: ExpressionT
+    numerator: ArithmeticExpressionT
+    denominator: ArithmeticExpressionT
 
     @property
     def num(self):
@@ -1389,8 +1393,8 @@ class Power(Expression):
     .. autoattribute:: exponent
     """
 
-    base: ExpressionT
-    exponent: ExpressionT
+    base: ArithmeticExpressionT
+    exponent: ArithmeticExpressionT
 
 # }}}
 
