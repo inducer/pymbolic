@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pymbolic.primitives import flattened_product
+
 
 __copyright__ = "Copyright (C) 2013 Andreas Kloeckner"
 
@@ -68,7 +70,7 @@ class CoefficientCollector(Mapper):
             return {1: other_coeffs}
         else:
             return {
-                    var: other_coeffs*coeff
+                    var: flattened_product((other_coeffs, coeff))
                     for var, coeff in
                     children_coeffs[idx_of_child_with_vars].items()}
 
@@ -83,7 +85,7 @@ class CoefficientCollector(Mapper):
             raise RuntimeError("nonlinear expression")
         val = d_den[1]
         for k in d_num.keys():
-            d_num[k] *= Quotient(1, val)
+            d_num[k] = flattened_product((d_num[k], Quotient(1, val)))
         return d_num
 
     def map_power(self, expr):

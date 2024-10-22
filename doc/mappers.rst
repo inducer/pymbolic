@@ -44,5 +44,10 @@ Analysis tools
 
 .. automodule:: pymbolic.mapper.analysis
 
+Simplification
+^^^^^^^^^^^^^^
+
+.. automodule:: pymbolic.mapper.flattener
+
 
 .. vim: sw=4

@@ -100,7 +100,7 @@ class ConstantFoldingMapper(
 
 
 # Yes, map_product incompatible: missing *args, **kwargs
-class CommutativeConstantFoldingMapper(    # type: ignore[misc]
+class CommutativeConstantFoldingMapper(
         CSECachingMapperMixin,
         CommutativeConstantFoldingMapperBase,
         IdentityMapper):

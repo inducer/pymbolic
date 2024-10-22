@@ -33,13 +33,15 @@ from typing import (
     ClassVar,
     Mapping,
     NoReturn,
+    Protocol,
+    Type,
     TypeVar,
     cast,
 )
 from warnings import warn
 
 from immutabledict import immutabledict
-from typing_extensions import TypeIs, dataclass_transform
+from typing_extensions import TypeAlias, TypeIs, dataclass_transform
 
 from . import traits
 from .typing import ArithmeticExpressionT, ExpressionT, NumberT, ScalarT
@@ -446,140 +448,84 @@ class Expression:
 
     # {{{ arithmetic
 
-    def __add__(self, other: object) -> ArithmeticExpressionT:
+    def __add__(self, other: object) -> Sum:
         if not is_arithmetic_expression(other):
             return NotImplemented
-        if is_nonzero(other):
-            if self:
-                if isinstance(other, Sum):
-                    return Sum((self, *other.children))
-                else:
-                    return Sum((self, other))
-            else:
-                return other
-        else:
-            return self
+        return Sum((self, other))
 
-    def __radd__(self, other: object) -> ArithmeticExpressionT:
-        assert is_number(other)
-        if is_nonzero(other):
-            if self:
-                return Sum((other, self))
-            else:
-                return other
-        else:
-            return self
+    def __radd__(self, other: object) -> Sum:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
+        return Sum((other, self))
 
-    def __sub__(self, other: object) -> ArithmeticExpressionT:
+    def __sub__(self, other: object) -> Sum:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
+        return Sum((self, -other))
+
+    def __rsub__(self, other: object) -> Sum:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
+        return Sum((other, -self))
+
+    def __mul__(self, other: object) -> Product:
         if not is_valid_operand(other):
             return NotImplemented
 
-        if is_nonzero(other):
-            return self.__add__(-cast(NumberT, other))
-        else:
-            return self
+        return Product((self, other))
 
-    def __rsub__(self, other: object) -> ArithmeticExpressionT:
-        if not is_constant(other):
-            return NotImplemented
-
-        if is_nonzero(other):
-            return Sum((other, -self))
-        else:
-            return -self
-
-    def __mul__(self, other: object) -> ArithmeticExpressionT:
+    def __rmul__(self, other: object) -> Product:
         if not is_valid_operand(other):
             return NotImplemented
 
-        other = cast(NumberT, other)
-        if is_zero(other - 1):
-            return self
-        elif is_zero(other):
-            return 0
-        else:
-            return Product((self, other))
+        return Product((other, self))
 
-    def __rmul__(self, other: object) -> ArithmeticExpressionT:
-        if not is_constant(other):
+    def __truediv__(self, other: object) -> Quotient:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
-        if is_zero(other-1):
-            return self
-        elif is_zero(other):
-            return 0
-        else:
-            return Product((other, self))
+        return Quotient(self, other)
 
-    def __div__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
+    def __rtruediv__(self, other: object) -> Quotient:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
-        other = cast(NumberT, other)
-        if is_zero(other-1):
-            return self
-        return quotient(self, other)
-    __truediv__ = __div__
+        return Quotient(other, self)
 
-    def __rdiv__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
+    def __floordiv__(self, other: object) -> FloorDiv:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
-        if is_zero(other):
-            return 0
-        return quotient(other, self)
-    __rtruediv__ = __rdiv__
-
-    def __floordiv__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
-            return NotImplemented
-
-        other = cast(NumberT, other)
-        if is_zero(other-1):
-            return self
         return FloorDiv(self, other)
 
-    def __rfloordiv__(self, other: object) -> ArithmeticExpressionT:
+    def __rfloordiv__(self, other: object) -> FloorDiv:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
-        if is_zero(self-1):
-            return other
         return FloorDiv(other, self)
 
-    def __mod__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
+    def __mod__(self, other: object) -> Remainder:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
-        other = cast(NumberT, other)
-        if is_zero(other-1):
-            return 0
         return Remainder(self, other)
 
-    def __rmod__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
+    def __rmod__(self, other: object) -> Remainder:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Remainder(other, self)
 
-    def __pow__(self, other: object) -> ArithmeticExpressionT:
-        if not is_valid_operand(other):
+    def __pow__(self, other: object) -> Power:
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
-        other = cast(NumberT, other)
-        if is_zero(other):  # exponent zero
-            return 1
-        elif is_zero(other-1):  # exponent one
-            return self
         return Power(self, other)
 
-    def __rpow__(self, other: object) -> ArithmeticExpressionT:
-        assert is_constant(other)
+    def __rpow__(self, other: object) -> Power:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
 
-        if is_zero(other):  # base zero
-            return 0
-        elif is_zero(other-1):  # base one
-            return 1
         return Power(other, self)
 
     # }}}
@@ -946,9 +892,13 @@ _CAMEL_TO_SNAKE_RE = re.compile(
 )
 
 
+class _HasMapperMethod(Protocol):
+    mapper_method: ClassVar[str]
+
+
 def _augment_expression_dataclass(
             cls: type[DataclassInstance],
-            hash: bool,
+            generate_hash: bool,
         ) -> None:
     attr_tuple = ", ".join(f"self.{fld.name}" for fld in fields(cls))
     if attr_tuple:
@@ -981,8 +931,9 @@ def _augment_expression_dataclass(
                 return True
             if self.__class__ is not other.__class__:
                 return False
-            if hash(self) != hash(other):
-                return False
+            if {generate_hash}:
+                if hash(self) != hash(other):
+                    return False
             if self.__class__ is not cls and self.init_arg_names != {fld_name_tuple}:
                 warn(f"{{self.__class__}} is derived from {cls}, which is now "
                     f"a dataclass. {{self.__class__}} should be converted to being "
@@ -1017,7 +968,7 @@ def _augment_expression_dataclass(
             object.__setattr__(self, "_hash_value", hash_val)
             return hash_val
 
-        if {hash}:
+        if {generate_hash}:
             cls.__hash__ = {cls.__name__}_hash
 
 
@@ -1083,23 +1034,23 @@ def _augment_expression_dataclass(
 
     # {{{ assign mapper_method
 
-    assert issubclass(cls, Expression)
+    mm_cls = cast(Type[_HasMapperMethod], cls)
 
-    snake_clsname = _CAMEL_TO_SNAKE_RE.sub("_", cls.__name__).lower()
+    snake_clsname = _CAMEL_TO_SNAKE_RE.sub("_", mm_cls.__name__).lower()
     default_mapper_method_name = f"map_{snake_clsname}"
 
     # This covers two cases: the class does not have the attribute in the first
     # place, or it inherits a value but does not set it itself.
-    sets_mapper_method = "mapper_method" in cls.__dict__
+    sets_mapper_method = "mapper_method" in mm_cls.__dict__
 
     if sets_mapper_method:
-        if default_mapper_method_name == cls.mapper_method:
-            warn(f"Explicit mapper_method on {cls} not needed, default matches "
+        if default_mapper_method_name == mm_cls.mapper_method:
+            warn(f"Explicit mapper_method on {mm_cls} not needed, default matches "
                  "explicit assignment. Just delete the explicit assignment.",
                  stacklevel=3)
 
     if not sets_mapper_method:
-        cls.mapper_method = intern(default_mapper_method_name)
+        mm_cls.mapper_method = intern(default_mapper_method_name)
 
     # }}}
 
@@ -1110,17 +1061,20 @@ _T = TypeVar("_T")
 @dataclass_transform(frozen_default=True)
 def expr_dataclass(
             init: bool = True,
-            hash: bool = True
+            hash: bool = True,
         ) -> Callable[[type[_T]], type[_T]]:
-    """A class decorator that makes the class a :func:`~dataclasses.dataclass`
+    r"""A class decorator that makes the class a :func:`~dataclasses.dataclass`
     while also adding functionality needed for :class:`Expression` nodes.
     Specifically, it adds cached hashing, equality comparisons
     with ``self is other`` shortcuts as well as some methods/attributes
-    for backward compatibility (e.g. ``__getinitargs__``, ``init_arg_names``)
+    for backward compatibility (e.g. ``__getinitargs__``, ``init_arg_names``).
 
     It also adds a :attr:`Expression.mapper_method` based on the class name
     if not already present. If :attr:`~Expression.mapper_method` is inherited,
     it will be viewed as unset and replaced.
+
+    Note that the class to which this decorator is applied need not be
+    a subclass of :class:`~pymbolic.Expression`.
 
     .. versionadded:: 2024.1
     """
@@ -1135,7 +1089,7 @@ def expr_dataclass(
         # It should just understand that?
         _augment_expression_dataclass(
                   dc_cls,  # type: ignore[arg-type]
-                  hash=hash
+                  generate_hash=hash,
                   )
         return dc_cls
 
@@ -1707,6 +1661,12 @@ class Derivative(Expression):
     variables: tuple[str, ...]
 
 
+SliceChildrenT: TypeAlias = (tuple[()]
+        | tuple[ExpressionT | None]
+        | tuple[ExpressionT | None, ExpressionT | None]
+        | tuple[ExpressionT | None, ExpressionT | None, ExpressionT | None])
+
+
 @expr_dataclass()
 class Slice(Expression):
     """A slice expression as in a[1:7].
@@ -1718,10 +1678,7 @@ class Slice(Expression):
     .. autoproperty:: step
     """
 
-    children: (tuple[()]
-        | tuple[ExpressionT]
-        | tuple[ExpressionT, ExpressionT]
-        | tuple[ExpressionT, ExpressionT, ExpressionT])
+    children: SliceChildrenT
 
     def __bool__(self):
         return True
@@ -1753,7 +1710,7 @@ class Slice(Expression):
 
 
 @expr_dataclass()
-class NaN(Expression):
+class NaN(AlgebraicLeaf):
     """
     An expression node representing not-a-number as a floating point number.
     Unlike, :data:`math.nan`, all instances of :class:`NaN` compare equal, as

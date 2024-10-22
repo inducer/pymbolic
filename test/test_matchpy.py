@@ -101,4 +101,5 @@ def test_make_subexpr_subst():
 
     replaced_expr = m.replace_all(subject, [rule])
 
-    assert replaced_expr == flatten(parse("subst(i, j)*a[(k,)]*d[(k,)]"))
+    ref_expr = flatten(parse("subst(i, j)*a[(k,)]*d[(k,)]"))
+    assert flatten(replaced_expr) == ref_expr
