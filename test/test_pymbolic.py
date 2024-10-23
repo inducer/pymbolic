@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pymbolic.mapper.stringifier import StringifyMapper
+from pymbolic.typing import ExpressionT
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -1025,6 +1028,27 @@ def test_python_ast_interop_roundtrip():
     for i in range(ntests):
         expr = generate_random_expression(seed=(5+i))
         assert ast2p(p2ast(expr)) == expr
+
+
+# {{{ test derived stringifiers
+
+@prim.expr_dataclass()
+class CustomOperator:
+    child: ExpressionT
+
+    def make_stringifier(self, originating_stringifier=None):
+        return OperatorStringifier()
+
+
+class OperatorStringifier(StringifyMapper[[]]):
+    def map_custom_operator(self, expr: CustomOperator):
+        return f"Op({self.rec(expr.child)})"
+
+
+def test_derived_stringifier() -> None:
+    str(CustomOperator(5))
+
+# }}}
 
 
 if __name__ == "__main__":
