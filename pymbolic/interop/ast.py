@@ -215,12 +215,7 @@ class ASTToPymbolic(ASTMapper):
     def map_Bytes(self, expr):  # noqa
         return expr.s
 
-    # 3.8 and up
     def map_Constant(self, expr):  # noqa
-        # (singleton value)
-        return expr.value
-
-    def map_NameConstant(self, expr):  # noqa
         # (singleton value)
         return expr.value
 
@@ -284,10 +279,7 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
         return self._map_multi_children_op(expr.children, ast.Mult())
 
     def map_constant(self, expr: object) -> ast.expr:
-        if isinstance(expr, bool):
-            return ast.NameConstant(expr)
-        else:
-            return ast.Constant(expr, None)
+        return ast.Constant(expr, None)
 
     def map_call(self, expr: p.Call) -> ast.expr:
         return ast.Call(
