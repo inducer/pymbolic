@@ -1894,7 +1894,7 @@ def unregister_constant_class(class_):
     VALID_CONSTANT_CLASSES = tuple(tmp)
 
 
-def is_nonzero(value):
+def is_nonzero(value: object) -> bool:
     if value is None:
         raise ValueError("is_nonzero is undefined for None")
 
@@ -1904,11 +1904,11 @@ def is_nonzero(value):
         return True
 
 
-def is_zero(value):
+def is_zero(value: object) -> bool:
     return not is_nonzero(value)
 
 
-def wrap_in_cse(expr, prefix=None):
+def wrap_in_cse(expr: ExpressionT, prefix=None) -> ExpressionT:
     if isinstance(expr, (Variable, Subscript)):
         return expr
 
