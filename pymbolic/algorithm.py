@@ -1,3 +1,15 @@
+"""
+.. autofunction:: integer_power
+.. autofunction:: extended_euclidean
+.. autofunction:: gcd
+.. autofunction:: lcm
+.. autofunction:: fft
+.. autofunction:: ifft
+.. autofunction:: sym_fft
+.. autofunction:: reduced_row_echelon_from
+.. autofunction:: solve_affine_equations_for
+"""
+
 from __future__ import annotations
 
 
