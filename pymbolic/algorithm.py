@@ -6,7 +6,7 @@
 .. autofunction:: fft
 .. autofunction:: ifft
 .. autofunction:: sym_fft
-.. autofunction:: reduced_row_echelon_from
+.. autofunction:: reduced_row_echelon_form
 .. autofunction:: solve_affine_equations_for
 """
 
@@ -35,7 +35,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pytools import memoize
+import operator
+import sys
+from typing import TYPE_CHECKING, overload
+from warnings import warn
+
+from pytools import MovedFunctionDeprecationWrapper, memoize
+
+
+if TYPE_CHECKING or getattr(sys, "_BUILDING_SPHINX_DOCS", None):
+    import numpy as np
 
 
 # {{{ integer powers
@@ -293,10 +302,47 @@ def csr_matrix_multiply(S, x):  # noqa
     return result
 
 
-# {{{ gaussian elimination
+# {{{ reduced_row_echelon_form
 
-def gaussian_elimination(mat, rhs):
+@overload
+def reduced_row_echelon_form(
+            mat: np.ndarray,
+            *, integral: bool | None = None,
+        ) -> np.ndarray:
+    ...
+
+
+@overload
+def reduced_row_echelon_form(
+            mat: np.ndarray,
+            rhs: np.ndarray,
+            *, integral: bool | None = None,
+        ) -> tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+def reduced_row_echelon_form(
+            mat: np.ndarray,
+            rhs: np.ndarray | None = None,
+            integral: bool | None = None,
+        ) -> tuple[np.ndarray, np.ndarray] | np.ndarray:
     m, n = mat.shape
+
+    mat = mat.copy()
+    if rhs is not None:
+        rhs = rhs.copy()
+
+    if integral is None:
+        warn(
+             "Not specifying 'integral' is deprecated, please add it as an argument. "
+             "This will stop being supported in 2025.",
+             DeprecationWarning, stacklevel=2)
+
+    if integral:
+        div_func = operator.floordiv
+    else:
+        div_func = operator.truediv
+
     i = 0
     j = 0
 
@@ -315,8 +361,9 @@ def gaussian_elimination(mat, rhs):
             # swap rows i and nonz
             mat[i], mat[nonz_row] = \
                     (mat[nonz_row].copy(), mat[i].copy())
-            rhs[i], rhs[nonz_row] = \
-                    (rhs[nonz_row].copy(), rhs[i].copy())
+            if rhs is not None:
+                rhs[i], rhs[nonz_row] = \
+                        (rhs[nonz_row].copy(), rhs[i].copy())
 
             for u in range(0, m):
                 if u == i:
@@ -326,11 +373,12 @@ def gaussian_elimination(mat, rhs):
                     continue
 
                 ell = lcm(mat[u, j], mat[i, j])
-                u_fac = ell//mat[u, j]
-                i_fac = ell//mat[i, j]
+                u_fac = div_func(ell, mat[u, j])
+                i_fac = div_func(ell, mat[i, j])
 
                 mat[u] = u_fac*mat[u] - i_fac*mat[i]
-                rhs[u] = u_fac*rhs[u] - i_fac*rhs[i]
+                if rhs is not None:
+                    rhs[u] = u_fac*rhs[u] - i_fac*rhs[i]
 
                 assert mat[u, j] == 0
 
@@ -338,18 +386,36 @@ def gaussian_elimination(mat, rhs):
 
         j += 1
 
+    if integral:
+        for i in range(m):
+            g = gcd_many(*(
+                [a for a in mat[i] if a]
+                +
+                [a for a in rhs[i] if a] if rhs is not None else []))
+
+            mat[i] //= g
+            if rhs is not None:
+                rhs[i] //= g
+
+    import numpy as np
+
+    from pymbolic.mapper.flattener import flatten
+    vec_flatten = np.vectorize(flatten, otypes=[object])
+
     for i in range(m):
-        g = gcd_many(*(
-            [a for a in mat[i] if a]
-            +
-            [a for a in rhs[i] if a]))
+        mat[i] = vec_flatten(mat[i])
+        if rhs is not None:
+            rhs[i] = vec_flatten(rhs[i])
 
-        mat[i] //= g
-        rhs[i] //= g
-
-    return mat, rhs
+    if rhs is None:
+        return mat
+    else:
+        return mat, rhs
 
 # }}}
+
+
+gaussian_elimination = MovedFunctionDeprecationWrapper(reduced_row_echelon_form, "2025")
 
 
 # {{{ symbolic (linear) equation solving
@@ -405,7 +471,7 @@ def solve_affine_equations_for(unknowns, equations):
 
     # }}}
 
-    mat, rhs_mat = gaussian_elimination(mat, rhs_mat)
+    mat, rhs_mat = reduced_row_echelon_form(mat, rhs_mat, integral=True)
 
     # FIXME /!\ Does not check for overdetermined system.
 
