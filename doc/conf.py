@@ -31,3 +31,8 @@ autodoc_type_aliases = {
     "ExpressionT": "ExpressionT",
     "ArithmeticExpressionT": "ArithmeticExpressionT",
 }
+
+import sys
+
+
+sys._BUILDING_SPHINX_DOCS = True
