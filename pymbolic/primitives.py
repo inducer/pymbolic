@@ -622,6 +622,9 @@ class Expression:
             return Call(self, args)
 
     if not TYPE_CHECKING:
+        # Subscript has an attribute 'index' which can't coexist with this.
+        # Thus we're hiding this from mypy until it goes away.
+
         def index(self, subscript: Expression) -> Expression:
             """Return an expression representing ``self[subscript]``.
 
