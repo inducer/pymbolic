@@ -31,6 +31,7 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Iterable,
     Mapping,
     NoReturn,
     Protocol,
@@ -1755,7 +1756,7 @@ def subscript(expression, index):
     return Subscript(expression, index)
 
 
-def flattened_sum(terms):
+def flattened_sum(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressionT:
     r"""Recursively flattens all the top level :class:`Sum`\ s in *terms*.
 
     :arg terms: an :class:`~collections.abc.Iterable` of expressions.
@@ -1772,7 +1773,8 @@ def flattened_sum(terms):
             continue
 
         if isinstance(item, Sum):
-            queue += item.children
+            ch = cast(tuple[ArithmeticExpressionT], item.children)
+            queue.extend(ch)
         else:
             done.append(item)
 
@@ -1790,7 +1792,7 @@ def linear_combination(coefficients, expressions):
                  if coefficient and expression)
 
 
-def flattened_product(terms):
+def flattened_product(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressionT:
     r"""Recursively flattens all the top level :class:`Product`\ s in *terms*.
 
     This operation does not change the order of the terms in the products, so
@@ -1812,7 +1814,8 @@ def flattened_product(terms):
             continue
 
         if isinstance(item, Product):
-            queue += item.children
+            ch = cast(tuple[ArithmeticExpressionT], item.children)
+            queue.extend(ch)
         else:
             done.append(item)
 
