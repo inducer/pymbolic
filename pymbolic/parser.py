@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pymbolic.typing import ExpressionT
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -559,7 +561,7 @@ class Parser:
 
             comma_allowed = True
 
-    def __call__(self, expr_str, min_precedence=0):
+    def __call__(self, expr_str: str, min_precedence: int = 0) -> ExpressionT:
         lex_result = [(tag, s, idx, match_obj)
                 for (tag, s, idx, match_obj) in pytools.lex.lex(
                     self.lex_table, expr_str,
