@@ -772,7 +772,7 @@ class Expression:
     def __setstate__(self, state) -> None:
         # Can't use trivial pickling: _hash_value cache must stay unset
         assert len(self.init_arg_names) == len(state), type(self)
-        for name, value in zip(self.init_arg_names, state):
+        for name, value in zip(self.init_arg_names, state, strict=True):
             object.__setattr__(self, name, value)
 
     # }}}
@@ -1791,7 +1791,8 @@ def flattened_sum(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressio
 
 def linear_combination(coefficients, expressions):
     return sum(coefficient * expression
-                 for coefficient, expression in zip(coefficients, expressions)
+                 for coefficient, expression
+                 in zip(coefficients, expressions, strict=True)
                  if coefficient and expression)
 
 

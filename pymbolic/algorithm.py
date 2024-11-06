@@ -489,7 +489,8 @@ def solve_affine_equations_for(unknowns, equations):
         div = mat[nonz_row, j]
 
         unknown_val = int(rhs_mat[nonz_row, -1]) // div
-        for parameter, coeff in zip(parameters_list, rhs_mat[nonz_row]):
+        for parameter, coeff in zip(
+                    parameters_list, rhs_mat[nonz_row, :-1], strict=True):
             unknown_val += (int(coeff) // div) * parameter
 
         result[unknown] = unknown_val
