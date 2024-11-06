@@ -302,7 +302,7 @@ def optimize_mapper(
             if not name.startswith("__") or name == "__call__":
                 method = getattr(cls, name)
                 if (not callable(method)
-                        or isinstance(method, (property, cached_property))):
+                        or isinstance(method, property | cached_property)):
                     # properties don't have *args, **kwargs
                     continue
 

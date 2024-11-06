@@ -28,15 +28,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import AbstractSet
-
-from typing_extensions import TypeAlias
+from collections.abc import Set
+from typing import TypeAlias
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin, P
 
 
-DependenciesT: TypeAlias = AbstractSet[p.AlgebraicLeaf | p.CommonSubexpression]
+DependenciesT: TypeAlias = Set[p.AlgebraicLeaf | p.CommonSubexpression]
 
 
 class DependencyMapper(

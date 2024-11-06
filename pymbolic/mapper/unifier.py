@@ -120,7 +120,7 @@ class UnifierBase(Mapper):
         raise NotImplementedError
 
     def unification_record_from_equation(self, lhs, rhs):
-        if isinstance(lhs, (tuple, list)) or isinstance(rhs, (tuple, list)):
+        if isinstance(lhs, tuple | list) or isinstance(rhs, tuple | list):
             # Always force lists/tuples to agree elementwise, never
             # generate a unification record between them directly.
             # This pushes the matching process down to the elementwise

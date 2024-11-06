@@ -24,21 +24,19 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping, Set
 from typing import (
     TYPE_CHECKING,
-    AbstractSet,
-    Callable,
+    Concatenate,
     Generic,
-    Hashable,
-    Iterable,
+    TypeAlias,
     TypeVar,
     cast,
 )
 from warnings import warn
 
 from immutabledict import immutabledict
-from typing_extensions import Concatenate, ParamSpec, TypeAlias, TypeIs
+from typing_extensions import ParamSpec, TypeIs
 
 import pymbolic.primitives as p
 from pymbolic.typing import ArithmeticExpressionT, ExpressionT
@@ -640,7 +638,7 @@ class CachedCombineMapper(CachedMapper, CombineMapper):
 CollectedT = TypeVar("CollectedT")
 
 
-class Collector(CombineMapper[AbstractSet[CollectedT], P]):
+class Collector(CombineMapper[Set[CollectedT], P]):
     """A subclass of :class:`CombineMapper` for the common purpose of
     collecting data derived from an expression in a set that gets 'unioned'
     across children at each non-leaf node in the expression tree.
@@ -651,34 +649,34 @@ class Collector(CombineMapper[AbstractSet[CollectedT], P]):
     """
 
     def combine(self,
-                values: Iterable[AbstractSet[CollectedT]]
-            ) -> AbstractSet[CollectedT]:
+                values: Iterable[Set[CollectedT]]
+            ) -> Set[CollectedT]:
         import operator
         from functools import reduce
         return reduce(operator.or_, values, set())
 
     def map_constant(self, expr: object,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
     def map_variable(self, expr: p.Variable,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
     def map_wildcard(self, expr: p.Wildcard,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
     def map_dot_wildcard(self, expr: p.DotWildcard,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
     def map_star_wildcard(self, expr: p.StarWildcard,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
     def map_function_symbol(self, expr: p.FunctionSymbol,
-                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
         return set()
 
 

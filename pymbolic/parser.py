@@ -25,11 +25,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from collections.abc import Sequence
 from sys import intern
-from typing import ClassVar, Sequence, Tuple, Union
+from typing import ClassVar, TypeAlias
 
 from immutabledict import immutabledict
-from typing_extensions import TypeAlias
 
 import pytools.lex
 from pytools import memoize_method
@@ -128,7 +128,7 @@ class FinalizedList(list, FinalizedContainer):
 
 
 LexTable: TypeAlias = Sequence[
-        Tuple[str, Union[pytools.lex.RE, Tuple[Union[str, pytools.lex.RE], ...]]]]
+        tuple[str, pytools.lex.RE | tuple[str | pytools.lex.RE, ...]]]
 
 
 class Parser:
@@ -500,7 +500,7 @@ class Parser:
 
             pstate.advance()
             if pstate.is_at_end() or pstate.next_tag() is _closepar:
-                if isinstance(left_exp, (tuple, list)) \
+                if isinstance(left_exp, tuple | list) \
                         and not isinstance(left_exp, FinalizedContainer):
                     # left_expr is a container with trailing commas
                     pass
@@ -508,7 +508,7 @@ class Parser:
                     left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
-                if isinstance(left_exp, (tuple, list)) \
+                if isinstance(left_exp, tuple | list) \
                         and not isinstance(left_exp, FinalizedContainer):
                     left_exp = (*left_exp, new_el)
                 else:

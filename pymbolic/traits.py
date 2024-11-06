@@ -40,7 +40,7 @@ def traits(x):
     try:
         return x.traits()
     except AttributeError:
-        if isinstance(x, (complex, float)):
+        if isinstance(x, complex | float):
             return FieldTraits()
         elif isinstance(x, int):
             return IntegerTraits()

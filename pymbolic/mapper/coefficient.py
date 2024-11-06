@@ -23,8 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections.abc import Collection
-from typing import Literal, Mapping, TypeAlias, cast
+from collections.abc import Collection, Mapping
+from typing import Literal, TypeAlias, cast
 
 import pymbolic.primitives as p
 from pymbolic.mapper import Mapper

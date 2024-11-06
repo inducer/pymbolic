@@ -25,9 +25,7 @@ Typing helpers
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, TypeVar, Union
-
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
 
 
 # FIXME: This is a lie. Many more constant types (e.g. numpy and such)
@@ -55,15 +53,15 @@ if TYPE_CHECKING:
 # (e.g. 'Unsupported operand types for * ("Decimal" and "Fraction")')
 # And leaving them out doesn't really make any of this more precise.
 
-_StdlibInexactNumberT = Union[float, complex]
+_StdlibInexactNumberT = float | complex
 
 
 if TYPE_CHECKING:
     # Yes, type-checking pymbolic will require numpy. That's OK.
     import numpy as np
-    BoolT = Union[bool, np.bool_]
-    IntegerT: TypeAlias = Union[int, np.integer]
-    InexactNumberT: TypeAlias = Union[_StdlibInexactNumberT, np.inexact]
+    BoolT = bool | np.bool_
+    IntegerT: TypeAlias = int | np.integer
+    InexactNumberT: TypeAlias = _StdlibInexactNumberT | np.inexact
 else:
     try:
         import numpy as np
@@ -72,18 +70,18 @@ else:
         IntegerT: TypeAlias = int
         InexactNumberT: TypeAlias = _StdlibInexactNumberT
     else:
-        BoolT = Union[bool, np.bool_]
-        IntegerT: TypeAlias = Union[int, np.integer]
-        InexactNumberT: TypeAlias = Union[_StdlibInexactNumberT, np.inexact]
+        BoolT = bool | np.bool_
+        IntegerT: TypeAlias = int | np.integer
+        InexactNumberT: TypeAlias = _StdlibInexactNumberT | np.inexact
 
 
-NumberT: TypeAlias = Union[IntegerT, InexactNumberT]
-ScalarT: TypeAlias = Union[NumberT, BoolT]
+NumberT: TypeAlias = IntegerT | InexactNumberT
+ScalarT: TypeAlias = NumberT | BoolT
 
 _ScalarOrExpression = Union[ScalarT, "Expression"]
 ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
 
-ExpressionT: TypeAlias = Union[_ScalarOrExpression, Tuple["ExpressionT", ...]]
+ExpressionT: TypeAlias = _ScalarOrExpression | tuple["ExpressionT", ...]
 
 ArithmeticOrExpressionT = TypeVar(
                 "ArithmeticOrExpressionT",

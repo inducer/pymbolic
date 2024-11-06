@@ -24,25 +24,23 @@ THE SOFTWARE.
 """
 
 import re
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, fields
 from sys import intern
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
-    Iterable,
-    Mapping,
     NoReturn,
     Protocol,
-    Type,
+    TypeAlias,
     TypeVar,
     cast,
 )
 from warnings import warn
 
 from immutabledict import immutabledict
-from typing_extensions import TypeAlias, TypeIs, dataclass_transform
+from typing_extensions import TypeIs, dataclass_transform
 
 from . import traits
 from .typing import ArithmeticExpressionT, ExpressionT, NumberT, ScalarT
@@ -1042,7 +1040,7 @@ def _augment_expression_dataclass(
 
     # {{{ assign mapper_method
 
-    mm_cls = cast(Type[_HasMapperMethod], cls)
+    mm_cls = cast(type[_HasMapperMethod], cls)
 
     snake_clsname = _CAMEL_TO_SNAKE_RE.sub("_", mm_cls.__name__).lower()
     default_mapper_method_name = f"map_{snake_clsname}"
@@ -1916,7 +1914,7 @@ def is_zero(value: object) -> bool:
 
 
 def wrap_in_cse(expr: ExpressionT, prefix=None) -> ExpressionT:
-    if isinstance(expr, (Variable, Subscript)):
+    if isinstance(expr, Variable | Subscript):
         return expr
 
     if isinstance(expr, CommonSubexpression):

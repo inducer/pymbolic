@@ -65,10 +65,6 @@ include = [
 [tool.ruff]
 preview = true
 
-# FIXME set this to 3.10 before merging
-# https://github.com/inducer/pymbolic/pull/152
-target-version = "py38"
-
 [tool.ruff.lint]
 extend-select = [
     "B",    # flake8-bugbear

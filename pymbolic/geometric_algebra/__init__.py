@@ -24,9 +24,9 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, Sequence, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast
 
 import numpy as np
 
@@ -590,7 +590,7 @@ class MultiVector(Generic[CoeffT]):
                 else:
                     new_data[bits] = new_coeff
         else:
-            new_data = cast(Dict[int, CoeffT], data)
+            new_data = cast(dict[int, CoeffT], data)
 
         # }}}
 

@@ -26,7 +26,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import AbstractSet, Sequence, cast
+from collections.abc import Sequence, Set
+from typing import cast
 
 import pymbolic
 import pymbolic.primitives as p
@@ -43,7 +44,7 @@ class TermCollector(IdentityMapper[[]]):
     coefficients and are not used for term collection.
     """
 
-    def __init__(self, parameters: AbstractSet[p.AlgebraicLeaf] | None = None):
+    def __init__(self, parameters: Set[p.AlgebraicLeaf] | None = None):
         if parameters is None:
             parameters = set()
         self.parameters = parameters
@@ -53,7 +54,7 @@ class TermCollector(IdentityMapper[[]]):
         return DependencyMapper()(expr)
 
     def split_term(self, mul_term: ExpressionT) -> tuple[
-        AbstractSet[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
+        Set[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
         ArithmeticExpressionT
     ]:
         """Returns  a pair consisting of:
@@ -81,7 +82,7 @@ class TermCollector(IdentityMapper[[]]):
 
         if isinstance(mul_term, Product):
             terms: Sequence[ExpressionT] = mul_term.children
-        elif isinstance(mul_term, (Power, AlgebraicLeaf)):
+        elif isinstance(mul_term, Power | AlgebraicLeaf):
             terms = [mul_term]
         elif not bool(self.get_dependencies(mul_term)):
             terms = [mul_term]
@@ -114,7 +115,7 @@ class TermCollector(IdentityMapper[[]]):
 
     def map_sum(self, expr: p.Sum) -> ExpressionT:
         term2coeff: dict[
-            AbstractSet[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
+            Set[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
             ArithmeticExpressionT] = {}
         for child in expr.children:
             term, coeff = self.split_term(child)

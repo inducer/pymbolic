@@ -457,19 +457,10 @@ def to_evaluatable_python_function(expr: ExpressionT,
         def foo(*, E, S):
             return S // 32 + E % 32
     """
-    import sys
 
     from pymbolic.mapper.dependency import CachedDependencyMapper
 
-    if sys.version_info < (3, 9):
-        try:
-            from astunparse import unparse
-        except ImportError:
-            raise RuntimeError("'to_evaluate_python_function' needs"
-                               "astunparse for Py<3.9. Install via `pip"
-                               " install astunparse`") from None
-    else:
-        unparse = ast.unparse
+    unparse = ast.unparse
 
     dep_mapper = CachedDependencyMapper(composite_leaves=True)
     deps = sorted({dep.name for dep in dep_mapper(expr)})

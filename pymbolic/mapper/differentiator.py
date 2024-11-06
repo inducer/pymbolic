@@ -222,7 +222,7 @@ def differentiate(expression,
                   variable,
                   func_mapper=map_math_functions_by_name,
                   allowed_nonsmoothness="none"):
-    if not isinstance(variable, (primitives.Variable, primitives.Subscript)):
+    if not isinstance(variable, primitives.Variable | primitives.Subscript):
         variable = primitives.make_variable(variable)
     from pymbolic import flatten
     return flatten(DifferentiationMapper(

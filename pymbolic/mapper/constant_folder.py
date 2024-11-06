@@ -70,7 +70,7 @@ class ConstantFoldingMapperBase(Mapper[ExpressionT, []]):
             assert is_arithmetic_expression(child)
 
             if isinstance(child, klass):
-                assert isinstance(child, (Sum, Product))
+                assert isinstance(child, Sum | Product)
                 queue = list(child.children) + queue
             else:
                 if self.is_constant(child):
