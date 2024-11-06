@@ -42,9 +42,10 @@ THE SOFTWARE.
 
 
 import abc
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, fields
 from functools import partial
-from typing import Callable, ClassVar, Generic, Iterable, Iterator, Mapping, TypeVar
+from typing import ClassVar, Generic, TypeAlias, TypeVar
 
 from matchpy import (
     Arity,
@@ -54,7 +55,6 @@ from matchpy import (
     ReplacementRule,
     Wildcard as BaseWildcard,
 )
-from typing_extensions import TypeAlias
 
 import pymbolic.primitives as p
 from pymbolic.typing import ScalarT
@@ -85,7 +85,7 @@ class _Constant(BaseAtom, Generic[ConstantT]):
 
     def __lt__(self, other):
         # Used by matchpy internally to order subexpressions
-        if not isinstance(other, (Expression,)):
+        if not isinstance(other, Expression):
             return NotImplemented
         if type(other) is type(self):
             if self.value == other.value:

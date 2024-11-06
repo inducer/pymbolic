@@ -26,7 +26,8 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import ClassVar, Hashable
+from collections.abc import Hashable
+from typing import ClassVar
 
 from pymbolic.primitives import Expression, Variable, expr_dataclass
 from pymbolic.typing import ExpressionT
