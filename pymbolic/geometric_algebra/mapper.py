@@ -285,7 +285,8 @@ class DerivativeBinder(IdentityMapper):
         if not has_d_source_nablas:
             rec_children = [self.rec(child) for child in expr.children]
             if all(rec_child is child
-                    for rec_child, child in zip(rec_children, expr.children)):
+                    for rec_child, child in zip(
+                            rec_children, expr.children, strict=True)):
                 return expr
 
             return type(expr)(tuple(rec_children))
@@ -296,7 +297,7 @@ class DerivativeBinder(IdentityMapper):
         result = [list(expr.children)]
 
         for child_idx, (d_source_nabla_ids, _child) in enumerate(
-                zip(d_source_nabla_ids_per_child, expr.children)):
+                zip(d_source_nabla_ids_per_child, expr.children, strict=True)):
             if not d_source_nabla_ids:
                 continue
 

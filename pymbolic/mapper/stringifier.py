@@ -698,7 +698,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     ) -> str:
         substs = ", ".join(
             "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
-            for name, val in zip(expr.variables, expr.values)
+            for name, val in zip(expr.variables, expr.values, strict=True)
         )
 
         return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE, *args, **kwargs), substs)
@@ -1139,7 +1139,7 @@ class LaTeXMapper(StringifyMapper):
     ) -> str:
         substs = ", ".join(
             "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
-            for name, val in zip(expr.variables, expr.values)
+            for name, val in zip(expr.variables, expr.values, strict=True)
         )
 
         return self.format(

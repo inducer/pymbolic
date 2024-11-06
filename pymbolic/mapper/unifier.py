@@ -214,7 +214,7 @@ class UnifierBase(Mapper):
 
             for my_child, other_child in zip(
                     expr.children,
-                    (other.children[i] for i in perm)):
+                    (other.children[i] for i in perm), strict=True):
                 it_assignments = self.rec(my_child, other_child, it_assignments)
                 if not it_assignments:
                     break
@@ -302,7 +302,7 @@ class UnifierBase(Mapper):
                 or len(expr) != len(other)):
             return []
 
-        for my_child, other_child in zip(expr, other):
+        for my_child, other_child in zip(expr, other, strict=True):
             urecs = self.rec(my_child, other_child, urecs)
             if not urecs:
                 break
@@ -399,7 +399,7 @@ class UnidirectionalUnifier(UnifierBase):
             for partition in partitions(
                     other_leftovers, len(plain_var_candidates)):
                 result = urec
-                for subset, var in zip(partition, plain_var_candidates):
+                for subset, var in zip(partition, plain_var_candidates, strict=True):
                     rec = self.unification_record_from_equation(
                         var, factory(other.children[i] for i in subset))
                     result = result.unify(rec)
