@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pymbolic.mapper.evaluator import evaluate_kw
+from pymbolic.mapper.flattener import FlattenMapper
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.typing import ExpressionT
 
@@ -1049,6 +1051,33 @@ class OperatorStringifier(StringifyMapper[[]]):
 
 def test_derived_stringifier() -> None:
     str(CustomOperator(5))
+
+# }}}
+
+
+# {{{ test_flatten
+
+class IntegerFlattenMapper(FlattenMapper):
+    def is_expr_integer_valued(self, expr: ExpressionT) -> bool:
+        return True
+
+
+def test_flatten():
+    expr = parse("(3 + x) % 1")
+
+    assert IntegerFlattenMapper()(expr) != expr
+    assert FlattenMapper()(expr) == expr
+
+    assert evaluate_kw(IntegerFlattenMapper()(expr), x=1) == 0
+    assert abs(evaluate_kw(FlattenMapper()(expr), x=1.1) - 0.1) < 1e-12
+
+    expr = parse("(3 + x) // 1")
+
+    assert IntegerFlattenMapper()(expr) != expr
+    assert FlattenMapper()(expr) == expr
+
+    assert evaluate_kw(IntegerFlattenMapper()(expr), x=1) == 4
+    assert abs(evaluate_kw(FlattenMapper()(expr), x=1.1) - 4) < 1e-12
 
 # }}}
 
