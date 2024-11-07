@@ -48,7 +48,19 @@ class FlattenMapper(IdentityMapper[[]]):
 
     This parallels what was done implicitly in the expression node
     constructors.
+
+    .. automethod:: is_expr_integer_valued
     """
+
+    def is_expr_integer_valued(self, expr: ExpressionT) -> bool:
+        """A user-supplied method to indicate whether a given *expr* is integer-
+        valued. This enables additional simplifications that are not valid in
+        general. The default implementation simply returns *False*.
+
+        .. versionadded :: 2024.1
+        """
+        return False
+
     def map_sum(self, expr: p.Sum) -> ExpressionT:
         from pymbolic.primitives import flattened_sum
         return flattened_sum([
@@ -77,7 +89,9 @@ class FlattenMapper(IdentityMapper[[]]):
         if p.is_zero(r_num):
             return 0
         if p.is_zero(r_den - 1):
-            return r_num
+            # It's the floor function in this case.
+            if self.is_expr_integer_valued(r_num):
+                return r_num
 
         return expr.__class__(r_num, r_den)
 
@@ -88,8 +102,9 @@ class FlattenMapper(IdentityMapper[[]]):
         if p.is_zero(r_num):
             return 0
         if p.is_zero(r_den - 1):
-            # mod 1 is zero
-            return 0
+            # mod 1 is zero for integers, however 3.1 % 1 == .1
+            if self.is_expr_integer_valued(r_num):
+                return 0
 
         return expr.__class__(r_num, r_den)
 
