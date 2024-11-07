@@ -36,10 +36,10 @@ THE SOFTWARE.
 import operator as op
 from collections.abc import Mapping
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 import pymbolic.primitives as p
-from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper
+from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper, ResultT
 from pymbolic.typing import ExpressionT
 
 
@@ -53,7 +53,7 @@ class UnknownVariableError(Exception):
     pass
 
 
-class EvaluationMapper(Mapper[Any, []], CSECachingMapperMixin):
+class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
     """Example usage:
 
     .. doctest::
@@ -70,9 +70,9 @@ class EvaluationMapper(Mapper[Any, []], CSECachingMapperMixin):
         110
     """
 
-    context: Mapping[str, Any]
+    context: Mapping[str, ResultT]
 
-    def __init__(self, context: Mapping[str, Any] | None = None) -> None:
+    def __init__(self, context: Mapping[str, ResultT] | None = None) -> None:
         """
         :arg context: a mapping from variable names to values
         """
@@ -81,147 +81,151 @@ class EvaluationMapper(Mapper[Any, []], CSECachingMapperMixin):
 
         self.context = context
 
-    def map_constant(self, expr: object) -> Any:
-        return expr
+    def map_constant(self, expr: object) -> ResultT:
+        return cast(ResultT, expr)
 
-    def map_variable(self, expr: p.Variable) -> None:
+    def map_variable(self, expr: p.Variable) -> ResultT:
         try:
             return self.context[expr.name]
         except KeyError:
             raise UnknownVariableError(expr.name) from None
 
-    def map_call(self, expr: p.Call) -> Any:
-        return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])
+    def map_call(self, expr: p.Call) -> ResultT:
+        return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])  # type: ignore[operator]
 
-    def map_call_with_kwargs(self, expr: p.CallWithKwargs) -> Any:
+    def map_call_with_kwargs(self, expr: p.CallWithKwargs) -> ResultT:
         args = [self.rec(par) for par in expr.parameters]
         kwargs = {
                 k: self.rec(v)
                 for k, v in expr.kw_parameters.items()}
 
-        return self.rec(expr.function)(*args, **kwargs)
+        return self.rec(expr.function)(*args, **kwargs)  # type: ignore[operator]
 
-    def map_subscript(self, expr: p.Subscript) -> Any:
-        return self.rec(expr.aggregate)[self.rec(expr.index)]
+    def map_subscript(self, expr: p.Subscript) -> ResultT:
+        return self.rec(expr.aggregate)[self.rec(expr.index)]  # type: ignore[index]
 
-    def map_lookup(self, expr: p.Lookup) -> Any:
+    def map_lookup(self, expr: p.Lookup) -> ResultT:
         return getattr(self.rec(expr.aggregate), expr.name)
 
-    def map_sum(self, expr: p.Sum) -> Any:
-        return sum(self.rec(child) for child in expr.children)
+    def map_sum(self, expr: p.Sum) -> ResultT:
+        return sum(self.rec(child) for child in expr.children)  # type: ignore[return-value, misc]
 
-    def map_product(self, expr: p.Product) -> Any:
+    def map_product(self, expr: p.Product) -> ResultT:
         from pytools import product
         return product(self.rec(child) for child in expr.children)
 
-    def map_quotient(self, expr: p.Quotient) -> Any:
-        return self.rec(expr.numerator) / self.rec(expr.denominator)
+    def map_quotient(self, expr: p.Quotient) -> ResultT:
+        return self.rec(expr.numerator) / self.rec(expr.denominator)  # type: ignore[operator]
 
-    def map_floor_div(self, expr: p.FloorDiv) -> Any:
-        return self.rec(expr.numerator) // self.rec(expr.denominator)
+    def map_floor_div(self, expr: p.FloorDiv) -> ResultT:
+        return self.rec(expr.numerator) // self.rec(expr.denominator)  # type: ignore[operator]
 
-    def map_remainder(self, expr: p.Remainder) -> Any:
-        return self.rec(expr.numerator) % self.rec(expr.denominator)
+    def map_remainder(self, expr: p.Remainder) -> ResultT:
+        return self.rec(expr.numerator) % self.rec(expr.denominator)  # type: ignore[operator]
 
-    def map_power(self, expr: p.Power) -> Any:
-        return self.rec(expr.base) ** self.rec(expr.exponent)
+    def map_power(self, expr: p.Power) -> ResultT:
+        return self.rec(expr.base) ** self.rec(expr.exponent)  # type: ignore[operator]
 
-    def map_left_shift(self, expr: p.LeftShift) -> Any:
-        return self.rec(expr.shiftee) << self.rec(expr.shift)
+    def map_left_shift(self, expr: p.LeftShift) -> ResultT:
+        return self.rec(expr.shiftee) << self.rec(expr.shift)  # type: ignore[operator]
 
-    def map_right_shift(self, expr: p.RightShift) -> Any:
-        return self.rec(expr.shiftee) >> self.rec(expr.shift)
+    def map_right_shift(self, expr: p.RightShift) -> ResultT:
+        return self.rec(expr.shiftee) >> self.rec(expr.shift)  # type: ignore[operator]
 
-    def map_bitwise_not(self, expr: p.BitwiseNot) -> Any:
+    def map_bitwise_not(self, expr: p.BitwiseNot) -> ResultT:
         # ??? Why, pylint, why ???
         # pylint: disable=invalid-unary-operand-type
-        return ~self.rec(expr.child)
+        return ~self.rec(expr.child)  # type: ignore[operator]
 
-    def map_bitwise_or(self, expr: p.BitwiseOr) -> Any:
+    def map_bitwise_or(self, expr: p.BitwiseOr) -> ResultT:
         return reduce(op.or_, (self.rec(ch) for ch in expr.children))
 
-    def map_bitwise_xor(self, expr: p.BitwiseXor) -> Any:
+    def map_bitwise_xor(self, expr: p.BitwiseXor) -> ResultT:
         return reduce(op.xor, (self.rec(ch) for ch in expr.children))
 
-    def map_bitwise_and(self, expr: p.BitwiseAnd) -> Any:
+    def map_bitwise_and(self, expr: p.BitwiseAnd) -> ResultT:
         return reduce(op.and_, (self.rec(ch) for ch in expr.children))
 
-    def map_logical_not(self, expr: p.LogicalNot) -> Any:
+    def map_logical_not(self, expr: p.LogicalNot) -> bool:  # type: ignore[override]
         return not self.rec(expr.child)
 
-    def map_logical_or(self, expr: p.LogicalOr) -> Any:
+    def map_logical_or(self, expr: p.LogicalOr) -> bool:  # type: ignore[override]
         return any(self.rec(ch) for ch in expr.children)
 
-    def map_logical_and(self, expr: p.LogicalAnd) -> Any:
+    def map_logical_and(self, expr: p.LogicalAnd) -> bool:  # type: ignore[override]
         return all(self.rec(ch) for ch in expr.children)
 
-    def map_list(self, expr: list[ExpressionT]) -> Any:
-        return [self.rec(child) for child in expr]
+    def map_list(self, expr: list[ExpressionT]) -> ResultT:
+        return [self.rec(child) for child in expr]  # type: ignore[return-value]
 
-    def map_numpy_array(self, expr: np.ndarray) -> Any:
+    def map_numpy_array(self, expr: np.ndarray) -> ResultT:
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         for i in numpy.ndindex(expr.shape):
             result[i] = self.rec(expr[i])
-        return result
+        return result  # type: ignore[return-value]
 
-    def map_multivector(self, expr: MultiVector) -> Any:
+    def map_multivector(self, expr: MultiVector) -> ResultT:
         return expr.map(lambda ch: self.rec(ch))
 
-    def map_common_subexpression_uncached(self, expr: p.CommonSubexpression) -> Any:
+    def map_common_subexpression_uncached(self, expr: p.CommonSubexpression) -> ResultT:
         return self.rec(expr.child)
 
-    def map_if(self, expr: p.If) -> Any:
+    def map_if(self, expr: p.If) -> ResultT:
         if self.rec(expr.condition):
             return self.rec(expr.then)
         else:
             return self.rec(expr.else_)
 
-    def map_comparison(self, expr: p.Comparison) -> Any:
+    def map_comparison(self, expr: p.Comparison) -> ResultT:
         import operator
         return getattr(operator, expr.operator_to_name[expr.operator])(
             self.rec(expr.left), self.rec(expr.right))
 
-    def map_min(self, expr: p.Min) -> Any:
-        return min(self.rec(child) for child in expr.children)
+    def map_min(self, expr: p.Min) -> ResultT:
+        return min(self.rec(child) for child in expr.children)  # type: ignore[type-var]
 
-    def map_max(self, expr: p.Max) -> Any:
-        return max(self.rec(child) for child in expr.children)
+    def map_max(self, expr: p.Max) -> ResultT:
+        return max(self.rec(child) for child in expr.children)  # type: ignore[type-var]
 
-    def map_tuple(self, expr: tuple[ExpressionT, ...]) -> Any:
-        return tuple([self.rec(child) for child in expr])
+    def map_tuple(self, expr: tuple[ExpressionT, ...]) -> ResultT:
+        return tuple([self.rec(child) for child in expr])  # type: ignore[return-value]
 
-    def map_nan(self, expr: p.NaN) -> Any:
+    def map_nan(self, expr: p.NaN) -> ResultT:
         if expr.data_type is None:
             from math import nan
-            return nan
+            return nan  # type:ignore[return-value]
         else:
             return expr.data_type(float("nan"))
 
 
-class CachedEvaluationMapper(CachedMapper, EvaluationMapper):
+class CachedEvaluationMapper(CachedMapper[ResultT, []], EvaluationMapper[ResultT]):
     def __init__(self, context=None):
         CachedMapper.__init__(self)
         EvaluationMapper.__init__(self, context=context)
 
 
-class FloatEvaluationMapper(EvaluationMapper):
-    def map_constant(self, expr):
+class FloatEvaluationMapper(EvaluationMapper[float]):
+    def map_constant(self, expr) -> float:
         return float(expr)
 
-    def map_rational(self, expr):
+    def map_rational(self, expr) -> float:
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-class CachedFloatEvaluationMapper(CachedEvaluationMapper):
-    def map_constant(self, expr):
+class CachedFloatEvaluationMapper(CachedEvaluationMapper[float]):
+    def map_constant(self, expr) -> float:
         return float(expr)
 
-    def map_rational(self, expr):
+    def map_rational(self, expr) -> float:
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
-def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper) -> Any:
+def evaluate(
+            expression: ExpressionT,
+            context: Mapping[str, ResultT] | None = None,
+            mapper_cls: type[EvaluationMapper[ResultT]] = CachedEvaluationMapper,
+        ) -> ResultT:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
@@ -231,7 +235,11 @@ def evaluate(expression, context=None, mapper_cls=CachedEvaluationMapper) -> Any
     return mapper_cls(context)(expression)
 
 
-def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context) -> Any:
+def evaluate_kw(
+            expression: ExpressionT,
+            mapper_cls: type[EvaluationMapper[ResultT]] = CachedEvaluationMapper,
+            **context: ResultT,
+        ) -> ResultT:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
@@ -240,7 +248,7 @@ def evaluate_kw(expression, mapper_cls=CachedEvaluationMapper, **context) -> Any
 
 
 def evaluate_to_float(expression, context=None,
-                      mapper_cls=CachedFloatEvaluationMapper) -> Any:
+                      mapper_cls=CachedFloatEvaluationMapper) -> float:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
