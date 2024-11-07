@@ -88,7 +88,8 @@ class FlattenMapper(IdentityMapper[[]]):
         if p.is_zero(r_num):
             return 0
         if p.is_zero(r_den - 1):
-            return r_num
+            # mod 1 is zero
+            return 0
 
         return expr.__class__(r_num, r_den)
 
