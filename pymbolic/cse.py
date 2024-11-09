@@ -90,8 +90,9 @@ class CSEMapper(IdentityMapper):
         try:
             return self.canonical_subexprs[key]
         except KeyError:
-            new_expr = prim.wrap_in_cse(
-                    getattr(IdentityMapper, expr.mapper_method)(self, expr))
+            new_expr = prim.make_common_subexpression(
+                    getattr(IdentityMapper, expr.mapper_method)(self, expr)
+                    )
             self.canonical_subexprs[key] = new_expr
             return new_expr
 
@@ -113,7 +114,9 @@ class CSEMapper(IdentityMapper):
     def map_common_subexpression(self, expr):
         # Avoid creating CSE(CSE(...))
         if type(expr) is prim.CommonSubexpression:
-            return prim.wrap_in_cse(self.rec(expr.child), expr.prefix)
+            return prim.make_common_subexpression(
+                self.rec(expr.child), expr.prefix, expr.scope
+                )
         else:
             # expr is of a derived CSE type
             result = self.rec(expr.child)
