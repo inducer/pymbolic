@@ -462,7 +462,8 @@ def to_evaluatable_python_function(expr: ExpressionT,
 
     unparse = ast.unparse
 
-    dep_mapper = CachedDependencyMapper(composite_leaves=True)
+    dep_mapper: CachedDependencyMapper[[]] = (
+        CachedDependencyMapper(composite_leaves=True))
     deps = sorted({dep.name for dep in dep_mapper(expr)})
 
     ast_func = ast.FunctionDef(name=fn_name,
