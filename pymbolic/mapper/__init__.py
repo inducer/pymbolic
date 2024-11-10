@@ -972,7 +972,9 @@ class IdentityMapper(Mapper[ExpressionT, P]):
                 expr: MultiVector[ArithmeticExpressionT],
                 *args: P.args, **kwargs: P.kwargs
             ) -> ExpressionT:
-        return expr.map(lambda ch: self.rec(ch, *args, **kwargs))
+        # True fact: MultiVectors aren't expressions
+        return expr.map(lambda ch: cast(ArithmeticExpressionT,
+                                        self.rec(ch, *args, **kwargs)))  # type: ignore[return-value]
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression,
