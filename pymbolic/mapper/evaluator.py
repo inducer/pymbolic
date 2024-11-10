@@ -166,7 +166,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
         return result  # type: ignore[return-value]
 
     def map_multivector(self, expr: MultiVector) -> ResultT:
-        return expr.map(lambda ch: self.rec(ch))
+        return expr.map(lambda ch: self.rec(ch))  # type: ignore[return-value]
 
     def map_common_subexpression_uncached(self, expr: p.CommonSubexpression) -> ResultT:
         return self.rec(expr.child)

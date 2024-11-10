@@ -24,7 +24,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar, cast
 
@@ -32,8 +32,8 @@ import numpy as np
 
 from pytools import memoize, memoize_method
 
-from pymbolic.primitives import expr_dataclass
-from pymbolic.typing import ArithmeticExpressionT
+from pymbolic.primitives import expr_dataclass, is_zero
+from pymbolic.typing import ArithmeticExpressionT, T
 
 
 __doc__ = """
@@ -1104,7 +1104,7 @@ class MultiVector(Generic[CoeffT]):
 
     # {{{ helper functions
 
-    def map(self, f):
+    def map(self, f: Callable[[CoeffT], CoeffT]) -> MultiVector[CoeffT]:
         """Return a new :class:`MultiVector` with coefficients mapped by
         function *f*, which takes a single coefficient as input and returns the
         new coefficient.
@@ -1127,14 +1127,14 @@ class MultiVector(Generic[CoeffT]):
 # }}}
 
 
-def componentwise(f, expr):
+def componentwise(f: Callable[[CoeffT], CoeffT], expr: T) -> T:
     """Apply function *f* componentwise to object arrays and
     :class:`MultiVector` instances. *expr* is also allowed to
     be a scalar.
     """
 
     if isinstance(expr, MultiVector):
-        return expr.map(f)
+        return cast(T, expr.map(f))
 
     from pytools.obj_array import obj_array_vectorize
     return obj_array_vectorize(f, expr)
