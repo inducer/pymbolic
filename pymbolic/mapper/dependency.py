@@ -29,7 +29,7 @@ THE SOFTWARE.
 """
 
 from collections.abc import Set
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin, P
@@ -53,10 +53,10 @@ class DependencyMapper(
         self,
         include_subscripts: bool = True,
         include_lookups: bool = True,
-        include_calls: bool = True,
+        include_calls: bool | Literal["descend_args"] = True,
         include_cses: bool = False,
         composite_leaves: bool | None = None,
-    ):
+    ) -> None:
         """
         :arg composite_leaves: Setting this is equivalent to setting
             all preceding ``include_*`` flags.
@@ -66,6 +66,7 @@ class DependencyMapper(
             include_subscripts = False
             include_lookups = False
             include_calls = False
+
         if composite_leaves is True:
             include_subscripts = True
             include_lookups = True
@@ -76,7 +77,6 @@ class DependencyMapper(
         self.include_subscripts = include_subscripts
         self.include_lookups = include_lookups
         self.include_calls = include_calls
-
         self.include_cses = include_cses
 
     def map_variable(
@@ -150,15 +150,16 @@ class DependencyMapper(
         return set()
 
 
-class CachedDependencyMapper(CachedMapper, DependencyMapper):
+class CachedDependencyMapper(CachedMapper[DependenciesT, P],
+                             DependencyMapper[P]):
     def __init__(
         self,
-        include_subscripts=True,
-        include_lookups=True,
-        include_calls=True,
-        include_cses=False,
-        composite_leaves=None,
-    ):
+        include_subscripts: bool = True,
+        include_lookups: bool = True,
+        include_calls: bool | Literal["descend_args"] = True,
+        include_cses: bool = False,
+        composite_leaves: bool | None = None,
+    ) -> None:
         CachedMapper.__init__(self)
         DependencyMapper.__init__(
             self,

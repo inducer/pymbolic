@@ -429,7 +429,7 @@ class CachedMapper(Mapper[ResultT, P]):
         method_name = getattr(expr, "mapper_method", None)
         if method_name is not None:
             method = cast(
-                Callable[Concatenate[ExpressionT, P], ResultT],
+                Callable[Concatenate[ExpressionT, P], ResultT] | None,
                 getattr(self, method_name, None)
                 )
             if method is not None:
