@@ -49,10 +49,6 @@ Spaces
 
 .. autoclass:: Space
 
-    .. autoattribute:: dimensions
-    .. autoattribute:: is_orthogonal
-    .. autoattribute:: is_euclidean
-
 .. autofunction:: get_euclidean_space
 
 Multivectors
@@ -192,6 +188,13 @@ class Space:
     """
     .. autoattribute :: basis_names
     .. autoattribute :: metric_matrix
+
+    .. autoproperty :: dimensions
+    .. autoproperty :: is_orthogonal
+    .. autoproperty :: is_euclidean
+
+    .. automethod:: bits_and_sign
+    .. automethod:: blade_bits_to_str
     """
 
     basis_names: Sequence[str]
@@ -199,53 +202,60 @@ class Space:
 
     metric_matrix: np.ndarray
     """
-    A *(dims,dims)*-shaped matrix, whose *(i,j)*-th entry represents the
+    A *(dims, dims)*-shaped matrix, whose *(i, j)*-th entry represents the
     inner product of basis vector *i* and basis vector *j*.
     """
 
-    def __init__(self, basis=None, metric_matrix=None):
+    def __init__(self,
+                 basis: Sequence[str] | int | None = None,
+                 metric_matrix: np.ndarray | None = None) -> None:
         """
         :arg basis: A sequence of names of basis vectors, or an integer (the
             number of dimensions) to use the default names ``e0`` through ``eN``.
-        :arg metric_matrix: See :attr:`metric_matrix`.
-            If *None*, the Euclidean metric is assumed.
+        :arg metric_matrix: See :attr:`metric_matrix`. If *None*, the Euclidean
+            metric is assumed.
         """
 
         if basis is None and metric_matrix is None:
-            raise TypeError("at least one of 'basis' and 'metric_matrix' "
-                    "must be passed")
-
-        if basis is None:
-            basis = int(metric_matrix.shape[0])
+            raise TypeError(
+                "At least one of 'basis' and 'metric_matrix' must be given")
 
         from numbers import Integral
-        if isinstance(basis, Integral):
-            basis = [f"e{i}" for i in range(basis)]
+        if basis is None:
+            assert metric_matrix is not None
+            basis_names = [f"e{i}" for i in range(metric_matrix.shape[0])]
+        elif isinstance(basis, Integral):
+            basis_names = [f"e{i}" for i in range(basis)]
+        else:
+            assert not isinstance(basis, int)
+            basis_names = list(basis)
 
         if metric_matrix is None:
-            metric_matrix = np.eye(len(basis), dtype=object)
+            metric_matrix = np.eye(len(basis_names), dtype=object)
 
         if not (
                 len(metric_matrix.shape) == 2
-                and all(dim == len(basis) for dim in metric_matrix.shape)):
-            raise ValueError("metric_matrix has the wrong shape")
+                and all(dim == len(basis_names) for dim in metric_matrix.shape)):
+            raise ValueError(
+                f"'metric_matrix' has the wrong shape: {metric_matrix.shape}")
 
-        object.__setattr__(self, "basis_names", basis)
+        object.__setattr__(self, "basis_names", basis_names)
         object.__setattr__(self, "metric_matrix", metric_matrix)
 
     @property
     def dimensions(self) -> int:
+        """The dimension of the space."""
         return len(self.basis_names)
 
     @memoize_method
-    def bits_and_sign(self, basis_indices):
+    def bits_and_sign(self, basis_indices: Sequence[int]) -> tuple[int, int]:
         # assert no repetitions
         assert len(set(basis_indices)) == len(basis_indices)
 
         sorted_basis_indices = tuple(sorted(
                 (bindex, num)
                 for num, bindex in enumerate(basis_indices)))
-        blade_permutation = [num for bindex, num in sorted_basis_indices]
+        blade_permutation = [num for _, num in sorted_basis_indices]
 
         bits = 0
         for bi in basis_indices:
@@ -256,22 +266,25 @@ class Space:
     @property
     @memoize_method
     def is_orthogonal(self):
+        """*True* if the metric is orthogonal (i.e. diagonal)."""
         return (self.metric_matrix - np.diag(np.diag(self.metric_matrix)) == 0).all()
 
     @property
     @memoize_method
-    def is_euclidean(self):
+    def is_euclidean(self) -> bool:
+        """*True* if the metric matrix corresponds to the Eucledian metric."""
         return (self.metric_matrix == np.eye(self.metric_matrix.shape[0])).all()
 
-    def blade_bits_to_str(self, bits, outer_operator="^"):
+    def blade_bits_to_str(self, bits: int, outer_operator: str = "^") -> str:
         return outer_operator.join(
                     name
                     for bit_num, name in enumerate(self.basis_names)
                     if bits & (1 << bit_num))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self is get_euclidean_space(self.dimensions):
             return f"Space({self.dimensions})"
+
         elif self.is_euclidean:
             return f"Space({self.basis_names!r})"
         else:
@@ -279,9 +292,8 @@ class Space:
 
 
 @memoize
-def get_euclidean_space(n):
-    """Return the canonical *n*-dimensional Euclidean :class:`Space`.
-    """
+def get_euclidean_space(n: int) -> Space:
+    """Return the canonical *n*-dimensional Euclidean :class:`Space`."""
     return Space(n)
 
 # }}}
@@ -564,6 +576,7 @@ class MultiVector(Generic[CoeffT]):
             data = {0: cast(CoeffT, data)}
 
         if space is None:
+            assert isinstance(dimensions, int)
             space = get_euclidean_space(dimensions)
         else:
             if dimensions is not None and space.dimensions != dimensions:
@@ -579,8 +592,12 @@ class MultiVector(Generic[CoeffT]):
             # data is in non-normalized non-bits tuple form
             new_data: dict[int, CoeffT] = {}
             for basis_indices, coeff in data.items():
+                assert isinstance(basis_indices, tuple)
+
                 bits, sign = space.bits_and_sign(basis_indices)
-                new_coeff = new_data.setdefault(bits, cast(CoeffT, 0)) + sign*coeff
+                new_coeff = cast(CoeffT,
+                    new_data.setdefault(bits, cast(CoeffT, 0))  # type: ignore[operator]
+                    + sign*coeff)
 
                 if is_zero(new_coeff):
                     del new_data[bits]
