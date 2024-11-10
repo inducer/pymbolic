@@ -24,7 +24,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar, cast
 
@@ -133,7 +133,10 @@ properties:
 
 # {{{ helpers
 
-def permutation_sign(p):
+def permutation_sign(p: Iterable[int]) -> int:
+    """
+    :returns: the sign of the permutation *p*.
+    """
     p = list(p)
     s = +1
 
@@ -152,32 +155,26 @@ def permutation_sign(p):
     return s
 
 
-def bit_count(i):
+def bit_count(i: int) -> int:
     """Count the number of set bits in *i*."""
 
-    # nicked from https://wiki.python.org/moin/BitManipulation
-
-    count = 0
-    while i:
-        i &= i - 1
-        count += 1
-    return count
+    return i.bit_count()
 
 
-def canonical_reordering_sign(a_bits, b_bits):
+def canonical_reordering_sign(a_bits: int, b_bits: int) -> int:
     """Count the number of basis vector swaps required to
-    get the combination of 'a_bits' and 'b_bits' into canonical order.
+    get the combination of *a_bits* and *b_bits* into canonical order.
 
-    :arg a_bits: bitmap representing basis blade *a*
-    :arg b_bits: bitmap representing basis blade *b*
+    Algorithm from figure 19.1 of [DFM2010]_ in :class:`MultiVector`.
 
-    Algorithm from figure 19.1 of [DFM] in :class:`MultiVector`.
+    :arg a_bits: bitmap representing basis blade *a*.
+    :arg b_bits: bitmap representing basis blade *b*.
     """
 
     a_bits = a_bits >> 1
     s = 0
     while a_bits:
-        s = s + bit_count(a_bits & b_bits)
+        s = s + (a_bits & b_bits).bit_count()
         a_bits = a_bits >> 1
 
     if s & 1:
