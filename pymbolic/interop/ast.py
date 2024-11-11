@@ -451,26 +451,28 @@ def to_evaluatable_python_function(expr: ExpressionT,
     .. doctest::
 
         >>> expr = parse("S//32 + E%32")
-        >>> # Skipping doctest as astunparse and ast.unparse have certain subtle
-        >>> # differences
-        >>> print(to_evaluatable_python_function(expr, "foo"))) # doctest: +SKIP
+        >>> print(to_evaluatable_python_function(expr, "foo"))
         def foo(*, E, S):
             return S // 32 + E % 32
     """
 
     from pymbolic.mapper.dependency import CachedDependencyMapper
 
-    unparse = ast.unparse
-
     dep_mapper: CachedDependencyMapper[[]] = (
         CachedDependencyMapper(composite_leaves=True))
-    deps = sorted({dep.name for dep in dep_mapper(expr)})
+
+    deps: list[str] = []
+    for dep in dep_mapper(expr):
+        if isinstance(dep, p.Variable):
+            deps.append(dep.name)
+        else:
+            raise NotImplementedError(f"{dep!r} is not supported")
 
     ast_func = ast.FunctionDef(name=fn_name,
                                args=ast.arguments(args=[],
                                                   posonlyargs=[],
                                                   kwonlyargs=[ast.arg(dep, None)
-                                                              for dep in deps],
+                                                              for dep in sorted(deps)],
                                                   kw_defaults=[None]*len(deps),
                                                   vararg=None,
                                                   kwarg=None,
@@ -479,7 +481,7 @@ def to_evaluatable_python_function(expr: ExpressionT,
                                decorator_list=[])
     ast_module = ast.Module([ast_func], type_ignores=[])
 
-    return unparse(ast.fix_missing_locations(ast_module))
+    return ast.unparse(ast.fix_missing_locations(ast_module))
 
 # }}}
 
