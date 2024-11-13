@@ -39,13 +39,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 from collections.abc import Callable
-from typing import Any
-
-from useful_types import SupportsGetItem, SupportsItems
+from typing import TYPE_CHECKING, Any
 
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 from pymbolic.primitives import AlgebraicLeaf
 from pymbolic.typing import ExpressionT
+
+
+if TYPE_CHECKING:
+    from useful_types import SupportsGetItem, SupportsItems
 
 
 class SubstitutionMapper(IdentityMapper[[]]):
