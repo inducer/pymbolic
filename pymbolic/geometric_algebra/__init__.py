@@ -151,12 +151,6 @@ def permutation_sign(p: Iterable[int]) -> int:
     return s
 
 
-def bit_count(i: int) -> int:
-    """Count the number of set bits in *i*."""
-
-    return i.bit_count()
-
-
 def canonical_reordering_sign(a_bits: int, b_bits: int) -> int:
     """Count the number of basis vector swaps required to
     get the combination of *a_bits* and *b_bits* into canonical order.
@@ -629,7 +623,7 @@ class MultiVector(Generic[CoeffT]):
 
         terms = []
         for bits in sorted(self.data.keys(),
-                key=lambda _bits: (bit_count(_bits), _bits)):
+                key=lambda _bits: (_bits.bit_count(), _bits)):
             coeff = self.data[bits]
 
             # {{{ try to find a stringifier
@@ -868,7 +862,7 @@ class MultiVector(Generic[CoeffT]):
         (bits, coeff), = self.data.items()
 
         # (1.1.54) in [HS]
-        grade = bit_count(bits)
+        grade = bits.bit_count()
         if grade*(grade-1)//2 % 2:
             coeff = -coeff
 
@@ -884,7 +878,7 @@ class MultiVector(Generic[CoeffT]):
         """
         new_data = {}
         for bits, coeff in self.data.items():
-            grade = bit_count(bits)
+            grade = bits.bit_count()
             if grade*(grade-1)//2 % 2 == 0:
                 new_data[bits] = coeff
             else:
@@ -900,7 +894,7 @@ class MultiVector(Generic[CoeffT]):
         """
         new_data = {}
         for bits, coeff in self.data.items():
-            grade = bit_count(bits)
+            grade = bits.bit_count()
             if grade % 2 == 0:
                 new_data[bits] = coeff
             else:
@@ -989,7 +983,7 @@ class MultiVector(Generic[CoeffT]):
                 yield MultiVector({bits: coeff}, self.space)
         else:
             for bits, coeff in self.data.items():
-                if bit_count(bits) == grade:
+                if bits.bit_count() == grade:
                     yield MultiVector({bits: coeff}, self.space)
 
     def project(self, r):
@@ -999,7 +993,7 @@ class MultiVector(Generic[CoeffT]):
         """
         new_data = {}
         for bits, coeff in self.data.items():
-            if bit_count(bits) == r:
+            if bits.bit_count() == r:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
@@ -1019,7 +1013,7 @@ class MultiVector(Generic[CoeffT]):
     def all_grades(self):
         """Return a :class:`set` of grades occurring in *self*."""
 
-        return {bit_count(bits) for bits, coeff in self.data.items()}
+        return {bits.bit_count() for bits, coeff in self.data.items()}
 
     def get_pure_grade(self):
         """If *self* only has components of a single grade, return
@@ -1031,7 +1025,7 @@ class MultiVector(Generic[CoeffT]):
         result = None
 
         for bits in self.data.keys():
-            grade = bit_count(bits)
+            grade = bits.bit_count()
             if result is None:
                 result = grade
             elif result == grade:
@@ -1045,7 +1039,7 @@ class MultiVector(Generic[CoeffT]):
         """Extract the odd-grade blades."""
         new_data = {}
         for bits, coeff in self.data.items():
-            if bit_count(bits) % 2:
+            if bits.bit_count() % 2:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
@@ -1054,7 +1048,7 @@ class MultiVector(Generic[CoeffT]):
         """Extract the even-grade blades."""
         new_data = {}
         for bits, coeff in self.data.items():
-            if bit_count(bits) % 2 == 0:
+            if bits.bit_count() % 2 == 0:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
