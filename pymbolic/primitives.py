@@ -704,9 +704,14 @@ class Expression:
             else:
                 return repr(child)
 
-        initargs_str = ", ".join(
-                strify_child(i, limit-1)
-                for i in self.__getinitargs__())
+        from dataclasses import is_dataclass
+
+        # NOTE: __getinitargs__() is deprecated, so skip it if possible
+        if is_dataclass(self):
+            initargs = tuple(getattr(self, fld.name) for fld in fields(self))
+        else:
+            initargs = self.__getinitargs__()
+        initargs_str = ", ".join(strify_child(i, limit - 1) for i in initargs)
 
         return f"{self.__class__.__name__}({initargs_str})"
 
