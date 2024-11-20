@@ -3,7 +3,7 @@ from __future__ import annotations
 from pymbolic.mapper.evaluator import evaluate_kw
 from pymbolic.mapper.flattener import FlattenMapper
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import Expression
 
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
@@ -567,7 +567,7 @@ def test_pickle():
         assert expr == pickled
 
 
-class OldTimeyExpression(prim.Expression):
+class OldTimeyExpression(prim.ExpressionNode):
     init_arg_names = ()
 
     def __getinitargs__(self):
@@ -921,7 +921,7 @@ class InCacheVerifier(WalkMapper):
         self.walk_call_functions = walk_call_functions
 
     def post_visit(self, expr):
-        if isinstance(expr, prim.Expression):
+        if isinstance(expr, prim.ExpressionNode):
             assert (self.cached_mapper.get_cache_key(expr)
                     in self.cached_mapper._cache)
 
@@ -1038,7 +1038,7 @@ def test_python_ast_interop_roundtrip():
 
 @prim.expr_dataclass()
 class CustomOperator:
-    child: ExpressionT
+    child: Expression
 
     def make_stringifier(self, originating_stringifier=None):
         return OperatorStringifier()
@@ -1058,7 +1058,7 @@ def test_derived_stringifier() -> None:
 # {{{ test_flatten
 
 class IntegerFlattenMapper(FlattenMapper):
-    def is_expr_integer_valued(self, expr: ExpressionT) -> bool:
+    def is_expr_integer_valued(self, expr: Expression) -> bool:
         return True
 
 

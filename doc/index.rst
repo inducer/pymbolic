@@ -69,10 +69,11 @@ You can also easily define your own objects to use inside an expression:
 
 .. doctest::
 
-    >>> from pymbolic.primitives import Expression, expr_dataclass
+    >>> from pymbolic import ExpressionNode, expr_dataclass
+    >>> from pymbolic.typing import Expression
     >>>
     >>> @expr_dataclass()
-    ... class FancyOperator(Expression):
+    ... class FancyOperator(ExpressionNode):
     ...     operand: Expression
     ...
     >>> u

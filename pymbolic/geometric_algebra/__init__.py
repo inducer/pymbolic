@@ -33,7 +33,7 @@ import numpy as np
 from pytools import memoize, memoize_method
 
 from pymbolic.primitives import expr_dataclass, is_zero
-from pymbolic.typing import ArithmeticExpressionT, T
+from pymbolic.typing import ArithmeticExpression, T
 
 
 __doc__ = """
@@ -293,7 +293,7 @@ def get_euclidean_space(n: int) -> Space:
 # }}}
 
 
-CoeffT = TypeVar("CoeffT", bound=ArithmeticExpressionT)
+CoeffT = TypeVar("CoeffT", bound=ArithmeticExpression)
 
 
 # {{{ blade product weights
@@ -428,7 +428,7 @@ def _cast_to_mv(obj: Any, space: Space) -> MultiVector:
 class MultiVector(Generic[CoeffT]):
     r"""An immutable multivector type. Its implementation follows [DFM].
     It is pickleable, and not picky about what data is used as coefficients.
-    It supports :class:`pymbolic.primitives.Expression` objects of course,
+    It supports :class:`pymbolic.primitives.ExpressionNode` objects of course,
     but it can take just about any other scalar-ish coefficients.
 
     .. autoattribute:: data

@@ -31,7 +31,7 @@ from typing import Any, ClassVar
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import Expression
 
 
 __doc__ = r'''
@@ -263,7 +263,7 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
         return ast.Name(id=expr.name)
 
     def _map_multi_children_op(self,
-                               children: tuple[ExpressionT, ...],
+                               children: tuple[Expression, ...],
                                op_type: ast.operator) -> ast.expr:
         rec_children = [self.rec(child) for child in children]
         result = rec_children[-1]
@@ -435,7 +435,7 @@ def to_python_ast(expr) -> ast.expr:
     return PymbolicToASTMapper()(expr)
 
 
-def to_evaluatable_python_function(expr: ExpressionT,
+def to_evaluatable_python_function(expr: Expression,
                                    fn_name: str
                                    ) -> str:
     """

@@ -34,7 +34,7 @@ import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
 from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
-from pymbolic.typing import ArithmeticExpressionT, ExpressionT
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class DistributeMapper(IdentityMapper[[]]):
@@ -69,7 +69,7 @@ class DistributeMapper(IdentityMapper[[]]):
         else:
             return res
 
-    def map_product(self, expr: p.Product) -> ExpressionT:
+    def map_product(self, expr: p.Product) -> Expression:
         def dist(prod):
             if not isinstance(prod, p.Product):
                 return prod
@@ -112,13 +112,13 @@ class DistributeMapper(IdentityMapper[[]]):
                     self.rec(expr.numerator)
                     ])
 
-    def map_power(self, expr: p.Power) -> ExpressionT:
+    def map_power(self, expr: p.Power) -> Expression:
         from pymbolic.primitives import Sum
 
         newbase = self.rec(expr.base)
         if isinstance(newbase, p.Product):
             return self.rec(pymbolic.flattened_product([
-                cast(ArithmeticExpressionT, child)**expr.exponent
+                cast(ArithmeticExpression, child)**expr.exponent
                     for child in newbase.children
                 ]))
 
@@ -133,7 +133,9 @@ class DistributeMapper(IdentityMapper[[]]):
             return IdentityMapper.map_power(self, expr)
 
 
-def distribute(expr: ExpressionT, parameters=None, commutative=True) -> ExpressionT:
+def distribute(
+            expr: Expression, parameters=None, commutative=True
+        ) -> Expression:
     if parameters is None:
         parameters = frozenset()
     if commutative:

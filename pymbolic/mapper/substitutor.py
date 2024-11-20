@@ -4,7 +4,7 @@
 .. autofunction:: make_subst_func
 .. autofunction:: substitute
 
-.. autoclass:: Callable[[AlgebraicLeaf], ExpressionT | None]
+.. autoclass:: Callable[[AlgebraicLeaf], Expression | None]
 
 References
 ----------
@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING, Any
 
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 from pymbolic.primitives import AlgebraicLeaf
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 class SubstitutionMapper(IdentityMapper[[]]):
     def __init__(
-        self, subst_func: Callable[[AlgebraicLeaf], ExpressionT | None]
+        self, subst_func: Callable[[AlgebraicLeaf], Expression | None]
     ) -> None:
         self.subst_func = subst_func
 
@@ -80,7 +80,7 @@ class SubstitutionMapper(IdentityMapper[[]]):
 
 class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
     def __init__(
-        self, subst_func: Callable[[AlgebraicLeaf], ExpressionT | None]
+        self, subst_func: Callable[[AlgebraicLeaf], Expression | None]
     ) -> None:
         # FIXME Mypy says:
         # error: Argument 1 to "__init__" of "CachedMapper" has incompatible type
@@ -93,11 +93,11 @@ class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
 def make_subst_func(
     # "Any" here avoids the whole Mapping variance disaster
     # e.g. https://github.com/python/typing/issues/445
-    variable_assignments: SupportsGetItem[Any, ExpressionT],
-) -> Callable[[AlgebraicLeaf], ExpressionT | None]:
+    variable_assignments: SupportsGetItem[Any, Expression],
+) -> Callable[[AlgebraicLeaf], Expression | None]:
     import pymbolic.primitives as primitives
 
-    def subst_func(var: AlgebraicLeaf) -> ExpressionT | None:
+    def subst_func(var: AlgebraicLeaf) -> Expression | None:
         try:
             return variable_assignments[var]
         except KeyError:
@@ -113,10 +113,11 @@ def make_subst_func(
 
 
 def substitute(
-    expression: ExpressionT,
-    variable_assignments: SupportsItems[AlgebraicLeaf | str, ExpressionT] | None = None,
+    expression: Expression,
+    variable_assignments: SupportsItems[AlgebraicLeaf | str, Expression] | None
+    = None,
     mapper_cls=CachedSubstitutionMapper,
-    **kwargs: ExpressionT,
+    **kwargs: Expression,
 ):
     """
     :arg mapper_cls: A :class:`type` of the substitution mapper
@@ -125,7 +126,7 @@ def substitute(
     if variable_assignments is None:
         # "Any" here avoids pointless grief about variance
         # e.g. https://github.com/python/typing/issues/445
-        v_ass_copied: dict[Any, ExpressionT] = {}
+        v_ass_copied: dict[Any, Expression] = {}
     else:
         v_ass_copied = dict(variable_assignments.items())
 

@@ -24,54 +24,60 @@ THE SOFTWARE.
 """
 
 
-from pymbolic.version import VERSION_TEXT as __version__  # noqa
+from functools import partial
 
-from . import parser
-from . import compiler
+from pytools import module_getattr_for_deprecations
 
-from .mapper import evaluator
-from .mapper import stringifier
-from .mapper import dependency
-from .mapper import substitutor
-from .mapper import differentiator
-from .mapper import distributor
-from .mapper import flattener
-from . import primitives
-
-from .primitives import (Variable as var,  # noqa: N813
+from . import compiler, parser, primitives
+from .compiler import compile
+from .mapper import (
+    dependency,
+    differentiator,
+    distributor,
+    evaluator,
+    flattener,
+    stringifier,
+    substitutor,
+)
+from .mapper.differentiator import differentiate, differentiate as diff
+from .mapper.distributor import distribute, distribute as expand
+from .mapper.evaluator import evaluate, evaluate_kw
+from .mapper.flattener import flatten
+from .mapper.substitutor import substitute
+from .parser import parse
+from .primitives import (  # noqa: N813
+    ExpressionNode,
     Variable,
-    Expression,
-    variables,
-    flattened_sum,
-    subscript,
+    Variable as var,
+    disable_subscript_by_getitem,
+    expr_dataclass,
     flattened_product,
-    quotient,
+    flattened_sum,
     linear_combination,
     make_common_subexpression as cse,
     make_sym_vector,
-    disable_subscript_by_getitem,
-    expr_dataclass,
+    quotient,
+    subscript,
+    variables,
 )
-from .parser import parse
-from .mapper.evaluator import evaluate
-from .mapper.evaluator import evaluate_kw
-from .compiler import compile
-from .mapper.substitutor import substitute
-from .mapper.differentiator import differentiate as diff
-from .mapper.differentiator import differentiate
-from .mapper.distributor import distribute as expand
-from .mapper.distributor import distribute
-from .mapper.flattener import flatten
-from .typing import NumberT, ScalarT, ArithmeticExpressionT, ExpressionT, BoolT
+from .typing import (
+    ArithmeticExpression,
+    Bool,
+    Expression,
+    Expression as _TypingExpression,
+    Number,
+    Scalar,
+)
+from pymbolic.version import VERSION_TEXT as __version__  # noqa
 
 
 __all__ = (
-    "ArithmeticExpressionT",
-    "BoolT",
+    "ArithmeticExpression",
+    "Bool",
     "Expression",
-    "ExpressionT",
-    "NumberT",
-    "ScalarT",
+    "ExpressionNode",
+    "Number",
+    "Scalar",
     "Variable",
     "compile",
     "compiler",
@@ -105,3 +111,10 @@ __all__ = (
     "var",
     "variables",
 )
+
+__getattr__ = partial(module_getattr_for_deprecations, __name__, {
+        "ExpressionT": ("pymbolic.typing.Expression", _TypingExpression, 2026),
+        "ArithmeticExpressionT": ("ArithmeticExpression", ArithmeticExpression, 2026),
+        "BoolT": ("Bool", Bool, 2026),
+        "ScalarT": ("Scalar", Scalar, 2026),
+        })

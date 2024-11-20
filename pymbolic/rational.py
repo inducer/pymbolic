@@ -29,7 +29,7 @@ import pymbolic.primitives as primitives
 import pymbolic.traits as traits
 
 
-class Rational(primitives.Expression):
+class Rational(primitives.ExpressionNode):
     def __init__(self, numerator, denominator=1):
         d_unit = traits.traits(denominator).get_unit(denominator)
         numerator /= d_unit
@@ -74,9 +74,9 @@ class Rational(primitives.Expression):
             gcd = t.gcd(newden, newnum)
             return primitives.quotient(newnum/gcd, newden/gcd)
         except traits.NoTraitsError:
-            return primitives.Expression.__add__(self, other)
+            return primitives.ExpressionNode.__add__(self, other)
         except traits.NoCommonTraitsError:
-            return primitives.Expression.__add__(self, other)
+            return primitives.ExpressionNode.__add__(self, other)
 
     __radd__ = __add__
 
@@ -106,9 +106,9 @@ class Rational(primitives.Expression):
 
             return Rational(new_num, new_denom)
         except traits.NoTraitsError:
-            return primitives.Expression.__mul__(self, other)
+            return primitives.ExpressionNode.__mul__(self, other)
         except traits.NoCommonTraitsError:
-            return primitives.Expression.__mul__(self, other)
+            return primitives.ExpressionNode.__mul__(self, other)
 
     __rmul__ = __mul__
 

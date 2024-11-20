@@ -39,7 +39,7 @@ from immutabledict import immutabledict
 from typing_extensions import ParamSpec, TypeIs
 
 import pymbolic.primitives as p
-from pymbolic.typing import ArithmeticExpressionT, ExpressionT
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
 if TYPE_CHECKING:
@@ -71,7 +71,7 @@ Basic dispatch
     .. rubric:: Handling objects that don't declare mapper methods
 
     In particular, this includes many non-subclasses of
-    :class:`pymbolic.Expression`.
+    :class:`pymbolic.ExpressionNode`.
 
     .. automethod:: map_foreign
 
@@ -149,9 +149,9 @@ P = ParamSpec("P")
 
 
 class Mapper(Generic[ResultT, P]):
-    """A visitor for trees of :class:`pymbolic.Expression`
+    """A visitor for trees of :class:`pymbolic.ExpressionNode`
     subclasses. Each expression-derived object is dispatched to the
-    method named by the :attr:`pymbolic.Expression.mapper_method`
+    method named by the :attr:`pymbolic.ExpressionNode.mapper_method`
     attribute and if not found, the methods named by the class attribute
     *mapper_method* in the method resolution order of the object.
 
@@ -163,7 +163,7 @@ class Mapper(Generic[ResultT, P]):
     def handle_unsupported_expression(self,
             expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Mapper method that is invoked for
-        :class:`pymbolic.Expression` subclasses for which a mapper
+        :class:`pymbolic.ExpressionNode` subclasses for which a mapper
         method does not exist in this mapper.
         """
 
@@ -172,7 +172,7 @@ class Mapper(Generic[ResultT, P]):
                     type(self), type(expr)))
 
     def __call__(self,
-             expr: ExpressionT, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+             expr: Expression, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Dispatch *expr* to its corresponding mapper method. Pass on
         ``*args`` and ``**kwargs`` unmodified.
 
@@ -190,7 +190,7 @@ class Mapper(Generic[ResultT, P]):
                 result = method(expr, *args, **kwargs)
                 return result
 
-        if isinstance(expr, p.Expression):
+        if isinstance(expr, p.ExpressionNode):
             for cls in type(expr).__mro__[1:]:
                 method_name = getattr(cls, "mapper_method", None)
                 if method_name:
@@ -206,7 +206,7 @@ class Mapper(Generic[ResultT, P]):
 
     def rec_fallback(self,
             expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        if isinstance(expr, p.Expression):
+        if isinstance(expr, p.ExpressionNode):
             for cls in type(expr).__mro__[1:]:
                 method_name = getattr(cls, "mapper_method", None)
                 if method_name:
@@ -289,11 +289,11 @@ class Mapper(Generic[ResultT, P]):
         raise NotImplementedError
 
     def map_list(self,
-            expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs) -> ResultT:
+            expr: list[Expression], *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
     def map_tuple(self,
-            expr: tuple[ExpressionT, ...],
+            expr: tuple[Expression, ...],
             *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
@@ -396,7 +396,7 @@ class CachedMapper(Mapper[ResultT, P]):
         Mapper.__init__(self)
 
     def get_cache_key(self,
-              expr: ExpressionT,
+              expr: Expression,
               *args: P.args,
               **kwargs: P.kwargs
           ) -> CacheKeyT:
@@ -416,7 +416,7 @@ class CachedMapper(Mapper[ResultT, P]):
         return (type(expr), expr, args, immutabledict(kwargs))
 
     def __call__(self,
-                 expr: ExpressionT,
+                 expr: Expression,
                  *args: P.args,
                  **kwargs: P.kwargs
              ) -> ResultT:
@@ -429,7 +429,7 @@ class CachedMapper(Mapper[ResultT, P]):
         method_name = getattr(expr, "mapper_method", None)
         if method_name is not None:
             method = cast(
-                Callable[Concatenate[ExpressionT, P], ResultT] | None,
+                Callable[Concatenate[Expression, P], ResultT] | None,
                 getattr(self, method_name, None)
                 )
             if method is not None:
@@ -592,12 +592,12 @@ class CombineMapper(Mapper[ResultT, P]):
                 for child in expr.children)
 
     def map_tuple(self,
-                expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs
+                expr: tuple[Expression, ...], *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
         return self.combine(self.rec(child, *args, **kwargs) for child in expr)
 
     def map_list(self,
-                expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs
+                expr: list[Expression], *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
         return self.combine(self.rec(child, *args, **kwargs) for child in expr)
 
@@ -607,7 +607,7 @@ class CombineMapper(Mapper[ResultT, P]):
         return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)
 
     def map_multivector(self,
-                expr: MultiVector[ArithmeticExpressionT],
+                expr: MultiVector[ArithmeticExpression],
                 *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
         return self.combine(
@@ -688,7 +688,7 @@ class CachedCollector(CachedMapper, Collector):
 
 # {{{ identity mapper
 
-class IdentityMapper(Mapper[ExpressionT, P]):
+class IdentityMapper(Mapper[Expression, P]):
     """A :class:`Mapper` whose default mapper methods
     make a deep copy of each subexpression.
 
@@ -699,48 +699,48 @@ class IdentityMapper(Mapper[ExpressionT, P]):
     """
 
     def rec_arith(self,
-                expr: ArithmeticExpressionT, *args: P.args, **kwargs: P.kwargs
-            ) -> ArithmeticExpressionT:
+                expr: ArithmeticExpression, *args: P.args, **kwargs: P.kwargs
+            ) -> ArithmeticExpression:
         res = self.rec(expr, *args, **kwargs)
         assert p.is_arithmetic_expression(res)
         return res
 
     def map_constant(self,
                 expr: object, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         # leaf -- no need to rebuild
         assert p.is_valid_operand(expr)
         return expr
 
     def map_variable(self,
                 expr: p.Variable, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         # leaf -- no need to rebuild
         return expr
 
     def map_wildcard(self,
                 expr: p.Wildcard, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         return expr
 
     def map_dot_wildcard(self,
                 expr: p.DotWildcard, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         return expr
 
     def map_star_wildcard(self,
                 expr: p.StarWildcard, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         return expr
 
     def map_function_symbol(self,
                 expr: p.FunctionSymbol, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         return expr
 
     def map_call(self,
                 expr: p.Call, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
@@ -755,12 +755,12 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_call_with_kwargs(self,
                 expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         function = self.rec(expr.function, *args, **kwargs)
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
             ])
-        kw_parameters: Mapping[str, ExpressionT] = immutabledict({
+        kw_parameters: Mapping[str, Expression] = immutabledict({
                 key: self.rec(val, *args, **kwargs)
                 for key, val in expr.kw_parameters.items()})
 
@@ -774,7 +774,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_subscript(self,
                 expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
         index = self.rec(expr.index, *args, **kwargs)
         if aggregate is expr.aggregate and index is expr.index:
@@ -783,7 +783,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_lookup(self,
                 expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         aggregate = self.rec(expr.aggregate, *args, **kwargs)
         if aggregate is expr.aggregate:
             return expr
@@ -791,7 +791,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_sum(self,
                 expr: p.Sum, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -801,7 +801,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_product(self,
                 expr: p.Product, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -811,7 +811,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_quotient(self,
                 expr: p.Quotient, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         numerator = self.rec_arith(expr.numerator, *args, **kwargs)
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
@@ -820,7 +820,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_floor_div(self,
                 expr: p.FloorDiv, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         numerator = self.rec_arith(expr.numerator, *args, **kwargs)
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
@@ -829,7 +829,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_remainder(self,
                 expr: p.Remainder, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         numerator = self.rec_arith(expr.numerator, *args, **kwargs)
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
@@ -838,7 +838,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_power(self,
                 expr: p.Power, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         base = self.rec_arith(expr.base, *args, **kwargs)
         exponent = self.rec_arith(expr.exponent, *args, **kwargs)
         if base is expr.base and exponent is expr.exponent:
@@ -847,7 +847,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_left_shift(self,
                 expr: p.LeftShift, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         shiftee = self.rec(expr.shiftee, *args, **kwargs)
         shift = self.rec(expr.shift, *args, **kwargs)
         if shiftee is expr.shiftee and shift is expr.shift:
@@ -856,7 +856,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_right_shift(self,
                 expr: p.RightShift, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         shiftee = self.rec(expr.shiftee, *args, **kwargs)
         shift = self.rec(expr.shift, *args, **kwargs)
         if shiftee is expr.shiftee and shift is expr.shift:
@@ -865,7 +865,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_bitwise_not(self,
                 expr: p.BitwiseNot, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
@@ -873,7 +873,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_bitwise_or(self,
                 expr: p.BitwiseOr, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -883,7 +883,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_bitwise_and(self,
                 expr: p.BitwiseAnd, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -893,7 +893,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_bitwise_xor(self,
                 expr: p.BitwiseXor, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -903,7 +903,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_logical_not(self,
                 expr: p.LogicalNot, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
@@ -911,7 +911,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_logical_or(self,
                 expr: p.LogicalOr, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -921,7 +921,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_logical_and(self,
                 expr: p.LogicalAnd, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
@@ -931,7 +931,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_comparison(self,
                 expr: p.Comparison, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         left = self.rec(expr.left, *args, **kwargs)
         right = self.rec(expr.right, *args, **kwargs)
         if left is expr.left and right is expr.right:
@@ -940,15 +940,15 @@ class IdentityMapper(Mapper[ExpressionT, P]):
         return type(expr)(left, expr.operator, right)
 
     def map_list(self,
-                expr: list[ExpressionT], *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+                expr: list[Expression], *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
 
         # True fact: lists aren't expressions
         return [self.rec(child, *args, **kwargs) for child in expr]  # type: ignore[return-value]
 
     def map_tuple(self,
-                expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+                expr: tuple[Expression, ...], *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr, strict=True)):
@@ -958,7 +958,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_numpy_array(self,
                 expr: np.ndarray, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
 
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
@@ -969,16 +969,16 @@ class IdentityMapper(Mapper[ExpressionT, P]):
         return result  # type: ignore[return-value]
 
     def map_multivector(self,
-                expr: MultiVector[ArithmeticExpressionT],
+                expr: MultiVector[ArithmeticExpression],
                 *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionT:
+            ) -> Expression:
         # True fact: MultiVectors aren't expressions
-        return expr.map(lambda ch: cast(ArithmeticExpressionT,
+        return expr.map(lambda ch: cast(ArithmeticExpression,
                                         self.rec(ch, *args, **kwargs)))  # type: ignore[return-value]
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression,
-                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+                *args: P.args, **kwargs: P.kwargs) -> Expression:
         result = self.rec(expr.child, *args, **kwargs)
         if result is expr.child:
             return expr
@@ -991,7 +991,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_substitution(self,
                  expr: p.Substitution,
-                 *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+                 *args: P.args, **kwargs: P.kwargs) -> Expression:
         child = self.rec(expr.child, *args, **kwargs)
         values = tuple([self.rec(v, *args, **kwargs) for v in expr.values])
         if child is expr.child and all(val is orig_val
@@ -1002,7 +1002,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_derivative(self,
                 expr: p.Derivative,
-                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+                *args: P.args, **kwargs: P.kwargs) -> Expression:
         child = self.rec(expr.child, *args, **kwargs)
         if child is expr.child:
             return expr
@@ -1011,7 +1011,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
     def map_slice(self,
                 expr: p.Slice,
-                *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+                *args: P.args, **kwargs: P.kwargs) -> Expression:
         children: p.SliceChildrenT = cast(p.SliceChildrenT, tuple([
             None if child is None else self.rec(child, *args, **kwargs)
             for child in expr.children
@@ -1022,7 +1022,7 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
         return type(expr)(children)
 
-    def map_if(self, expr: p.If, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+    def map_if(self, expr: p.If, *args: P.args, **kwargs: P.kwargs) -> Expression:
         condition = self.rec(expr.condition, *args, **kwargs)
         then = self.rec(expr.then, *args, **kwargs)
         else_ = self.rec(expr.else_, *args, **kwargs)
@@ -1033,7 +1033,8 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
         return type(expr)(condition, then, else_)
 
-    def map_min(self, expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+    def map_min(self,
+                expr: p.Min, *args: P.args, **kwargs: P.kwargs) -> Expression:
         children = tuple([
             self.rec(child, *args, **kwargs) for child in expr.children
             ])
@@ -1043,7 +1044,8 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
         return type(expr)(children)
 
-    def map_max(self, expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+    def map_max(self,
+                expr: p.Max, *args: P.args, **kwargs: P.kwargs) -> Expression:
         children = tuple([
             self.rec(child, *args, **kwargs) for child in expr.children
             ])
@@ -1053,12 +1055,13 @@ class IdentityMapper(Mapper[ExpressionT, P]):
 
         return type(expr)(children)
 
-    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> ExpressionT:
+    def map_nan(self,
+                expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> Expression:
         # Leaf node -- don't recurse
         return expr
 
 
-class CachedIdentityMapper(CachedMapper[ExpressionT, P], IdentityMapper[P]):
+class CachedIdentityMapper(CachedMapper[Expression, P], IdentityMapper[P]):
     pass
 
 # }}}
@@ -1217,7 +1220,8 @@ class WalkMapper(Mapper[None, P]):
         self.post_visit(expr, *args, **kwargs)
 
     def map_tuple(self,
-            expr: tuple[ExpressionT, ...], *args: P.args, **kwargs: P.kwargs) -> None:
+                expr: tuple[Expression, ...], *args: P.args, **kwargs: P.kwargs
+            ) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -1238,7 +1242,7 @@ class WalkMapper(Mapper[None, P]):
         self.post_visit(expr, *args, **kwargs)
 
     def map_multivector(self,
-            expr: MultiVector[ArithmeticExpressionT],
+            expr: MultiVector[ArithmeticExpression],
             *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
@@ -1502,7 +1506,7 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
     This method deliberately does not support extra arguments in mapper
     dispatch, to avoid spurious dependencies of the cache on these arguments.
     """
-    _cse_cache_dict: dict[tuple[ExpressionT, P.args, P.kwargs], ResultT]
+    _cse_cache_dict: dict[tuple[Expression, P.args, P.kwargs], ResultT]
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression,
@@ -1512,7 +1516,8 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
-        key: tuple[ExpressionT, P.args, P.kwargs] = (expr, args, immutabledict(kwargs))
+        key: tuple[Expression, P.args, P.kwargs] = (
+            expr, args, immutabledict(kwargs))
         try:
             return ccd[key]
         except KeyError:

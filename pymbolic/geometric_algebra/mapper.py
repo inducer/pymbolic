@@ -49,21 +49,23 @@ from pymbolic.mapper.stringifier import (
     PREC_NONE,
     StringifyMapper as StringifyMapperBase,
 )
-from pymbolic.primitives import Expression
+from pymbolic.primitives import ExpressionNode
 
 
 class IdentityMapper(IdentityMapperBase[P]):
     def map_nabla(
-            self, expr: prim.Nabla, *args: P.args, **kwargs: P.kwargs) -> Expression:
+                self, expr: prim.Nabla, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionNode:
         return expr
 
     def map_nabla_component(self,
-            expr: prim.NablaComponent, *args: P.args, **kwargs: P.kwargs) -> Expression:
+                expr: prim.NablaComponent, *args: P.args, **kwargs: P.kwargs
+            ) -> ExpressionNode:
         return expr
 
     def map_derivative_source(self,
                 expr: prim.DerivativeSource, *args: P.args, **kwargs: P.kwargs
-            ) -> Expression:
+            ) -> ExpressionNode:
         operand = self.rec(expr.operand, *args, **kwargs)
         if operand is expr.operand:
             return expr

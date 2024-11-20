@@ -26,6 +26,7 @@ THE SOFTWARE.
 import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, fields
+from functools import partial
 from sys import intern
 from typing import (
     TYPE_CHECKING,
@@ -42,8 +43,10 @@ from warnings import warn
 from immutabledict import immutabledict
 from typing_extensions import TypeIs, dataclass_transform
 
+from pytools import module_getattr_for_deprecations
+
 from . import traits
-from .typing import ArithmeticExpressionT, ExpressionT, NumberT, ScalarT
+from .typing import ArithmeticExpression, Expression as _Expression, Number, Scalar
 
 
 if TYPE_CHECKING:
@@ -56,7 +59,7 @@ Expression base class
 
 .. currentmodule:: pymbolic
 
-.. autoclass:: Expression
+.. autoclass:: ExpressionNode
 
 .. autofunction:: expr_dataclass
 
@@ -296,9 +299,9 @@ References
 
     An instance of a :func:`~dataclasses.dataclass`.
 
-.. class:: ArithmeticExpressionT
+.. class:: ArithmeticExpression
 
-    See :class:`pymbolic.ArithmeticExpressionT`
+    See :class:`pymbolic.ArithmeticExpression`
 
 .. class:: _T
 
@@ -320,9 +323,9 @@ References
 
     See :class:`pymbolic.Variable`.
 
-.. class:: ExpressionT
+.. class:: Expression
 
-    See :class:`pymbolic.ExpressionT`.
+    See :data:`pymbolic.typing.Expression`.
 
 .. currentmodule:: pymbolic
 
@@ -370,11 +373,11 @@ class _classproperty(property):  # noqa: N801
 
 
 class _AttributeLookupCreator:
-    """Helper used by :attr:`pymbolic.Expression.a` to create lookups.
+    """Helper used by :attr:`pymbolic.ExpressionNode.a` to create lookups.
 
     .. automethod:: __getattr__
     """
-    def __init__(self, aggregate: ExpressionT) -> None:
+    def __init__(self, aggregate: _Expression) -> None:
         self.aggregate = aggregate
 
     def __getattr__(self, name: str) -> Lookup:
@@ -383,10 +386,10 @@ class _AttributeLookupCreator:
 
 @dataclass(frozen=True)
 class EmptyOK:
-    child: ExpressionT
+    child: _Expression
 
 
-class Expression:
+class ExpressionNode:
     """Superclass for parts of a mathematical expression. Overrides operators
     to implicitly construct :class:`~pymbolic.primitives.Sum`,
     :class:`~pymbolic.primitives.Product` and other expressions.
@@ -606,10 +609,10 @@ class Expression:
 
     # {{{ misc
 
-    def __neg__(self) -> ArithmeticExpressionT:
+    def __neg__(self) -> ArithmeticExpression:
         return -1*self
 
-    def __pos__(self) -> ArithmeticExpressionT:
+    def __pos__(self) -> ArithmeticExpression:
         return self
 
     def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
@@ -623,7 +626,7 @@ class Expression:
         # Subscript has an attribute 'index' which can't coexist with this.
         # Thus we're hiding this from mypy until it goes away.
 
-        def index(self, subscript: Expression) -> Expression:
+        def index(self, subscript: ExpressionNode) -> ExpressionNode:
             """Return an expression representing ``self[subscript]``.
 
             .. versionadded:: 2014.3
@@ -634,7 +637,7 @@ class Expression:
 
             return self[subscript]
 
-    def __getitem__(self, subscript: ExpressionT | EmptyOK) -> Expression:
+    def __getitem__(self, subscript: _Expression | EmptyOK) -> ExpressionNode:
         """Return an expression representing ``self[subscript]``. """
 
         if isinstance(subscript, EmptyOK):
@@ -699,7 +702,7 @@ class Expression:
                         ", ".join(strify_child(i, limit-1) for i in child),
                         "," if len(child) == 1 else "")
 
-            elif isinstance(child, Expression):
+            elif isinstance(child, ExpressionNode):
                 return child._safe_repr(limit=limit-1)
             else:
                 return repr(child)
@@ -725,7 +728,8 @@ class Expression:
     # This custom warning deduplication mechanism became necessary because the
     # sheer amount of warnings ended up leading to out-of-memory situations
     # with pytest which bufered all the warnings.
-    _deprecation_warnings_issued: ClassVar[set[tuple[type[Expression], str]]] = set()
+    _deprecation_warnings_issued: ClassVar[set[tuple[type[ExpressionNode], str]]] \
+        = set()
 
     def __eq__(self, other) -> bool:
         """Provides equality testing with quick positive and negative paths
@@ -879,7 +883,7 @@ class Expression:
 
     # }}}
 
-    def __abs__(self) -> Expression:
+    def __abs__(self) -> ExpressionNode:
         return Call(Variable("abs"), (self,))
 
     def __iter__(self):
@@ -1084,17 +1088,17 @@ def expr_dataclass(
             hash: bool = True,
         ) -> Callable[[type[_T]], type[_T]]:
     r"""A class decorator that makes the class a :func:`~dataclasses.dataclass`
-    while also adding functionality needed for :class:`Expression` nodes.
+    while also adding functionality needed for :class:`ExpressionNode`.
     Specifically, it adds cached hashing, equality comparisons
     with ``self is other`` shortcuts as well as some methods/attributes
     for backward compatibility (e.g. ``__getinitargs__``, ``init_arg_names``).
 
-    It also adds a :attr:`Expression.mapper_method` based on the class name
-    if not already present. If :attr:`~Expression.mapper_method` is inherited,
+    It also adds a :attr:`ExpressionNode.mapper_method` based on the class name
+    if not already present. If :attr:`~ExpressionNode.mapper_method` is inherited,
     it will be viewed as unset and replaced.
 
     Note that the class to which this decorator is applied need not be
-    a subclass of :class:`~pymbolic.Expression`.
+    a subclass of :class:`ExpressionNode`.
 
     .. versionadded:: 2024.1
     """
@@ -1120,7 +1124,7 @@ def expr_dataclass(
 
 
 @expr_dataclass()
-class AlgebraicLeaf(Expression):
+class AlgebraicLeaf(ExpressionNode):
     """An expression that serves as a leaf for arithmetic evaluation.
     This may end up having child nodes still, but they're not reached by
     ways of arithmetic."""
@@ -1179,13 +1183,12 @@ class Call(AlgebraicLeaf):
     .. autoattribute:: function
     .. autoattribute:: parameters
     """
-    function: ExpressionT
-    """A :class:`Expression` that evaluates to a function."""
+    function: _Expression
+    """Evaluates to the function to be called."""
 
-    parameters: tuple[ExpressionT, ...]
+    parameters: tuple[_Expression, ...]
     """
-    A :class:`tuple` of positional parameters, each element
-    of which is a :class:`Expression` or a constant.
+    A :class:`tuple` of positional parameters.
     """
 
 
@@ -1198,17 +1201,15 @@ class CallWithKwargs(AlgebraicLeaf):
     .. autoattribute:: kw_parameters
     """
 
-    function: ExpressionT
-    """An :class:`Expression` that evaluates to a function."""
+    function: _Expression
+    """Evaluates to the function to be called."""
 
-    parameters: tuple[ExpressionT, ...]
-    """A :class:`tuple` of positional parameters, each element
-    of which is a :class:`Expression` or a constant.
+    parameters: tuple[_Expression, ...]
+    """A :class:`tuple` of positional parameters.
     """
 
-    kw_parameters: Mapping[str, ExpressionT]
-    """A dictionary mapping names to arguments, each
-    of which is a :class:`Expression` or a constant.
+    kw_parameters: Mapping[str, _Expression]
+    """A dictionary mapping names to arguments.
     """
 
     def __post_init__(self):
@@ -1228,11 +1229,11 @@ class CallWithKwargs(AlgebraicLeaf):
 class Subscript(AlgebraicLeaf):
     """An array subscript."""
 
-    aggregate: ExpressionT
-    index: ExpressionT
+    aggregate: _Expression
+    index: _Expression
 
     @property
-    def index_tuple(self) -> tuple[ExpressionT, ...]:
+    def index_tuple(self) -> tuple[_Expression, ...]:
         """
         Return :attr:`index` wrapped in a single-element tuple, if it is not already
         a tuple.
@@ -1248,7 +1249,7 @@ class Subscript(AlgebraicLeaf):
 class Lookup(AlgebraicLeaf):
     """Access to an attribute of an *aggregate*, such as an attribute of a class."""
 
-    aggregate: ExpressionT
+    aggregate: _Expression
     name: str
 
 # }}}
@@ -1257,7 +1258,7 @@ class Lookup(AlgebraicLeaf):
 # {{{ arithmetic primitives
 
 @expr_dataclass()
-class Sum(Expression):
+class Sum(ExpressionNode):
     """
     .. autoattribute:: children
 
@@ -1267,7 +1268,7 @@ class Sum(Expression):
     .. automethod:: __bool__
     """
 
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
     def __add__(self, other):
         if not is_valid_operand(other):
@@ -1310,7 +1311,7 @@ class Sum(Expression):
 
 
 @expr_dataclass()
-class Product(Expression):
+class Product(ExpressionNode):
     """
     .. autoattribute:: children
 
@@ -1319,7 +1320,7 @@ class Product(Expression):
     .. automethod:: __bool__
     """
 
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
     def __mul__(self, other):
         if not is_valid_operand(other):
@@ -1353,25 +1354,25 @@ class Product(Expression):
 
 
 @expr_dataclass()
-class Min(Expression):
+class Min(ExpressionNode):
     """
     .. autoattribute:: children
     """
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class Max(Expression):
+class Max(ExpressionNode):
     """
     .. autoattribute:: children
     """
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class QuotientBase(Expression):
-    numerator: ArithmeticExpressionT
-    denominator: ArithmeticExpressionT
+class QuotientBase(ExpressionNode):
+    numerator: ArithmeticExpression
+    denominator: ArithmeticExpression
 
     @property
     def num(self):
@@ -1389,7 +1390,7 @@ class QuotientBase(Expression):
 
 @expr_dataclass()
 class Quotient(QuotientBase):
-    """Bases: :class:`~pymbolic.Expression`
+    """Bases: :class:`~pymbolic.ExpressionNode`
 
     .. autoattribute:: numerator
     .. autoattribute:: denominator
@@ -1398,7 +1399,7 @@ class Quotient(QuotientBase):
 
 @expr_dataclass()
 class FloorDiv(QuotientBase):
-    """Bases: :class:`~pymbolic.Expression`
+    """Bases: :class:`~pymbolic.ExpressionNode`
 
     .. autoattribute:: numerator
     .. autoattribute:: denominator
@@ -1407,7 +1408,7 @@ class FloorDiv(QuotientBase):
 
 @expr_dataclass()
 class Remainder(QuotientBase):
-    """Bases: :class:`~pymbolic.Expression`
+    """Bases: :class:`~pymbolic.ExpressionNode`
 
     .. autoattribute:: numerator
     .. autoattribute:: denominator
@@ -1415,14 +1416,14 @@ class Remainder(QuotientBase):
 
 
 @expr_dataclass()
-class Power(Expression):
+class Power(ExpressionNode):
     """
     .. autoattribute:: base
     .. autoattribute:: exponent
     """
 
-    base: ArithmeticExpressionT
-    exponent: ArithmeticExpressionT
+    base: ArithmeticExpression
+    exponent: ArithmeticExpression
 
 # }}}
 
@@ -1430,14 +1431,14 @@ class Power(Expression):
 # {{{ shift operators
 
 @expr_dataclass()
-class _ShiftOperator(Expression):
-    shiftee: ExpressionT
-    shift: ExpressionT
+class _ShiftOperator(ExpressionNode):
+    shiftee: _Expression
+    shift: _Expression
 
 
 @expr_dataclass()
 class LeftShift(_ShiftOperator):
-    """Bases: :class:`~pymbolic.Expression`.
+    """Bases: :class:`~pymbolic.ExpressionNode`.
 
     .. autoattribute:: shiftee
     .. autoattribute:: shift
@@ -1446,7 +1447,7 @@ class LeftShift(_ShiftOperator):
 
 @expr_dataclass()
 class RightShift(_ShiftOperator):
-    """Bases: :class:`~pymbolic.Expression`.
+    """Bases: :class:`~pymbolic.ExpressionNode`.
 
     .. autoattribute:: shiftee
     .. autoattribute:: shift
@@ -1458,37 +1459,37 @@ class RightShift(_ShiftOperator):
 # {{{ bitwise operators
 
 @expr_dataclass()
-class BitwiseNot(Expression):
+class BitwiseNot(ExpressionNode):
     """
     .. autoattribute:: child
     """
 
-    child: ExpressionT
+    child: _Expression
 
 
 @expr_dataclass()
-class BitwiseOr(Expression):
+class BitwiseOr(ExpressionNode):
     """
     .. autoattribute:: children
     """
 
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class BitwiseXor(Expression):
+class BitwiseXor(ExpressionNode):
     """
     .. autoattribute:: children
     """
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class BitwiseAnd(Expression):
+class BitwiseAnd(ExpressionNode):
     """
     .. autoattribute:: children
     """
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 # }}}
 
@@ -1496,7 +1497,7 @@ class BitwiseAnd(Expression):
 # {{{ comparisons, logic, conditionals
 
 @expr_dataclass()
-class Comparison(Expression):
+class Comparison(ExpressionNode):
     """
     .. autoattribute:: left
     .. autoattribute:: operator
@@ -1505,18 +1506,19 @@ class Comparison(Expression):
     .. note::
 
         Unlike other expressions, comparisons are not implicitly constructed by
-        comparing :class:`Expression` objects. See :meth:`pymbolic.Expression.eq`.
+        comparing :class:`ExpressionNode` objects.
+        See :meth:`pymbolic.ExpressionNode.eq` and related.
 
     .. autoattribute:: operator_to_name
     .. autoattribute:: name_to_operator
     """
 
-    left: ExpressionT
+    left: _Expression
 
     operator: str
     """One of ``[">", ">=", "==", "!=", "<", "<="]``."""
 
-    right: ExpressionT
+    right: _Expression
 
     operator_to_name: ClassVar[dict[str, str]] = {
             "==": "eq",
@@ -1547,42 +1549,42 @@ class Comparison(Expression):
 
 
 @expr_dataclass()
-class LogicalNot(Expression):
+class LogicalNot(ExpressionNode):
     """
     .. autoattribute:: child
     """
 
-    child: ExpressionT
+    child: _Expression
 
 
 @expr_dataclass()
-class LogicalOr(Expression):
+class LogicalOr(ExpressionNode):
     """
     .. autoattribute:: children
     """
 
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class LogicalAnd(Expression):
+class LogicalAnd(ExpressionNode):
     """
     .. autoattribute:: children
     """
-    children: tuple[ExpressionT, ...]
+    children: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class If(Expression):
+class If(ExpressionNode):
     """
     .. autoattribute:: condition
     .. autoattribute:: then
     .. autoattribute:: else_
     """
 
-    condition: ExpressionT
-    then: ExpressionT
-    else_: ExpressionT
+    condition: _Expression
+    then: _Expression
+    else_: _Expression
 
 # }}}
 
@@ -1617,7 +1619,7 @@ class cse_scope:  # noqa
 
 
 @expr_dataclass()
-class CommonSubexpression(Expression):
+class CommonSubexpression(ExpressionNode):
     """A helper for code generation and caching. Denotes a subexpression that
     should only be evaluated once. If, in code generation, it is assigned to
     a variable, a name starting with :attr:`prefix` should be used.
@@ -1630,7 +1632,7 @@ class CommonSubexpression(Expression):
     See :class:`pymbolic.mapper.c_code.CCodeMapper` for an example.
     """
 
-    child: ExpressionT
+    child: _Expression
     prefix: str | None = None
     scope: str = cse_scope.EVALUATION
     """
@@ -1657,7 +1659,7 @@ class CommonSubexpression(Expression):
 
 
 @expr_dataclass()
-class Substitution(Expression):
+class Substitution(ExpressionNode):
     """Work-alike of :class:`~sympy.core.function.Subs`.
 
     .. autoattribute:: child
@@ -1665,31 +1667,32 @@ class Substitution(Expression):
     .. autoattribute:: values
     """
 
-    child: ExpressionT
+    child: _Expression
     variables: tuple[str, ...]
-    values: tuple[ExpressionT, ...]
+    values: tuple[_Expression, ...]
 
 
 @expr_dataclass()
-class Derivative(Expression):
+class Derivative(ExpressionNode):
     """Work-alike of sympy's :class:`~sympy.core.function.Derivative`.
 
     .. autoattribute:: child
     .. autoattribute:: variables
     """
 
-    child: ExpressionT
+    child: _Expression
     variables: tuple[str, ...]
 
 
 SliceChildrenT: TypeAlias = (tuple[()]
-        | tuple[ExpressionT | None]
-        | tuple[ExpressionT | None, ExpressionT | None]
-        | tuple[ExpressionT | None, ExpressionT | None, ExpressionT | None])
+        | tuple[_Expression | None]
+        | tuple[_Expression | None, _Expression | None]
+        | tuple[_Expression | None, _Expression | None, _Expression
+            | None])
 
 
 @expr_dataclass()
-class Slice(Expression):
+class Slice(ExpressionNode):
     """A slice expression as in a[1:7].
 
     .. autoattribute:: children
@@ -1772,7 +1775,7 @@ def subscript(expression, index):
     return Subscript(expression, index)
 
 
-def flattened_sum(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressionT:
+def flattened_sum(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression:
     r"""Recursively flattens all the top level :class:`Sum`\ s in *terms*.
 
     :arg terms: an :class:`~collections.abc.Iterable` of expressions.
@@ -1789,7 +1792,7 @@ def flattened_sum(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressio
             continue
 
         if isinstance(item, Sum):
-            ch = cast(tuple[ArithmeticExpressionT], item.children)
+            ch = cast(tuple[ArithmeticExpression], item.children)
             queue.extend(ch)
         else:
             done.append(item)
@@ -1809,7 +1812,7 @@ def linear_combination(coefficients, expressions):
                  if coefficient and expression)
 
 
-def flattened_product(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpressionT:
+def flattened_product(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression:
     r"""Recursively flattens all the top level :class:`Product`\ s in *terms*.
 
     This operation does not change the order of the terms in the products, so
@@ -1831,7 +1834,7 @@ def flattened_product(terms: Iterable[ArithmeticExpressionT]) -> ArithmeticExpre
             continue
 
         if isinstance(item, Product):
-            ch = cast(tuple[ArithmeticExpressionT], item.children)
+            ch = cast(tuple[ArithmeticExpression], item.children)
             queue.extend(ch)
         else:
             done.append(item)
@@ -1873,7 +1876,7 @@ global VALID_CONSTANT_CLASSES
 global VALID_OPERANDS
 VALID_CONSTANT_CLASSES: tuple[type, ...] = (int, float, complex)
 _BOOL_CLASSES: tuple[type, ...] = (bool,)
-VALID_OPERANDS = (Expression,)
+VALID_OPERANDS = (ExpressionNode,)
 
 try:
     import numpy
@@ -1883,20 +1886,20 @@ except ImportError:
     pass
 
 
-def is_constant(value: object) -> TypeIs[ScalarT]:
+def is_constant(value: object) -> TypeIs[Scalar]:
     return isinstance(value, VALID_CONSTANT_CLASSES)
 
 
-def is_number(value: object) -> TypeIs[NumberT]:
+def is_number(value: object) -> TypeIs[Number]:
     return (not isinstance(value, _BOOL_CLASSES)
         and isinstance(value, VALID_CONSTANT_CLASSES))
 
 
-def is_valid_operand(value: object) -> TypeIs[ExpressionT]:
+def is_valid_operand(value: object) -> TypeIs[_Expression]:
     return isinstance(value, VALID_OPERANDS) or is_constant(value)
 
 
-def is_arithmetic_expression(value: object) -> TypeIs[ArithmeticExpressionT]:
+def is_arithmetic_expression(value: object) -> TypeIs[ArithmeticExpression]:
     return not isinstance(value, _BOOL_CLASSES) and is_valid_operand(value)
 
 
@@ -1928,9 +1931,9 @@ def is_zero(value: object) -> bool:
     return not is_nonzero(value)
 
 
-def wrap_in_cse(expr: ExpressionT,
+def wrap_in_cse(expr: _Expression,
                 prefix: str | None = None,
-                scope: str | None = None) -> ExpressionT:
+                scope: str | None = None) -> _Expression:
     warn("'wrap_in_cse' is deprecated and will be removed in 2025. Use "
          "'make_common_subexpression' with the `wrap_vars=False` flag instead.",
          DeprecationWarning, stacklevel=2)
@@ -1938,11 +1941,11 @@ def wrap_in_cse(expr: ExpressionT,
     return make_common_subexpression(expr, prefix, scope, wrap_vars=False)
 
 
-def make_common_subexpression(expr: ExpressionT,
+def make_common_subexpression(expr: _Expression,
                               prefix: str | None = None,
                               scope: str | None = None,
                               *,
-                              wrap_vars: bool = True) -> ExpressionT:
+                              wrap_vars: bool = True) -> _Expression:
     """Wrap *expr* in a :class:`CommonSubexpression` with *prefix*.
 
     If *expr* is a :mod:`numpy` object array, each individual entry is instead
@@ -2067,6 +2070,11 @@ def variables(s):
     return [Variable(s_i) for s_i in s.split() if s_i]
 
 # }}}
+
+
+__getattr__ = partial(module_getattr_for_deprecations, __name__, {
+        "Expression": ("ExpressionNode", ExpressionNode, 2026),
+        })
 
 
 # vim: foldmethod=marker

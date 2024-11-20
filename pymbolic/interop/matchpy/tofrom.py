@@ -12,6 +12,7 @@ import pymbolic.interop.matchpy as m
 import pymbolic.primitives as p
 from pymbolic.interop.matchpy.mapper import Mapper as BaseMatchPyMapper
 from pymbolic.mapper import Mapper as BasePymMapper
+from pymbolic.typing import Scalar as PbScalar
 
 
 # {{{ to matchpy
@@ -117,7 +118,7 @@ class ToMatchpyExpressionMapper(BasePymMapper):
 # {{{ from matchpy
 
 class FromMatchpyExpressionMapper(BaseMatchPyMapper):
-    def map_scalar(self, expr: m.Scalar) -> m.ScalarT:
+    def map_scalar(self, expr: m.Scalar) -> PbScalar:
         return expr.value
 
     def map_variable(self, expr: m.Variable) -> p.Variable:
@@ -200,7 +201,7 @@ class FromMatchpyExpressionMapper(BaseMatchPyMapper):
 
 @dataclass(frozen=True, eq=True)
 class ToFromReplacement:
-    f: Callable[..., p.Expression]
+    f: Callable[..., p.ExpressionNode]
     to_matchpy_expr: m.ToMatchpyT
     from_matchpy_expr: m.FromMatchpyT
 

@@ -40,7 +40,7 @@ from typing import TYPE_CHECKING, cast
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper, ResultT
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
@@ -155,7 +155,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
     def map_logical_and(self, expr: p.LogicalAnd) -> bool:  # type: ignore[override]
         return all(self.rec(ch) for ch in expr.children)
 
-    def map_list(self, expr: list[ExpressionT]) -> ResultT:
+    def map_list(self, expr: list[Expression]) -> ResultT:
         return [self.rec(child) for child in expr]  # type: ignore[return-value]
 
     def map_numpy_array(self, expr: np.ndarray) -> ResultT:
@@ -188,7 +188,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
     def map_max(self, expr: p.Max) -> ResultT:
         return max(self.rec(child) for child in expr.children)  # type: ignore[type-var]
 
-    def map_tuple(self, expr: tuple[ExpressionT, ...]) -> ResultT:
+    def map_tuple(self, expr: tuple[Expression, ...]) -> ResultT:
         return tuple([self.rec(child) for child in expr])  # type: ignore[return-value]
 
     def map_nan(self, expr: p.NaN) -> ResultT:
@@ -222,7 +222,7 @@ class CachedFloatEvaluationMapper(CachedEvaluationMapper[float]):
 
 
 def evaluate(
-            expression: ExpressionT,
+            expression: Expression,
             context: Mapping[str, ResultT] | None = None,
             mapper_cls: type[EvaluationMapper[ResultT]] = CachedEvaluationMapper,
         ) -> ResultT:
@@ -236,7 +236,7 @@ def evaluate(
 
 
 def evaluate_kw(
-            expression: ExpressionT,
+            expression: Expression,
             mapper_cls: type[EvaluationMapper[ResultT]] = CachedEvaluationMapper,
             **context: ResultT,
         ) -> ResultT:

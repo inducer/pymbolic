@@ -28,10 +28,10 @@ from typing import Literal, TypeAlias, cast
 
 import pymbolic.primitives as p
 from pymbolic.mapper import Mapper
-from pymbolic.typing import ArithmeticExpressionT
+from pymbolic.typing import ArithmeticExpression
 
 
-CoeffsT: TypeAlias = Mapping[p.AlgebraicLeaf | Literal[1], ArithmeticExpressionT]
+CoeffsT: TypeAlias = Mapping[p.AlgebraicLeaf | Literal[1], ArithmeticExpression]
 
 
 class CoefficientCollector(Mapper[CoeffsT, []]):
@@ -41,7 +41,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
     def map_sum(self, expr: p.Sum) -> CoeffsT:
         stride_dicts = [self.rec(ch) for ch in expr.children]
 
-        result: dict[p.AlgebraicLeaf | Literal[1], ArithmeticExpressionT] = {}
+        result: dict[p.AlgebraicLeaf | Literal[1], ArithmeticExpression] = {}
         for stride_dict in stride_dicts:
             for var, stride in stride_dict.items():
                 if var in result:
@@ -64,11 +64,11 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
                                 "nonlinear expression")
                     idx_of_child_with_vars = i
 
-        other_coeffs: ArithmeticExpressionT = 1
+        other_coeffs: ArithmeticExpression = 1
         for i, child_coeffs in enumerate(children_coeffs):
             if i != idx_of_child_with_vars:
                 assert len(child_coeffs) == 1
-                other_coeffs *= cast(ArithmeticExpressionT, child_coeffs[1])
+                other_coeffs *= cast(ArithmeticExpression, child_coeffs[1])
 
         if idx_of_child_with_vars is None:
             return {1: other_coeffs}
