@@ -35,10 +35,10 @@ from pymbolic.mapper import (
     Mapper,
 )
 from pymbolic.primitives import Product, Sum, is_arithmetic_expression
-from pymbolic.typing import ArithmeticExpressionT, ExpressionT
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
-class ConstantFoldingMapperBase(Mapper[ExpressionT, []]):
+class ConstantFoldingMapperBase(Mapper[Expression, []]):
     def is_constant(self, expr):
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))
@@ -53,16 +53,16 @@ class ConstantFoldingMapperBase(Mapper[ExpressionT, []]):
     def fold(self,
              expr: Sum | Product,
              op: Callable[
-                 [ArithmeticExpressionT, ArithmeticExpressionT],
-                 ArithmeticExpressionT],
+                 [ArithmeticExpression, ArithmeticExpression],
+                 ArithmeticExpression],
              constructor: Callable[
-                     [tuple[ArithmeticExpressionT, ...]],
-                     ArithmeticExpressionT],
-         ) -> ExpressionT:
+                     [tuple[ArithmeticExpression, ...]],
+                     ArithmeticExpression],
+         ) -> Expression:
         klass = type(expr)
 
-        constants: list[ArithmeticExpressionT] = []
-        nonconstants: list[ArithmeticExpressionT] = []
+        constants: list[ArithmeticExpression] = []
+        nonconstants: list[ArithmeticExpression] = []
 
         queue = list(expr.children)
         while queue:
@@ -90,7 +90,7 @@ class ConstantFoldingMapperBase(Mapper[ExpressionT, []]):
         else:
             return constructor(tuple(nonconstants))
 
-    def map_sum(self, expr: Sum) -> ExpressionT:
+    def map_sum(self, expr: Sum) -> Expression:
         import operator
 
         from pymbolic.primitives import flattened_sum
@@ -108,7 +108,7 @@ class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
 
 
 class ConstantFoldingMapper(
-        CSECachingMapperMixin[ExpressionT, []],
+        CSECachingMapperMixin[Expression, []],
         ConstantFoldingMapperBase,
         IdentityMapper[[]]):
 
@@ -117,7 +117,7 @@ class ConstantFoldingMapper(
 
 
 class CommutativeConstantFoldingMapper(
-        CSECachingMapperMixin[ExpressionT, []],
+        CSECachingMapperMixin[Expression, []],
         CommutativeConstantFoldingMapperBase,
         IdentityMapper[[]]):
 

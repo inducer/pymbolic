@@ -57,13 +57,13 @@ from matchpy import (
 )
 
 import pymbolic.primitives as p
-from pymbolic.typing import ScalarT
+from pymbolic.typing import Scalar as PbScalar
 
 
 ExprT: TypeAlias = Expression
 ConstantT = TypeVar("ConstantT")
-ToMatchpyT = Callable[[p.Expression], ExprT]
-FromMatchpyT = Callable[[ExprT], p.Expression]
+ToMatchpyT = Callable[[p.ExpressionNode], ExprT]
+FromMatchpyT = Callable[[ExprT], p.ExpressionNode]
 
 
 _NOT_OPERAND_METADATA = {"not_an_operand": True}
@@ -95,7 +95,7 @@ class _Constant(BaseAtom, Generic[ConstantT]):
 
 
 @op_dataclass
-class Scalar(_Constant[ScalarT]):
+class Scalar(_Constant[PbScalar]):
     _mapper_method: str = "map_scalar"
 
 
@@ -360,11 +360,11 @@ def _get_operand_at_path(expr: PymbolicOp, path: tuple[int, ...]) -> PymbolicOp:
     return result
 
 
-def match(subject: p.Expression,
-          pattern: p.Expression,
+def match(subject: p.ExpressionNode,
+          pattern: p.ExpressionNode,
           to_matchpy_expr: ToMatchpyT | None = None,
           from_matchpy_expr: FromMatchpyT | None = None
-          ) -> Iterator[Mapping[str, p.Expression | ScalarT]]:
+          ) -> Iterator[Mapping[str, p.ExpressionNode | PbScalar]]:
     from matchpy import Pattern, match
 
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
@@ -383,12 +383,12 @@ def match(subject: p.Expression,
                for name, expr in subst.items()}
 
 
-def match_anywhere(subject: p.Expression,
-                   pattern: p.Expression,
+def match_anywhere(subject: p.ExpressionNode,
+                   pattern: p.ExpressionNode,
                    to_matchpy_expr: ToMatchpyT | None = None,
                    from_matchpy_expr: FromMatchpyT | None = None
-                   ) -> Iterator[tuple[Mapping[str, p.Expression | ScalarT],
-                                       p.Expression | ScalarT]
+                   ) -> Iterator[tuple[Mapping[str, p.ExpressionNode | PbScalar],
+                                       p.ExpressionNode | PbScalar]
                                  ]:
     from matchpy import Pattern, match_anywhere
 
@@ -409,8 +409,8 @@ def match_anywhere(subject: p.Expression,
                from_matchpy_expr(_get_operand_at_path(m_subject, path)))
 
 
-def make_replacement_rule(pattern: p.Expression,
-                          replacement: Callable[..., p.Expression],
+def make_replacement_rule(pattern: p.ExpressionNode,
+                          replacement: Callable[..., p.ExpressionNode],
                           to_matchpy_expr: ToMatchpyT | None = None,
                           from_matchpy_expr: FromMatchpyT | None = None
                           ) -> ReplacementRule:
@@ -437,11 +437,11 @@ def make_replacement_rule(pattern: p.Expression,
                                                         from_matchpy_expr))
 
 
-def replace_all(expression: p.Expression,
+def replace_all(expression: p.ExpressionNode,
                 rules: Iterable[ReplacementRule],
                 to_matchpy_expr: ToMatchpyT | None = None,
                 from_matchpy_expr: FromMatchpyT | None = None
-                ) -> p.Expression | tuple[p.Expression, ...]:
+                ) -> p.ExpressionNode | tuple[p.ExpressionNode, ...]:
     import collections.abc as abc
 
     from matchpy import replace_all

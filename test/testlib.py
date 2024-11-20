@@ -47,7 +47,7 @@ class RandomExpressionGeneratorContext:
 
 
 def _generate_random_expr_inner(
-        context: RandomExpressionGeneratorContext) -> prim.Expression:
+        context: RandomExpressionGeneratorContext) -> prim.ExpressionNode:
 
     if context.current_depth >= context.max_depth:
         # force expression to be a leaf type
@@ -92,7 +92,7 @@ def _generate_random_expr_inner(
         raise NotImplementedError(expr_type)
 
 
-def generate_random_expression(seed: int, max_depth: int = 8) -> prim.Expression:
+def generate_random_expression(seed: int, max_depth: int = 8) -> prim.ExpressionNode:
     from numpy.random import default_rng
     rng = default_rng(seed)
     vng = UniqueNameGenerator()

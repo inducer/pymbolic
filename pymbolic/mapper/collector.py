@@ -33,7 +33,7 @@ import pymbolic
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.dependency import DependenciesT
-from pymbolic.typing import ArithmeticExpressionT, ExpressionT
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class TermCollector(IdentityMapper[[]]):
@@ -49,13 +49,13 @@ class TermCollector(IdentityMapper[[]]):
             parameters = set()
         self.parameters = parameters
 
-    def get_dependencies(self, expr: ExpressionT) -> DependenciesT:
+    def get_dependencies(self, expr: Expression) -> DependenciesT:
         from pymbolic.mapper.dependency import DependencyMapper
         return DependencyMapper()(expr)
 
-    def split_term(self, mul_term: ExpressionT) -> tuple[
-        Set[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
-        ArithmeticExpressionT
+    def split_term(self, mul_term: Expression) -> tuple[
+        Set[tuple[ArithmeticExpression, ArithmeticExpression]],
+        ArithmeticExpression
     ]:
         """Returns  a pair consisting of:
         - a frozenset of (base, exponent) pairs
@@ -67,21 +67,21 @@ class TermCollector(IdentityMapper[[]]):
         """
         from pymbolic.primitives import AlgebraicLeaf, Power, Product
 
-        def base(term: ExpressionT) -> ArithmeticExpressionT:
+        def base(term: Expression) -> ArithmeticExpression:
             if isinstance(term, Power):
                 return term.base
             else:
                 assert p.is_arithmetic_expression(term)
                 return term
 
-        def exponent(term: ExpressionT) -> ArithmeticExpressionT:
+        def exponent(term: Expression) -> ArithmeticExpression:
             if isinstance(term, Power):
                 return term.exponent
             else:
                 return 1
 
         if isinstance(mul_term, Product):
-            terms: Sequence[ExpressionT] = mul_term.children
+            terms: Sequence[Expression] = mul_term.children
         elif isinstance(mul_term, Power | AlgebraicLeaf):
             terms = [mul_term]
         elif not bool(self.get_dependencies(mul_term)):
@@ -89,7 +89,7 @@ class TermCollector(IdentityMapper[[]]):
         else:
             raise RuntimeError("split_term expects a multiplicative term")
 
-        base2exp: dict[ArithmeticExpressionT, ArithmeticExpressionT] = {}
+        base2exp: dict[ArithmeticExpression, ArithmeticExpression] = {}
         for term in terms:
             mybase = base(term)
             myexp = exponent(term)
@@ -110,13 +110,13 @@ class TermCollector(IdentityMapper[[]]):
 
         base_exp_set = frozenset(
                 (base, exp) for base, exp in cleaned_base2exp.items())
-        return base_exp_set, cast(ArithmeticExpressionT,
+        return base_exp_set, cast(ArithmeticExpression,
                 self.rec(pymbolic.flattened_product(coefficients)))
 
-    def map_sum(self, expr: p.Sum) -> ExpressionT:
+    def map_sum(self, expr: p.Sum) -> Expression:
         term2coeff: dict[
-            Set[tuple[ArithmeticExpressionT, ArithmeticExpressionT]],
-            ArithmeticExpressionT] = {}
+            Set[tuple[ArithmeticExpression, ArithmeticExpression]],
+            ArithmeticExpression] = {}
         for child in expr.children:
             term, coeff = self.split_term(child)
             term2coeff[term] = term2coeff.get(term, 0) + coeff

@@ -28,9 +28,17 @@ intersphinx_mapping = {
         ("https://immutabledict.corenting.fr/", None)
 }
 autodoc_type_aliases = {
-    "ExpressionT": "ExpressionT",
-    "ArithmeticExpressionT": "ArithmeticExpressionT",
+    "Expression": "Expression",
+    "ArithmeticExpression": "ArithmeticExpression",
 }
+
+
+nitpick_ignore_regex = [
+    # Avoids this error. Not sure where to even look.
+    # <unknown>:1: WARNING: py:class reference target not found: ExpressionNode [ref.class]  # noqa: E501
+    ["py:class", r"ExpressionNode"],
+    ]
+
 
 import sys
 

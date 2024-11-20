@@ -30,7 +30,7 @@ from typing_extensions import deprecated
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Mapper, P
-from pymbolic.typing import ExpressionT
+from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
@@ -95,11 +95,11 @@ PREC_NONE = 0
 class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     """A mapper to turn an expression tree into a string.
 
-    :class:`pymbolic.Expression.__str__` is often implemented using
+    :class:`pymbolic.ExpressionNode.__str__` is often implemented using
     this mapper.
 
-    When it encounters an unsupported :class:`pymbolic.Expression`
-    subclass, it calls its :meth:`pymbolic.Expression.make_stringifier`
+    When it encounters an unsupported :class:`pymbolic.ExpressionNode`
+    subclass, it calls its :meth:`pymbolic.ExpressionNode.make_stringifier`
     method to get a :class:`StringifyMapper` that potentially does.
     """
 
@@ -108,7 +108,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     def format(self, s: str, *args: object) -> str:
         return s % args
 
-    def join(self, joiner: str, seq: Sequence[ExpressionT]) -> str:
+    def join(self, joiner: str, seq: Sequence[Expression]) -> str:
         return self.format(joiner.join("%s" for _ in seq), *seq)
 
     # {{{ deprecated junk
@@ -136,7 +136,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     def join_rec(
         self,
         joiner: str,
-        seq: Sequence[ExpressionT],
+        seq: Sequence[Expression],
         prec: int,
         *args,
         **kwargs,  # force_with_parens_around may hide in here
@@ -167,7 +167,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     def rec_with_parens_around_types(
         self,
-        expr: ExpressionT,
+        expr: Expression,
         enclosing_prec: int,
         parens_around: tuple[type, ...],
         *args: P.args,
@@ -183,7 +183,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     def join_rec_with_parens_around_types(
         self,
         joiner: str,
-        seq: Sequence[ExpressionT],
+        seq: Sequence[Expression],
         prec: int,
         parens_around_types: tuple[type, ...],
         *args: P.args,
@@ -565,7 +565,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     def map_list(
         self,
-        expr: list[ExpressionT],
+        expr: list[Expression],
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -578,7 +578,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     def map_tuple(
         self,
-        expr: tuple[ExpressionT, ...],
+        expr: tuple[Expression, ...],
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -773,7 +773,7 @@ class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
     of the use of this mix-in.
     """
 
-    cse_to_name: dict[ExpressionT, str]
+    cse_to_name: dict[Expression, str]
     cse_names: set[str]
     cse_name_list: list[tuple[str, str]]
 

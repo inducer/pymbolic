@@ -137,7 +137,7 @@ def tag_common_subexpressions(exprs):
     get_key = NormalizedKeyGetter()
     ucm = UseCountMapper(get_key)
 
-    if isinstance(exprs, prim.Expression):
+    if isinstance(exprs, prim.ExpressionNode):
         raise TypeError("exprs should be an iterable of expressions")
 
     for expr in exprs:

@@ -8,7 +8,8 @@ Parser
 
 .. function:: parse(expr_str)
 
-    Return a :class:`pymbolic.primitives.Expression` tree corresponding to *expr_str*.
+    Return a :class:`pymbolic.primitives.ExpressionNode` tree corresponding
+    to *expr_str*.
 
 The parser is also relatively easy to extend. See the source code of the following
 class.

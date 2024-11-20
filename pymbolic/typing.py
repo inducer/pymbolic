@@ -4,28 +4,61 @@
 Typing helpers
 --------------
 
-.. autoclass:: BoolT
-.. autoclass:: NumberT
-.. autoclass:: ScalarT
-.. autoclass:: ArithmeticExpressionT
+.. autoclass:: Bool
+.. autoclass:: Number
+.. autoclass:: Scalar
+.. autoclass:: ArithmeticExpression
 
-    A narrower type alias than :class:`ExpressionT` that is returned by
+    A narrower type alias than :class:`Expression` that is returned by
     arithmetic operators, to allow continue doing arithmetic with the result
     of arithmetic.
 
-.. autoclass:: ExpressionT
-
 .. currentmodule:: pymbolic.typing
+
+.. autoclass:: Expression
+
+.. note::
+
+    For backward compatibility, ``pymbolic.Expression``
+    will alias :class:`pymbolic.primitives.ExpressionNode` for now. Once its deprecation
+    period is up, it will be removed, and then, in the further future,
+    ``pymbolic.Expression`` may become this type alias.
 
 .. autoclass:: ArithmeticOrExpressionT
 
-    A type variable that can be either :data:`ArithmeticExpressionT`
-    or :data:`ExpressionT`.
+    A type variable that can be either :data:`ArithmeticExpression`
+    or :data:`Expression`.
 """
 
 from __future__ import annotations
 
+
+__copyright__ = "Copyright (C) 2024 University of Illinois Board of Trustees"
+
+__license__ = """
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+
+from functools import partial
 from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
+
+from pytools import module_getattr_for_deprecations
 
 
 # FIXME: This is a lie. Many more constant types (e.g. numpy and such)
@@ -45,7 +78,7 @@ from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
 # https://github.com/python/typeshed/blob/119cd09655dcb4ed7fb2021654ba809b8d88846f/stdlib/numbers.pyi
 
 if TYPE_CHECKING:
-    from pymbolic.primitives import Expression
+    from pymbolic.primitives import ExpressionNode
 
 # Experience with depending packages showed that including Decimal and Fraction
 # from the stdlib was more trouble than it's worth because those types don't cleanly
@@ -59,37 +92,46 @@ _StdlibInexactNumberT = float | complex
 if TYPE_CHECKING:
     # Yes, type-checking pymbolic will require numpy. That's OK.
     import numpy as np
-    BoolT = bool | np.bool_
-    IntegerT: TypeAlias = int | np.integer
-    InexactNumberT: TypeAlias = _StdlibInexactNumberT | np.inexact
+    Bool = bool | np.bool_
+    Integer: TypeAlias = int | np.integer
+    InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 else:
     try:
         import numpy as np
     except ImportError:
-        BoolT = bool
-        IntegerT: TypeAlias = int
-        InexactNumberT: TypeAlias = _StdlibInexactNumberT
+        Bool = bool
+        Integer: TypeAlias = int
+        InexactNumber: TypeAlias = _StdlibInexactNumberT
     else:
-        BoolT = bool | np.bool_
-        IntegerT: TypeAlias = int | np.integer
-        InexactNumberT: TypeAlias = _StdlibInexactNumberT | np.inexact
+        Bool = bool | np.bool_
+        Integer: TypeAlias = int | np.integer
+        InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 
 
-NumberT: TypeAlias = IntegerT | InexactNumberT
-ScalarT: TypeAlias = NumberT | BoolT
+Number: TypeAlias = Integer | InexactNumber
+Scalar: TypeAlias = Number | Bool
 
-_ScalarOrExpression = Union[ScalarT, "Expression"]
-ArithmeticExpressionT: TypeAlias = Union[NumberT, "Expression"]
+_ScalarOrExpression = Union[Scalar, "ExpressionNode"]
+ArithmeticExpression: TypeAlias = Union[Number, "ExpressionNode"]
 
-ExpressionT: TypeAlias = _ScalarOrExpression | tuple["ExpressionT", ...]
+Expression: TypeAlias = _ScalarOrExpression | tuple["Expression", ...]
 
 ArithmeticOrExpressionT = TypeVar(
                 "ArithmeticOrExpressionT",
-                ArithmeticExpressionT,
-                ExpressionT)
+                ArithmeticExpression,
+                Expression)
 
 
 T = TypeVar("T")
+
+
+__getattr__ = partial(module_getattr_for_deprecations, __name__, {
+        "ArithmeticExpressionT": ("ArithmeticExpression", ArithmeticExpression, 2026),
+        "ExpressionT": ("Expression", Expression, 2026),
+        "IntegerT": ("Integer", Integer, 2026),
+        "ScalarT": ("Scalar", Scalar, 2026),
+        "BoolT": ("Bool", Bool, 2026),
+        })
 
 
 def not_none(x: T | None) -> T:

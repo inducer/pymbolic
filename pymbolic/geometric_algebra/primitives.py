@@ -29,8 +29,8 @@ THE SOFTWARE.
 from collections.abc import Hashable
 from typing import ClassVar
 
-from pymbolic.primitives import Expression, Variable, expr_dataclass
-from pymbolic.typing import ExpressionT
+from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
+from pymbolic.typing import Expression
 
 
 class MultiVectorVariable(Variable):
@@ -39,7 +39,7 @@ class MultiVectorVariable(Variable):
 
 # {{{ geometric calculus
 
-class _GeometricCalculusExpression(Expression):
+class _GeometricCalculusExpression(ExpressionNode):
     def stringifier(self):
         from pymbolic.geometric_algebra.mapper import StringifyMapper
         return StringifyMapper
@@ -58,7 +58,7 @@ class Nabla(_GeometricCalculusExpression):
 
 @expr_dataclass()
 class DerivativeSource(_GeometricCalculusExpression):
-    operand: ExpressionT
+    operand: Expression
     nabla_id: Hashable
 
 
