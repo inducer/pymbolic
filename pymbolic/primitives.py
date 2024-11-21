@@ -2055,7 +2055,7 @@ def make_sym_array(name, shape, var_factory=Variable):
     import numpy as np
     result = np.zeros(shape, dtype=object)
     for i in np.ndindex(shape):
-        result[i] = vfld.index(i)
+        result[i] = vfld[i]
 
     return result
 
