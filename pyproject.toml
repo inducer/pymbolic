@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "pymbolic"
-version = "2024.1"
+version = "2024.2"
 description = "A package for symbolic computation"
 readme = "README.rst"
 license = { text = "MIT" }
