@@ -399,7 +399,7 @@ class ExpressionNode:
     .. versionchanged:: 2022.2
 
         `PEP 634 <https://peps.python.org/pep-0634/>`__-style pattern matching
-        is now supported when Pymbolic is used under Python 3.10.
+        is now supported.
 
     .. autoproperty:: a
 
