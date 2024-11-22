@@ -33,14 +33,16 @@ autodoc_type_aliases = {
 }
 
 
+import sys
+
+
 nitpick_ignore_regex = [
-    # Avoids this error. Not sure where to even look.
+    # Avoids this error in pymbolic.typing.
     # <unknown>:1: WARNING: py:class reference target not found: ExpressionNode [ref.class]  # noqa: E501
+    # Understandable, because typing can't import primitives, which would be needed
+    # to resolve the reference.
     ["py:class", r"ExpressionNode"],
     ]
-
-
-import sys
 
 
 sys._BUILDING_SPHINX_DOCS = True

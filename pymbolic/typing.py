@@ -1,33 +1,29 @@
 """
-.. currentmodule:: pymbolic
-
 Typing helpers
 --------------
+
+.. currentmodule:: pymbolic
 
 .. autoclass:: Bool
 .. autoclass:: Number
 .. autoclass:: Scalar
-.. autoclass:: ArithmeticExpression
+.. autodata:: ArithmeticExpression
 
-    A narrower type alias than :class:`Expression` that is returned by
-    arithmetic operators, to allow continue doing arithmetic with the result
-    of arithmetic.
+    A narrower type alias than :class:`~pymbolic.typing.Expression` that is returned
+    by arithmetic operators, to allow continue doing arithmetic with the result.
 
 .. currentmodule:: pymbolic.typing
 
-.. autoclass:: Expression
+.. autodata:: Expression
 
 .. note::
 
-    For backward compatibility, ``pymbolic.Expression``
-    will alias :class:`pymbolic.primitives.ExpressionNode` for now. Once its deprecation
+    For backward compatibility, ``pymbolic.Expression``  will alias
+    :class:`pymbolic.primitives.ExpressionNode` for now. Once its deprecation
     period is up, it will be removed, and then, in the further future,
     ``pymbolic.Expression`` may become this type alias.
 
 .. autoclass:: ArithmeticOrExpressionT
-
-    A type variable that can be either :data:`ArithmeticExpression`
-    or :data:`Expression`.
 """
 
 from __future__ import annotations
@@ -78,7 +74,7 @@ from pytools import module_getattr_for_deprecations
 # https://github.com/python/typeshed/blob/119cd09655dcb4ed7fb2021654ba809b8d88846f/stdlib/numbers.pyi
 
 if TYPE_CHECKING:
-    from pymbolic.primitives import ExpressionNode
+    from pymbolic import ExpressionNode
 
 # Experience with depending packages showed that including Decimal and Fraction
 # from the stdlib was more trouble than it's worth because those types don't cleanly
@@ -111,16 +107,20 @@ else:
 Number: TypeAlias = Integer | InexactNumber
 Scalar: TypeAlias = Number | Bool
 
-_ScalarOrExpression = Union[Scalar, "ExpressionNode"]
 ArithmeticExpression: TypeAlias = Union[Number, "ExpressionNode"]
-
-Expression: TypeAlias = _ScalarOrExpression | tuple["Expression", ...]
+Expression: TypeAlias = Union[
+    Scalar,
+    "ExpressionNode",
+    tuple["Expression", ...]]
+"""A union of types that are considered as part of an expression tree."""
 
 ArithmeticOrExpressionT = TypeVar(
                 "ArithmeticOrExpressionT",
                 ArithmeticExpression,
                 Expression)
-
+"""A type variable that can be either an :class:`~pymbolic.ArithmeticExpression`
+or an :class:`~pymbolic.typing.Expression`.
+"""
 
 T = TypeVar("T")
 
