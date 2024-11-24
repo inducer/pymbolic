@@ -54,7 +54,7 @@ OUT_PROMPT_RE = re.compile(br"\(%o([0-9]+)\) ")
 ERROR_PROMPT_RE = re.compile(
     br"(Principal Value|debugmode|incorrect syntax|Maxima encountered a Lisp error)")
 ASK_RE = re.compile(br"(zero or nonzero|an integer|positive, negative, or zero|"
-        b"positive or negative|positive or zero)")
+        br"positive or negative|positive or zero)")
 MULTI_WHITESPACE = re.compile(br"[ \r\n\t]+")
 
 
