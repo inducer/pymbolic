@@ -66,6 +66,7 @@ from .typing import (
     Expression,
     Expression as _TypingExpression,
     Number,
+    RealNumber,
     Scalar,
 )
 from pymbolic.version import VERSION_TEXT as __version__  # noqa
@@ -77,6 +78,7 @@ __all__ = (
     "Expression",
     "ExpressionNode",
     "Number",
+    "RealNumber",
     "Scalar",
     "Variable",
     "compile",
