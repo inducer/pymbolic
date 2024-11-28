@@ -4,9 +4,14 @@ Typing helpers
 
 .. currentmodule:: pymbolic
 
-.. autoclass:: Bool
-.. autoclass:: Number
-.. autoclass:: Scalar
+.. autodata:: Bool
+.. autodata:: RealNumber
+
+    Mainly distinguished from :data:`Number` by having a total ordering, i.e.
+    not including the complex numbers.
+
+.. autodata:: Number
+.. autodata:: Scalar
 .. autodata:: ArithmeticExpression
 
     A narrower type alias than :class:`~pymbolic.typing.Expression` that is returned
@@ -88,8 +93,9 @@ _StdlibInexactNumberT = float | complex
 if TYPE_CHECKING:
     # Yes, type-checking pymbolic will require numpy. That's OK.
     import numpy as np
-    Bool = bool | np.bool_
+    Bool: TypeAlias = bool | np.bool_
     Integer: TypeAlias = int | np.integer
+    RealNumber: TypeAlias = Integer | float | np.floating
     InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 else:
     try:
@@ -97,10 +103,12 @@ else:
     except ImportError:
         Bool = bool
         Integer: TypeAlias = int
+        RealNumber: TypeAlias = Integer | float
         InexactNumber: TypeAlias = _StdlibInexactNumberT
     else:
         Bool = bool | np.bool_
         Integer: TypeAlias = int | np.integer
+        RealNumber: TypeAlias = Integer | float | np.floating
         InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 
 
