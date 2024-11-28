@@ -368,7 +368,8 @@ def disable_subscript_by_getitem():
 
 # https://stackoverflow.com/a/13624858
 class _classproperty(property):  # noqa: N801
-    def __get__(self, owner_self, owner_cls):
+    def __get__(self, owner_self: Any, owner_cls: type | None = None) -> Any:
+        assert self.fget is not None
         return self.fget(owner_cls)
 
 
