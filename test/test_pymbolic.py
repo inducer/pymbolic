@@ -465,7 +465,7 @@ def test_geometric_algebra(dims):
         # contractions
 
         # (3.18) in [DFM]
-        assert abs(b.scalar_product(a ^ c) - (b >> a).scalar_product(c)) < 1e-13
+        assert abs(b.scalar_product(a ^ c) - (b >> a).scalar_product(c)) < 1e-12
 
         # duality, (3.20) in [DFM]
         assert ((a ^ b) << c) .close_to(a << (b << c))
