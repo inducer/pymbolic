@@ -31,7 +31,6 @@ dependencies = [
     "pytools>=2024.1.16",
     # for dataclass_transform, TypeAlias, deprecated
     "typing-extensions>=4.5",
-    "useful-types",
 ]
 
 [project.optional-dependencies]
@@ -44,7 +43,9 @@ numpy = [
 test = [
     "mypy",
     "pytest",
-    "ruff"
+    "ruff",
+    # only needed for type checking
+    "useful-types",
 ]
 
 [project.urls]
