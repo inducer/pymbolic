@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pymbolic.typing import Expression
-
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -27,12 +25,16 @@ THE SOFTWARE.
 
 from collections.abc import Sequence
 from sys import intern
-from typing import ClassVar, TypeAlias
+from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
 from immutabledict import immutabledict
 
 import pytools.lex
 from pytools import memoize_method
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import Expression
 
 
 _imaginary = intern("imaginary")

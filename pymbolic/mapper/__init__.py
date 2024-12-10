@@ -429,7 +429,7 @@ class CachedMapper(Mapper[ResultT, P]):
         method_name = getattr(expr, "mapper_method", None)
         if method_name is not None:
             method = cast(
-                Callable[Concatenate[Expression, P], ResultT] | None,
+                "Callable[Concatenate[Expression, P], ResultT] | None",
                 getattr(self, method_name, None)
                 )
             if method is not None:
@@ -973,7 +973,7 @@ class IdentityMapper(Mapper[Expression, P]):
                 *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
         # True fact: MultiVectors aren't expressions
-        return expr.map(lambda ch: cast(ArithmeticExpression,
+        return expr.map(lambda ch: cast("ArithmeticExpression",
                                         self.rec(ch, *args, **kwargs)))  # type: ignore[return-value]
 
     def map_common_subexpression(self,
@@ -1012,7 +1012,7 @@ class IdentityMapper(Mapper[Expression, P]):
     def map_slice(self,
                 expr: p.Slice,
                 *args: P.args, **kwargs: P.kwargs) -> Expression:
-        children: p.SliceChildrenT = cast(p.SliceChildrenT, tuple([
+        children: p.SliceChildrenT = cast("p.SliceChildrenT", tuple([
             None if child is None else self.rec(child, *args, **kwargs)
             for child in expr.children
             ]))

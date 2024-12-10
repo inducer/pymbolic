@@ -24,7 +24,6 @@ THE SOFTWARE.
 """
 
 import re
-from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, fields
 from functools import partial
 from sys import intern
@@ -50,6 +49,8 @@ from .typing import ArithmeticExpression, Expression as _Expression, Number, Sca
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Mapping
+
     from _typeshed import DataclassInstance
 
 
@@ -1058,7 +1059,7 @@ def _augment_expression_dataclass(
 
     # {{{ assign mapper_method
 
-    mm_cls = cast(type[_HasMapperMethod], cls)
+    mm_cls = cast("type[_HasMapperMethod]", cls)
 
     snake_clsname = _CAMEL_TO_SNAKE_RE.sub("_", mm_cls.__name__).lower()
     default_mapper_method_name = f"map_{snake_clsname}"
@@ -1793,7 +1794,7 @@ def flattened_sum(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression
             continue
 
         if isinstance(item, Sum):
-            ch = cast(tuple[ArithmeticExpression], item.children)
+            ch = cast("tuple[ArithmeticExpression]", item.children)
             queue.extend(ch)
         else:
             done.append(item)
@@ -1835,7 +1836,7 @@ def flattened_product(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpres
             continue
 
         if isinstance(item, Product):
-            ch = cast(tuple[ArithmeticExpression], item.children)
+            ch = cast("tuple[ArithmeticExpression]", item.children)
             queue.extend(ch)
         else:
             done.append(item)

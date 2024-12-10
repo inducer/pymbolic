@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import multiset
 import numpy as np
@@ -12,7 +11,12 @@ import pymbolic.interop.matchpy as m
 import pymbolic.primitives as p
 from pymbolic.interop.matchpy.mapper import Mapper as BaseMatchPyMapper
 from pymbolic.mapper import Mapper as BasePymMapper
-from pymbolic.typing import Scalar as PbScalar
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pymbolic.typing import Scalar as PbScalar
 
 
 # {{{ to matchpy

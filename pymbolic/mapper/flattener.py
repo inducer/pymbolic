@@ -31,15 +31,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
-from pymbolic.typing import (
-    ArithmeticExpression,
-    ArithmeticOrExpressionT,
-    Expression,
-)
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import (
+        ArithmeticExpression,
+        ArithmeticOrExpressionT,
+        Expression,
+    )
 
 
 class FlattenMapper(IdentityMapper[[]]):
@@ -68,13 +71,13 @@ class FlattenMapper(IdentityMapper[[]]):
     def map_sum(self, expr: p.Sum) -> Expression:
         from pymbolic.primitives import flattened_sum
         return flattened_sum([
-                             cast(ArithmeticExpression, self.rec(ch))
+                             cast("ArithmeticExpression", self.rec(ch))
                              for ch in expr.children])
 
     def map_product(self, expr: p.Product) -> Expression:
         from pymbolic.primitives import flattened_product
         return flattened_product([
-                                 cast(ArithmeticExpression, self.rec(ch))
+                                 cast("ArithmeticExpression", self.rec(ch))
                                  for ch in expr.children])
 
     def map_quotient(self, expr: p.Quotient) -> Expression:
@@ -123,4 +126,4 @@ class FlattenMapper(IdentityMapper[[]]):
 
 
 def flatten(expr: ArithmeticOrExpressionT) -> ArithmeticOrExpressionT:
-    return cast(ArithmeticOrExpressionT, FlattenMapper()(expr))
+    return cast("ArithmeticOrExpressionT", FlattenMapper()(expr))

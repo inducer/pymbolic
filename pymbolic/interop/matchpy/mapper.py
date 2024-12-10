@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pymbolic.interop.matchpy import PymbolicOp
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pymbolic.interop.matchpy import PymbolicOp
 
 
 class Mapper:

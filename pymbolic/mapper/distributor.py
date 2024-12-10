@@ -27,14 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pymbolic
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
 from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
-from pymbolic.typing import ArithmeticExpression, Expression
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class DistributeMapper(IdentityMapper[[]]):
@@ -118,7 +121,7 @@ class DistributeMapper(IdentityMapper[[]]):
         newbase = self.rec(expr.base)
         if isinstance(newbase, p.Product):
             return self.rec(pymbolic.flattened_product([
-                cast(ArithmeticExpression, child)**expr.exponent
+                cast("ArithmeticExpression", child)**expr.exponent
                     for child in newbase.children
                 ]))
 

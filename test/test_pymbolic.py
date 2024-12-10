@@ -3,7 +3,6 @@ from __future__ import annotations
 from pymbolic.mapper.evaluator import evaluate_kw
 from pymbolic.mapper.flattener import FlattenMapper
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.typing import Expression
 
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
@@ -30,6 +29,7 @@ THE SOFTWARE.
 
 import logging
 from functools import reduce
+from typing import TYPE_CHECKING
 
 import pytest
 from testlib import generate_random_expression
@@ -40,6 +40,10 @@ import pymbolic.primitives as prim
 from pymbolic import parse
 from pymbolic.mapper import IdentityMapper, WalkMapper
 from pymbolic.mapper.dependency import CachedDependencyMapper, DependencyMapper
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import Expression
 
 
 logger = logging.getLogger(__name__)

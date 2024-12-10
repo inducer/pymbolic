@@ -34,19 +34,20 @@ THE SOFTWARE.
 """
 
 import operator as op
-from collections.abc import Mapping
 from functools import reduce
 from typing import TYPE_CHECKING, cast
 
-import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper, ResultT
-from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     import numpy as np
 
+    import pymbolic.primitives as p
     from pymbolic.geometric_algebra import MultiVector
+    from pymbolic.typing import Expression
 
 
 class UnknownVariableError(Exception):
@@ -82,7 +83,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
         self.context = context
 
     def map_constant(self, expr: object) -> ResultT:
-        return cast(ResultT, expr)
+        return cast("ResultT", expr)
 
     def map_variable(self, expr: p.Variable) -> ResultT:
         try:

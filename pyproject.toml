@@ -68,6 +68,7 @@ extend-select = [
     "RUF",  # ruff
     "UP",   # pyupgrade
     "W",    # pycodestyle
+    "TC",   # type checking
 ]
 extend-ignore = [
     "C409", # remove comprehension within tuple call
