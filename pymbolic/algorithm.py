@@ -43,8 +43,12 @@ from warnings import warn
 from pytools import MovedFunctionDeprecationWrapper, memoize
 
 
-if TYPE_CHECKING or getattr(sys, "_BUILDING_SPHINX_DOCS", None):
+if TYPE_CHECKING:
     import numpy as np
+
+
+if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
+    import numpy as np  # noqa: TC002
 
 
 # {{{ integer powers

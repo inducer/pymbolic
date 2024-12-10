@@ -26,14 +26,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections.abc import Sequence, Set
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pymbolic
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
-from pymbolic.mapper.dependency import DependenciesT
-from pymbolic.typing import ArithmeticExpression, Expression
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence, Set
+
+    from pymbolic.mapper.dependency import DependenciesT
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class TermCollector(IdentityMapper[[]]):
@@ -110,7 +114,7 @@ class TermCollector(IdentityMapper[[]]):
 
         base_exp_set = frozenset(
                 (base, exp) for base, exp in cleaned_base2exp.items())
-        return base_exp_set, cast(ArithmeticExpression,
+        return base_exp_set, cast("ArithmeticExpression",
                 self.rec(pymbolic.flattened_product(coefficients)))
 
     def map_sum(self, expr: p.Sum) -> Expression:

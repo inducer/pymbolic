@@ -27,11 +27,14 @@ THE SOFTWARE.
 """
 
 import ast
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper
-from pymbolic.typing import Expression
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import Expression
 
 
 __doc__ = r'''

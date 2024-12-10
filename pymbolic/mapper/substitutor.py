@@ -38,16 +38,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-from collections.abc import Callable
+import sys
 from typing import TYPE_CHECKING, Any
 
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
-from pymbolic.primitives import AlgebraicLeaf
-from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from useful_types import SupportsGetItem, SupportsItems
+
+    from pymbolic.primitives import AlgebraicLeaf
+    from pymbolic.typing import Expression
+
+
+if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
+    from collections.abc import Callable  # noqa: TC003
 
 
 class SubstitutionMapper(IdentityMapper[[]]):

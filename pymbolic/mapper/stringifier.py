@@ -22,7 +22,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar, Concatenate
 from warnings import warn
 
@@ -30,13 +29,15 @@ from typing_extensions import deprecated
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Mapper, P
-from pymbolic.typing import Expression
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy as np
 
     from pymbolic.geometric_algebra import MultiVector
+    from pymbolic.typing import Expression
 
 
 __doc__ = """

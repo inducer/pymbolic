@@ -27,7 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections.abc import Callable
+
+from typing import TYPE_CHECKING
 
 from pymbolic.mapper import (
     CSECachingMapperMixin,
@@ -36,6 +37,10 @@ from pymbolic.mapper import (
 )
 from pymbolic.primitives import Product, Sum, is_arithmetic_expression
 from pymbolic.typing import ArithmeticExpression, Expression
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ConstantFoldingMapperBase(Mapper[Expression, []]):

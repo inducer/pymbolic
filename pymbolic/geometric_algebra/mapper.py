@@ -25,8 +25,7 @@ THE SOFTWARE.
 
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
-from collections.abc import Set
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pymbolic.geometric_algebra.primitives as prim
 from pymbolic.geometric_algebra import MultiVector
@@ -49,7 +48,12 @@ from pymbolic.mapper.stringifier import (
     PREC_NONE,
     StringifyMapper as StringifyMapperBase,
 )
-from pymbolic.primitives import ExpressionNode
+
+
+if TYPE_CHECKING:
+    from collections.abc import Set
+
+    from pymbolic.primitives import ExpressionNode
 
 
 class IdentityMapper(IdentityMapperBase[P]):

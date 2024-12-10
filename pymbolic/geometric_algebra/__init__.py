@@ -567,7 +567,7 @@ class MultiVector(Generic[CoeffT]):
                     f"are supported for 'data': shape {data.shape}")
 
             dimensions, = data.shape
-            data_dict = {(i,): cast(CoeffT, xi) for i, xi in enumerate(data)}
+            data_dict = {(i,): cast("CoeffT", xi) for i, xi in enumerate(data)}
 
             if space is None:
                 space = get_euclidean_space(dimensions)
@@ -579,7 +579,7 @@ class MultiVector(Generic[CoeffT]):
         elif isinstance(data, Mapping):
             data_dict = data
         else:
-            data_dict = {0: cast(CoeffT, data)}
+            data_dict = {0: cast("CoeffT", data)}
 
         if space is None:
             raise ValueError("No 'space' provided")
@@ -595,8 +595,8 @@ class MultiVector(Generic[CoeffT]):
                 assert isinstance(basis_indices, tuple)
 
                 bits, sign = space.bits_and_sign(basis_indices)
-                new_coeff = cast(CoeffT,
-                    new_data.setdefault(bits, cast(CoeffT, 0))  # type: ignore[operator]
+                new_coeff = cast("CoeffT",
+                    new_data.setdefault(bits, cast("CoeffT", 0))  # type: ignore[operator]
                     + sign*coeff)
 
                 if is_zero(new_coeff):
@@ -604,7 +604,7 @@ class MultiVector(Generic[CoeffT]):
                 else:
                     new_data[bits] = new_coeff
         else:
-            new_data = cast(dict[int, CoeffT], data_dict)
+            new_data = cast("dict[int, CoeffT]", data_dict)
 
         # }}}
 
@@ -691,8 +691,8 @@ class MultiVector(Generic[CoeffT]):
         from pymbolic.primitives import is_zero
         new_data = {}
         for bits in all_bits:
-            new_coeff = (self.data.get(bits, cast(CoeffT, 0))
-                + other.data.get(bits, cast(CoeffT, 0)))
+            new_coeff = (self.data.get(bits, cast("CoeffT", 0))
+                + other.data.get(bits, cast("CoeffT", 0)))
 
             if not is_zero(new_coeff):
                 new_data[bits] = new_coeff
@@ -741,7 +741,7 @@ class MultiVector(Generic[CoeffT]):
                     coeff = (weight
                             * canonical_reordering_sign(sbits, obits)
                             * scoeff * ocoeff)
-                    new_coeff = new_data.setdefault(new_bits, cast(CoeffT, 0)) + coeff
+                    new_coeff = new_data.setdefault(new_bits, cast("CoeffT", 0)) + coeff
                     if is_zero(new_coeff):
                         del new_data[new_bits]
                     else:
@@ -1134,7 +1134,7 @@ def componentwise(f: Callable[[CoeffT], CoeffT], expr: T) -> T:
     """
 
     if isinstance(expr, MultiVector):
-        return cast(T, expr.map(f))
+        return cast("T", expr.map(f))
 
     from pytools.obj_array import obj_array_vectorize
     return obj_array_vectorize(f, expr)

@@ -24,9 +24,12 @@ THE SOFTWARE.
 """
 
 import ast
-from collections.abc import Callable, Iterable, MutableMapping
 from functools import cached_property, lru_cache
-from typing import TextIO, TypeVar, cast
+from typing import TYPE_CHECKING, TextIO, TypeVar, cast
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, MutableMapping
 
 
 # This machinery applies AST rewriting to the mapper in a mildly brutal
@@ -130,7 +133,7 @@ class _RecInliner(ast.NodeTransformer):
         self.inline_cache = inline_cache
 
     def visit_Call(self, node: ast.Call) -> ast.AST:  # noqa: N802
-        node = cast(ast.Call, self.generic_visit(node))
+        node = cast("ast.Call", self.generic_visit(node))
 
         result_expr: ast.expr = node
 
@@ -397,7 +400,7 @@ def optimize_mapper(
             "exec"),
              compile_dict)
 
-        return cast(type, compile_dict[cls.__name__])
+        return cast("type", compile_dict[cls.__name__])
 
     return wrapper
 

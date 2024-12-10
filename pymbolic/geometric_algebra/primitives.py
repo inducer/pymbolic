@@ -26,11 +26,15 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from collections.abc import Hashable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
-from pymbolic.typing import Expression
+
+
+if TYPE_CHECKING:
+    from collections.abc import Hashable
+
+    from pymbolic.typing import Expression
 
 
 class MultiVectorVariable(Variable):

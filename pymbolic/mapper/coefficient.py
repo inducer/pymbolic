@@ -68,7 +68,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
         for i, child_coeffs in enumerate(children_coeffs):
             if i != idx_of_child_with_vars:
                 assert len(child_coeffs) == 1
-                other_coeffs *= cast(ArithmeticExpression, child_coeffs[1])
+                other_coeffs *= cast("ArithmeticExpression", child_coeffs[1])
 
         if idx_of_child_with_vars is None:
             return {1: other_coeffs}

@@ -42,6 +42,8 @@ nitpick_ignore_regex = [
     # Understandable, because typing can't import primitives, which would be needed
     # to resolve the reference.
     ["py:class", r"ExpressionNode"],
+    ["py:class", r"_Expression"],
+    ["py:class", r"p\.AlgebraicLeaf"],
     ]
 
 
