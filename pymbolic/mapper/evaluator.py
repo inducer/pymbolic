@@ -163,7 +163,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         for i in numpy.ndindex(expr.shape):
-            result[i] = self.rec(expr[i])
+            result[i] = self.rec(expr[i])  # type: ignore[call-overload]
         return result  # type: ignore[return-value]
 
     def map_multivector(self, expr: MultiVector) -> ResultT:
