@@ -627,7 +627,7 @@ class CombineMapper(Mapper[ResultT, P]):
             self.rec(expr.else_, *args, **kwargs)])
 
 
-class CachedCombineMapper(CachedMapper, CombineMapper):
+class CachedCombineMapper(CachedMapper[ResultT, P], CombineMapper[ResultT, P]):
     pass
 
 # }}}
@@ -1436,7 +1436,7 @@ class WalkMapper(Mapper[None, P]):
         pass
 
 
-class CachedWalkMapper(CachedMapper, WalkMapper):
+class CachedWalkMapper(CachedMapper[None, P], WalkMapper[P]):
     pass
 
 # }}}
