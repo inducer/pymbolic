@@ -263,6 +263,8 @@ Helper functions
 
 .. autofunction:: is_zero
 .. autofunction:: is_constant
+.. autofunction:: is_expression
+.. autofunction:: is_arithmetic_expression
 .. autofunction:: flattened_sum
 .. autofunction:: flattened_product
 .. autofunction:: register_constant_class
@@ -1895,6 +1897,16 @@ def is_constant(value: object) -> TypeIs[Scalar]:
 def is_number(value: object) -> TypeIs[Number]:
     return (not isinstance(value, _BOOL_CLASSES)
         and isinstance(value, VALID_CONSTANT_CLASSES))
+
+
+def is_expression(value: object) -> TypeIs[_Expression]:
+    """
+    .. versionadded:: 2024.2.3
+    """
+    if isinstance(value, tuple):
+        return all(is_expression(vi) for vi in value)
+    else:
+        return isinstance(value, VALID_OPERANDS) or is_constant(value)
 
 
 def is_valid_operand(value: object) -> TypeIs[_Expression]:
