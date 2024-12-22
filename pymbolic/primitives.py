@@ -648,8 +648,8 @@ class ExpressionNode:
             return Subscript(self, subscript.child)
 
         if subscript == ():
-            warn("Expression.__getitem__ called with an empty tuple as an index. "
-                 "This still returns just the aggregate (not a Subscript), "
+            warn(f"{type(self).__name__}.__getitem__ called with an empty tuple as "
+                 "an index. This still returns just the aggregate (not a Subscript), "
                  "but this behavior will change in 2026. To avoid this warning "
                  "(and return a Subscript unconditionally), wrap the subscript "
                  "in pymbolic.primitives.EmptyOK.", DeprecationWarning, stacklevel=2)
