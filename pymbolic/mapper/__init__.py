@@ -963,7 +963,7 @@ class IdentityMapper(Mapper[Expression, P]):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         for i in numpy.ndindex(expr.shape):
-            result[i] = self.rec(expr[i], *args, **kwargs)  # type: ignore[assignment]
+            result[i] = self.rec(expr[i], *args, **kwargs)
 
         # True fact: ndarrays aren't expressions
         return result  # type: ignore[return-value]
