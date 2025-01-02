@@ -637,7 +637,7 @@ def test_unifier():
 def test_long_sympy_mapping():
     sp = pytest.importorskip("sympy")
     from pymbolic.interop.sympy import SympyToPymbolicMapper
-    SympyToPymbolicMapper()(sp.sympify(int(10**20)))
+    SympyToPymbolicMapper()(sp.sympify(10**20))
     SympyToPymbolicMapper()(sp.sympify(10))
 
 # }}}
