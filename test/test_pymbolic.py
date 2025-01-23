@@ -598,10 +598,7 @@ def test_unifier():
     a, b, c, d, e, f = (var(s) for s in "abcdef")
 
     def match_found(records, eqns):
-        for record in records:
-            if eqns <= set(record.equations):
-                return True
-        return False
+        return any(eqns <= set(record.equations) for record in records)
 
     recs = UnidirectionalUnifier("abc")(a+b*c, d+e*f)
     assert len(recs) == 2

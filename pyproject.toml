@@ -69,6 +69,7 @@ extend-select = [
     "UP",   # pyupgrade
     "W",    # pycodestyle
     "TC",   # type checking
+    "SIM",
 ]
 extend-ignore = [
     "C409", # remove comprehension within tuple call

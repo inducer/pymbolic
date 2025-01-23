@@ -344,10 +344,7 @@ def reduced_row_echelon_form(
              "This will stop being supported in 2025.",
              DeprecationWarning, stacklevel=2)
 
-    if integral:
-        div_func = operator.floordiv
-    else:
-        div_func = operator.truediv
+    div_func = operator.floordiv if integral else operator.truediv
 
     i = 0
     j = 0

@@ -24,6 +24,7 @@ THE SOFTWARE.
 """
 
 import ast
+import contextlib
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING, TextIO, TypeVar, cast
 
@@ -98,14 +99,10 @@ def _get_ast_for_method(f: Callable) -> ast.FunctionDef:
 
 
 def _replace(obj, **kwargs):
-    try:
+    with contextlib.suppress(AttributeError):
         kwargs["lineno"] = obj.lineno
-    except AttributeError:
-        pass
-    try:
+    with contextlib.suppress(AttributeError):
         kwargs["col_offsets"] = obj.col_offsets
-    except AttributeError:
-        pass
 
     return type(obj)(**{
         name: kwargs.get(name, getattr(obj, name))
@@ -384,11 +381,10 @@ def optimize_mapper(
             for name, value in import_module(mod_name).__dict__.items():
                 if name.startswith("__"):
                     continue
-                if name in compile_dict:
-                    if compile_dict[name] is not value:
-                        raise ValueError(
-                                "symbol disagreement in environment: "
-                                f"'{name}', most recently from '{mod_name}'")
+                if name in compile_dict and compile_dict[name] is not value:
+                    raise ValueError(
+                            "symbol disagreement in environment: "
+                            f"'{name}', most recently from '{mod_name}'")
                 compile_dict[name] = value
 
         # }}}

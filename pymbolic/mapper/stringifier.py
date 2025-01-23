@@ -639,10 +639,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     ) -> str:
         from pymbolic.primitives import CommonSubexpression
 
-        if type(expr) is CommonSubexpression:
-            type_name = "CSE"
-        else:
-            type_name = type(expr).__name__
+        type_name = "CSE" if type(expr) is CommonSubexpression else type(expr).__name__
 
         return self.format(
             "%s(%s)", type_name, self.rec(expr.child, PREC_NONE, *args, **kwargs)
@@ -913,11 +910,10 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
     ) -> str:
         entries = []
         i = 0
-        from pymbolic.primitives import is_zero
 
         while i < len(expr.children):
             child = expr.children[i]
-            if False and is_zero(child + 1) and i + 1 < len(expr.children):
+            if False:
                 # NOTE: That space needs to be there.
                 # Otherwise two unary minus signs merge into a pre-decrement.
                 entries.append(

@@ -23,6 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import contextlib
+
 import pytest
 
 from pymbolic.interop.maxima import MaximaKernel
@@ -75,15 +77,11 @@ def test_setup(knl):
 @pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")
 def test_error(knl):
     from pymbolic.interop.maxima import MaximaError
-    try:
+    with contextlib.suppress(MaximaError):
         knl.eval_str("))(!")
-    except MaximaError:
-        pass
 
-    try:
+    with contextlib.suppress(MaximaError):
         knl.eval_str("integrate(1/(x^3*(a+b*x)^(1/3)),x)")
-    except MaximaError:
-        pass
 
 
 @pytest.mark.skipif(MAXIMA_UNAVAILABLE, reason="maxima cannot be launched")

@@ -342,7 +342,7 @@ class Parser:
 
         next_tag = pstate.next_tag()
 
-        if next_tag is _openpar and _PREC_CALL > min_precedence:
+        if next_tag is _openpar and min_precedence < _PREC_CALL:
             pstate.advance()
             args, kwargs = self.parse_arglist(pstate)
 
@@ -353,14 +353,14 @@ class Parser:
                 left_exp = primitives.Call(left_exp, args)
 
             did_something = True
-        elif next_tag is _openbracket and _PREC_CALL > min_precedence:
+        elif next_tag is _openbracket and min_precedence < _PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
             left_exp = primitives.Subscript(left_exp, self.parse_expression(pstate))
             pstate.expect(_closebracket)
             pstate.advance()
             did_something = True
-        elif next_tag is _if and _PREC_IF > min_precedence:
+        elif next_tag is _if and min_precedence < _PREC_IF:
             from pymbolic.primitives import If
             then_expr = left_exp
             pstate.advance()
@@ -371,13 +371,13 @@ class Parser:
             else_expr = self.parse_expression(pstate)
             left_exp = If(condition, then_expr, else_expr)
             did_something = True
-        elif next_tag is _dot and _PREC_CALL > min_precedence:
+        elif next_tag is _dot and min_precedence < _PREC_CALL:
             pstate.advance()
             pstate.expect(_identifier)
             left_exp = primitives.Lookup(left_exp, pstate.next_str())
             pstate.advance()
             did_something = True
-        elif next_tag is _plus and _PREC_PLUS > min_precedence:
+        elif next_tag is _plus and min_precedence < _PREC_PLUS:
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Sum):
@@ -386,7 +386,7 @@ class Parser:
                 left_exp = primitives.Sum((left_exp, right_exp))
 
             did_something = True
-        elif next_tag is _minus and _PREC_PLUS > min_precedence:
+        elif next_tag is _minus and min_precedence < _PREC_PLUS:
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Sum):
@@ -394,7 +394,7 @@ class Parser:
             else:
                 left_exp = primitives.Sum((left_exp, -right_exp))  # pylint:disable=invalid-unary-operand-type
             did_something = True
-        elif next_tag is _times and _PREC_TIMES > min_precedence:
+        elif next_tag is _times and min_precedence < _PREC_TIMES:
             pstate.advance()
             right_exp = self.parse_expression(pstate, _PREC_PLUS)
             if isinstance(left_exp, primitives.Product):
@@ -402,76 +402,76 @@ class Parser:
             else:
                 left_exp = primitives.Product((left_exp, right_exp))
             did_something = True
-        elif next_tag is _floordiv and _PREC_TIMES > min_precedence:
+        elif next_tag is _floordiv and min_precedence < _PREC_TIMES:
             pstate.advance()
             left_exp = primitives.FloorDiv(
                     left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
-        elif next_tag is _over and _PREC_TIMES > min_precedence:
+        elif next_tag is _over and min_precedence < _PREC_TIMES:
             pstate.advance()
             left_exp = primitives.Quotient(
                     left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
-        elif next_tag is _modulo and _PREC_TIMES > min_precedence:
+        elif next_tag is _modulo and min_precedence < _PREC_TIMES:
             pstate.advance()
             left_exp = primitives.Remainder(
                     left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
-        elif next_tag is _power and _PREC_POWER > min_precedence:
+        elif next_tag is _power and min_precedence < _PREC_POWER:
             pstate.advance()
             left_exp = primitives.Power(
                     left_exp, self.parse_expression(pstate, _PREC_TIMES))
             did_something = True
-        elif next_tag is _and and _PREC_LOGICAL_AND > min_precedence:
+        elif next_tag is _and and min_precedence < _PREC_LOGICAL_AND:
             pstate.advance()
             from pymbolic.primitives import LogicalAnd
             left_exp = LogicalAnd((
                     left_exp,
                     self.parse_expression(pstate, _PREC_LOGICAL_AND)))
             did_something = True
-        elif next_tag is _or and _PREC_LOGICAL_OR > min_precedence:
+        elif next_tag is _or and min_precedence < _PREC_LOGICAL_OR:
             pstate.advance()
             from pymbolic.primitives import LogicalOr
             left_exp = LogicalOr((
                     left_exp,
                     self.parse_expression(pstate, _PREC_LOGICAL_OR)))
             did_something = True
-        elif next_tag is _bitwiseor and _PREC_BITWISE_OR > min_precedence:
+        elif next_tag is _bitwiseor and min_precedence < _PREC_BITWISE_OR:
             pstate.advance()
             from pymbolic.primitives import BitwiseOr
             left_exp = BitwiseOr((
                     left_exp,
                     self.parse_expression(pstate, _PREC_BITWISE_OR)))
             did_something = True
-        elif next_tag is _bitwisexor and _PREC_BITWISE_XOR > min_precedence:
+        elif next_tag is _bitwisexor and min_precedence < _PREC_BITWISE_XOR:
             pstate.advance()
             from pymbolic.primitives import BitwiseXor
             left_exp = BitwiseXor((
                     left_exp,
                     self.parse_expression(pstate, _PREC_BITWISE_XOR)))
             did_something = True
-        elif next_tag is _bitwiseand and _PREC_BITWISE_AND > min_precedence:
+        elif next_tag is _bitwiseand and min_precedence < _PREC_BITWISE_AND:
             pstate.advance()
             from pymbolic.primitives import BitwiseAnd
             left_exp = BitwiseAnd((
                     left_exp,
                     self.parse_expression(pstate, _PREC_BITWISE_AND)))
             did_something = True
-        elif next_tag is _rightshift and _PREC_SHIFT > min_precedence:
+        elif next_tag is _rightshift and min_precedence < _PREC_SHIFT:
             pstate.advance()
             from pymbolic.primitives import RightShift
             left_exp = RightShift(
                     left_exp,
                     self.parse_expression(pstate, _PREC_SHIFT))
             did_something = True
-        elif next_tag is _leftshift and _PREC_SHIFT > min_precedence:
+        elif next_tag is _leftshift and min_precedence < _PREC_SHIFT:
             pstate.advance()
             from pymbolic.primitives import LeftShift
             left_exp = LeftShift(
                     left_exp,
                     self.parse_expression(pstate, _PREC_SHIFT))
             did_something = True
-        elif next_tag in self._COMP_TABLE and _PREC_COMPARISON > min_precedence:
+        elif next_tag in self._COMP_TABLE and min_precedence < _PREC_COMPARISON:
             pstate.advance()
             from pymbolic.primitives import Comparison
             left_exp = Comparison(
@@ -479,7 +479,7 @@ class Parser:
                     self._COMP_TABLE[next_tag],
                     self.parse_expression(pstate, _PREC_COMPARISON))
             did_something = True
-        elif next_tag is _colon and _PREC_SLICE >= min_precedence:
+        elif next_tag is _colon and min_precedence <= _PREC_SLICE:
             pstate.advance()
             expr_pstate = pstate.copy()
 
@@ -497,7 +497,7 @@ class Parser:
 
             did_something = True
 
-        elif next_tag is _comma and _PREC_COMMA > min_precedence:
+        elif next_tag is _comma and min_precedence < _PREC_COMMA:
             # The precedence makes the comma left-associative.
 
             pstate.advance()

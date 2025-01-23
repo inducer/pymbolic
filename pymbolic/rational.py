@@ -61,10 +61,7 @@ class Rational(primitives.ExpressionNode):
                self.Denominator == other.Denominator
 
     def __add__(self, other):
-        if not isinstance(other, Rational):
-            newother = Rational(other)
-        else:
-            newother = other
+        newother = Rational(other) if not isinstance(other, Rational) else other
 
         try:
             t = traits.common_traits(self.Denominator, newother.Denominator)
@@ -87,10 +84,7 @@ class Rational(primitives.ExpressionNode):
         return (-self).__radd__(other)
 
     def __mul__(self, other):
-        if not isinstance(other, Rational):
-            newother = Rational(other)
-        else:
-            newother = other
+        newother = Rational(other) if not isinstance(other, Rational) else other
 
         try:
             t = traits.common_traits(self.Numerator, newother.Numerator,

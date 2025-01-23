@@ -28,7 +28,7 @@ import pytest
 import pymbolic.primitives as prim
 
 
-x_, y_, i_, j_ = (prim.Variable(s) for s in "x y i j".split())
+x_, y_, i_, j_ = (prim.Variable(s) for s in ["x", "y", "i", "j"])
 
 
 # {{{ to pymbolic test

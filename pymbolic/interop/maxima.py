@@ -150,7 +150,7 @@ class MaximaParser(ParserBase):
 
         next_tag = pstate.next_tag()
 
-        if next_tag is p._openpar and p._PREC_CALL > min_precedence:
+        if next_tag is p._openpar and min_precedence < p._PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
             if next_tag is p._closepar:
@@ -170,38 +170,38 @@ class MaximaParser(ParserBase):
                     left_exp = primitives.Call(left_exp, args)
 
             did_something = True
-        elif next_tag is p._openbracket and p._PREC_CALL > min_precedence:
+        elif next_tag is p._openbracket and min_precedence < p._PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
             left_exp = primitives.Subscript(left_exp, self.parse_expression(pstate))
             pstate.expect(p._closebracket)
             pstate.advance()
             did_something = True
-        elif next_tag is p._dot and p._PREC_CALL > min_precedence:
+        elif next_tag is p._dot and min_precedence < p._PREC_CALL:
             pstate.advance()
             pstate.expect(p._identifier)
             left_exp = primitives.Lookup(left_exp, pstate.next_str())
             pstate.advance()
             did_something = True
-        elif next_tag is p._plus and p._PREC_PLUS > min_precedence:
+        elif next_tag is p._plus and min_precedence < p._PREC_PLUS:
             pstate.advance()
             left_exp += self.parse_expression(pstate, p._PREC_PLUS)
             did_something = True
-        elif next_tag is p._minus and p._PREC_PLUS > min_precedence:
+        elif next_tag is p._minus and min_precedence < p._PREC_PLUS:
             pstate.advance()
             left_exp -= self.parse_expression(pstate, p._PREC_PLUS)
             did_something = True
-        elif next_tag is p._times and p._PREC_TIMES > min_precedence:
+        elif next_tag is p._times and min_precedence < p._PREC_TIMES:
             pstate.advance()
             left_exp *= self.parse_expression(pstate, p._PREC_TIMES)
             did_something = True
-        elif next_tag is p._over and p._PREC_TIMES > min_precedence:
+        elif next_tag is p._over and min_precedence < p._PREC_TIMES:
             pstate.advance()
             from pymbolic.primitives import Quotient
             left_exp = Quotient(
                     left_exp, self.parse_expression(pstate, p._PREC_TIMES))
             did_something = True
-        elif next_tag is self.power_sym and p._PREC_POWER > min_precedence:
+        elif next_tag is self.power_sym and min_precedence < p._PREC_POWER:
             pstate.advance()
             exponent = self.parse_expression(pstate, p._PREC_POWER)
             if left_exp == np.e:
@@ -210,7 +210,7 @@ class MaximaParser(ParserBase):
             else:
                 left_exp **= exponent
             did_something = True
-        elif next_tag is p._comma and p._PREC_COMMA > min_precedence:
+        elif next_tag is p._comma and min_precedence < p._PREC_COMMA:
             # The precedence makes the comma left-associative.
 
             pstate.advance()
@@ -244,10 +244,7 @@ def set_debug(level):
 def _strify_assignments_and_expr(assignments, expr):
     strify = MaximaStringifyMapper()
 
-    if isinstance(expr, str):
-        expr_str = expr
-    else:
-        expr_str = strify(expr)
+    expr_str = expr if isinstance(expr, str) else strify(expr)
 
     def make_setup(assignment):
         if isinstance(assignment, str):
