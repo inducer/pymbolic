@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import contextlib
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -361,7 +362,7 @@ class _InnerProduct(_GAProduct):
     def orthogonal_blade_product_weight(a_bits, b_bits, space):
         shared_bits = a_bits & b_bits
 
-        if shared_bits == a_bits or shared_bits == b_bits:
+        if shared_bits in (a_bits, b_bits):
             return _shared_metric_coeff(shared_bits, space)
         else:
             return 0
@@ -588,7 +589,7 @@ class MultiVector(Generic[CoeffT]):
 
         from pytools import single_valued
 
-        if data_dict and single_valued(isinstance(k, tuple) for k in data_dict.keys()):
+        if data_dict and single_valued(isinstance(k, tuple) for k in data_dict):
             # data is in non-normalized non-bits tuple form
             new_data: dict[int, CoeffT] = {}
             for basis_indices, coeff in data_dict.items():
@@ -630,10 +631,8 @@ class MultiVector(Generic[CoeffT]):
 
             strifier = None
             if coeff_stringifier is None:
-                try:
+                with contextlib.suppress(AttributeError):
                     strifier = coeff.stringifier()()
-                except AttributeError:
-                    pass
             else:
                 strifier = coeff_stringifier
 
@@ -1024,7 +1023,7 @@ class MultiVector(Generic[CoeffT]):
 
         result = None
 
-        for bits in self.data.keys():
+        for bits in self.data:
             grade = bits.bit_count()
             if result is None:
                 result = grade

@@ -921,16 +921,10 @@ def _augment_expression_dataclass(
             generate_hash: bool,
         ) -> None:
     attr_tuple = ", ".join(f"self.{fld.name}" for fld in fields(cls))
-    if attr_tuple:
-        attr_tuple = f"({attr_tuple},)"
-    else:
-        attr_tuple = "()"
+    attr_tuple = f"({attr_tuple},)" if attr_tuple else "()"
 
     fld_name_tuple = ", ".join(f"'{fld.name}'" for fld in fields(cls))
-    if fld_name_tuple:
-        fld_name_tuple = f"({fld_name_tuple},)"
-    else:
-        fld_name_tuple = "()"
+    fld_name_tuple = f"({fld_name_tuple},)" if fld_name_tuple else "()"
 
     comparison = " and ".join(
             f"self.{fld.name} == other.{fld.name}"
@@ -1070,11 +1064,10 @@ def _augment_expression_dataclass(
     # place, or it inherits a value but does not set it itself.
     sets_mapper_method = "mapper_method" in mm_cls.__dict__
 
-    if sets_mapper_method:
-        if default_mapper_method_name == mm_cls.mapper_method:
-            warn(f"Explicit mapper_method on {mm_cls} not needed, default matches "
-                 "explicit assignment. Just delete the explicit assignment.",
-                 stacklevel=3)
+    if sets_mapper_method and default_mapper_method_name == mm_cls.mapper_method:
+        warn(f"Explicit mapper_method on {mm_cls} not needed, default matches "
+             "explicit assignment. Just delete the explicit assignment.",
+             stacklevel=3)
 
     if not sets_mapper_method:
         mm_cls.mapper_method = intern(default_mapper_method_name)
@@ -1349,10 +1342,7 @@ class Product(ExpressionNode):
         return Product((other, *self.children))
 
     def __bool__(self):
-        for i in self.children:
-            if is_zero(i):
-                return False
-        return True
+        return all(not is_zero(i) for i in self.children)
 
     __nonzero__ = __bool__
 
@@ -1984,9 +1974,9 @@ def make_common_subexpression(expr: _Expression,
     if scope is None:
         scope = cse_scope.EVALUATION
 
-    if isinstance(expr, CommonSubexpression):
-        if scope == cse_scope.EVALUATION or expr.scope == scope:
-            return expr
+    if (isinstance(expr, CommonSubexpression)
+            and (scope == cse_scope.EVALUATION or expr.scope == scope)):
+        return expr
 
     # handle MultiVector
     from pymbolic.geometric_algebra import MultiVector

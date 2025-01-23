@@ -86,9 +86,8 @@ class TermCollector(IdentityMapper[[]]):
 
         if isinstance(mul_term, Product):
             terms: Sequence[Expression] = mul_term.children
-        elif isinstance(mul_term, Power | AlgebraicLeaf):
-            terms = [mul_term]
-        elif not bool(self.get_dependencies(mul_term)):
+        elif (isinstance(mul_term, Power | AlgebraicLeaf)
+                or not bool(self.get_dependencies(mul_term))):
             terms = [mul_term]
         else:
             raise RuntimeError("split_term expects a multiplicative term")

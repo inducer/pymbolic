@@ -79,10 +79,6 @@ def _generate_random_expr_inner(
         num = _generate_random_expr_inner(context.with_increased_depth())
         den = _generate_random_expr_inner(context.with_increased_depth())
         return prim.Quotient(num, den)
-    elif expr_type == prim.Quotient:
-        num = _generate_random_expr_inner(context.with_increased_depth())
-        den = _generate_random_expr_inner(context.with_increased_depth())
-        return prim.Quotient(num, den)
     elif expr_type == prim.Call:
         nargs = 3
         return prim.Variable(context.vng("f"))(

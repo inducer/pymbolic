@@ -92,10 +92,7 @@ class DistributeMapper(IdentityMapper[[]]):
                 sum = prod.children[len(leading)]
                 assert isinstance(sum, p.Sum)
                 rest = prod.children[len(leading)+1:]
-                if rest:
-                    rest = dist(p.Product(rest))
-                else:
-                    rest = 1
+                rest = dist(p.Product(rest)) if rest else 1
 
                 result = self.collect(pymbolic.flattened_sum([
                        pymbolic.flattened_product(leading) * dist(sumchild*rest)

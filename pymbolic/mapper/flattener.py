@@ -95,10 +95,9 @@ class FlattenMapper(IdentityMapper[[]]):
         r_den = self.rec_arith(expr.denominator)
         if p.is_zero(r_num):
             return 0
-        if p.is_zero(r_den - 1):
-            # It's the floor function in this case.
-            if self.is_expr_integer_valued(r_num):
-                return r_num
+        if p.is_zero(r_den - 1) and self.is_expr_integer_valued(r_num):
+            # With a denominator of 1, it's the floor function in this case.
+            return r_num
 
         return expr.__class__(r_num, r_den)
 
@@ -108,10 +107,9 @@ class FlattenMapper(IdentityMapper[[]]):
         assert p.is_arithmetic_expression(r_den)
         if p.is_zero(r_num):
             return 0
-        if p.is_zero(r_den - 1):
+        if p.is_zero(r_den - 1) and self.is_expr_integer_valued(r_num):
             # mod 1 is zero for integers, however 3.1 % 1 == .1
-            if self.is_expr_integer_valued(r_num):
-                return 0
+            return 0
 
         return expr.__class__(r_num, r_den)
 
