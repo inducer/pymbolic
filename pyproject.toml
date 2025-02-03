@@ -27,7 +27,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "immutabledict",
+    "constantdict",
     "pytools>=2024.1.16",
     # for dataclass_transform, TypeAlias, deprecated
     "typing-extensions>=4.5",
