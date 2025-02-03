@@ -27,7 +27,7 @@ from collections.abc import Sequence
 from sys import intern
 from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
-from immutabledict import immutabledict
+from constantdict import constantdict
 
 import pytools.lex
 from pytools import memoize_method
@@ -348,7 +348,7 @@ class Parser:
 
             if kwargs:
                 left_exp = primitives.CallWithKwargs(
-                        left_exp, args, immutabledict(kwargs))
+                        left_exp, args, constantdict(kwargs))
             else:
                 left_exp = primitives.Call(left_exp, args)
 

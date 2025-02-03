@@ -39,7 +39,7 @@ from typing import (
 )
 from warnings import warn
 
-from immutabledict import immutabledict
+from constantdict import constantdict
 from typing_extensions import TypeIs, dataclass_transform
 
 from pytools import module_getattr_for_deprecations
@@ -621,8 +621,7 @@ class ExpressionNode:
 
     def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
         if kwargs:
-            from immutabledict import immutabledict
-            return CallWithKwargs(self, args, immutabledict(kwargs))
+            return CallWithKwargs(self, args, constantdict(kwargs))
         else:
             return Call(self, args)
 
@@ -1216,10 +1215,10 @@ class CallWithKwargs(AlgebraicLeaf):
             warn("CallWithKwargs created with non-hashable kw_parameters. "
                  "This is deprecated and will stop working in 2025. "
                  "If you need an immutable mapping, "
-                 "try the :mod:`immutabledict` package.",
+                 "try the :mod:`constantdict` package.",
                  DeprecationWarning, stacklevel=3
              )
-            object.__setattr__(self, "kw_parameters", immutabledict(self.kw_parameters))
+            object.__setattr__(self, "kw_parameters", constantdict(self.kw_parameters))
 
 
 @expr_dataclass()

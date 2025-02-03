@@ -35,7 +35,7 @@ from typing import (
 )
 from warnings import warn
 
-from immutabledict import immutabledict
+from constantdict import constantdict
 from typing_extensions import ParamSpec, TypeIs
 
 import pymbolic.primitives as p
@@ -413,7 +413,7 @@ class CachedMapper(Mapper[ResultT, P]):
         # Must add 'type(expr)', to differentiate between python scalar types.
         # In Python, the following conditions are true: "hash(4) == hash(4.0)"
         # and "4 == 4.0", but their traversal results cannot be re-used.
-        return (type(expr), expr, args, immutabledict(kwargs))
+        return (type(expr), expr, args, constantdict(kwargs))
 
     def __call__(self,
                  expr: Expression,
@@ -760,7 +760,7 @@ class IdentityMapper(Mapper[Expression, P]):
         parameters = tuple([
             self.rec(child, *args, **kwargs) for child in expr.parameters
             ])
-        kw_parameters: Mapping[str, Expression] = immutabledict({
+        kw_parameters: Mapping[str, Expression] = constantdict({
                 key: self.rec(val, *args, **kwargs)
                 for key, val in expr.kw_parameters.items()})
 
@@ -1517,7 +1517,7 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
             ccd = self._cse_cache_dict = {}
 
         key: tuple[Expression, P.args, P.kwargs] = (
-            expr, args, immutabledict(kwargs))
+            expr, args, constantdict(kwargs))
         try:
             return ccd[key]
         except KeyError:
