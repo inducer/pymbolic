@@ -53,7 +53,9 @@ def _get_def_from_ast_container(
             name: str,
             node_type: type[AstDefNodeT]
         ) -> AstDefNodeT:
-    for entry in container:
+    # Return the last definition in the container, not the first.
+    # This is relevant, e.g., in the case of @overload of methods.
+    for entry in reversed(list(container)):
         if isinstance(entry, node_type) and entry.name == name:
             return entry
 
