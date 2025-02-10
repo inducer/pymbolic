@@ -36,7 +36,7 @@ from typing import (
 from warnings import warn
 
 from constantdict import constantdict
-from typing_extensions import ParamSpec, TypeIs
+from typing_extensions import Any, ParamSpec, TypeIs
 
 import pymbolic.primitives as p
 from pymbolic.typing import ArithmeticExpression, Expression
@@ -1506,7 +1506,12 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
     This method deliberately does not support extra arguments in mapper
     dispatch, to avoid spurious dependencies of the cache on these arguments.
     """
-    _cse_cache_dict: dict[tuple[Expression, P.args, P.kwargs], ResultT]
+    _cse_cache_dict: dict[
+        # NOTE: "Any" because it isn not possible to use P.args, P.kwargs here.
+        # https://github.com/python/typing/discussions/1289#discussioncomment-4168040
+        # No good alternate strategy exists.
+        tuple[Expression, tuple[Any, ...], constantdict[str, Any]],
+        ResultT]
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression,
@@ -1516,7 +1521,7 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
         except AttributeError:
             ccd = self._cse_cache_dict = {}
 
-        key: tuple[Expression, P.args, P.kwargs] = (
+        key: tuple[Expression, tuple[Any, ...], constantdict[str, Any]] = (
             expr, args, constantdict(kwargs))
         try:
             return ccd[key]
