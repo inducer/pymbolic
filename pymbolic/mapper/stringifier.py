@@ -731,7 +731,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         return Mapper.__call__(self, expr, prec, *args, **kwargs)
 
 
-class CachedStringifyMapper(StringifyMapper, CachedMapper):
+class CachedStringifyMapper(StringifyMapper[P], CachedMapper):
     def __init__(self) -> None:
         StringifyMapper.__init__(self)
         CachedMapper.__init__(self)
@@ -862,7 +862,7 @@ class SortingStringifyMapper(StringifyMapper[P]):
 # {{{ simplifying, sorting stringifier
 
 
-class SimplifyingSortingStringifyMapper(StringifyMapper):
+class SimplifyingSortingStringifyMapper(StringifyMapper[P]):
     def __init__(self, reverse=True):
         super().__init__()
         self.reverse = reverse
@@ -939,7 +939,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper):
 # {{{ latex stringifier
 
 
-class LaTeXMapper(StringifyMapper):
+class LaTeXMapper(StringifyMapper[P]):
     COMPARISON_OP_TO_LATEX: ClassVar[dict[str, str]] = {
         "==": r"=",
         "!=": r"\ne",
@@ -1031,7 +1031,7 @@ class LaTeXMapper(StringifyMapper):
         from pytools import is_single_valued
 
         if is_single_valued(expr.children):
-            return self.rec(expr.children[0], enclosing_prec)
+            return self.rec(expr.children[0], enclosing_prec, *args, **kwargs)
 
         what = type(expr).__name__.lower()
         return self.format(
@@ -1046,7 +1046,7 @@ class LaTeXMapper(StringifyMapper):
         from pytools import is_single_valued
 
         if is_single_valued(expr.children):
-            return self.rec(expr.children[0], enclosing_prec)
+            return self.rec(expr.children[0], enclosing_prec, *args, **kwargs)
 
         what = type(expr).__name__.lower()
         return self.format(
