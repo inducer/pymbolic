@@ -267,7 +267,7 @@ class Space:
     @property
     @memoize_method
     def is_euclidean(self) -> bool:
-        """*True* if the metric matrix corresponds to the Eucledian metric."""
+        """*True* if the metric matrix corresponds to the Euclidian metric."""
         return (self.metric_matrix == np.eye(self.metric_matrix.shape[0])).all()
 
     def blade_bits_to_str(self, bits: int, outer_operator: str = "^") -> str:
