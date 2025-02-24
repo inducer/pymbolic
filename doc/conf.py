@@ -44,7 +44,11 @@ nitpick_ignore_regex = [
     ["py:class", r"ExpressionNode"],
     ["py:class", r"_Expression"],
     ["py:class", r"p\.AlgebraicLeaf"],
-    ]
+
+    # Sphinx started complaining about these in 8.2.1(-ish)
+    # -AK, 2025-02-24
+    ["py:class", r"TypeAliasForwardRef"],
+]
 
 
 sys._BUILDING_SPHINX_DOCS = True
