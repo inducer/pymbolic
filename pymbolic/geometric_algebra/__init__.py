@@ -27,7 +27,7 @@ import contextlib
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import numpy as np
 
@@ -35,6 +35,10 @@ from pytools import memoize, memoize_method
 
 from pymbolic.primitives import expr_dataclass, is_zero
 from pymbolic.typing import ArithmeticExpression, T
+
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 __doc__ = """
@@ -124,7 +128,6 @@ properties:
 .. literalinclude:: ../test/test_pymbolic.py
    :start-after: START_GA_TEST
    :end-before: END_GA_TEST
-
 """
 
 
@@ -195,7 +198,7 @@ class Space:
     basis_names: Sequence[str]
     "A sequence of names of basis vectors."
 
-    metric_matrix: np.ndarray
+    metric_matrix: NDArray[np.generic]
     """
     A *(dims, dims)*-shaped matrix, whose *(i, j)*-th entry represents the
     inner product of basis vector *i* and basis vector *j*.
@@ -203,7 +206,7 @@ class Space:
 
     def __init__(self,
                  basis: Sequence[str] | int | None = None,
-                 metric_matrix: np.ndarray | None = None) -> None:
+                 metric_matrix: NDArray[np.generic] | None = None) -> None:
         """
         :arg basis: A sequence of names of basis vectors, or an integer (the
             number of dimensions) to use the default names ``e0`` through ``eN``.
@@ -539,7 +542,7 @@ class MultiVector(Generic[CoeffT]):
                 self,
                 data: (Mapping[int, CoeffT]
                        | Mapping[tuple[int, ...], CoeffT]
-                       | np.ndarray
+                       | NDArray[np.generic]
                        | CoeffT),
                 space: Space | None = None
             ) -> None:

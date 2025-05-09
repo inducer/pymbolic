@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     import numpy as np
+    from numpy.typing import NDArray
 
     import pymbolic.primitives as p
     from pymbolic.geometric_algebra import MultiVector
@@ -54,7 +55,7 @@ class UnknownVariableError(Exception):
     pass
 
 
-class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
+class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
     """Example usage:
 
     .. doctest::
@@ -159,7 +160,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin):
     def map_list(self, expr: list[Expression]) -> ResultT:
         return [self.rec(child) for child in expr]  # type: ignore[return-value]
 
-    def map_numpy_array(self, expr: np.ndarray) -> ResultT:
+    def map_numpy_array(self, expr: NDArray[np.generic]) -> ResultT:
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
         for i in numpy.ndindex(expr.shape):

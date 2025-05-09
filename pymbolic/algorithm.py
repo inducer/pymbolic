@@ -8,6 +8,23 @@
 .. autofunction:: sym_fft
 .. autofunction:: reduced_row_echelon_form
 .. autofunction:: solve_affine_equations_for
+
+References
+----------
+
+.. class:: NDArray
+
+    See :data:`numpy.typing.NDArray`.
+
+.. currentmodule:: np
+
+.. class:: generic
+
+    See :class:`numpy.generic`.
+
+.. class:: inexact
+
+    See :class:`numpy.inexact`.
 """
 
 from __future__ import annotations
@@ -45,6 +62,7 @@ from pytools import MovedFunctionDeprecationWrapper, memoize
 
 if TYPE_CHECKING:
     import numpy as np
+    from numpy.typing import NDArray
 
 
 if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
@@ -312,26 +330,26 @@ def csr_matrix_multiply(S, x):  # noqa
 
 @overload
 def reduced_row_echelon_form(
-            mat: np.ndarray,
+            mat: NDArray[np.inexact],
             *, integral: bool | None = None,
-        ) -> np.ndarray:
+        ) -> NDArray[np.inexact]:
     ...
 
 
 @overload
 def reduced_row_echelon_form(
-            mat: np.ndarray,
-            rhs: np.ndarray,
+            mat: NDArray[np.inexact],
+            rhs: NDArray[np.inexact],
             *, integral: bool | None = None,
-        ) -> tuple[np.ndarray, np.ndarray]:
+        ) -> tuple[NDArray[np.inexact], NDArray[np.inexact]]:
     ...
 
 
 def reduced_row_echelon_form(
-            mat: np.ndarray,
-            rhs: np.ndarray | None = None,
+            mat: NDArray[np.inexact],
+            rhs: NDArray[np.inexact] | None = None,
             integral: bool | None = None,
-        ) -> tuple[np.ndarray, np.ndarray] | np.ndarray:
+        ) -> tuple[NDArray[np.inexact], NDArray[np.inexact]] | NDArray[np.inexact]:
     m, n = mat.shape
 
     mat = mat.copy()
