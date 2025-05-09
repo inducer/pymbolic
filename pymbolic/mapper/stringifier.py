@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy as np
+    from numpy.typing import NDArray
 
     from pymbolic.geometric_algebra import MultiVector
     from pymbolic.typing import Expression
@@ -594,7 +595,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     def map_numpy_array(
         self,
-        expr: np.ndarray,
+        expr: NDArray[np.generic],
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,

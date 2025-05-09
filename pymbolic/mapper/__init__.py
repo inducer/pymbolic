@@ -44,6 +44,7 @@ from pymbolic.typing import ArithmeticExpression, Expression
 
 if TYPE_CHECKING:
     import numpy as np
+    from numpy.typing import NDArray
 
     from pymbolic.geometric_algebra import MultiVector
     from pymbolic.rational import Rational
@@ -121,16 +122,16 @@ Base classes for mappers with memoization support
 if TYPE_CHECKING:
     import numpy as np
 
-    def is_numpy_array(val) -> TypeIs[np.ndarray]:
+    def is_numpy_array(val: object) -> TypeIs[NDArray[np.generic]]:
         return isinstance(val, np.ndarray)
 else:
     try:
         import numpy as np
 
-        def is_numpy_array(val):
+        def is_numpy_array(val: object) -> bool:
             return isinstance(val, np.ndarray)
     except ImportError:
-        def is_numpy_array(ary):
+        def is_numpy_array(ary) -> bool:
             return False
 
 
@@ -298,7 +299,7 @@ class Mapper(Generic[ResultT, P]):
         raise NotImplementedError
 
     def map_numpy_array(self,
-            expr: np.ndarray, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+            expr: NDArray[np.generic], *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
     def map_left_shift(self,
@@ -602,9 +603,10 @@ class CombineMapper(Mapper[ResultT, P]):
         return self.combine(self.rec(child, *args, **kwargs) for child in expr)
 
     def map_numpy_array(self,
-                expr: np.ndarray, *args: P.args, **kwargs: P.kwargs
+                expr: NDArray[np.generic], *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)
+        # FIXME Can the type-ignore be avoided?
+        return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)  # type: ignore[arg-type]
 
     def map_multivector(self,
                 expr: MultiVector[ArithmeticExpression],
@@ -680,7 +682,7 @@ class Collector(CombineMapper[Set[CollectedT], P]):
         return set()
 
 
-class CachedCollector(CachedMapper, Collector):
+class CachedCollector(CachedMapper[Set[CollectedT], P], Collector[CollectedT, P]):
     pass
 
 # }}}
@@ -957,7 +959,7 @@ class IdentityMapper(Mapper[Expression, P]):
         return tuple(children)
 
     def map_numpy_array(self,
-                expr: np.ndarray, *args: P.args, **kwargs: P.kwargs
+                expr: NDArray[np.generic], *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
 
         import numpy
@@ -1231,7 +1233,7 @@ class WalkMapper(Mapper[None, P]):
         self.post_visit(expr, *args, **kwargs)
 
     def map_numpy_array(self,
-            expr: np.ndarray, *args: P.args, **kwargs: P.kwargs) -> None:
+            expr: NDArray[np.generic], *args: P.args, **kwargs: P.kwargs) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
 
@@ -1445,7 +1447,7 @@ class CachedWalkMapper(CachedMapper[None, P], WalkMapper[P]):
 # {{{ callback mapper
 
 # FIXME: Is it worth typing this?
-class CallbackMapper(Mapper):
+class CallbackMapper(Mapper[ResultT, P]):
     def __init__(self, function, fallback_mapper):
         self.function = function
         self.fallback_mapper = fallback_mapper
