@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import dataclasses
 import re
 from dataclasses import dataclass, fields
 from functools import partial
@@ -1077,7 +1078,7 @@ def _augment_expression_dataclass(
 _T = TypeVar("_T")
 
 
-@dataclass_transform(frozen_default=True)
+@dataclass_transform(frozen_default=True, field_specifiers=(dataclasses.field,))
 def expr_dataclass(
             init: bool = True,
             eq: bool = True,
