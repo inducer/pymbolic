@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import multiset
 import numpy as np
@@ -16,19 +16,20 @@ from pymbolic.mapper import Mapper as BasePymMapper
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pymbolic.typing import Scalar as PbScalar
+    from pymbolic.typing import Expression as PbExpression, Scalar as PbScalar
 
 
 # {{{ to matchpy
 
-class ToMatchpyExpressionMapper(BasePymMapper):
+class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
     """
     Mapper to convert instances of :class:`pymbolic.primitives.Expression` to
     :class:`pymbolic.interop.matchpy.PymbolicOperation`.
     """
-    def map_constant(self, expr: Any) -> m.Scalar:
+    def map_constant(self, expr: object) -> m.Scalar:
         if np.isscalar(expr):
-            return m.Scalar(expr)
+            assert p.is_constant(expr)
+            return m.Scalar(expr)  # pyright: ignore[reportUnknownArgumentType]
 
         raise NotImplementedError(expr)
 
@@ -205,7 +206,7 @@ class FromMatchpyExpressionMapper(BaseMatchPyMapper):
 
 @dataclass(frozen=True, eq=True)
 class ToFromReplacement:
-    f: Callable[..., p.ExpressionNode]
+    f: Callable[..., PbExpression]
     to_matchpy_expr: m.ToMatchpyT
     from_matchpy_expr: m.FromMatchpyT
 
