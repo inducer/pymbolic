@@ -37,6 +37,7 @@ from typing import (
     TypeAlias,
     TypeVar,
     cast,
+    overload,
 )
 from warnings import warn
 
@@ -640,6 +641,14 @@ class ExpressionNode:
                  "Use 'expr[i] 'instead.", DeprecationWarning, stacklevel=2)
 
             return self[subscript]
+
+    @overload
+    def __getitem__(self, subscript: EmptyOK) -> Subscript:
+        ...
+
+    @overload
+    def __getitem__(self, subscript: _Expression) -> ExpressionNode:
+        ...
 
     def __getitem__(self, subscript: _Expression | EmptyOK) -> ExpressionNode:
         """Return an expression representing ``self[subscript]``. """
