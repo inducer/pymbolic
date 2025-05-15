@@ -114,7 +114,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
     def map_product(self, expr: p.Product) -> ResultT:
         from pytools import product
-        return product(self.rec(child) for child in expr.children)
+        return cast("ResultT", product(self.rec(child) for child in expr.children))
 
     def map_quotient(self, expr: p.Quotient) -> ResultT:
         return self.rec(expr.numerator) / self.rec(expr.denominator)  # type: ignore[operator]
