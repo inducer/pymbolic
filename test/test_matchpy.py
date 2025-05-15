@@ -22,10 +22,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-
+from typing import TYPE_CHECKING, cast
 
 import pymbolic.interop.matchpy as m
 import pymbolic.primitives as p
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import Expression
 
 
 def test_replace_with_variadic_op():
@@ -41,7 +45,7 @@ def test_replace_with_variadic_op():
         for k, v in w1_star.items():
             result_args.extend([k]*v)
 
-        return product(result_args)
+        return cast("Expression", product(result_args))
 
     a_times_c_pattern = a * c * w1
     expr = a * b * c
