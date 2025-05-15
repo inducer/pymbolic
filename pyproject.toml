@@ -130,3 +130,7 @@ reportImportCycles = "none"
 pythonVersion = "3.10"
 pythonPlatform = "All"
 
+[[tool.basedpyright.executionEnvironments]]
+root = "test"
+reportUnknownArgumentType = "hint"
+
