@@ -53,7 +53,9 @@ from .typing import ArithmeticExpression, Expression as _Expression, Number, Sca
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
 
+    import numpy as np
     from _typeshed import DataclassInstance
+    from numpy.typing import NDArray
 
 
 __doc__ = """
@@ -2038,7 +2040,11 @@ def make_common_subexpression(expr: _Expression,
     return CommonSubexpression(expr, prefix, scope)
 
 
-def make_sym_vector(name, components, var_factory=Variable):
+def make_sym_vector(
+            name: str,
+            components: int | list[int],
+            var_factory: Callable[[str], ExpressionNode] = Variable
+        ) -> NDArray[np.generic]:
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
@@ -2054,8 +2060,7 @@ def make_sym_vector(name, components, var_factory=Variable):
                Subscript(Variable('vec'), 2)], dtype=object)
 
     """
-    from numbers import Integral
-    if isinstance(components, Integral):
+    if is_constant(components):
         components = list(range(components))
 
     from pytools.obj_array import flat_obj_array
