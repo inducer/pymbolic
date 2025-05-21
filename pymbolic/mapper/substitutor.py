@@ -39,7 +39,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+from typing_extensions import override
 
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 
@@ -49,7 +52,7 @@ if TYPE_CHECKING:
 
     from useful_types import SupportsGetItem, SupportsItems
 
-    from pymbolic.primitives import AlgebraicLeaf
+    from pymbolic.primitives import AlgebraicLeaf, Lookup, Subscript, Variable
     from pymbolic.typing import Expression
 
 
@@ -57,27 +60,32 @@ if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
     from collections.abc import Callable  # noqa: TC003
 
 
+@dataclass
 class SubstitutionMapper(IdentityMapper[[]]):
-    def __init__(
-        self, subst_func: Callable[[AlgebraicLeaf], Expression | None]
-    ) -> None:
-        self.subst_func = subst_func
 
-    def map_variable(self, expr):
+    subst_func: Callable[[AlgebraicLeaf], Expression | None]
+
+    def __post_init__(self) -> None:
+        super().__init__()
+
+    @override
+    def map_variable(self, expr: Variable) -> Expression:
         result = self.subst_func(expr)
         if result is not None:
             return result
         else:
             return expr
 
-    def map_subscript(self, expr):
+    @override
+    def map_subscript(self, expr: Subscript) -> Expression:
         result = self.subst_func(expr)
         if result is not None:
             return result
         else:
             return IdentityMapper.map_subscript(self, expr)
 
-    def map_lookup(self, expr):
+    @override
+    def map_lookup(self, expr: Lookup) -> Expression:
         result = self.subst_func(expr)
         if result is not None:
             return result
@@ -89,13 +97,8 @@ class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
     def __init__(
         self, subst_func: Callable[[AlgebraicLeaf], Expression | None]
     ) -> None:
-        # FIXME Mypy says:
-        # error: Argument 1 to "__init__" of "CachedMapper" has incompatible type
-        # "CachedSubstitutionMapper"; expected "CachedMapper[ResultT, P]"  [arg-type]
-        # This seems spurious?
-        CachedIdentityMapper.__init__(self)  # type: ignore[arg-type]
         SubstitutionMapper.__init__(self, subst_func)
-        super().__init__()
+        super().__init__(subst_func)
 
 
 def make_subst_func(
