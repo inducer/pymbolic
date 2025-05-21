@@ -370,7 +370,9 @@ def disable_subscript_by_getitem():
     #
     # See
     # https://github.com/inducer/pymbolic/issues/4
-    pass
+    warn("disable_subscript_by_getitem is deprecated and will be removed "
+         "in 2026. It has been a no-op for a long time.",
+         DeprecationWarning, stacklevel=2)
 
 
 # https://stackoverflow.com/a/13624858
