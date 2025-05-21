@@ -42,7 +42,7 @@ from typing import (
 from warnings import warn
 
 from constantdict import constantdict
-from typing_extensions import TypeIs, dataclass_transform
+from typing_extensions import Self, TypeIs, dataclass_transform
 
 from pytools import module_getattr_for_deprecations
 
@@ -651,10 +651,10 @@ class ExpressionNode:
         ...
 
     @overload
-    def __getitem__(self, subscript: _Expression) -> ExpressionNode:
+    def __getitem__(self, subscript: _Expression) -> Self | Subscript:
         ...
 
-    def __getitem__(self, subscript: _Expression | EmptyOK) -> ExpressionNode:
+    def __getitem__(self, subscript: _Expression | EmptyOK) -> Self | Subscript:
         """Return an expression representing ``self[subscript]``. """
 
         if isinstance(subscript, EmptyOK):
