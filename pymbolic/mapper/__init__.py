@@ -392,9 +392,9 @@ class CachedMapper(Mapper[ResultT, P]):
 
     .. automethod:: get_cache_key
     """
-    def __init__(self) -> None:
+    def __init__(self, *args: object) -> None:
         self._cache: dict[CacheKeyT, ResultT] = {}
-        super().__init__()
+        super().__init__(*args)
 
     def get_cache_key(self,
               expr: Expression,
