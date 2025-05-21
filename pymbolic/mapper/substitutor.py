@@ -95,6 +95,7 @@ class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
         # This seems spurious?
         CachedIdentityMapper.__init__(self)  # type: ignore[arg-type]
         SubstitutionMapper.__init__(self, subst_func)
+        super().__init__()
 
 
 def make_subst_func(
