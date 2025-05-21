@@ -39,14 +39,18 @@ __doc__ = """
 
 import re
 from sys import intern
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 
 import pytools
 
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.parser import FinalizedTuple, LexTable, Parser as ParserBase
+from pymbolic.parser import FinalizedTuple, Parser as ParserBase
+
+
+if TYPE_CHECKING:
+    from pytools.lex import LexTable
 
 
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")

@@ -23,9 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections.abc import Sequence
 from sys import intern
-from typing import TYPE_CHECKING, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, ClassVar
 
 from constantdict import constantdict
 
@@ -129,12 +128,8 @@ class FinalizedList(list, FinalizedContainer):
         return result
 
 
-LexTable: TypeAlias = Sequence[
-        tuple[str, pytools.lex.RE | tuple[str | pytools.lex.RE, ...]]]
-
-
 class Parser:
-    lex_table: ClassVar[LexTable] = [
+    lex_table: ClassVar[pytools.lex.LexTable] = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
             (_equal, pytools.lex.RE(r"==")),
