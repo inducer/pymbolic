@@ -153,7 +153,7 @@ def lcm(q, r):
 # {{{ fft
 
 @memoize
-def find_factors(n):
+def find_factors(n: int) -> tuple[int, int]:
     from math import sqrt
 
     n1 = 2
@@ -169,8 +169,7 @@ def find_factors(n):
     return n1, n2
 
 
-def fft(x, sign=1,
-        wrap_intermediate=None,
+def fft(x, sign: int = 1,
         *,
         wrap_intermediate_with_level=None,
         complex_dtype=None,
@@ -191,18 +190,6 @@ def fft(x, sign=1,
     # https://en.wikipedia.org/w/index.php?title=Cooley-Tukey_FFT_algorithm&oldid=293076305
 
     # {{{ parameter processing
-
-    if wrap_intermediate is not None and wrap_intermediate_with_level is not None:
-        raise TypeError("may specify at most one of wrap_intermediate and "
-                "wrap_intermediate_with_level")
-    if wrap_intermediate is not None:
-        from warnings import warn
-        warn("wrap_intermediate is deprecated. Use wrap_intermediate_with_level "
-                "instead. wrap_intermediate will stop working in 2023.",
-                DeprecationWarning, stacklevel=2)
-
-        def wrap_intermediate_with_level(level, x):  # pylint: disable=function-redefined
-            return wrap_intermediate(x)
 
     if wrap_intermediate_with_level is None:
         def wrap_intermediate_with_level(level, x):
@@ -237,7 +224,9 @@ def fft(x, sign=1,
     scalar_tp = complex_dtype.type
     sub_ffts = [
             wrap_intermediate_with_level(level,
-                fft(x[n1::N1], sign, wrap_intermediate, custom_np=custom_np,
+                fft(x[n1::N1], sign,
+                    wrap_intermediate_with_level=wrap_intermediate_with_level,
+                    custom_np=custom_np,
                     level=level+1, complex_dtype=complex_dtype)
                 * custom_np.exp(
                     sign*-2j*pi*n1/(N1*N2)
@@ -251,12 +240,12 @@ def fft(x, sign=1,
         ], axis=0)
 
 
-def ifft(x, wrap_intermediate=None,
+def ifft(x,
          *,
          wrap_intermediate_with_level=None,
          complex_dtype=None,
          custom_np=None):
-    return (1/len(x))*fft(x, sign=-1, wrap_intermediate=wrap_intermediate,
+    return (1/len(x))*fft(x, sign=-1,
             wrap_intermediate_with_level=wrap_intermediate_with_level,
             complex_dtype=complex_dtype, custom_np=custom_np)
 
@@ -292,7 +281,7 @@ def sym_fft(x, sign=1):
 
     import numpy
 
-    def wrap_intermediate(x):
+    def wrap_intermediate_with_level(level: int, x):
         if len(x) > 1:
             from pymbolic.primitives import CommonSubexpression, cse_scope
 
@@ -305,8 +294,8 @@ def sym_fft(x, sign=1):
             return x
 
     return NearZeroKiller()(
-            fft(wrap_intermediate(x), sign=sign,
-                wrap_intermediate=wrap_intermediate))
+            fft(wrap_intermediate_with_level(0, x), sign=sign,
+                wrap_intermediate_with_level=wrap_intermediate_with_level))
 
 # }}}
 
