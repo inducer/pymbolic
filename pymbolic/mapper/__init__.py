@@ -1431,10 +1431,10 @@ class WalkMapper(Mapper[None, P]):
 
         self.post_visit(expr, *args, **kwargs)
 
-    def visit(self, expr, *args: P.args, **kwargs: P.kwargs) -> bool:
+    def visit(self, expr: object, *args: P.args, **kwargs: P.kwargs) -> bool:
         return True
 
-    def post_visit(self, expr, *args: P.args, **kwargs: P.kwargs) -> None:
+    def post_visit(self, expr: object, *args: P.args, **kwargs: P.kwargs) -> None:
         pass
 
 
