@@ -55,24 +55,6 @@ jobs:
 
                 run_pylint pymbolic test/test_*.py
 
-    mypy:
-        name: Mypy
-        runs-on: ubuntu-latest
-        steps:
-        -   uses: actions/checkout@v4
-        -
-            uses: actions/setup-python@v5
-            with:
-                python-version: '3.x'
-        -   name: "Main Script"
-            run: |
-                curl -L -O https://tiker.net/ci-support-v0
-                . ./ci-support-v0
-                build_py_project_in_venv
-                pip install -e .[test]
-                python -m pip install mypy numpy
-                ./run-mypy.sh
-
     basedpyright:
         runs-on: ubuntu-latest
 

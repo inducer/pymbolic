@@ -40,7 +40,6 @@ numpy = [
     "numpy>=1.6",
 ]
 test = [
-    "mypy",
     "pytest",
     "ruff",
     # only needed for type checking
@@ -102,20 +101,6 @@ known-local-folder = ["pymbolic"]
 lines-after-imports = 2
 combine-as-imports = true
 required-imports = ["from __future__ import annotations"]
-
-[tool.mypy]
-python_version = "3.10"
-warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-module = [
-    "sympy.*",
-    "symengine.*",
-    "matchpy.*",
-    "multiset.*",
-    "pexpect.*",
-]
-ignore_missing_imports = true
 
 [tool.basedpyright]
 reportImplicitStringConcatenation = "none"
