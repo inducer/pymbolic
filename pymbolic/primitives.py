@@ -1740,7 +1740,7 @@ def flattened_sum(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression
         the sum, the respective term.
     """
     queue = list(terms)
-    done = []
+    done: list[ArithmeticExpression] = []
 
     while queue:
         item = queue.pop(0)
@@ -1749,12 +1749,11 @@ def flattened_sum(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression
             continue
 
         if isinstance(item, Sum):
-            ch = cast("tuple[ArithmeticExpression]", item.children)
-            queue.extend(ch)
+            queue = [*item.children, *queue]
         else:
             done.append(item)
 
-    if len(done) == 0:
+    if not done:
         return 0
     elif len(done) == 1:
         return done[0]
@@ -1780,7 +1779,7 @@ def flattened_product(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpres
         the product, the respective term.
     """
     queue = list(terms)
-    done = []
+    done: list[ArithmeticExpression] = []
 
     while queue:
         item = queue.pop(0)
@@ -1791,12 +1790,11 @@ def flattened_product(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpres
             continue
 
         if isinstance(item, Product):
-            ch = cast("tuple[ArithmeticExpression]", item.children)
-            queue.extend(ch)
+            queue = [*item.children, *queue]
         else:
             done.append(item)
 
-    if len(done) == 0:
+    if not done:
         return 1
     elif len(done) == 1:
         return done[0]

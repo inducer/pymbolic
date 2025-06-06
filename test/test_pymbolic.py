@@ -590,6 +590,18 @@ def test_pickle_backward_compat():
 # }}}
 
 
+def test_flattener():
+    from pymbolic import flatten, var
+    a, b, c, d = (var(s) for s in "abcd")
+
+    assert flatten(a + b + c) == prim.Sum((a, b, c))
+    assert flatten(a + b + c + d) == prim.Sum((a, b, c, d))
+    assert flatten((a + b) + (c + d)) == prim.Sum((a, b, c, d))
+    assert flatten(a * b * c) == prim.Product((a, b, c))
+    assert flatten(a * b * c * d) == prim.Product((a, b, c, d))
+    assert flatten((a * b) * (c * d)) == prim.Product((a, b, c, d))
+
+
 # {{{ test_unifier
 
 def test_unifier():
