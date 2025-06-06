@@ -794,7 +794,7 @@ class IdentityMapper(Mapper[Expression, P]):
     def map_sum(self,
                 expr: p.Sum, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
-        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        children = [self.rec_arith(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
             return expr
@@ -804,7 +804,7 @@ class IdentityMapper(Mapper[Expression, P]):
     def map_product(self,
                 expr: p.Product, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
-        children = [self.rec(child, *args, **kwargs) for child in expr.children]
+        children = [self.rec_arith(child, *args, **kwargs) for child in expr.children]
         if all(child is orig_child
                 for child, orig_child in zip(children, expr.children, strict=True)):
             return expr
