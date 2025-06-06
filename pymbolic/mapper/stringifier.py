@@ -25,7 +25,7 @@ THE SOFTWARE.
 from typing import TYPE_CHECKING, ClassVar, Concatenate
 from warnings import warn
 
-from typing_extensions import deprecated
+from typing_extensions import deprecated, override
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Mapper, P
@@ -215,6 +215,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     # {{{ mappings
 
+    @override
     def handle_unsupported_expression(
         self, expr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -223,6 +224,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             raise ValueError(f"stringifier '{self}' can't handle '{expr.__class__}'")
         return strifier(expr, enclosing_prec, *args, **kwargs)
 
+    @override
     def map_constant(
         self, expr: object, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -237,16 +239,19 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         else:
             return result
 
+    @override
     def map_variable(
         self, expr: p.Variable, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return expr.name
 
+    @override
     def map_wildcard(
         self, expr: p.Wildcard, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return "*"
 
+    @override
     def map_function_symbol(
         self,
         expr: p.FunctionSymbol,
@@ -256,6 +261,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     ) -> str:
         return expr.__class__.__name__
 
+    @override
     def map_call(
         self, expr: p.Call, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -265,6 +271,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             self.join_rec(", ", expr.parameters, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_call_with_kwargs(
         self,
         expr: p.CallWithKwargs,
@@ -284,6 +291,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             ", ".join(args_strings),
         )
 
+    @override
     def map_subscript(
         self, expr: p.Subscript, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -302,6 +310,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_CALL,
         )
 
+    @override
     def map_lookup(
         self, expr: p.Lookup, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -313,6 +322,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_CALL,
         )
 
+    @override
     def map_sum(
         self, expr: p.Sum, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -326,6 +336,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     multiplicative_primitives = (p.Product, p.Quotient, p.FloorDiv, p.Remainder)
 
+    @override
     def map_product(
         self, expr: p.Product, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -342,6 +353,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_PRODUCT,
         )
 
+    @override
     def map_quotient(
         self, expr: p.Quotient, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -369,6 +381,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_PRODUCT,
         )
 
+    @override
     def map_floor_div(
         self, expr: p.FloorDiv, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -394,6 +407,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_PRODUCT,
         )
 
+    @override
     def map_remainder(
         self, expr: p.Remainder, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -421,6 +435,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     # }}}
 
+    @override
     def map_power(
         self, expr: p.Power, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -434,6 +449,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_POWER,
         )
 
+    @override
     def map_left_shift(
         self, expr: p.LeftShift, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -449,6 +465,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_SHIFT,
         )
 
+    @override
     def map_right_shift(
         self,
         expr: p.RightShift,
@@ -468,6 +485,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_SHIFT,
         )
 
+    @override
     def map_bitwise_not(
         self,
         expr: p.BitwiseNot,
@@ -481,6 +499,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_UNARY,
         )
 
+    @override
     def map_bitwise_or(
         self, expr: p.BitwiseOr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -490,6 +509,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_BITWISE_OR,
         )
 
+    @override
     def map_bitwise_xor(
         self,
         expr: p.BitwiseXor,
@@ -503,6 +523,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_BITWISE_XOR,
         )
 
+    @override
     def map_bitwise_and(
         self,
         expr: p.BitwiseAnd,
@@ -516,6 +537,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_BITWISE_AND,
         )
 
+    @override
     def map_comparison(
         self, expr: p.Comparison, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -530,6 +552,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_COMPARISON,
         )
 
+    @override
     def map_logical_not(
         self,
         expr: p.LogicalNot,
@@ -543,6 +566,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_UNARY,
         )
 
+    @override
     def map_logical_or(
         self, expr: p.LogicalOr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -552,6 +576,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_LOGICAL_OR,
         )
 
+    @override
     def map_logical_and(
         self,
         expr: p.LogicalAnd,
@@ -565,6 +590,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_LOGICAL_AND,
         )
 
+    @override
     def map_list(
         self,
         expr: list[Expression],
@@ -578,6 +604,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     map_vector = map_list
 
+    @override
     def map_tuple(
         self,
         expr: tuple[Expression, ...],
@@ -593,6 +620,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
         return f"({el_str})"
 
+    @override
     def map_numpy_array(
         self,
         expr: NDArray[np.generic],
@@ -622,6 +650,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             else:
                 return "array(\n{})".format("".join(lines))
 
+    @override
     def map_multivector(
         self,
         expr: MultiVector,
@@ -646,6 +675,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             "%s(%s)", type_name, self.rec(expr.child, PREC_NONE, *args, **kwargs)
         )
 
+    @override
     def map_if(
         self, expr: p.If, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -659,6 +689,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             PREC_IF,
         )
 
+    @override
     def map_min(
         self, expr: p.Min, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -669,6 +700,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_max(
         self, expr: p.Max, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -679,6 +711,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_derivative(
         self, expr: p.Derivative, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -688,6 +721,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs)
         )
 
+    @override
     def map_substitution(
         self,
         expr: p.Substitution,
@@ -702,6 +736,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
         return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE, *args, **kwargs), substs)
 
+    @override
     def map_slice(
         self, expr: p.Slice, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -716,6 +751,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             ":".join(children), enclosing_prec, PREC_NONE
         )
 
+    @override
     def map_nan(
         self, expr: p.NaN, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
@@ -723,6 +759,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     # }}}
 
+    @override
     def __call__(self, expr, prec=PREC_NONE, *args: P.args, **kwargs: P.kwargs) -> str:
         """Return a string corresponding to *expr*. If the enclosing
         precedence level *prec* is higher than *prec* (see :ref:`prec-constants`),
@@ -745,7 +782,6 @@ class CachedStringifyMapper(StringifyMapper[P], CachedMapper):
 
 
 # {{{ cse-splitting stringifier
-
 
 class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
     """A :term:`mix-in` for subclasses of

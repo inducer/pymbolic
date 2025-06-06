@@ -22,8 +22,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-
 from functools import partial
+
+from typing_extensions import override
 
 import pymbolic.primitives as prim
 from pymbolic.mapper.evaluator import EvaluationMapper
@@ -154,15 +155,19 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
     def raise_conversion_error(self, message):
         raise NotImplementedError
 
+    @override
     def map_variable(self, expr):
         return self.sym.Symbol(expr.name)
 
+    @override
     def map_constant(self, expr):
         return self.sym.sympify(expr)
 
+    @override
     def map_floor_div(self, expr):
         return self.sym.floor(self.rec(expr.numerator) / self.rec(expr.denominator))
 
+    @override
     def map_call(self, expr):
         if isinstance(expr.function, prim.Variable):
             func_name = expr.function.name
@@ -174,6 +179,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         else:
             self.raise_conversion_error(expr)
 
+    @override
     def map_subscript(self, expr):
         if isinstance(expr.aggregate, prim.Variable):
             return self.sym.Function("Indexed")(expr.aggregate.name,
@@ -181,18 +187,21 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         else:
             self.raise_conversion_error(expr)
 
+    @override
     def map_substitution(self, expr):
         return self.sym.Subs(self.rec(expr.child),
                 tuple([self.sym.Symbol(v) for v in expr.variables]),
                 tuple([self.rec(v) for v in expr.values]),
                 )
 
+    @override
     def map_if(self, expr):
         cond = self.rec(expr.condition)
         return self.sym.Piecewise((self.rec(expr.then), cond),
                                   (self.rec(expr.else_), True)
                                   )
 
+    @override
     def map_comparison(self, expr):
         left = self.rec(expr.left)
         right = self.rec(expr.right)
@@ -211,6 +220,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper):
         else:
             raise NotImplementedError(f"Unknown operator '{expr.operator}'")
 
+    @override
     def map_derivative(self, expr):
         return self.sym.Derivative(self.rec(expr.child),
                 *[self.sym.Symbol(v) for v in expr.variables])
