@@ -1761,7 +1761,10 @@ def flattened_sum(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpression
         return Sum(tuple(done))
 
 
-def linear_combination(coefficients, expressions):
+def linear_combination(
+            coefficients: Iterable[ArithmeticExpression],
+            expressions: Iterable[ArithmeticExpression],
+        ) -> ArithmeticExpression:
     return sum(coefficient * expression
                  for coefficient, expression
                  in zip(coefficients, expressions, strict=True)
