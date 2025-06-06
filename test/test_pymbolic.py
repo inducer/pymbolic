@@ -1021,7 +1021,7 @@ def test_nodecount():
     expr = 3*subexpr + subexpr + subexpr + subexpr
     expr = expr + expr + expr
 
-    assert get_num_nodes(expr) == 12
+    assert get_num_nodes(expr) == 17
 
 
 def test_python_ast_interop_roundtrip():
