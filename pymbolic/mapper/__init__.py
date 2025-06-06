@@ -273,6 +273,10 @@ class Mapper(Generic[ResultT, P]):
             expr: p.Remainder, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
 
+    def map_power(self,
+            expr: p.Power, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
     def map_constant(self,
             expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError
@@ -353,6 +357,46 @@ class Mapper(Generic[ResultT, P]):
                 **kwargs: P.kwargs
             ) -> ResultT:
         return self.map_algebraic_leaf(expr, *args, **kwargs)
+
+    def map_wildcard(self, expr: p.Wildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_dot_wildcard(self, expr: p.DotWildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_star_wildcard(self, expr: p.StarWildcard,
+                     *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_function_symbol(self, expr: p.FunctionSymbol,
+                     *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_multivector(self,
+                expr: MultiVector[ArithmeticExpression],
+                *args: P.args, **kwargs: P.kwargs
+            ) -> ResultT:
+        raise NotImplementedError
+
+    # def map_common_subexpression deliberately unimplemented to avoid breaking
+    # multiple inheritance with CSE-caching mappers
+
+    def map_substitution(self,
+                 expr: p.Substitution,
+                 *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_derivative(self,
+                expr: p.Derivative,
+                *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
+
+    def map_slice(self,
+                expr: p.Slice,
+                *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError
 
     def map_foreign(self,
                 expr: object,
