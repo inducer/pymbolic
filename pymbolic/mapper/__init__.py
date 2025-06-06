@@ -36,7 +36,7 @@ from typing import (
 from warnings import warn
 
 from constantdict import constantdict
-from typing_extensions import Any, ParamSpec, TypeIs
+from typing_extensions import Any, ParamSpec, TypeIs, override
 
 import pymbolic.primitives as p
 from pymbolic.typing import ArithmeticExpression, Expression
@@ -410,13 +410,13 @@ class Mapper(Generic[ResultT, P]):
         elif is_numpy_array(expr):
             return self.map_numpy_array(expr, *args, **kwargs)
         elif isinstance(expr, tuple):
-            return self.map_tuple(expr, *args, **kwargs)
+            return self.map_tuple(cast("tuple[Expression]", expr), *args, **kwargs)
         elif isinstance(expr, list):
             warn("List found in expression graph. "
                  "This is deprecated and will stop working in 2025. "
                  "Use tuples instead.", DeprecationWarning, stacklevel=2
              )
-            return self.map_list(expr, *args, **kwargs)
+            return self.map_list(cast("list[Expression]", expr), *args, **kwargs)
         else:
             raise ValueError(
                     "{} encountered invalid foreign object: {}".format(
@@ -472,7 +472,7 @@ class CachedMapper(Mapper[ResultT, P]):
         if not isinstance(result, type):
             return result
 
-        method_name = getattr(expr, "mapper_method", None)
+        method_name: str | None = getattr(expr, "mapper_method", None)
         if method_name is not None:
             method = cast(
                 "Callable[Concatenate[Expression, P], ResultT] | None",
@@ -487,7 +487,7 @@ class CachedMapper(Mapper[ResultT, P]):
         self._cache[cache_key] = result
         return result
 
-    rec = __call__
+    rec = __call__  # pyright: ignore[reportUnannotatedClassAttribute]
 
 # }}}
 
