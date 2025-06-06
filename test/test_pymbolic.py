@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from pymbolic.mapper.evaluator import evaluate_kw
-from pymbolic.mapper.flattener import FlattenMapper
-from pymbolic.mapper.stringifier import StringifyMapper
-
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -40,9 +36,15 @@ import pymbolic.primitives as prim
 from pymbolic import parse
 from pymbolic.mapper import IdentityMapper, WalkMapper
 from pymbolic.mapper.dependency import CachedDependencyMapper, DependencyMapper
+from pymbolic.mapper.evaluator import evaluate_kw
+from pymbolic.mapper.flattener import FlattenMapper
+from pymbolic.mapper.stringifier import StringifyMapper
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection, Sequence, Set
+
+    from pymbolic.mapper.unifier import UnificationRecord
     from pymbolic.typing import Expression
 
 
@@ -605,19 +607,26 @@ def test_flattener():
 # {{{ test_unifier
 
 def test_unifier():
-    from pymbolic import var
+    from pymbolic import flatten, var
     from pymbolic.mapper.unifier import UnidirectionalUnifier
     a, b, c, d, e, f = (var(s) for s in "abcdef")
 
-    def match_found(records, eqns):
+    def match_found(
+            records: Sequence[UnificationRecord],
+            eqns: Set[tuple[Expression, Expression]]):
         return any(eqns <= set(record.equations) for record in records)
 
-    recs = UnidirectionalUnifier("abc")(a+b*c, d+e*f)
+    def unify(candidates: Collection[str], expr: Expression, other: Expression):
+        unif = UnidirectionalUnifier(candidates)
+        print(flatten(expr), flatten(other))
+        return unif(flatten(expr), flatten(other))
+
+    recs = unify("abc", a+b*c, d+e*f)
     assert len(recs) == 2
     assert match_found(recs, {(a, d), (b, e), (c, f)})
     assert match_found(recs, {(a, d), (b, f), (c, e)})
 
-    recs = UnidirectionalUnifier("abc")(a+b, d+e+f)
+    recs = unify("abc", a+b, d+e+f)
     assert len(recs) == 6
     assert match_found(recs, {(a, d), (b, e+f)})
     assert match_found(recs, {(a, e), (b, d+f)})
@@ -627,14 +636,14 @@ def test_unifier():
     assert match_found(recs, {(b, f), (a, d+e)})
 
     vals = [var("v" + str(i)) for i in range(100)]
-    recs = UnidirectionalUnifier("a")(sum(vals[1:]) + a, sum(vals))
+    recs = unify("a", sum(vals[1:]) + a, sum(vals))
     assert len(recs) == 1
     assert match_found(recs, {(a, var("v0"))})
 
-    recs = UnidirectionalUnifier("abc")(a+b+c, d+e)
+    recs = unify("abc", a+b+c, d+e)
     assert len(recs) == 0
 
-    recs = UnidirectionalUnifier("abc")(f(a+b, f(a+c)), f(b+c, f(b+d)))
+    recs = unify("abc", f(a+b, f(a+c)), f(b+c, f(b+d)))
     assert len(recs) == 1
     assert match_found(recs, {(a, b), (b, c), (c, d)})
 
