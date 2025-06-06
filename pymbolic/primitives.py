@@ -1280,34 +1280,6 @@ class Sum(ExpressionNode):
 
     children: tuple[_Expression, ...]
 
-    def __add__(self, other):
-        if not is_valid_operand(other):
-            return NotImplemented
-
-        if isinstance(other, Sum):
-            return Sum(self.children + other.children)
-        if not other:
-            return self
-        return Sum((*self.children, other))
-
-    def __radd__(self, other):
-        if not is_constant(other):
-            return NotImplemented
-
-        if isinstance(other, Sum):
-            return Sum(other.children + self.children)
-        if not other:
-            return self
-        return Sum((other, *self.children))
-
-    def __sub__(self, other):
-        if not is_valid_operand(other):
-            return NotImplemented
-
-        if not other:
-            return self
-        return Sum((*self.children, -other))
-
     def __bool__(self):
         if len(self.children) == 0:
             return True
@@ -1331,28 +1303,6 @@ class Product(ExpressionNode):
     """
 
     children: tuple[_Expression, ...]
-
-    def __mul__(self, other):
-        if not is_valid_operand(other):
-            return NotImplemented
-        if isinstance(other, Product):
-            return Product(self.children + other.children)
-        if is_zero(other):
-            return 0
-        if is_zero(other-1):
-            return self
-        return Product((*self.children, other))
-
-    def __rmul__(self, other):
-        if not is_constant(other):
-            return NotImplemented
-        if isinstance(other, Product):
-            return Product(other.children + self.children)
-        if is_zero(other):
-            return 0
-        if is_zero(other-1):
-            return self
-        return Product((other, *self.children))
 
     def __bool__(self):
         return all(not is_zero(i) for i in self.children)
