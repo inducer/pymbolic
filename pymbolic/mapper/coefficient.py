@@ -26,6 +26,8 @@ THE SOFTWARE.
 from collections.abc import Collection, Mapping
 from typing import Literal, TypeAlias, cast
 
+from typing_extensions import override
+
 import pymbolic.primitives as p
 from pymbolic.mapper import Mapper
 from pymbolic.typing import ArithmeticExpression
@@ -38,6 +40,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
     def __init__(self, target_names: Collection[str] | None = None) -> None:
         self.target_names = target_names
 
+    @override
     def map_sum(self, expr: p.Sum) -> CoeffsT:
         stride_dicts = [self.rec(ch) for ch in expr.children]
 
@@ -51,6 +54,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
 
         return result
 
+    @override
     def map_product(self, expr: p.Product) -> CoeffsT:
         children_coeffs = [self.rec(child) for child in expr.children]
 
@@ -78,6 +82,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
                     for var, coeff in
                     children_coeffs[idx_of_child_with_vars].items()}
 
+    @override
     def map_quotient(self, expr: p.Quotient) -> CoeffsT:
         from pymbolic.primitives import Quotient
         d_num = dict(self.rec(expr.numerator))
@@ -90,6 +95,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
             d_num[k] = p.flattened_product((d_num[k], Quotient(1, val)))
         return d_num
 
+    @override
     def map_power(self, expr: p.Power) -> CoeffsT:
         d_base = self.rec(expr.base)
         d_exponent = self.rec(expr.exponent)
@@ -101,17 +107,20 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
             raise RuntimeError("nonlinear expression")
         return {1: expr}
 
+    @override
     def map_constant(self, expr: object) -> CoeffsT:
         assert p.is_arithmetic_expression(expr)
         from pymbolic.primitives import is_zero
         return {} if is_zero(expr) else {1: expr}
 
+    @override
     def map_variable(self, expr: p.Variable) -> CoeffsT:
         if self.target_names is None or expr.name in self.target_names:
             return {expr: 1}
         else:
             return {1: expr}
 
+    @override
     def map_algebraic_leaf(self, expr: p.AlgebraicLeaf) -> CoeffsT:
         if self.target_names is None:
             return {expr: 1}

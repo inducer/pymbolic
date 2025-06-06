@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import multiset
 import numpy as np
 from matchpy import Expression as MatchpyExpression
+from typing_extensions import override
 
 import pymbolic.interop.matchpy as m
 import pymbolic.primitives as p
@@ -26,6 +27,7 @@ class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
     Mapper to convert instances of :class:`pymbolic.primitives.Expression` to
     :class:`pymbolic.interop.matchpy.PymbolicOperation`.
     """
+    @override
     def map_constant(self, expr: object) -> m.Scalar:
         if np.isscalar(expr):
             assert p.is_constant(expr)
@@ -33,71 +35,90 @@ class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
 
         raise NotImplementedError(expr)
 
+    @override
     def map_variable(self, expr: p.Variable) -> m.Variable:
         return m.Variable(m.Id(expr.name))
 
+    @override
     def map_call(self, expr: p.Call) -> m.Call:
         return m.Call(self.rec(expr.function),
                       m.TupleOp(tuple(self.rec(p)
                                       for p in expr.parameters)))
 
+    @override
     def map_subscript(self, expr: p.Subscript) -> m.Subscript:
         return m.Subscript(self.rec(expr.aggregate),
                            m.TupleOp(tuple(self.rec(idx)
                                            for idx in expr.index_tuple)))
 
+    @override
     def map_sum(self, expr: p.Sum) -> m.Sum:
         return m.Sum(*[self.rec(child)
                        for child in expr.children])
 
+    @override
     def map_product(self, expr: p.Product) -> m.Product:
         return m.Product(*[self.rec(child)
                            for child in expr.children])
 
+    @override
     def map_quotient(self, expr: p.Quotient) -> m.TrueDiv:
         return m.TrueDiv(self.rec(expr.numerator), self.rec(expr.denominator))
 
+    @override
     def map_floor_div(self, expr: p.FloorDiv) -> m.FloorDiv:
         return m.FloorDiv(self.rec(expr.numerator), self.rec(expr.denominator))
 
+    @override
     def map_remainder(self, expr: p.Remainder) -> m.Modulo:
         return m.Modulo(self.rec(expr.numerator), self.rec(expr.denominator))
 
+    @override
     def map_power(self, expr: p.Power) -> m.Power:
         return m.Power(self.rec(expr.base), self.rec(expr.exponent))
 
+    @override
     def map_left_shift(self, expr: p.LeftShift) -> m.LeftShift:
         return m.LeftShift(self.rec(expr.shiftee), self.rec(expr.shift))
 
+    @override
     def map_right_shift(self, expr: p.RightShift) -> m.RightShift:
         return m.RightShift(self.rec(expr.shiftee), self.rec(expr.shift))
 
+    @override
     def map_bitwise_not(self, expr: p.BitwiseNot) -> m.BitwiseNot:
         return m.BitwiseNot(self.rec(expr.child))
 
+    @override
     def map_bitwise_or(self, expr: p.BitwiseOr) -> m.BitwiseOr:
         return m.BitwiseOr(*[self.rec(child)
                              for child in expr.children])
 
+    @override
     def map_bitwise_and(self, expr: p.BitwiseAnd) -> m.BitwiseAnd:
         return m.BitwiseAnd(*[self.rec(child)
                               for child in expr.children])
 
+    @override
     def map_bitwise_xor(self, expr: p.BitwiseXor) -> m.BitwiseXor:
         return m.BitwiseXor(*[self.rec(child)
                               for child in expr.children])
 
+    @override
     def map_logical_not(self, expr: p.LogicalNot) -> m.LogicalNot:
         return m.LogicalNot(self.rec(expr.child))
 
+    @override
     def map_logical_or(self, expr: p.LogicalOr) -> m.LogicalOr:
         return m.LogicalOr(*[self.rec(child)
                              for child in expr.children])
 
+    @override
     def map_logical_and(self, expr: p.LogicalAnd) -> m.LogicalAnd:
         return m.LogicalAnd(*[self.rec(child)
                               for child in expr.children])
 
+    @override
     def map_comparison(self, expr: p.Comparison) -> m.Comparison:
         # pylint: disable=too-many-function-args
         return m.Comparison(self.rec(expr.left),
@@ -105,15 +126,18 @@ class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
                             self.rec(expr.right),
                             )
 
+    @override
     def map_if(self, expr: p.If) -> m.If:
         # pylint: disable=too-many-function-args
         return m.If(self.rec(expr.condition),
                     self.rec(expr.then),
                     self.rec(expr.else_))
 
+    @override
     def map_dot_wildcard(self, expr: p.DotWildcard) -> m.Wildcard:
         return m.Wildcard.dot(expr.name)
 
+    @override
     def map_star_wildcard(self, expr: p.StarWildcard) -> m.Wildcard:
         return m.Wildcard.star(expr.name)
 

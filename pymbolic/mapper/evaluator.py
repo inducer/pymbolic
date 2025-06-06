@@ -32,10 +32,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-
 import operator as op
 from functools import reduce
 from typing import TYPE_CHECKING, cast
+
+from typing_extensions import override
 
 from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper, ResultT
 
@@ -83,18 +84,22 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
         self.context = context
 
+    @override
     def map_constant(self, expr: object) -> ResultT:
         return cast("ResultT", expr)
 
+    @override
     def map_variable(self, expr: p.Variable) -> ResultT:
         try:
             return self.context[expr.name]
         except KeyError:
             raise UnknownVariableError(expr.name) from None
 
+    @override
     def map_call(self, expr: p.Call) -> ResultT:
         return self.rec(expr.function)(*[self.rec(par) for par in expr.parameters])  # type: ignore[operator]
 
+    @override
     def map_call_with_kwargs(self, expr: p.CallWithKwargs) -> ResultT:
         args = [self.rec(par) for par in expr.parameters]
         kwargs = {
@@ -103,63 +108,82 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
         return self.rec(expr.function)(*args, **kwargs)  # type: ignore[operator]
 
+    @override
     def map_subscript(self, expr: p.Subscript) -> ResultT:
         return self.rec(expr.aggregate)[self.rec(expr.index)]  # type: ignore[index]
 
+    @override
     def map_lookup(self, expr: p.Lookup) -> ResultT:
         return getattr(self.rec(expr.aggregate), expr.name)
 
+    @override
     def map_sum(self, expr: p.Sum) -> ResultT:
         return sum(self.rec(child) for child in expr.children)  # type: ignore[return-value, misc]
 
+    @override
     def map_product(self, expr: p.Product) -> ResultT:
         from pytools import product
         return cast("ResultT", product(self.rec(child) for child in expr.children))
 
+    @override
     def map_quotient(self, expr: p.Quotient) -> ResultT:
         return self.rec(expr.numerator) / self.rec(expr.denominator)  # type: ignore[operator]
 
+    @override
     def map_floor_div(self, expr: p.FloorDiv) -> ResultT:
         return self.rec(expr.numerator) // self.rec(expr.denominator)  # type: ignore[operator]
 
+    @override
     def map_remainder(self, expr: p.Remainder) -> ResultT:
         return self.rec(expr.numerator) % self.rec(expr.denominator)  # type: ignore[operator]
 
+    @override
     def map_power(self, expr: p.Power) -> ResultT:
         return self.rec(expr.base) ** self.rec(expr.exponent)  # type: ignore[operator]
 
+    @override
     def map_left_shift(self, expr: p.LeftShift) -> ResultT:
         return self.rec(expr.shiftee) << self.rec(expr.shift)  # type: ignore[operator]
 
+    @override
     def map_right_shift(self, expr: p.RightShift) -> ResultT:
         return self.rec(expr.shiftee) >> self.rec(expr.shift)  # type: ignore[operator]
 
+    @override
     def map_bitwise_not(self, expr: p.BitwiseNot) -> ResultT:
         # ??? Why, pylint, why ???
         # pylint: disable=invalid-unary-operand-type
         return ~self.rec(expr.child)  # type: ignore[operator]
 
+    @override
     def map_bitwise_or(self, expr: p.BitwiseOr) -> ResultT:
         return reduce(op.or_, (self.rec(ch) for ch in expr.children))
 
+    @override
     def map_bitwise_xor(self, expr: p.BitwiseXor) -> ResultT:
         return reduce(op.xor, (self.rec(ch) for ch in expr.children))
 
+    @override
     def map_bitwise_and(self, expr: p.BitwiseAnd) -> ResultT:
         return reduce(op.and_, (self.rec(ch) for ch in expr.children))
 
+    @override
     def map_logical_not(self, expr: p.LogicalNot) -> bool:  # type: ignore[override]
         return not self.rec(expr.child)
 
+    @override
     def map_logical_or(self, expr: p.LogicalOr) -> bool:  # type: ignore[override]
         return any(self.rec(ch) for ch in expr.children)
 
+    @override
     def map_logical_and(self, expr: p.LogicalAnd) -> bool:  # type: ignore[override]
         return all(self.rec(ch) for ch in expr.children)
 
+    @override
     def map_list(self, expr: list[Expression]) -> ResultT:
         return [self.rec(child) for child in expr]  # type: ignore[return-value]
 
+    @override
     def map_numpy_array(self, expr: NDArray[np.generic]) -> ResultT:
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
@@ -167,32 +191,40 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
             result[i] = self.rec(expr[i])
         return result  # type: ignore[return-value]
 
+    @override
     def map_multivector(self, expr: MultiVector) -> ResultT:
         return expr.map(lambda ch: self.rec(ch))  # type: ignore[return-value]
 
+    @override
     def map_common_subexpression_uncached(self, expr: p.CommonSubexpression) -> ResultT:
         return self.rec(expr.child)
 
+    @override
     def map_if(self, expr: p.If) -> ResultT:
         if self.rec(expr.condition):
             return self.rec(expr.then)
         else:
             return self.rec(expr.else_)
 
+    @override
     def map_comparison(self, expr: p.Comparison) -> ResultT:
         import operator
         return getattr(operator, expr.operator_to_name[expr.operator])(
             self.rec(expr.left), self.rec(expr.right))
 
+    @override
     def map_min(self, expr: p.Min) -> ResultT:
         return min(self.rec(child) for child in expr.children)  # type: ignore[type-var]
 
+    @override
     def map_max(self, expr: p.Max) -> ResultT:
         return max(self.rec(child) for child in expr.children)  # type: ignore[type-var]
 
+    @override
     def map_tuple(self, expr: tuple[Expression, ...]) -> ResultT:
         return tuple([self.rec(child) for child in expr])  # type: ignore[return-value]
 
+    @override
     def map_nan(self, expr: p.NaN) -> ResultT:
         if expr.data_type is None:
             from math import nan

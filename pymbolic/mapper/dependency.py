@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -79,11 +81,13 @@ class DependencyMapper(
         self.include_calls = include_calls
         self.include_cses = include_cses
 
+    @override
     def map_variable(
         self, expr: p.Variable, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
         return {expr}
 
+    @override
     def map_call(
         self, expr: p.Call, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -96,6 +100,7 @@ class DependencyMapper(
         else:
             return super().map_call(expr, *args, **kwargs)
 
+    @override
     def map_call_with_kwargs(
         self, expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -112,6 +117,7 @@ class DependencyMapper(
         else:
             return super().map_call_with_kwargs(expr, *args, **kwargs)
 
+    @override
     def map_lookup(
         self, expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -120,6 +126,7 @@ class DependencyMapper(
         else:
             return super().map_lookup(expr, *args, **kwargs)
 
+    @override
     def map_subscript(
         self, expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -128,6 +135,7 @@ class DependencyMapper(
         else:
             return super().map_subscript(expr, *args, **kwargs)
 
+    @override
     def map_common_subexpression_uncached(
         self, expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -137,6 +145,7 @@ class DependencyMapper(
             # FIXME: These look like mypy bugs, revisit
             return Collector.map_common_subexpression(self, expr, *args, **kwargs)  # type: ignore[return-value, arg-type]
 
+    @override
     def map_slice(
         self, expr: p.Slice, *args: P.args, **kwargs: P.kwargs
     ) -> DependenciesT:
@@ -146,6 +155,7 @@ class DependencyMapper(
             if child is not None
         ])
 
+    @override
     def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> DependenciesT:
         return set()
 

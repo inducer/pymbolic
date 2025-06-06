@@ -26,6 +26,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing_extensions import override
+
 import pymbolic
 import pymbolic.mapper
 import pymbolic.mapper.evaluator
@@ -124,15 +126,18 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
         """
         return expr
 
+    @override
     def map_constant(self, expr, *args):
         return 0
 
+    @override
     def map_variable(self, expr, *args):
         if expr == self.variable:
             return 1
         else:
             return 0
 
+    @override
     def map_call(self, expr, *args):
         return pymbolic.flattened_sum(
             self.function_map(
@@ -144,10 +149,12 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
 
     map_subscript = map_variable
 
+    @override
     def map_sum(self, expr, *args):
         return pymbolic.flattened_sum(
                 self.rec(child, *args) for child in expr.children)
 
+    @override
     def map_product(self, expr, *args):
         return pymbolic.flattened_sum(
             pymbolic.flattened_product(
@@ -157,6 +164,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
                 )
             for i, child in enumerate(expr.children))
 
+    @override
     def map_quotient(self, expr, *args):
         f = expr.numerator
         g = expr.denominator
@@ -174,6 +182,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
         else:
             return (df*g-dg*f)/g**2
 
+    @override
     def map_power(self, expr, *args):
         f = expr.base
         g = expr.exponent
@@ -194,6 +203,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
             return log(f) * f**g * dg + \
                     g * f**(g-1) * df
 
+    @override
     def map_numpy_array(self, expr, *args):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
@@ -201,6 +211,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
             result[i] = self.rec(expr[i], *args)
         return result
 
+    @override
     def map_if(self, expr, *args):
         if self.allowed_nonsmoothness != "discontinuous":
             raise ValueError("cannot differentiate 'If' nodes unless "
@@ -211,6 +222,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
                 self.rec(expr.then, *args),
                 self.rec(expr.else_, *args))
 
+    @override
     def map_common_subexpression_uncached(self, expr, *args):
         return type(expr)(
                 self.rec(expr.child, *args),
