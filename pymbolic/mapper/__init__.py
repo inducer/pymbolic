@@ -725,10 +725,14 @@ class Collector(CombineMapper[Set[CollectedT], P]):
     @override
     def combine(self,
                 values: Iterable[Set[CollectedT]]
-            ) -> Set[CollectedT]:
-        import operator
-        from functools import reduce
-        return reduce(operator.or_, values, set())
+            ) -> frozenset[CollectedT]:
+        it = iter(values)
+        try:
+            first = next(it)
+        except StopIteration:
+            return frozenset()
+
+        return frozenset(first).union(*it)
 
     @override
     def map_constant(self, expr: object,
