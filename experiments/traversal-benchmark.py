@@ -122,6 +122,10 @@ if __name__ == "__main__":
     from time import time
 
     if 1:
+        # Allow for JIT warm-up
+        for _ in range(10):
+            main()
+
         t_start = time()
         for _ in range(10_000):
             main()
