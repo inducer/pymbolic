@@ -23,12 +23,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from abc import ABC, abstractmethod
+from collections.abc import Collection, Mapping, Sequence
+from typing import TYPE_CHECKING, cast, final
+
+from typing_extensions import override
+
 from pymbolic.mapper import Mapper
 from pymbolic.primitives import Variable
+from pymbolic.typing import Expression
 
 
-def unify_map(map1, map2):
-    result = map1.copy()
+if TYPE_CHECKING:
+    import pymbolic.primitives as p
+
+
+def unify_map(
+            map1: Mapping[str, Expression],
+            map2: Mapping[str, Expression]
+        ) -> Mapping[str, Expression] | None:
+    result = dict(map1)
     for name, value in map2.items():
         if name in map1:
             if map1[name] != value:
@@ -39,9 +53,13 @@ def unify_map(map1, map2):
     return result
 
 
+@final
 class UnificationRecord:
 
-    def __init__(self, equations, lmap=None, rmap=None):
+    def __init__(self,
+            equations: Collection[tuple[Expression, Expression]],
+            lmap: Mapping[str, Expression] | None = None,
+            rmap: Mapping[str, Expression] | None = None):
         self.equations = equations
 
         # lmap and rmap just serve as a tool to reject
@@ -60,7 +78,7 @@ class UnificationRecord:
         self.lmap = lmap
         self.rmap = rmap
 
-    def unify(self, other):
+    def unify(self, other: UnificationRecord):
         new_lmap = unify_map(self.lmap, other.lmap)
         if new_lmap is None:
             return None
@@ -76,14 +94,18 @@ class UnificationRecord:
         return UnificationRecord(
             list(new_equations), new_lmap, new_rmap)
 
+    @override
     def __repr__(self):
         return "UnificationRecord({})".format(
                 ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
                 )
 
 
-def unify_many(unis1, uni2):
-    result = []
+def unify_many(
+            unis1: Sequence[UnificationRecord],
+            uni2: UnificationRecord
+        ):
+    result: list[UnificationRecord] = []
     for uni1 in unis1:
         unif_result = uni1.unify(uni2)
         if unif_result is not None:
@@ -92,16 +114,19 @@ def unify_many(unis1, uni2):
     return result
 
 
-class UnifierBase(Mapper):
+class UnifierBase(Mapper[
+                  Sequence[UnificationRecord],
+                  [Expression, Sequence[UnificationRecord]]], ABC):
     # The idea of the algorithm here is that the unifier accumulates a set of
     # unification possibilities (:class:`UnificationRecord`) as it descends the
     # expression tree. :func:`unify_many` above then checks if these possibilities
     # are consistent with new incoming information (also encoded as a
     # :class:`UnificationRecord`) and either augments or abandons them.
 
-    def __init__(self, lhs_mapping_candidates=None,
-            rhs_mapping_candidates=None,
-            force_var_match=True):
+    def __init__(self,
+            lhs_mapping_candidates: Collection[str] | None = None,
+            rhs_mapping_candidates: Collection[str] | None = None,
+            force_var_match: bool = True):
         """
         :arg lhs_mapping_candidates: list or set of  variable names that may be
           assigned in the left-hand ("first") expression
@@ -116,7 +141,12 @@ class UnifierBase(Mapper):
         self.rhs_mapping_candidates = rhs_mapping_candidates
         self.force_var_match = force_var_match
 
-    def treat_mismatch(self, expr, other, urecs):
+    @abstractmethod
+    def treat_mismatch(self,
+                expr: Expression,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]
+            ) -> Sequence[UnificationRecord]:
         raise NotImplementedError
 
     def unification_record_from_equation(self, lhs, rhs):
@@ -145,13 +175,16 @@ class UnifierBase(Mapper):
 
         return UnificationRecord([(lhs, rhs)])
 
-    def map_constant(self, expr, other, urecs):
+    def map_constant(self,
+                expr: object,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if expr == other:
             return urecs
         else:
             return []
 
-    def map_variable(self, expr, other, urecs):
+    def map_variable(self, expr, other: Expression, urecs: Sequence[UnificationRecord]):
         new_uni_record = self.unification_record_from_equation(
                 expr, other)
 
@@ -166,14 +199,22 @@ class UnifierBase(Mapper):
         else:
             return unify_many(urecs, new_uni_record)
 
-    def map_call(self, expr, other, urecs):
+    @override
+    def map_call(self,
+                 expr: p.Call,
+                 other: Expression,
+                 urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
         return self.rec(expr.function, other.function,
                 self.rec(expr.parameters, other.parameters, urecs))
 
-    def map_subscript(self, expr, other, urecs):
+    @override
+    def map_subscript(self,
+                expr: p. Subscript,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -192,7 +233,11 @@ class UnifierBase(Mapper):
         return self.rec(expr.aggregate, other.aggregate,
                 self.rec(expr_index, other_index, urecs))
 
-    def map_lookup(self, expr, other, urecs):
+    @override
+    def map_lookup(self,
+                expr: p.Lookup,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
         if expr.name != other.name:
@@ -200,7 +245,14 @@ class UnifierBase(Mapper):
 
         return self.rec(expr.aggregate, other.aggregate, urecs)
 
-    def map_sum(self, expr, other, urecs):
+    @override
+    def map_sum(self,
+                expr: (p.Sum | p.Product
+                    | p.BitwiseAnd | p.BitwiseOr | p.BitwiseXor
+                    | p.LogicalAnd | p.LogicalOr
+                    | p.Min | p.Max),
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if (not isinstance(other, type(expr))
                 or len(expr.children) != len(other.children)):
             return []
@@ -215,7 +267,8 @@ class UnifierBase(Mapper):
             for my_child, other_child in zip(
                     expr.children,
                     (other.children[i] for i in perm), strict=True):
-                it_assignments = self.rec(my_child, other_child, it_assignments)
+                it_assignments = self.rec(
+                            my_child, cast("Expression", other_child), it_assignments)
                 if not it_assignments:
                     break
 
@@ -230,7 +283,11 @@ class UnifierBase(Mapper):
 
     map_product = map_sum
 
-    def map_quotient(self, expr, other, urecs):
+    @override
+    def map_quotient(self,
+                expr: p.Quotient | p.FloorDiv | p.Remainder,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -240,14 +297,21 @@ class UnifierBase(Mapper):
     map_floor_div = map_quotient
     map_remainder = map_quotient
 
-    def map_power(self, expr, other, urecs):
+    @override
+    def map_power(self,
+                expr: p.Power,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
         return self.rec(expr.base, other.base,
                 self.rec(expr.exponent, other.exponent, urecs))
 
-    def map_left_shift(self, expr, other, urecs):
+    def map_left_shift(self,
+                expr: p.LeftShift | p.RightShift,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -256,7 +320,11 @@ class UnifierBase(Mapper):
 
     map_right_shift = map_left_shift
 
-    def map_bitwise_not(self, expr, other, urecs):
+    @override
+    def map_bitwise_not(self,
+                expr: p.BitwiseNot | p.LogicalNot,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -270,7 +338,11 @@ class UnifierBase(Mapper):
     map_logical_or = map_sum
     map_logical_and = map_sum
 
-    def map_comparison(self, expr, other, urecs):
+    @override
+    def map_comparison(self,
+                expr: p.Comparison,
+                other: Expression,
+                urecs: Sequence[UnificationRecord]):
         if (not isinstance(other, type(expr))
                 or expr.operator != other.operator):
             return self.treat_mismatch(expr, other, urecs)
@@ -278,15 +350,7 @@ class UnifierBase(Mapper):
         return self.rec(expr.left, other.left,
                 self.rec(expr.right, other.right, urecs))
 
-    def map_if_positive(self, expr, other, urecs):
-        if not isinstance(other, type(expr)):
-            return self.treat_mismatch(expr, other, urecs)
-
-        return self.rec(expr.criterion, other.criterion,
-                self.rec(expr.then, other.then,
-                    self.rec(expr.else_, other.else_, urecs)))
-
-    def map_if(self, expr, other, urecs):
+    def map_if(self, expr: p.If, other: Expression, urecs: Sequence[UnificationRecord]):
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -297,7 +361,11 @@ class UnifierBase(Mapper):
     map_min = map_sum
     map_max = map_sum
 
-    def map_list(self, expr, other, urecs):
+    @override
+    def map_list(self,
+                 expr: list[Expression] | tuple[Expression, ...],
+                 other: Expression,
+                 urecs: Sequence[UnificationRecord]):
         if (not isinstance(other, type(expr))
                 or len(expr) != len(other)):
             return []
@@ -311,7 +379,11 @@ class UnifierBase(Mapper):
 
     map_tuple = map_list
 
-    def __call__(self, expr, other, urecs=None):
+    @override
+    def __call__(self,
+                 expr: Expression,
+                 other: Expression,
+                 urecs: Sequence[UnificationRecord] | None = None):
         if urecs is None:
             urecs = [UnificationRecord([])]
         return self.rec(expr, other, urecs)
@@ -350,7 +422,8 @@ class UnidirectionalUnifier(UnifierBase):
         for my_child in non_var_children:
             i_matches = []
             for j, other_child in enumerate(other.children):
-                result = self.rec(my_child, other_child, urecs)
+                # type-ignore to avoid having to type this too
+                result = self.rec(my_child, other_child, urecs)  # pyright: ignore[reportUnknownArgumentType]
                 if result:
                     i_matches.append((j, result))
             unification_candidates.append(i_matches)
