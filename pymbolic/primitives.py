@@ -485,13 +485,13 @@ class ExpressionNode:
         return Sum((other, -self))
 
     def __mul__(self, other: object) -> Product:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Product((self, other))
 
     def __rmul__(self, other: object) -> Product:
-        if not is_valid_operand(other):
+        if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Product((other, self))
@@ -1278,7 +1278,7 @@ class Sum(ExpressionNode):
     .. automethod:: __bool__
     """
 
-    children: tuple[_Expression, ...]
+    children: tuple[ArithmeticExpression, ...]
 
     def __bool__(self):
         if len(self.children) == 0:
@@ -1302,7 +1302,7 @@ class Product(ExpressionNode):
     .. automethod:: __bool__
     """
 
-    children: tuple[_Expression, ...]
+    children: tuple[ArithmeticExpression, ...]
 
     def __bool__(self):
         return all(not is_zero(i) for i in self.children)
