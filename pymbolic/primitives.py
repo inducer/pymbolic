@@ -1037,8 +1037,8 @@ def _augment_expression_dataclass(
         def {cls.__name__}_getstate(self):
             # We might get called on a non-dataclass subclass.
             if "_is_expr_dataclass" not in self.__class__.__dict__:
-                from pymbolic.primitives import Expression
-                return Expression.__getstate__(self)
+                from pymbolic.primitives import ExpressionNode
+                return ExpressionNode.__getstate__(self)
 
             return {attr_tuple}
 
