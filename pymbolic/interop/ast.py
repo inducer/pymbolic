@@ -288,7 +288,7 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
 
     @override
     def map_constant(self, expr: object) -> ast.expr:
-        return ast.Constant(expr, None)
+        return ast.Constant(expr, None)  # pyright: ignore[reportArgumentType]
 
     @override
     def map_call(self, expr: p.Call) -> ast.expr:
