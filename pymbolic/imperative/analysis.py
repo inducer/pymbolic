@@ -25,12 +25,21 @@ THE SOFTWARE.
 """
 
 
-def get_all_used_insn_ids(insn_stream):
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from pymbolic.imperative.statement import StatementLike
+
+
+def get_all_used_insn_ids(insn_stream: Iterable[StatementLike]):
     return frozenset(insn.id for insn in insn_stream)
 
 
-def get_all_used_identifiers(insn_stream):
-    result = set()
+def get_all_used_identifiers(insn_stream: Iterable[StatementLike]):
+    result: set[str] = set()
     for insn in insn_stream:
         result |= insn.get_read_variables()
         result |= insn.get_written_variables()
