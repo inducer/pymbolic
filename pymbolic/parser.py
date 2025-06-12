@@ -24,16 +24,20 @@ THE SOFTWARE.
 """
 
 from sys import intern
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from constantdict import constantdict
 
 import pytools.lex
 from pytools import memoize_method
 
+from pymbolic.primitives import is_arithmetic_expression
+
 
 if TYPE_CHECKING:
-    from pymbolic.typing import Expression
+    from pytools.lex import LexIterator
+
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 _imaginary = intern("imaginary")
@@ -203,10 +207,10 @@ class Parser:
             _notequal: "!=",
             }
 
-    def parse_float(self, s):
+    def parse_float(self, s: str):
         return float(s.replace("d", "e").replace("D", "e"))
 
-    def parse_terminal(self, pstate):
+    def parse_terminal(self, pstate: LexIterator):
         import pymbolic.primitives as primitives
 
         next_tag = pstate.next_tag()
@@ -233,7 +237,7 @@ class Parser:
         else:
             pstate.expected("terminal")
 
-    def parse_prefix(self, pstate):
+    def parse_prefix(self, pstate: LexIterator):
         import pymbolic.primitives as primitives
         pstate.expect_not_end()
 
@@ -312,7 +316,7 @@ class Parser:
 
         return left_exp
 
-    def parse_expression(self, pstate, min_precedence=0):
+    def parse_expression(self, pstate: LexIterator, min_precedence: int = 0):
         left_exp = self.parse_prefix(pstate)
 
         did_something = True
@@ -322,7 +326,7 @@ class Parser:
                 return left_exp
 
             result = self.parse_postfix(
-                    pstate, min_precedence, left_exp)
+                    pstate, min_precedence, cast("Expression", left_exp))
             left_exp, did_something = result
 
         if isinstance(left_exp, FinalizedTuple):
@@ -330,7 +334,15 @@ class Parser:
 
         return left_exp
 
-    def parse_postfix(self, pstate, min_precedence, left_exp):
+    def parse_arith_expression(self, pstate: LexIterator, min_precedence: int = 0):
+        expr = self.parse_expression(pstate, min_precedence)
+        assert is_arithmetic_expression(expr)
+        return cast("ArithmeticExpression", expr)
+
+    def parse_postfix(self,
+                pstate: LexIterator,
+                min_precedence: int,
+                left_exp: Expression):
         import pymbolic.primitives as primitives
 
         did_something = False
@@ -374,48 +386,46 @@ class Parser:
             did_something = True
         elif next_tag is _plus and min_precedence < _PREC_PLUS:
             pstate.advance()
-            right_exp = self.parse_expression(pstate, _PREC_PLUS)
-            if isinstance(left_exp, primitives.Sum):
-                left_exp = primitives.Sum((*left_exp.children, right_exp))
-            else:
-                left_exp = primitives.Sum((left_exp, right_exp))
+            right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
+            assert is_arithmetic_expression(left_exp)
+            left_exp = primitives.Sum((left_exp, right_exp))
 
             did_something = True
         elif next_tag is _minus and min_precedence < _PREC_PLUS:
             pstate.advance()
-            right_exp = self.parse_expression(pstate, _PREC_PLUS)
-            if isinstance(left_exp, primitives.Sum):
-                left_exp = primitives.Sum(left_exp.children + ((-right_exp),))  # noqa pylint:disable=invalid-unary-operand-type
-            else:
-                left_exp = primitives.Sum((left_exp, -right_exp))  # pylint:disable=invalid-unary-operand-type
+            right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
+            assert is_arithmetic_expression(left_exp)
+            left_exp = primitives.Sum((left_exp, -right_exp))  # pylint:disable=invalid-unary-operand-type
             did_something = True
         elif next_tag is _times and min_precedence < _PREC_TIMES:
             pstate.advance()
-            right_exp = self.parse_expression(pstate, _PREC_PLUS)
-            if isinstance(left_exp, primitives.Product):
-                left_exp = primitives.Product((*left_exp.children, right_exp))
-            else:
-                left_exp = primitives.Product((left_exp, right_exp))
+            right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
+            assert is_arithmetic_expression(left_exp)
+            left_exp = primitives.Product((left_exp, right_exp))
             did_something = True
         elif next_tag is _floordiv and min_precedence < _PREC_TIMES:
             pstate.advance()
+            assert is_arithmetic_expression(left_exp)
             left_exp = primitives.FloorDiv(
-                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
+                    left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _over and min_precedence < _PREC_TIMES:
             pstate.advance()
+            assert is_arithmetic_expression(left_exp)
             left_exp = primitives.Quotient(
-                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
+                    left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _modulo and min_precedence < _PREC_TIMES:
             pstate.advance()
+            assert is_arithmetic_expression(left_exp)
             left_exp = primitives.Remainder(
-                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
+                    left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _power and min_precedence < _PREC_POWER:
             pstate.advance()
+            assert is_arithmetic_expression(left_exp)
             left_exp = primitives.Power(
-                    left_exp, self.parse_expression(pstate, _PREC_TIMES))
+                    left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _and and min_precedence < _PREC_LOGICAL_AND:
             pstate.advance()
@@ -515,7 +525,7 @@ class Parser:
 
         return left_exp, did_something
 
-    def parse_arglist(self, pstate):
+    def parse_arglist(self, pstate: LexIterator):
         pstate.expect_not_end()
 
         args = []
