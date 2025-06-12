@@ -25,16 +25,33 @@ THE SOFTWARE.
 """
 
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from pymbolic.imperative.statement import (
+        BasicStatementLikeT,
+        StatementLike,
+        StatementLikeT,
+    )
+    from pymbolic.primitives import Variable
+
+
 # {{{ fuse statement streams
 
-def fuse_statement_streams_with_unique_ids(statements_a, statements_b):
+def fuse_statement_streams_with_unique_ids(
+            statements_a: Sequence[BasicStatementLikeT],
+            statements_b: Sequence[BasicStatementLikeT]
+        ) -> tuple[list[BasicStatementLikeT], dict[str, str]]:
     new_statements = list(statements_a)
     from pytools import UniqueNameGenerator
     stmt_id_gen = UniqueNameGenerator(
             {stmta.id for stmta in new_statements})
 
-    b_unique_statements = []
-    old_b_id_to_new_b_id = {}
+    b_unique_statements: list[BasicStatementLikeT] = []
+    old_b_id_to_new_b_id: dict[str, str] = {}
     for stmtb in statements_b:
         old_id = stmtb.id
         new_id = stmt_id_gen(old_id)
@@ -53,7 +70,10 @@ def fuse_statement_streams_with_unique_ids(statements_a, statements_b):
     return new_statements, old_b_id_to_new_b_id
 
 
-def fuse_instruction_streams_with_unique_ids(insns_a, insns_b):
+def fuse_instruction_streams_with_unique_ids(
+            insns_a: Sequence[StatementLikeT],
+            insns_b: Sequence[StatementLikeT]
+        ):
     from warnings import warn
     warn("fuse_instruction_streams_with_unique_ids has been renamed to "
             "fuse_statement_streams_with_unique_ids", DeprecationWarning,
@@ -66,11 +86,13 @@ def fuse_instruction_streams_with_unique_ids(insns_a, insns_b):
 
 # {{{ disambiguate_identifiers
 
-def disambiguate_identifiers(statements_a, statements_b,
-        should_disambiguate_name=None):
+def disambiguate_identifiers(
+            statements_a: Sequence[StatementLike],
+            statements_b: Sequence[StatementLike],
+            should_disambiguate_name: Callable[[str], bool] | None = None,
+        ):
     if should_disambiguate_name is None:
-        def should_disambiguate_name(name):  # pylint:disable=function-redefined
-            return True
+        should_disambiguate_name = lambda name: True  # noqa: E731
 
     from pymbolic.imperative.analysis import get_all_used_identifiers
 
@@ -81,7 +103,7 @@ def disambiguate_identifiers(statements_a, statements_b,
     vng = UniqueNameGenerator(id_a | id_b)
 
     from pymbolic import var
-    subst_b = {}
+    subst_b: dict[str, Variable] = {}
     for clash in id_a & id_b:
         if should_disambiguate_name(clash):
             unclash = vng(clash)
@@ -100,8 +122,11 @@ def disambiguate_identifiers(statements_a, statements_b,
 
 # {{{ disambiguate_and_fuse
 
-def disambiguate_and_fuse(statements_a, statements_b,
-        should_disambiguate_name=None):
+def disambiguate_and_fuse(
+            statements_a: Sequence[StatementLike],
+            statements_b: Sequence[StatementLike],
+            should_disambiguate_name: Callable[[str], bool] | None = None,
+        ):
     statements_b, subst_b = disambiguate_identifiers(
             statements_a, statements_b,
             should_disambiguate_name)
