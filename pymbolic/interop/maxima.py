@@ -1,3 +1,5 @@
+# pyright: reportPrivateUsage=none, reportUnknownArgumentType=none
+
 from __future__ import annotations
 
 
@@ -36,12 +38,12 @@ __doc__ = """
 
 # Inspired by similar code in Sage at:
 # https://github.com/sagemath/sage/blob/master/src/sage/interfaces/maxima.py
-
 import re
 from sys import intern
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
+from typing_extensions import override
 
 import pytools
 
@@ -50,7 +52,10 @@ from pymbolic.parser import FinalizedTuple, Parser as ParserBase
 
 
 if TYPE_CHECKING:
-    from pytools.lex import LexTable
+    from pytools.lex import LexIterator, LexTable
+
+    from pymbolic.primitives import Power
+    from pymbolic.typing import Expression
 
 
 IN_PROMPT_RE = re.compile(br"\(%i([0-9]+)\) ")
@@ -69,8 +74,9 @@ class MaximaError(RuntimeError):
 
 # {{{ stringifier
 
-class MaximaStringifyMapper(StringifyMapper):
-    def map_power(self, expr, enclosing_prec):
+class MaximaStringifyMapper(StringifyMapper[[]]):
+    @override
+    def map_power(self, expr: Power, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_POWER
         return self.parenthesize_if_needed(
                 self.format("%s^%s",
@@ -78,7 +84,8 @@ class MaximaStringifyMapper(StringifyMapper):
                     self.rec(expr.exponent, PREC_POWER)),
                 enclosing_prec, PREC_POWER)
 
-    def map_constant(self, expr, enclosing_prec):
+    @override
+    def map_constant(self, expr: object, enclosing_prec):
         from pymbolic.mapper.stringifier import PREC_SUM
         if isinstance(expr, complex):
             result = f"{expr.real!r} + {expr.imag!r}*%i"
@@ -110,7 +117,7 @@ class MaximaParser(ParserBase):
             *ParserBase.lex_table
             ]
 
-    def parse_prefix(self, pstate):
+    def parse_prefix(self, pstate: LexIterator):
         pstate.expect_not_end()
 
         from pymbolic.parser import _closebracket, _openbracket
@@ -126,7 +133,7 @@ class MaximaParser(ParserBase):
 
         return left_exp
 
-    def parse_terminal(self, pstate):
+    def parse_terminal(self, pstate: LexIterator):
         import pymbolic.primitives as primitives
 
         next_tag = pstate.next_tag()
@@ -146,7 +153,7 @@ class MaximaParser(ParserBase):
         else:
             pstate.expected("terminal")
 
-    def parse_postfix(self, pstate, min_precedence, left_exp):
+    def parse_postfix(self, pstate: LexIterator, min_precedence, left_exp: Expression):
         import pymbolic.parser as p
         import pymbolic.primitives as primitives
 
@@ -169,7 +176,7 @@ class MaximaParser(ParserBase):
                 pstate.advance()
 
                 if left_exp == primitives.Variable("matrix"):
-                    left_exp = np.array([list(row) for row in args])
+                    left_exp = np.array([list(row) for row in args])  # pyright: ignore[reportAssignmentType]
                 else:
                     left_exp = primitives.Call(left_exp, args)
 
@@ -189,21 +196,21 @@ class MaximaParser(ParserBase):
             did_something = True
         elif next_tag is p._plus and min_precedence < p._PREC_PLUS:
             pstate.advance()
-            left_exp += self.parse_expression(pstate, p._PREC_PLUS)
+            left_exp += self.parse_expression(pstate, p._PREC_PLUS)  # pyright: ignore[reportOperatorIssue]
             did_something = True
         elif next_tag is p._minus and min_precedence < p._PREC_PLUS:
             pstate.advance()
-            left_exp -= self.parse_expression(pstate, p._PREC_PLUS)
+            left_exp -= self.parse_expression(pstate, p._PREC_PLUS)  # pyright: ignore[reportOperatorIssue]
             did_something = True
         elif next_tag is p._times and min_precedence < p._PREC_TIMES:
             pstate.advance()
-            left_exp *= self.parse_expression(pstate, p._PREC_TIMES)
+            left_exp *= self.parse_expression(pstate, p._PREC_TIMES)  # pyright: ignore[reportOperatorIssue, reportAssignmentType]
             did_something = True
         elif next_tag is p._over and min_precedence < p._PREC_TIMES:
             pstate.advance()
             from pymbolic.primitives import Quotient
             left_exp = Quotient(
-                    left_exp, self.parse_expression(pstate, p._PREC_TIMES))
+                    left_exp, self.parse_expression(pstate, p._PREC_TIMES))  # pyright: ignore[reportArgumentType]
             did_something = True
         elif next_tag is self.power_sym and min_precedence < p._PREC_POWER:
             pstate.advance()
@@ -212,7 +219,7 @@ class MaximaParser(ParserBase):
                 from pymbolic.primitives import Call, Variable
                 left_exp = Call(Variable("exp"), (exponent,))
             else:
-                left_exp **= exponent
+                left_exp **= exponent  # pyright: ignore[reportOperatorIssue]
             did_something = True
         elif next_tag is p._comma and min_precedence < p._PREC_COMMA:
             # The precedence makes the comma left-associative.
@@ -224,9 +231,9 @@ class MaximaParser(ParserBase):
                 new_el = self.parse_expression(pstate, p._PREC_COMMA)
                 if isinstance(left_exp, tuple) \
                         and not isinstance(left_exp, FinalizedTuple):
-                    left_exp = (*left_exp, new_el)
+                    left_exp = (*left_exp, new_el)  # pyright: ignore[reportAssignmentType]
                 else:
-                    left_exp = (left_exp, new_el)
+                    left_exp = (left_exp, new_el)  # pyright: ignore[reportAssignmentType]
 
             did_something = True
 
