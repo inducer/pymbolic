@@ -219,6 +219,7 @@ class Assignment(Statement):
 
 # {{{ conditional assignment
 
+@dataclass(frozen=True)
 class ConditionalAssignment(ConditionalStatement, Assignment):
     @override
     def map_expressions(self,
@@ -234,6 +235,7 @@ class ConditionalAssignment(ConditionalStatement, Assignment):
 
 # {{{ nop
 
+@dataclass(frozen=True)
 class Nop(Statement):
     def __str__(self):
         return "nop"
