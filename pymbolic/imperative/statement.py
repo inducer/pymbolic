@@ -87,7 +87,8 @@ class Statement:
     executed."""
 
     def __post_init__(self):
-        object.__setattr__(self, "id", intern(self.id))
+        if isinstance(self.id, str):
+            object.__setattr__(self, "id", intern(self.id))
 
     def get_written_variables(self) -> Set[str]:
         """Returns a :class:`frozenset` of variables being written by this
