@@ -130,4 +130,7 @@ pythonPlatform = "All"
 [[tool.basedpyright.executionEnvironments]]
 root = "test"
 reportUnknownArgumentType = "hint"
-
+[[tool.basedpyright.executionEnvironments]]
+root = "pymbolic/interop/symengine.py"
+reportMissingTypeStubs = "none"
+reportMissingImports = "none"
