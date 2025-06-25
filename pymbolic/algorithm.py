@@ -12,6 +12,10 @@
 References
 ----------
 
+.. class:: _CanMultiplyT
+
+    A type variable for a type that supports multiplication.
+
 .. class:: NDArray
 
     See :data:`numpy.typing.NDArray`.
@@ -54,7 +58,7 @@ THE SOFTWARE.
 
 import operator
 import sys
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Protocol, TypeVar, cast, overload
 from warnings import warn
 
 from pytools import MovedFunctionDeprecationWrapper, memoize
@@ -71,11 +75,25 @@ if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
 
 # {{{ integer powers
 
-def integer_power(x, n, one=1):
+class _CanMultiply(Protocol):
+    def __mul__(self: _CanMultiplyT, other: _CanMultiplyT, /) -> _CanMultiplyT: ...
+
+
+_CanMultiplyT = TypeVar("_CanMultiplyT", bound=_CanMultiply)
+
+
+def integer_power(
+            x: _CanMultiplyT,
+            n: int,
+            one: _CanMultiplyT | None = None
+        ) -> _CanMultiplyT:
     """Compute :math:`x^n` using only multiplications.
 
     See also the `C2 wiki <https://wiki.c2.com/?IntegerPowerAlgorithm>`__.
     """
+
+    if one is None:
+        one = cast("_CanMultiplyT", cast("object", 1))
 
     assert isinstance(n, int)
 
@@ -87,7 +105,7 @@ def integer_power(x, n, one=1):
 
     while n > 0:
         if n & 1:
-            aux *= x
+            aux = aux * x
             if n == 1:
                 return aux
         x = x * x
