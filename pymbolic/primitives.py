@@ -619,10 +619,10 @@ class ExpressionNode:
 
     # {{{ misc
 
-    def __neg__(self) -> ArithmeticExpression:
+    def __neg__(self) -> ExpressionNode:
         return -1*self
 
-    def __pos__(self) -> ArithmeticExpression:
+    def __pos__(self) -> ExpressionNode:
         return self
 
     def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
