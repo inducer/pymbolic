@@ -27,14 +27,23 @@ import contextlib
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Literal,
+    Protocol,
+    TypeVar,
+    cast,
+)
 
 import numpy as np
+from typing_extensions import Self, override
 
 from pytools import memoize, memoize_method
 
 from pymbolic.primitives import expr_dataclass, is_zero
-from pymbolic.typing import ArithmeticExpression, T
 
 
 if TYPE_CHECKING:
@@ -131,6 +140,24 @@ properties:
 """
 
 
+class _HasArithmetic(Protocol):
+    def __neg__(self: CoeffT) -> CoeffT: ...
+    def __abs__(self: CoeffT) -> CoeffT: ...
+    def __add__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __radd__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __sub__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __rsub__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+
+    def __mul__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __rmul__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+
+    def __pow__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __rpow__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+
+
+CoeffT = TypeVar("CoeffT", bound=_HasArithmetic)
+
+
 # {{{ helpers
 
 def permutation_sign(p: Iterable[int]) -> int:
@@ -182,7 +209,7 @@ def canonical_reordering_sign(a_bits: int, b_bits: int) -> int:
 # {{{ space
 
 @dataclass(frozen=True, init=False)
-class Space:
+class Space(Generic[CoeffT]):
     """
     .. autoattribute :: basis_names
     .. autoattribute :: metric_matrix
@@ -261,16 +288,20 @@ class Space:
 
         return bits, permutation_sign(blade_permutation)
 
+    def __getitem__(self, idx: tuple[int, int]) -> CoeffT:
+        i, j = idx
+        return self.metric_matrix[i, j]
+
     @property
     @memoize_method
-    def is_orthogonal(self):
+    def is_orthogonal(self) -> bool:
         """*True* if the metric is orthogonal (i.e. diagonal)."""
         return (self.metric_matrix - np.diag(np.diag(self.metric_matrix)) == 0).all()
 
     @property
     @memoize_method
     def is_euclidean(self) -> bool:
-        """*True* if the metric matrix corresponds to the Euclidian metric."""
+        """*True* if the metric matrix corresponds to the Euclidean metric."""
         return (self.metric_matrix == np.eye(self.metric_matrix.shape[0])).all()
 
     def blade_bits_to_str(self, bits: int, outer_operator: str = "^") -> str:
@@ -279,6 +310,7 @@ class Space:
                     for bit_num, name in enumerate(self.basis_names)
                     if bits & (1 << bit_num))
 
+    @override
     def __repr__(self) -> str:
         if self is get_euclidean_space(self.dimensions):
             return f"Space({self.dimensions})"
@@ -290,26 +322,23 @@ class Space:
 
 
 @memoize
-def get_euclidean_space(n: int) -> Space:
+def get_euclidean_space(n: int) -> Space[int]:
     """Return the canonical *n*-dimensional Euclidean :class:`Space`."""
-    return Space(n)
+    return Space[int](n)
 
 # }}}
 
 
-CoeffT = TypeVar("CoeffT", bound=ArithmeticExpression)
-
-
 # {{{ blade product weights
 
-def _shared_metric_coeff(shared_bits, space):
+def _shared_metric_coeff(shared_bits: int, space: Space[CoeffT]) -> CoeffT | Literal[1]:
     result = 1
 
     basis_idx = 0
     while shared_bits:
         bit = (1 << basis_idx)
         if shared_bits & bit:
-            result = result * space.metric_matrix[basis_idx, basis_idx]
+            result = result * space[basis_idx, basis_idx]
             shared_bits ^= bit
 
         basis_idx += 1
@@ -320,33 +349,49 @@ def _shared_metric_coeff(shared_bits, space):
 class _GAProduct(ABC, Generic[CoeffT]):
     @staticmethod
     @abstractmethod
-    def generic_blade_product_weight(a_bits: int, b_bits: int, space: Space) -> CoeffT:
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
         ...
 
     @staticmethod
     @abstractmethod
     def orthogonal_blade_product_weight(
-                a_bits: int, b_bits: int, space: Space
-            ) -> CoeffT:
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         ...
 
 
-class _OuterProduct(_GAProduct):
+class _OuterProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
         return int(not a_bits & b_bits)
 
     orthogonal_blade_product_weight = generic_blade_product_weight
 
 
-class _GeometricProduct(_GAProduct):
+class _GeometricProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
         raise NotImplementedError("geometric product for spaces "
                 "with non-diagonal metric (i.e. non-orthogonal basis)")
 
     @staticmethod
-    def orthogonal_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         shared_bits = a_bits & b_bits
 
         if shared_bits:
@@ -355,14 +400,22 @@ class _GeometricProduct(_GAProduct):
             return 1
 
 
-class _InnerProduct(_GAProduct):
+class _InnerProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
         raise NotImplementedError("inner product for spaces "
                 "with non-diagonal metric (i.e. non-orthogonal basis)")
 
     @staticmethod
-    def orthogonal_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         shared_bits = a_bits & b_bits
 
         if shared_bits in (a_bits, b_bits):
@@ -371,14 +424,22 @@ class _InnerProduct(_GAProduct):
             return 0
 
 
-class _LeftContractionProduct(_GAProduct):
+class _LeftContractionProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
         raise NotImplementedError("contraction product for spaces "
                 "with non-diagonal metric (i.e. non-orthogonal basis)")
 
     @staticmethod
-    def orthogonal_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         shared_bits = a_bits & b_bits
 
         if shared_bits == a_bits:
@@ -387,14 +448,22 @@ class _LeftContractionProduct(_GAProduct):
             return 0
 
 
-class _RightContractionProduct(_GAProduct):
+class _RightContractionProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT:
         raise NotImplementedError("contraction product for spaces "
                 "with non-diagonal metric (i.e. non-orthogonal basis)")
 
     @staticmethod
-    def orthogonal_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         shared_bits = a_bits & b_bits
 
         if shared_bits == b_bits:
@@ -403,14 +472,22 @@ class _RightContractionProduct(_GAProduct):
             return 0
 
 
-class _ScalarProduct(_GAProduct):
+class _ScalarProduct(_GAProduct[CoeffT]):
     @staticmethod
-    def generic_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def generic_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT:
         raise NotImplementedError("contraction product for spaces "
                 "with non-diagonal metric (i.e. non-orthogonal basis)")
 
     @staticmethod
-    def orthogonal_blade_product_weight(a_bits, b_bits, space):
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int, b_bits: int, space: Space[CoeffT]
+            ) -> CoeffT | int:
         if a_bits == b_bits:
             return _shared_metric_coeff(a_bits, space)
         else:
@@ -421,9 +498,9 @@ class _ScalarProduct(_GAProduct):
 
 # {{{ multivector
 
-def _cast_to_mv(obj: Any, space: Space) -> MultiVector:
+def _cast_to_mv(obj: Any, space: Space[CoeffT]) -> MultiVector[CoeffT]:
     if isinstance(obj, MultiVector):
-        return obj
+        return cast("MultiVector[CoeffT]", obj)
     else:
         return MultiVector(obj, space)
 
@@ -532,19 +609,20 @@ class MultiVector(Generic[CoeffT]):
     (see [DFM], Chapter 19 for idea and rationale)
     """
 
-    space: Space
+    space: Space[CoeffT]
 
-    mapper_method = "map_multivector"
+    mapper_method: ClassVar[str] = "map_multivector"
 
     # {{{ construction
 
     def __init__(
                 self,
-                data: (Mapping[int, CoeffT]
-                       | Mapping[tuple[int, ...], CoeffT]
+                data: (Mapping[int, CoeffT | int]
+                       | Mapping[tuple[int, ...], CoeffT | int]
                        | NDArray[np.generic]
-                       | CoeffT),
-                space: Space | None = None
+                       | CoeffT
+                       | int),
+                space: Space[CoeffT] | None = None
             ) -> None:
         """
         :arg data: This may be one of the following:
@@ -563,18 +641,19 @@ class MultiVector(Generic[CoeffT]):
             works when a :class:`numpy.ndarray` is being passed for *data*.
         """
 
-        data_dict: Mapping
+        data_dict: Mapping[tuple[int, ...], CoeffT | int] | Mapping[int, CoeffT | int]
         if isinstance(data, np.ndarray):
             if len(data.shape) != 1:
                 raise ValueError(
                     "Only numpy vectors (not higher-rank objects) "
                     f"are supported for 'data': shape {data.shape}")
 
+            dimensions: int
             dimensions, = data.shape
             data_dict = {(i,): cast("CoeffT", xi) for i, xi in enumerate(data)}
 
             if space is None:
-                space = get_euclidean_space(dimensions)
+                space = cast("Space[CoeffT]", get_euclidean_space(dimensions))
 
             if space.dimensions != dimensions:
                 raise ValueError(
@@ -594,13 +673,13 @@ class MultiVector(Generic[CoeffT]):
 
         if data_dict and single_valued(isinstance(k, tuple) for k in data_dict):
             # data is in non-normalized non-bits tuple form
-            new_data: dict[int, CoeffT] = {}
+            new_data: dict[int, CoeffT | int] = {}
             for basis_indices, coeff in data_dict.items():
                 assert isinstance(basis_indices, tuple)
 
                 bits, sign = space.bits_and_sign(basis_indices)
-                new_coeff = cast("CoeffT",
-                    new_data.setdefault(bits, cast("CoeffT", 0))  # type: ignore[operator]
+                new_coeff = (
+                    new_data.setdefault(bits, 0)
                     + sign*coeff)
 
                 if is_zero(new_coeff):
@@ -608,7 +687,7 @@ class MultiVector(Generic[CoeffT]):
                 else:
                     new_data[bits] = new_coeff
         else:
-            new_data = cast("dict[int, CoeffT]", data_dict)
+            new_data = cast("dict[int, CoeffT | int]", data_dict)
 
         # }}}
 
@@ -693,8 +772,8 @@ class MultiVector(Generic[CoeffT]):
         from pymbolic.primitives import is_zero
         new_data = {}
         for bits in all_bits:
-            new_coeff = (self.data.get(bits, cast("CoeffT", 0))
-                + other.data.get(bits, cast("CoeffT", 0)))
+            new_coeff = (self.data.get(bits, 0)
+                + other.data.get(bits, 0))
 
             if not is_zero(new_coeff):
                 new_data[bits] = new_coeff
@@ -715,9 +794,9 @@ class MultiVector(Generic[CoeffT]):
     # {{{ multiplicative operators
 
     def _generic_product(self,
-                    other: MultiVector,
-                    product_class: _GAProduct
-                ) -> MultiVector:
+                    other: MultiVector[CoeffT],
+                    product_class: type[_GAProduct[CoeffT]],
+                ) -> Self:
         """
         :arg product_class: A subclass of :class:`_GAProduct`.
         """
@@ -732,7 +811,7 @@ class MultiVector(Generic[CoeffT]):
                     "from identical spaces")
 
         from pymbolic.primitives import is_zero
-        new_data: dict[int, CoeffT] = {}
+        new_data: dict[int, CoeffT | int] = {}
         for sbits, scoeff in self.data.items():
             for obits, ocoeff in other.data.items():
                 new_bits = sbits ^ obits
@@ -743,21 +822,21 @@ class MultiVector(Generic[CoeffT]):
                     coeff = (weight
                             * canonical_reordering_sign(sbits, obits)
                             * scoeff * ocoeff)
-                    new_coeff = new_data.setdefault(new_bits, cast("CoeffT", 0)) + coeff
+                    new_coeff = new_data.setdefault(new_bits, 0) + coeff
                     if is_zero(new_coeff):
                         del new_data[new_bits]
                     else:
                         new_data[new_bits] = new_coeff
 
-        return MultiVector(new_data, self.space)
+        return type(self)(new_data, self.space)
 
-    def __mul__(self, other):
-        other = _cast_to_mv(other, self.space)
+    def __mul__(self, other: Self | int | CoeffT) -> Self:
+        c_other = _cast_to_mv(other, self.space)
 
-        return self._generic_product(other, _GeometricProduct)
+        return self._generic_product(c_other, _GeometricProduct)
 
-    def __rmul__(self, other):
-        return MultiVector(other, self.space) \
+    def __rmul__(self, other: int | CoeffT) -> Self:
+        return type(self)(other, self.space) \
                 ._generic_product(self, _GeometricProduct)
 
     def __xor__(self, other):
@@ -796,7 +875,7 @@ class MultiVector(Generic[CoeffT]):
         return MultiVector(other, self.space)\
                 ._generic_product(self, _RightContractionProduct)
 
-    def scalar_product(self, other):
+    def scalar_product(self, other) -> CoeffT | int:
         r"""Return the scalar product, as a scalar, not a :class:`MultiVector`.
 
         Often written :math:`A*B`.
@@ -815,13 +894,16 @@ class MultiVector(Generic[CoeffT]):
         """
         return (self*other - other*self)/2
 
-    def __pow__(self, other):
+    def __pow__(self, other: int):
         """Return *self* to the integer power *other*."""
 
         other = int(other)
 
         from pymbolic.algorithm import integer_power
-        return integer_power(self, other, one=MultiVector({0: 1}, self.space))
+        return integer_power(
+                             self,
+                             other,
+                             one=MultiVector[CoeffT]({0: 1}, self.space))
 
     def __truediv__(self, other):
         """Return ``self*(1/other)``.
@@ -855,7 +937,10 @@ class MultiVector(Generic[CoeffT]):
         if len(self.data) > 1:
             if self.get_pure_grade() in [0, 1, self.space.dimensions]:
                 return MultiVector({
-                    bits: coeff/nsqr for bits, coeff in self.data.items()},
+                    bits:
+                    # FIXME: Coefficients with division
+                    coeff/nsqr  # pyright: ignore[reportOperatorIssue]
+                        for bits, coeff in self.data.items()},
                     self.space)
 
             else:
@@ -868,7 +953,8 @@ class MultiVector(Generic[CoeffT]):
         if grade*(grade-1)//2 % 2:
             coeff = -coeff
 
-        coeff = coeff/nsqr
+        # FIXME: Coefficients with division
+        coeff = coeff/nsqr  # pyright: ignore[reportOperatorIssue]
 
         return MultiVector({bits: coeff}, self.space)
 
@@ -916,7 +1002,7 @@ class MultiVector(Generic[CoeffT]):
         """Return the dual of *self*, see :meth:`dual`."""
         return self.dual()
 
-    def norm_squared(self):
+    def norm_squared(self) -> CoeffT | int:
         return self.rev().scalar_product(self)
 
     def __abs__(self):
@@ -961,10 +1047,12 @@ class MultiVector(Generic[CoeffT]):
         if tol is None:
             tol = 1e-12
 
-        new_data = {}
-        for bits, coeff in self.data.items():
-            if abs(coeff) > tol:
-                new_data[bits] = coeff
+        new_data = {
+            bits: coeff
+            for bits, coeff in self.data.items()
+            # FIXME: coefficients with greater-than
+            if abs(coeff) > tol  # pyright: ignore[reportOperatorIssue]
+        }
 
         return MultiVector(new_data, self.space)
 
@@ -1069,7 +1157,7 @@ class MultiVector(Generic[CoeffT]):
 
         return self.project(max(self.all_grades()))
 
-    def as_scalar(self):
+    def as_scalar(self) -> CoeffT | int:
         result = 0
         for bits, coeff in self.data.items():
             if bits != 0:
@@ -1093,7 +1181,8 @@ class MultiVector(Generic[CoeffT]):
         log_table = {2**i: i for i in range(self.space.dimensions)}
         try:
             for bits, coeff in self.data.items():
-                result[log_table[bits]] = coeff
+                # type ignore because: too hard to make precise
+                result[log_table[bits]] = coeff  # pyright: ignore[reportArgumentType]
         except KeyError:
             raise ValueError("multivector is not a purely grade-1") from None
 
@@ -1129,6 +1218,9 @@ class MultiVector(Generic[CoeffT]):
 # }}}
 
 
+T = TypeVar("T")
+
+
 def componentwise(f: Callable[[CoeffT], CoeffT], expr: T) -> T:
     """Apply function *f* componentwise to object arrays and
     :class:`MultiVector` instances. *expr* is also allowed to
@@ -1136,7 +1228,7 @@ def componentwise(f: Callable[[CoeffT], CoeffT], expr: T) -> T:
     """
 
     if isinstance(expr, MultiVector):
-        return cast("T", expr.map(f))
+        return cast("T", cast("MultiVector[CoeffT]", expr).map(f))
 
     from pytools.obj_array import obj_array_vectorize
     return obj_array_vectorize(f, expr)
