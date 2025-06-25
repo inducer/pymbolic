@@ -36,6 +36,7 @@ from typing import (
     Protocol,
     TypeVar,
     cast,
+    overload,
 )
 
 import numpy as np
@@ -47,7 +48,7 @@ from pymbolic.primitives import expr_dataclass, is_zero
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
+    from numpy.typing import DTypeLike, NDArray
 
 
 __doc__ = """
@@ -137,6 +138,13 @@ properties:
 .. literalinclude:: ../test/test_pymbolic.py
    :start-after: START_GA_TEST
    :end-before: END_GA_TEST
+
+References
+----------
+
+.. class:: DTypeLike
+
+    See :data:`numpy.typing.DTypeLike`.
 """
 
 
@@ -604,6 +612,10 @@ class MultiVector(Generic[CoeffT]):
 
     """
 
+    # This prevents mishaps with array arithmetic, and, additionally, helps
+    # arraycontext recognize this as an array container.
+    __array_ufunc__: ClassVar[None] = None
+
     data: Mapping[int, CoeffT]
     """A mapping from a basis vector bitmap (indicating blades) to coefficients.
     (see [DFM], Chapter 19 for idea and rationale)
@@ -701,10 +713,13 @@ class MultiVector(Generic[CoeffT]):
 
     # {{{ stringification
 
-    def stringify(self, coeff_stringifier, enclosing_prec):
+    def stringify(self,
+                coeff_stringifier: Callable[[CoeffT, int], str] | None,
+                enclosing_prec: int
+            ):
         from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_SUM
 
-        terms = []
+        terms: list[str] = []
         for bits in sorted(self.data.keys(),
                 key=lambda _bits: (_bits.bit_count(), _bits)):
             coeff = self.data[bits]
@@ -714,7 +729,9 @@ class MultiVector(Generic[CoeffT]):
             strifier = None
             if coeff_stringifier is None:
                 with contextlib.suppress(AttributeError):
-                    strifier = coeff.stringifier()()
+                    strifier = cast(
+                                    "Callable[[CoeffT, int], str]",
+                                    coeff.stringifier()())  # pyright: ignore[reportAttributeAccessIssue,reportUnknownMemberType]
             else:
                 strifier = coeff_stringifier
 
@@ -744,10 +761,12 @@ class MultiVector(Generic[CoeffT]):
 
         return f"MV({result})"
 
+    @override
     def __str__(self):
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.stringify(None, PREC_NONE)
 
+    @override
     def __repr__(self):
         return f"MultiVector({self.data}, {self.space!r})"
 
@@ -755,38 +774,37 @@ class MultiVector(Generic[CoeffT]):
 
     # {{{ additive operators
 
-    def __neg__(self) -> MultiVector:
+    def __neg__(self) -> MultiVector[CoeffT]:
         return MultiVector(
                 {bits: -coeff
                     for bits, coeff in self.data.items()},
                 self.space)
 
-    def __add__(self, other) -> MultiVector:
-        other = _cast_to_mv(other, self.space)
+    def __add__(self, other: Self | int | CoeffT) -> MultiVector[CoeffT]:
+        other_c = _cast_to_mv(other, self.space)
 
-        if self.space is not other.space:
+        if self.space is not other_c.space:
             raise ValueError("can only add multivectors from identical spaces")
 
-        all_bits = set(self.data.keys()) | set(other.data.keys())
+        all_bits = set(self.data.keys()) | set(other_c.data.keys())
 
         from pymbolic.primitives import is_zero
-        new_data = {}
-        for bits in all_bits:
-            new_coeff = (self.data.get(bits, 0)
-                + other.data.get(bits, 0))
-
-            if not is_zero(new_coeff):
-                new_data[bits] = new_coeff
+        new_data = {
+            bits: new_coeff
+            for bits in all_bits
+            if not is_zero(
+                    new_coeff := (self.data.get(bits, 0) + other_c.data.get(bits, 0)))
+            }
 
         return MultiVector(new_data, self.space)
 
-    def __radd__(self, other):
+    def __radd__(self, other: Self | int | CoeffT):
         return self.__add__(other)
 
-    def __sub__(self, other):
+    def __sub__(self, other: Self | int | CoeffT):
         return self + (-other)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: Self | int | CoeffT):
         return other + (-self)
 
     # }}}
@@ -1009,7 +1027,7 @@ class MultiVector(Generic[CoeffT]):
         return self.norm_squared()**0.5
 
     @property
-    def I(self):  # noqa
+    def I(self):  # noqa: E743, N802
         """Return the pseudoscalar associated with this object's :class:`Space`.
         """
         return MultiVector({2**self.space.dimensions-1: 1}, self.space)
@@ -1076,7 +1094,7 @@ class MultiVector(Generic[CoeffT]):
                 if bits.bit_count() == grade:
                     yield MultiVector({bits: coeff}, self.space)
 
-    def project(self, r):
+    def project(self, r: int):
         r"""Return a new multivector containing only the blades of grade *r*.
 
         Often written :math:`\langle A\rangle_r`.
@@ -1088,7 +1106,17 @@ class MultiVector(Generic[CoeffT]):
 
         return MultiVector(new_data, self.space)
 
-    def xproject(self, r, dtype=None):
+    @overload
+    # ignore because there most definitely is overlap.
+    def xproject(self, r: Literal[0], dtype: DTypeLike = None) -> CoeffT | int: ...  # pyright: ignore[reportOverlappingOverload]
+
+    @overload
+    def xproject(self, r: Literal[1], dtype: DTypeLike = None) -> NDArray[Any]: ...
+
+    @overload
+    def xproject(self, r: int, dtype: DTypeLike = None) -> Self: ...
+
+    def xproject(self, r: int, dtype: DTypeLike = None):
         r"""If ``r == 0``, return ``self.project(0).as_scalar()``.
         If ``r == 1``, return ``self.project(1).as_vector(dtype)``.
         Otherwise, return ``self.project(r)``.
@@ -1166,7 +1194,7 @@ class MultiVector(Generic[CoeffT]):
 
         return result
 
-    def as_vector(self, dtype=None):
+    def as_vector(self, dtype: DTypeLike = None) -> NDArray[Any]:
         """Return a :mod:`numpy` vector corresponding to the grade-1
         :class:`MultiVector` *self*.
 
@@ -1187,6 +1215,7 @@ class MultiVector(Generic[CoeffT]):
             raise ValueError("multivector is not a purely grade-1") from None
 
         if dtype is not None:
+            assert isinstance(result, np.ndarray)
             return result
         else:
             return np.array(result)
