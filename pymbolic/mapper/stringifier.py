@@ -27,6 +27,8 @@ from warnings import warn
 
 from typing_extensions import deprecated, override
 
+from pytools import ndindex
+
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Mapper, P
 
@@ -632,7 +634,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
         str_array = numpy.zeros(expr.shape, dtype="object")
         max_length = 0
-        for i in numpy.ndindex(expr.shape):
+        for i in ndindex(expr.shape):
             s = self.rec(expr[i], PREC_NONE, *args, **kwargs)
             max_length = max(len(s), max_length)
             str_array[i] = s.replace("\n", "\n  ")
