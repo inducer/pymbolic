@@ -10,6 +10,8 @@
 """
 from __future__ import annotations
 
+from pytools import ndindex
+
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -187,7 +189,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
     def map_numpy_array(self, expr: NDArray[np.generic]) -> ResultT:
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        for i in numpy.ndindex(expr.shape):
+        for i in ndindex(expr.shape):
             result[i] = self.rec(expr[i])
         return result  # type: ignore[return-value]
 

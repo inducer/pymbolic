@@ -38,6 +38,8 @@ from warnings import warn
 from constantdict import constantdict
 from typing_extensions import Any, ParamSpec, TypeIs, override
 
+from pytools import ndindex
+
 import pymbolic.primitives as p
 from pymbolic.typing import ArithmeticExpression, Expression
 
@@ -1076,7 +1078,7 @@ class IdentityMapper(Mapper[Expression, P]):
 
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        for i in numpy.ndindex(expr.shape):
+        for i in ndindex(expr.shape):
             result[i] = self.rec(expr[i], *args, **kwargs)
 
         # True fact: ndarrays aren't expressions
@@ -1376,8 +1378,7 @@ class WalkMapper(Mapper[None, P]):
         if not self.visit(expr, *args, **kwargs):
             return
 
-        import numpy
-        for i in numpy.ndindex(expr.shape):
+        for i in ndindex(expr.shape):
             self.rec(expr[i], *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)

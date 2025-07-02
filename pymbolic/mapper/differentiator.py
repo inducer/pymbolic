@@ -28,6 +28,8 @@ THE SOFTWARE.
 
 from typing_extensions import override
 
+from pytools import ndindex
+
 import pymbolic
 import pymbolic.mapper
 import pymbolic.mapper.evaluator
@@ -207,7 +209,7 @@ class DifferentiationMapper(pymbolic.mapper.Mapper,
     def map_numpy_array(self, expr, *args):
         import numpy
         result = numpy.empty(expr.shape, dtype=object)
-        for i in numpy.ndindex(result.shape):
+        for i in ndindex(result.shape):
             result[i] = self.rec(expr[i], *args)
         return result
 
