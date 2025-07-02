@@ -22,6 +22,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "python": ("https://docs.python.org/3", None),
     "sympy": ("https://docs.sympy.org/dev/", None),
+    "pytools": ("https://documen.tician.de/pytools/", None),
     "typing_extensions":
         ("https://typing-extensions.readthedocs.io/en/latest/", None),
     "constantdict":
