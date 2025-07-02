@@ -28,8 +28,8 @@ classifiers = [
 dependencies = [
     "constantdict",
     "pytools>=2025.2",
-    # for dataclass_transform, TypeAlias, deprecated
-    "typing-extensions>=4.5",
+    # for TypeIs
+    "typing-extensions>=4.10",
 ]
 
 [project.optional-dependencies]
