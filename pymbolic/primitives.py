@@ -44,7 +44,13 @@ from warnings import warn
 from constantdict import constantdict
 from typing_extensions import Self, TypeIs, dataclass_transform
 
-from pytools import module_getattr_for_deprecations
+from pytools import module_getattr_for_deprecations, ndindex
+from pytools.obj_array import (
+    ObjectArray,
+    ObjectArray1D,
+    ShapeT,
+    from_numpy,
+)
 
 from . import traits
 from .typing import ArithmeticExpression, Expression as _Expression, Number, Scalar
@@ -53,9 +59,17 @@ from .typing import ArithmeticExpression, Expression as _Expression, Number, Sca
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
 
-    import numpy as np
     from _typeshed import DataclassInstance
-    from numpy.typing import NDArray
+
+    from pymbolic.geometric_algebra import MultiVector
+
+
+def _have_numpy() -> bool:
+    from importlib.util import find_spec
+    return bool(find_spec("numpy"))
+
+
+_HAVE_NUMPY = _have_numpy()
 
 
 __doc__ = """
@@ -301,6 +315,18 @@ Helper classes
 
 References
 ----------
+
+.. class:: ObjectArray
+
+    See :class:`pytools.obj_array.ObjectArray`.
+
+.. class:: ObjectArray1D
+
+    See :class:`pytools.obj_array.ObjectArray`.
+
+.. class:: ShapeT
+
+    See :class:`pytools.obj_array.ShapeT`.
 
 .. class:: DataclassInstance
 
@@ -1909,11 +1935,41 @@ def wrap_in_cse(expr: _Expression,
     return make_common_subexpression(expr, prefix, scope, wrap_vars=False)
 
 
-def make_common_subexpression(expr: _Expression,
-                              prefix: str | None = None,
-                              scope: str | None = None,
-                              *,
-                              wrap_vars: bool = True) -> _Expression:
+@overload
+def make_common_subexpression(
+        expr: _Expression,
+        prefix: str | None = None,
+        scope: str | None = None,
+        *, wrap_vars: bool = True
+    ) -> CommonSubexpression: ...
+
+@overload
+def make_common_subexpression(
+        expr: ObjectArray[ShapeT, _Expression],
+        prefix: str | None = None,
+        scope: str | None = None,
+        *, wrap_vars: bool = True
+    ) -> ObjectArray[ShapeT, CommonSubexpression]: ...
+
+@overload
+def make_common_subexpression(
+        expr: MultiVector[ArithmeticExpression],
+        prefix: str | None = None,
+        scope: str | None = None,
+        *, wrap_vars: bool = True
+    ) -> MultiVector[ArithmeticExpression]: ...
+
+
+def make_common_subexpression(
+        expr: (_Expression
+            | MultiVector[ArithmeticExpression]
+            | ObjectArray[ShapeT, _Expression]),
+        prefix: str | None = None,
+        scope: str | None = None,
+        *, wrap_vars: bool = True
+    ) -> (_Expression
+            | MultiVector[ArithmeticExpression]
+            | ObjectArray[ShapeT, _Expression]):
     """Wrap *expr* in a :class:`CommonSubexpression` with *prefix*.
 
     If *expr* is a :mod:`numpy` object array, each individual entry is instead
@@ -1946,7 +2002,7 @@ def make_common_subexpression(expr: _Expression,
     from pymbolic.geometric_algebra import MultiVector
 
     if isinstance(expr, MultiVector):
-        new_data = {}
+        new_data: dict[int, ArithmeticExpression] = {}
         for bits, coeff in expr.data.items():
             if prefix is not None:
                 blade_str = expr.space.blade_bits_to_str(bits, "")
@@ -1957,47 +2013,32 @@ def make_common_subexpression(expr: _Expression,
             new_data[bits] = make_common_subexpression(
                     coeff, component_prefix, scope, wrap_vars=wrap_vars)
 
-        return MultiVector(new_data, expr.space)
+        return type(expr)(new_data, expr.space)
 
-    # handle numpy object arrays
-    try:
-        import numpy as np
+    if not isinstance(expr, ObjectArray):
+        # everything else gets re-wrapped
+        return CommonSubexpression(expr, prefix, scope)
 
-        if isinstance(expr, np.ndarray) and expr.dtype.char == "O":
-            is_obj_array = True
-            logical_shape = expr.shape
+    import numpy as np
+    result = np.zeros(expr.shape, dtype=object)
+    for i in ndindex(expr.shape):
+        if prefix is not None:
+            bits = "_".join(str(i_i) for i_i in i)
+            component_prefix = f"{prefix}_{bits}"
         else:
-            is_obj_array = False
-            logical_shape = ()
-    except ImportError:
-        is_obj_array = False
-        logical_shape = ()
+            component_prefix = None
 
-    if is_obj_array and logical_shape != ():
-        assert isinstance(expr, np.ndarray)
+        result[i] = make_common_subexpression(
+                expr[i], component_prefix, scope, wrap_vars=wrap_vars)
 
-        result = np.zeros(logical_shape, dtype=object)
-        for i in np.ndindex(logical_shape):
-            if prefix is not None:
-                bits = "_".join(str(i_i) for i_i in i)
-                component_prefix = f"{prefix}_{bits}"
-            else:
-                component_prefix = None
-
-            result[i] = make_common_subexpression(
-                    expr[i], component_prefix, scope, wrap_vars=wrap_vars)
-
-        return result
-
-    # everything else gets re-wrapped
-    return CommonSubexpression(expr, prefix, scope)
+    return from_numpy(result)
 
 
 def make_sym_vector(
             name: str,
             components: int | list[int],
             var_factory: Callable[[str], ExpressionNode] = Variable
-        ) -> NDArray[np.generic]:
+        ) -> ObjectArray1D[ArithmeticExpression]:
     """Return an object array of *components* subscripted
     :class:`Variable` (or subclass) instances.
 
@@ -2021,20 +2062,24 @@ def make_sym_vector(
     return flat_obj_array(*[vfld[i] for i in components])
 
 
-def make_sym_array(name, shape, var_factory=Variable):
+def make_sym_array(
+            name: str,
+            shape: ShapeT,
+            var_factory: Callable[[str], Variable] = Variable
+        ) -> Variable | ObjectArray[ShapeT, ArithmeticExpression]:
     vfld = var_factory(name)
     if shape == ():
         return vfld
 
     import numpy as np
     result = np.zeros(shape, dtype=object)
-    for i in np.ndindex(shape):
+    for i in ndindex(shape):
         result[i] = vfld[i]
 
-    return result
+    return from_numpy(result)
 
 
-def variables(s):
+def variables(s: str):
     """Return a list of variables for each (space-delimited) identifier
     in *s*.
     """

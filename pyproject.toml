@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "constantdict",
-    "pytools>=2025.1.6",
+    "pytools>=2025.2",
     # for dataclass_transform, TypeAlias, deprecated
     "typing-extensions>=4.5",
 ]
@@ -104,6 +104,9 @@ multiline-quotes = "double"
 extend-ignore-re = [
   "(?Rm)^.*(#|//)\\s*spellchecker:\\s*disable-line$"
 ]
+
+[tool.typos.default.extend-words]
+"nd" = "nd"
 
 [tool.ruff.lint.isort]
 known-first-party = ["pytools"]

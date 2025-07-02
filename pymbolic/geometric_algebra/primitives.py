@@ -34,7 +34,7 @@ from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from pymbolic.typing import Expression
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class MultiVectorVariable(Variable):
@@ -77,20 +77,21 @@ class Derivative:
     _next_id: ClassVar[list[int]] = [0]
 
     def __init__(self):
-        self.my_id = f"id{self._next_id[0]}"
+        self.my_id: str = f"id{self._next_id[0]}"
         self._next_id[0] += 1
 
     @property
     def nabla(self):
         return Nabla(self.my_id)
 
-    def dnabla(self, ambient_dim):
+    def dnabla(self, ambient_dim: int):
         from pytools.obj_array import make_obj_array
 
         from pymbolic.geometric_algebra import MultiVector
-        return MultiVector(make_obj_array(
-            [NablaComponent(axis, self.my_id)
-                for axis in range(ambient_dim)]))
+        nablas: list[ArithmeticExpression] = [
+            NablaComponent(axis, self.my_id)
+            for axis in range(ambient_dim)]
+        return MultiVector(make_obj_array(nablas))
 
     def __call__(self, operand):
         from pymbolic.geometric_algebra import MultiVector

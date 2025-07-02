@@ -23,8 +23,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING, cast
+
+from typing_extensions import override
+
 import pymbolic.primitives as prim
 from pymbolic.mapper import IdentityMapper, WalkMapper
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable
+
+    from pymbolic.typing import Expression
 
 
 COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
@@ -76,27 +86,33 @@ class UseCountMapper(WalkMapper):
             self.subexpr_counts[key] = 1
 
 
-class CSEMapper(IdentityMapper):
+class CSEMapper(IdentityMapper[[]]):
     def __init__(self, to_eliminate, get_key):
         self.to_eliminate = to_eliminate
-        self.get_key = get_key
+        self.get_key: Callable[[Expression], Hashable] = get_key
 
-        self.canonical_subexprs = {}
+        self.canonical_subexprs: dict[Hashable, Expression] = {}
 
-    def get_cse(self, expr, key=None):
+    def get_cse(self, expr: prim.ExpressionNode, key: Hashable = None):
         if key is None:
             key = self.get_key(expr)
 
         try:
             return self.canonical_subexprs[key]
         except KeyError:
-            new_expr = prim.make_common_subexpression(
+            new_expr = cast("Expression", prim.make_common_subexpression(
                     getattr(IdentityMapper, expr.mapper_method)(self, expr)
-                    )
+                    ))
             self.canonical_subexprs[key] = new_expr
             return new_expr
 
-    def map_sum(self, expr):
+    @override
+    def map_sum(self,
+                expr: (prim.Sum | prim.Product | prim.Power
+                    | prim.Quotient | prim.Remainder | prim.FloorDiv
+                    | prim.Call
+                )
+            ):
         key = self.get_key(expr)
         if key in self.to_eliminate:
             result = self.get_cse(expr, key)
@@ -111,7 +127,8 @@ class CSEMapper(IdentityMapper):
     map_floor_div = map_sum
     map_call = map_sum
 
-    def map_common_subexpression(self, expr):
+    @override
+    def map_common_subexpression(self, expr: prim.CommonSubexpression):
         # Avoid creating CSE(CSE(...))
         if type(expr) is prim.CommonSubexpression:
             return prim.make_common_subexpression(

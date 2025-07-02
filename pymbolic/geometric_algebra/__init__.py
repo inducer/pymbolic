@@ -43,6 +43,7 @@ import numpy as np
 from typing_extensions import Self, override
 
 from pytools import memoize, memoize_method
+from pytools.obj_array import ObjectArray, ObjectArray1D, ShapeT
 
 from pymbolic.primitives import expr_dataclass, is_zero
 
@@ -151,16 +152,16 @@ References
 class _HasArithmetic(Protocol):
     def __neg__(self: CoeffT) -> CoeffT: ...
     def __abs__(self: CoeffT) -> CoeffT: ...
+
     def __add__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __radd__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __radd__(self: CoeffT, other: int, /) -> CoeffT: ...
+
     def __sub__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __rsub__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
 
     def __mul__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __rmul__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __rmul__(self: CoeffT, other: int, /) -> CoeffT: ...
 
     def __pow__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __rpow__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
 
 
 CoeffT = TypeVar("CoeffT", bound=_HasArithmetic)
@@ -632,6 +633,7 @@ class MultiVector(Generic[CoeffT]):
                 data: (Mapping[int, CoeffT | int]
                        | Mapping[tuple[int, ...], CoeffT | int]
                        | NDArray[np.generic]
+                       | ObjectArray1D[CoeffT]
                        | CoeffT
                        | int),
                 space: Space[CoeffT] | None = None
@@ -654,7 +656,7 @@ class MultiVector(Generic[CoeffT]):
         """
 
         data_dict: Mapping[tuple[int, ...], CoeffT | int] | Mapping[int, CoeffT | int]
-        if isinstance(data, np.ndarray):
+        if isinstance(data, (np.ndarray, ObjectArray)):
             if len(data.shape) != 1:
                 raise ValueError(
                     "Only numpy vectors (not higher-rank objects) "
@@ -1247,17 +1249,30 @@ class MultiVector(Generic[CoeffT]):
 # }}}
 
 
-T = TypeVar("T")
+@overload
+def componentwise(
+            f: Callable[[CoeffT], CoeffT],
+            expr: MultiVector[CoeffT]
+        ) -> MultiVector[CoeffT]: ...
+
+@overload
+def componentwise(
+            f: Callable[[CoeffT], CoeffT],
+            expr: ObjectArray[ShapeT, CoeffT]
+        ) -> ObjectArray[ShapeT, CoeffT]: ...
 
 
-def componentwise(f: Callable[[CoeffT], CoeffT], expr: T) -> T:
+def componentwise(
+            f: Callable[[CoeffT], CoeffT],
+            expr: MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]
+        ) -> MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]:
     """Apply function *f* componentwise to object arrays and
     :class:`MultiVector` instances. *expr* is also allowed to
     be a scalar.
     """
 
     if isinstance(expr, MultiVector):
-        return cast("T", cast("MultiVector[CoeffT]", expr).map(f))
+        return expr.map(f)
 
     from pytools.obj_array import obj_array_vectorize
     return obj_array_vectorize(f, expr)
