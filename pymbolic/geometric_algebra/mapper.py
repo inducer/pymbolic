@@ -27,6 +27,8 @@ THE SOFTWARE.
 # Consider yourself warned.
 from typing import TYPE_CHECKING, ClassVar
 
+from typing_extensions import override
+
 import pymbolic.geometric_algebra.primitives as prim
 from pymbolic.geometric_algebra import MultiVector
 from pymbolic.mapper import (
@@ -48,6 +50,7 @@ from pymbolic.mapper.stringifier import (
     PREC_NONE,
     StringifyMapper as StringifyMapperBase,
 )
+from pymbolic.typing import ArithmeticExpression
 
 
 if TYPE_CHECKING:
@@ -117,13 +120,20 @@ class WalkMapper(WalkMapperBase[P]):
         self.post_visit(expr, *args, **kwargs)
 
 
-class EvaluationMapper(EvaluationMapperBase):
+class EvaluationMapper(EvaluationMapperBase[ResultT]):
     def map_nabla_component(self, expr):
         return expr
 
     map_nabla = map_nabla_component
 
-    def map_derivative_source(self, expr):
+
+class EvaluationRewriter(EvaluationMapperBase[ArithmeticExpression]):
+    def map_nabla_component(self, expr: prim.NablaComponent) -> ArithmeticExpression:
+        return expr
+
+    def map_derivative_source(self,
+                expr: prim.DerivativeSource
+            ) -> ArithmeticExpression:
         operand = self.rec(expr.operand)
         if operand is expr.operand:
             return expr
@@ -160,7 +170,7 @@ class GraphvizMapper(GraphvizMapperBase):
 
 # {{{ dimensionalizer
 
-class Dimensionalizer(EvaluationMapper):
+class Dimensionalizer(EvaluationRewriter):
     """
     .. attribute:: ambient_dim
 
@@ -168,7 +178,7 @@ class Dimensionalizer(EvaluationMapper):
     """
 
     @property
-    def ambient_dim(self):
+    def ambient_dim(self) -> int:
         raise NotImplementedError
 
     def map_multivector_variable(self, expr):
@@ -183,7 +193,8 @@ class Dimensionalizer(EvaluationMapper):
             [prim.NablaComponent(axis, expr.nabla_id)
                 for axis in range(self.ambient_dim)]))
 
-    def map_derivative_source(self, expr):
+    @override
+    def map_derivative_source(self, expr: prim.DerivativeSource):
         rec_op = self.rec(expr.operand)
 
         if isinstance(rec_op, MultiVector):
@@ -214,25 +225,26 @@ class DerivativeSourceAndNablaComponentCollector(CachedMapper, Collector):
         return {expr} | self.rec(expr.operand)
 
 
-class NablaComponentToUnitVector(EvaluationMapper):
+class NablaComponentToUnitVector(EvaluationRewriter):
     def __init__(self, nabla_id, ambient_axis):
-        self.nabla_id = nabla_id
-        self.ambient_axis = ambient_axis
+        self.nabla_id: prim.NablaId = nabla_id
+        self.ambient_axis: int = ambient_axis
 
     def map_variable(self, expr):
         return expr
 
-    def map_nabla_component(self, expr):
+    @override
+    def map_nabla_component(self, expr: prim.NablaComponent) -> ArithmeticExpression:
         if expr.nabla_id == self.nabla_id:
             if expr.ambient_axis == self.ambient_axis:
                 return 1
             else:
                 return 0
         else:
-            return EvaluationMapper.map_nabla_component(self, expr)
+            return super().map_nabla_component(expr)
 
 
-class DerivativeSourceFinder(EvaluationMapper):
+class DerivativeSourceFinder(EvaluationRewriter):
     """Recurses down until it finds the
     :class:`pymbolic.geometric_algebra.primitives.DerivativeSource`
     with the right *nabla_id*, then calls :method:`DerivativeBinder.take_derivative`
@@ -240,18 +252,18 @@ class DerivativeSourceFinder(EvaluationMapper):
     """
 
     def __init__(self, nabla_id, binder, ambient_axis):
-        self.nabla_id = nabla_id
-        self.binder = binder
-        self.ambient_axis = ambient_axis
+        self.nabla_id: prim.NablaId = nabla_id
+        self.binder: DerivativeBinder = binder
+        self.ambient_axis: int = ambient_axis
 
     def map_derivative_source(self, expr):
         if expr.nabla_id == self.nabla_id:
             return self.binder.take_derivative(self.ambient_axis, expr.operand)
         else:
-            return EvaluationMapper.map_derivative_source(self, expr)
+            return super().map_derivative_source(expr)
 
 
-class DerivativeBinder(IdentityMapper):
+class DerivativeBinder(IdentityMapper[[]]):
     derivative_source_and_nabla_component_collector = \
             DerivativeSourceAndNablaComponentCollector
     nabla_component_to_unit_vector = NablaComponentToUnitVector
