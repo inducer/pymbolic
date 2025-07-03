@@ -26,7 +26,7 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
 from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 
@@ -49,10 +49,13 @@ class _GeometricCalculusExpression(ExpressionNode):
         return StringifyMapper
 
 
+NablaId: TypeAlias = "Hashable"
+
+
 @expr_dataclass()
 class NablaComponent(_GeometricCalculusExpression):
     ambient_axis: int
-    nabla_id: Hashable
+    nabla_id: NablaId
 
 
 @expr_dataclass()
