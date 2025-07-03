@@ -1670,10 +1670,10 @@ class Derivative(ExpressionNode):
 
 
 SliceChildrenT: TypeAlias = (tuple[()]
-        | tuple[_Expression | None]
-        | tuple[_Expression | None, _Expression | None]
-        | tuple[_Expression | None, _Expression | None, _Expression
-            | None])
+        | tuple[ArithmeticExpression | None]
+        | tuple[ArithmeticExpression | None, ArithmeticExpression | None]
+        | tuple[ArithmeticExpression | None, ArithmeticExpression | None,
+                ArithmeticExpression | None])
 
 
 @expr_dataclass()
