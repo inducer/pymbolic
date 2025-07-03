@@ -1196,7 +1196,9 @@ class MultiVector(Generic[CoeffT]):
 
         return result
 
-    def as_vector(self, dtype: DTypeLike = None) -> NDArray[Any]:
+    def as_vector(self,
+                dtype: DTypeLike = None
+            ) -> np.ndarray[tuple[int], np.dtype[Any]]:
         """Return a :mod:`numpy` vector corresponding to the grade-1
         :class:`MultiVector` *self*.
 
