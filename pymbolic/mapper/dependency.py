@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-from typing_extensions import override
-
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -31,17 +29,23 @@ THE SOFTWARE.
 """
 
 from collections.abc import Set
-from typing import Literal, TypeAlias
+from typing import TYPE_CHECKING, Literal, TypeAlias
+
+from typing_extensions import override
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin, P
 
 
-DependenciesT: TypeAlias = Set[p.AlgebraicLeaf | p.CommonSubexpression]
+Dependency: TypeAlias = p.AlgebraicLeaf | p.CommonSubexpression
+Dependencies: TypeAlias = Set[Dependency]
+
+if not TYPE_CHECKING:
+    DependenciesT: TypeAlias = Dependencies
 
 
 class DependencyMapper(
-    CSECachingMapperMixin[DependenciesT, P],
+    CSECachingMapperMixin[Dependencies, P],
     Collector[p.AlgebraicLeaf | p.CommonSubexpression, P],
 ):
     """Maps an expression to the :class:`set` of expressions it
@@ -84,13 +88,13 @@ class DependencyMapper(
     @override
     def map_variable(
         self, expr: p.Variable, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         return {expr}
 
     @override
     def map_call(
         self, expr: p.Call, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         if self.include_calls == "descend_args":
             return self.combine([
                 self.rec(child, *args, **kwargs) for child in expr.parameters
@@ -103,7 +107,7 @@ class DependencyMapper(
     @override
     def map_call_with_kwargs(
         self, expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         if self.include_calls == "descend_args":
             return self.combine(
                 [self.rec(child, *args, **kwargs) for child in expr.parameters]
@@ -120,7 +124,7 @@ class DependencyMapper(
     @override
     def map_lookup(
         self, expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         if self.include_lookups:
             return {expr}
         else:
@@ -129,7 +133,7 @@ class DependencyMapper(
     @override
     def map_subscript(
         self, expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         if self.include_subscripts:
             return {expr}
         else:
@@ -138,7 +142,7 @@ class DependencyMapper(
     @override
     def map_common_subexpression_uncached(
         self, expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         if self.include_cses:
             return {expr}
         else:
@@ -148,7 +152,7 @@ class DependencyMapper(
     @override
     def map_slice(
         self, expr: p.Slice, *args: P.args, **kwargs: P.kwargs
-    ) -> DependenciesT:
+    ) -> Dependencies:
         return self.combine([
             self.rec(child, *args, **kwargs)
             for child in expr.children
@@ -156,11 +160,11 @@ class DependencyMapper(
         ])
 
     @override
-    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> DependenciesT:
+    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> Dependencies:
         return set()
 
 
-class CachedDependencyMapper(CachedMapper[DependenciesT, P],
+class CachedDependencyMapper(CachedMapper[Dependencies, P],
                              DependencyMapper[P]):
     def __init__(
         self,

@@ -36,7 +36,7 @@ from pymbolic.mapper import IdentityMapper
 if TYPE_CHECKING:
     from collections.abc import Sequence, Set
 
-    from pymbolic.mapper.dependency import DependenciesT
+    from pymbolic.mapper.dependency import Dependencies
     from pymbolic.typing import ArithmeticExpression, Expression
 
 
@@ -53,7 +53,7 @@ class TermCollector(IdentityMapper[[]]):
             parameters = set()
         self.parameters = parameters
 
-    def get_dependencies(self, expr: Expression) -> DependenciesT:
+    def get_dependencies(self, expr: Expression) -> Dependencies:
         from pymbolic.mapper.dependency import DependencyMapper
         return DependencyMapper()(expr)
 
