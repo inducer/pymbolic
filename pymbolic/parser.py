@@ -31,7 +31,7 @@ from constantdict import constantdict
 import pytools.lex
 from pytools import memoize_method
 
-from pymbolic.primitives import is_arithmetic_expression
+from pymbolic.primitives import Slice, is_arithmetic_expression
 
 
 if TYPE_CHECKING:
@@ -104,7 +104,9 @@ _PREC_POWER = 240
 _PREC_CALL = 250
 
 
-def _join_to_slice(left, right):
+def _join_to_slice(
+            left: Slice | ArithmeticExpression | None,
+            right: ArithmeticExpression | None):
     from pymbolic.primitives import Slice
     if isinstance(right, Slice):
         return Slice((left, *right.children))
@@ -247,7 +249,7 @@ class Parser:
             expr_pstate = pstate.copy()
             from pytools.lex import ParseError
             try:
-                next_expr = self.parse_expression(expr_pstate, _PREC_SLICE)
+                next_expr = self.parse_arith_expression(expr_pstate, _PREC_SLICE)
             except ParseError:
                 # no expression follows, too bad.
                 left_exp = primitives.Slice((None,))
@@ -489,10 +491,11 @@ class Parser:
             expr_pstate = pstate.copy()
 
             assert not isinstance(left_exp, primitives.Slice)
+            assert is_arithmetic_expression(left_exp)
 
             from pytools.lex import ParseError
             try:
-                next_expr = self.parse_expression(expr_pstate, _PREC_SLICE)
+                next_expr = self.parse_arith_expression(expr_pstate, _PREC_SLICE)
             except ParseError:
                 # no expression follows, too bad.
                 left_exp = primitives.Slice((left_exp, None,))
