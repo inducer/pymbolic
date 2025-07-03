@@ -1,3 +1,5 @@
+# pyright: reportUnreachable=none
+
 from __future__ import annotations
 
 
@@ -490,81 +492,81 @@ class ExpressionNode:
 
     # {{{ arithmetic
 
-    def __add__(self, other: object) -> Sum:
+    def __add__(self, other: ArithmeticExpression) -> Sum:
         if not is_arithmetic_expression(other):
             return NotImplemented
         return Sum((self, other))
 
-    def __radd__(self, other: object) -> Sum:
+    def __radd__(self, other: ArithmeticExpression) -> Sum:
         if not is_arithmetic_expression(other):
             return NotImplemented
         return Sum((other, self))
 
-    def __sub__(self, other: object) -> Sum:
+    def __sub__(self, other: ArithmeticExpression) -> Sum:
         if not is_arithmetic_expression(other):
             return NotImplemented
         return Sum((self, -other))
 
-    def __rsub__(self, other: object) -> Sum:
+    def __rsub__(self, other: ArithmeticExpression) -> Sum:
         if not is_arithmetic_expression(other):
             return NotImplemented
         return Sum((other, -self))
 
-    def __mul__(self, other: object) -> Product:
+    def __mul__(self, other: ArithmeticExpression) -> Product:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Product((self, other))
 
-    def __rmul__(self, other: object) -> Product:
+    def __rmul__(self, other: ArithmeticExpression) -> Product:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Product((other, self))
 
-    def __truediv__(self, other: object) -> Quotient:
+    def __truediv__(self, other: ArithmeticExpression) -> Quotient:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Quotient(self, other)
 
-    def __rtruediv__(self, other: object) -> Quotient:
+    def __rtruediv__(self, other: ArithmeticExpression) -> Quotient:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Quotient(other, self)
 
-    def __floordiv__(self, other: object) -> FloorDiv:
+    def __floordiv__(self, other: ArithmeticExpression) -> FloorDiv:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return FloorDiv(self, other)
 
-    def __rfloordiv__(self, other: object) -> FloorDiv:
+    def __rfloordiv__(self, other: ArithmeticExpression) -> FloorDiv:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return FloorDiv(other, self)
 
-    def __mod__(self, other: object) -> Remainder:
+    def __mod__(self, other: ArithmeticExpression) -> Remainder:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Remainder(self, other)
 
-    def __rmod__(self, other: object) -> Remainder:
+    def __rmod__(self, other: ArithmeticExpression) -> Remainder:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Remainder(other, self)
 
-    def __pow__(self, other: object) -> Power:
+    def __pow__(self, other: ArithmeticExpression) -> Power:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
         return Power(self, other)
 
-    def __rpow__(self, other: object) -> Power:
+    def __rpow__(self, other: ArithmeticExpression) -> Power:
         if not is_arithmetic_expression(other):
             return NotImplemented
 
@@ -574,25 +576,25 @@ class ExpressionNode:
 
     # {{{ shifts
 
-    def __lshift__(self, other: object) -> LeftShift:
+    def __lshift__(self, other: _Expression) -> LeftShift:
         if not is_valid_operand(other):
             return NotImplemented
 
         return LeftShift(self, other)
 
-    def __rlshift__(self, other: object) -> LeftShift:
+    def __rlshift__(self, other: _Expression) -> LeftShift:
         if not is_valid_operand(other):
             return NotImplemented
 
         return LeftShift(other, self)
 
-    def __rshift__(self, other: object) -> RightShift:
+    def __rshift__(self, other: _Expression) -> RightShift:
         if not is_valid_operand(other):
             return NotImplemented
 
         return RightShift(self, other)
 
-    def __rrshift__(self, other: object) -> RightShift:
+    def __rrshift__(self, other: _Expression) -> RightShift:
         if not is_valid_operand(other):
             return NotImplemented
 
@@ -605,37 +607,37 @@ class ExpressionNode:
     def __invert__(self) -> BitwiseNot:
         return BitwiseNot(self)
 
-    def __or__(self, other: object) -> BitwiseOr:
+    def __or__(self, other: _Expression) -> BitwiseOr:
         if not is_valid_operand(other):
             return NotImplemented
 
         return BitwiseOr((self, other))
 
-    def __ror__(self, other: object) -> BitwiseOr:
+    def __ror__(self, other: _Expression) -> BitwiseOr:
         if not is_valid_operand(other):
             return NotImplemented
 
         return BitwiseOr((other, self))
 
-    def __xor__(self, other: object) -> BitwiseXor:
+    def __xor__(self, other: _Expression) -> BitwiseXor:
         if not is_valid_operand(other):
             return NotImplemented
 
         return BitwiseXor((self, other))
 
-    def __rxor__(self, other: object) -> BitwiseXor:
+    def __rxor__(self, other: _Expression) -> BitwiseXor:
         if not is_valid_operand(other):
             return NotImplemented
 
         return BitwiseXor((other, self))
 
-    def __and__(self, other: object) -> BitwiseAnd:
+    def __and__(self, other: _Expression) -> BitwiseAnd:
         if not is_valid_operand(other):
             return NotImplemented
 
         return BitwiseAnd((self, other))
 
-    def __rand__(self, other: object) -> BitwiseAnd:
+    def __rand__(self, other: _Expression) -> BitwiseAnd:
         if not is_valid_operand(other):
             return NotImplemented
 
