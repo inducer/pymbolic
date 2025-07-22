@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import override
 
+import pytools.obj_array as obj_array
+
 import pymbolic.geometric_algebra.primitives as prim
 from pymbolic.geometric_algebra import MultiVector
 from pymbolic.mapper import (
@@ -187,9 +189,9 @@ class Dimensionalizer(EvaluationRewriter):
                 make_sym_vector(expr.name, self.ambient_dim,
                     var_factory=type(expr)))
 
+    @override
     def map_nabla(self, expr):
-        from pytools.obj_array import make_obj_array
-        return MultiVector(make_obj_array(
+        return MultiVector(obj_array.new_1d(
             [prim.NablaComponent(axis, expr.nabla_id)
                 for axis in range(self.ambient_dim)]))
 
