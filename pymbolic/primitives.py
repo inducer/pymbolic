@@ -46,6 +46,7 @@ from warnings import warn
 from constantdict import constantdict
 from typing_extensions import Self, TypeIs, dataclass_transform
 
+import pytools.obj_array as obj_array
 from pytools import module_getattr_for_deprecations, ndindex
 from pytools.obj_array import (
     ObjectArray,
@@ -2059,9 +2060,8 @@ def make_sym_vector(
     if is_constant(components):
         components = list(range(components))
 
-    from pytools.obj_array import flat_obj_array
     vfld = var_factory(name)
-    return flat_obj_array(*[vfld[i] for i in components])
+    return obj_array.flat(*[vfld[i] for i in components])
 
 
 def make_sym_array(

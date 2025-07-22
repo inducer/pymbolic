@@ -42,6 +42,7 @@ from typing import (
 import numpy as np
 from typing_extensions import Self, override
 
+import pytools.obj_array as obj_array
 from pytools import memoize, memoize_method
 from pytools.obj_array import ObjectArray, ObjectArray1D, ShapeT
 
@@ -1276,7 +1277,6 @@ def componentwise(
     if isinstance(expr, MultiVector):
         return expr.map(f)
 
-    from pytools.obj_array import obj_array_vectorize
-    return obj_array_vectorize(f, expr)
+    return obj_array.vectorize(f, expr)
 
 # vim: foldmethod=marker

@@ -28,6 +28,8 @@ THE SOFTWARE.
 
 from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
+import pytools.obj_array as obj_array
+
 from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 
 
@@ -88,13 +90,11 @@ class Derivative:
         return Nabla(self.my_id)
 
     def dnabla(self, ambient_dim: int):
-        from pytools.obj_array import make_obj_array
-
         from pymbolic.geometric_algebra import MultiVector
         nablas: list[ArithmeticExpression] = [
             NablaComponent(axis, self.my_id)
             for axis in range(ambient_dim)]
-        return MultiVector(make_obj_array(nablas))
+        return MultiVector(obj_array.new_1d(nablas))
 
     def __call__(self, operand):
         from pymbolic.geometric_algebra import MultiVector
