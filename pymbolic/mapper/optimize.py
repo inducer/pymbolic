@@ -117,7 +117,7 @@ class _VarArgsRemover(ast.NodeTransformer):
         self.drop_args = drop_args
         self.drop_kwargs = drop_kwargs
 
-    def visit_Call(self, node):  # noqa: N802
+    def visit_Call(self, node):
         node = self.generic_visit(node)
         return _replace(node,
                        args=[arg for arg in node.args
@@ -131,7 +131,7 @@ class _RecInliner(ast.NodeTransformer):
         self.inline_rec = inline_rec
         self.inline_cache = inline_cache
 
-    def visit_Call(self, node: ast.Call) -> ast.AST:  # noqa: N802
+    def visit_Call(self, node: ast.Call) -> ast.AST:
         node = cast("ast.Call", self.generic_visit(node))
 
         result_expr: ast.expr = node
@@ -235,7 +235,7 @@ class _CacheKeyInliner(ast.NodeTransformer):
     def __init__(self, *, cache_key_expr):
         self.cache_key_expr = cache_key_expr
 
-    def visit_Call(self, node):  # noqa: N802
+    def visit_Call(self, node):
         node = self.generic_visit(node)
 
         result_expr = node
