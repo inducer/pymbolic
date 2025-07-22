@@ -123,15 +123,14 @@ class WalkMapper(WalkMapperBase[P]):
 
 
 class EvaluationMapper(EvaluationMapperBase[ResultT]):
-    def map_nabla_component(self, expr):
-        return expr
-
-    map_nabla = map_nabla_component
+    pass
 
 
 class EvaluationRewriter(EvaluationMapperBase[ArithmeticExpression]):
     def map_nabla_component(self, expr: prim.NablaComponent) -> ArithmeticExpression:
         return expr
+
+    map_nabla = map_nabla_component
 
     def map_derivative_source(self,
                 expr: prim.DerivativeSource
