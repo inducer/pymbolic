@@ -2,8 +2,7 @@ from importlib import metadata
 from urllib.request import urlopen
 
 
-_conf_url = \
-        "https://raw.githubusercontent.com/inducer/sphinxconfig/main/sphinxconfig.py"
+_conf_url = "https://raw.githubusercontent.com/inducer/sphinxconfig/main/sphinxconfig.py"
 with urlopen(_conf_url) as _inf:
     exec(compile(_inf.read(), _conf_url, "exec"), globals())
 
@@ -28,28 +27,48 @@ intersphinx_mapping = {
     "constantdict":
         ("https://matthiasdiener.github.io/constantdict/", None)
 }
+
 autodoc_type_aliases = {
     "Expression": "Expression",
     "ArithmeticExpression": "ArithmeticExpression",
 }
 
-
-import sys
-
-
 nitpick_ignore_regex = [
-    # Avoids this error in pymbolic.typing.
-    # <unknown>:1: WARNING: py:class reference target not found: ExpressionNode [ref.class]  # noqa: E501
-    # Understandable, because typing can't import primitives, which would be needed
-    # to resolve the reference.
-    ["py:class", r"ExpressionNode"],
-    ["py:class", r"_Expression"],
-    ["py:class", r"p\.AlgebraicLeaf"],
-
     # Sphinx started complaining about these in 8.2.1(-ish)
     # -AK, 2025-02-24
     ["py:class", r"TypeAliasForwardRef"],
 ]
+
+sphinxconfig_missing_reference_aliases = {
+    # numpy
+    "NDArray": "obj:numpy.typing.NDArray",
+    "DTypeLike": "obj:numpy.typing.DTypeLike",
+    "np.inexact": "class:numpy.inexact",
+    "np.generic": "class:numpy.generic",
+    # pytools typing
+    "T": "class:pytools.T",
+    "ShapeT": "class:pytools.obj_array.ShapeT",
+    "ObjectArray": "class:pytools.obj_array.ObjectArray",
+    "ObjectArray1D": "class:pytools.obj_array.ObjectArray",
+    # pymbolic typing
+    "ArithmeticExpression": "data:pymbolic.typing.ArithmeticExpression",
+    "Expression": "data:pymbolic.typing.Expression",
+    "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
+    "ExpressionNode": "class:pymbolic.primitives.ExpressionNode",
+    "_Expression": "class:pymbolic.primitives.ExpressionNode",
+    "Lookup": "class:pymbolic.primitives.Lookup",
+    "LogicalAnd": "class:pymbolic.primitives.LogicalAnd",
+    "LogicalOr": "class:pymbolic.primitives.LogicalOr",
+    "LogicalNot": "class:pymbolic.primitives.LogicalNot",
+    "Comparison": "class:pymbolic.primitives.Comparison",
+}
+
+
+def setup(app):
+    app.connect("missing-reference", process_autodoc_missing_reference)  # noqa: F821
+
+
+import sys
 
 
 sys._BUILDING_SPHINX_DOCS = True
