@@ -140,13 +140,6 @@ properties:
 .. literalinclude:: ../test/test_pymbolic.py
    :start-after: START_GA_TEST
    :end-before: END_GA_TEST
-
-References
-----------
-
-.. class:: DTypeLike
-
-    See :data:`numpy.typing.DTypeLike`.
 """
 
 

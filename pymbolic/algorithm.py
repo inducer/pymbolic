@@ -15,20 +15,6 @@ References
 .. class:: _CanMultiplyT
 
     A type variable for a type that supports multiplication.
-
-.. class:: NDArray
-
-    See :data:`numpy.typing.NDArray`.
-
-.. currentmodule:: np
-
-.. class:: generic
-
-    See :class:`numpy.generic`.
-
-.. class:: inexact
-
-    See :class:`numpy.inexact`.
 """
 
 from __future__ import annotations

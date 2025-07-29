@@ -37,7 +37,6 @@ from typing import (
     NoReturn,
     Protocol,
     TypeAlias,
-    TypeVar,
     cast,
     overload,
 )
@@ -47,7 +46,7 @@ from constantdict import constantdict
 from typing_extensions import Self, TypeIs, dataclass_transform
 
 import pytools.obj_array as obj_array
-from pytools import module_getattr_for_deprecations, ndindex
+from pytools import T, module_getattr_for_deprecations, ndindex
 from pytools.obj_array import (
     ObjectArray,
     ObjectArray1D,
@@ -315,75 +314,6 @@ Helper classes
 
 .. autoclass:: EmptyOK
 .. autoclass:: _AttributeLookupCreator
-
-References
-----------
-
-.. class:: ObjectArray
-
-    See :class:`pytools.obj_array.ObjectArray`.
-
-.. class:: ObjectArray1D
-
-    See :class:`pytools.obj_array.ObjectArray`.
-
-.. class:: ShapeT
-
-    See :class:`pytools.obj_array.ShapeT`.
-
-.. class:: DataclassInstance
-
-    An instance of a :func:`~dataclasses.dataclass`.
-
-.. class:: ArithmeticExpression
-
-    See :class:`pymbolic.ArithmeticExpression`
-
-.. class:: _T
-
-    A type variable.
-
-.. currentmodule:: numpy
-
-.. class:: bool_
-
-    Deprecated alias for :class:`numpy.bool`.
-
-.. currentmodule:: typing_extensions
-
-.. class:: TypeIs
-
-    See :data:`typing_extensions.TypeIs`.
-
-.. class:: Variable
-
-    See :class:`pymbolic.Variable`.
-
-.. class:: Expression
-
-    See :data:`pymbolic.typing.Expression`.
-
-.. currentmodule:: pymbolic
-
-.. class:: Comparison
-
-    See :class:`pymbolic.primitives.Comparison`.
-
-.. class:: LogicalNot
-
-    See :class:`pymbolic.primitives.LogicalNot`.
-
-.. class:: LogicalAnd
-
-    See :class:`pymbolic.primitives.LogicalAnd`.
-
-.. class:: LogicalOr
-
-    See :class:`pymbolic.primitives.LogicalOr`.
-
-.. class:: Lookup
-
-    See :class:`pymbolic.primitives.Lookup`.
 """
 
 
@@ -1117,15 +1047,12 @@ def _augment_expression_dataclass(
     # }}}
 
 
-_T = TypeVar("_T")
-
-
 @dataclass_transform(frozen_default=True, field_specifiers=(dataclasses.field,))
 def expr_dataclass(
             init: bool = True,
             eq: bool = True,
             hash: bool = True,
-        ) -> Callable[[type[_T]], type[_T]]:
+        ) -> Callable[[type[T]], type[T]]:
     r"""A class decorator that makes the class a :func:`~dataclasses.dataclass`
     while also adding functionality needed for :class:`ExpressionNode`.
     Specifically, it adds cached hashing, equality comparisons
@@ -1141,7 +1068,7 @@ def expr_dataclass(
 
     .. versionadded:: 2024.1
     """
-    def map_cls(cls: type[_T]) -> type[_T]:
+    def map_cls(cls: type[T]) -> type[T]:
         # Frozen dataclasses (empirically) have a ~20% speed penalty in pymbolic,
         # and their frozen-ness is arguably a debug feature.
 
