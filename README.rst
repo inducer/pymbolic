@@ -4,12 +4,12 @@ Pymbolic: Easy Expression Trees and Term Rewriting
 .. image:: https://gitlab.tiker.net/inducer/pymbolic/badges/main/pipeline.svg
     :alt: Gitlab Build Status
     :target: https://gitlab.tiker.net/inducer/pymbolic/commits/main
-.. image:: https://github.com/inducer/pymbolic/workflows/CI/badge.svg?branch=main&event=push
+.. image:: https://github.com/inducer/pymbolic/actions/workflows/ci.yml/badge.svg
     :alt: Github Build Status
-    :target: https://github.com/inducer/pymbolic/actions?query=branch%3Amain+workflow%3ACI+event%3Apush
-.. image:: https://badge.fury.io/py/pymbolic.png
+    :target: https://github.com/inducer/pymbolic/actions/workflows/ci.yml
+.. image:: https://badge.fury.io/py/pymbolic.svg
     :alt: Python Package Index Release Page
-    :target: https://pypi.org/project/pymbolic/
+    :target: https://pypi.org/project/pymbolic
 .. image:: https://zenodo.org/badge/2016193.svg
     :alt: Zenodo DOI for latest release
     :target: https://zenodo.org/badge/latestdoi/2016193
