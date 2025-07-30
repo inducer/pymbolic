@@ -55,7 +55,7 @@ sphinxconfig_missing_reference_aliases = {
     "Expression": "data:pymbolic.typing.Expression",
     "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
     "ExpressionNode": "class:pymbolic.primitives.ExpressionNode",
-    "_Expression": "class:pymbolic.primitives.ExpressionNode",
+    "_Expression": "data:pymbolic.typing.Expression",
     "Lookup": "class:pymbolic.primitives.Lookup",
     "LogicalAnd": "class:pymbolic.primitives.LogicalAnd",
     "LogicalOr": "class:pymbolic.primitives.LogicalOr",
