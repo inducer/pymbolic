@@ -66,9 +66,3 @@ sphinxconfig_missing_reference_aliases = {
 
 def setup(app):
     app.connect("missing-reference", process_autodoc_missing_reference)  # noqa: F821
-
-
-import sys
-
-
-sys._BUILDING_SPHINX_DOCS = True

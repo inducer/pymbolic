@@ -4,8 +4,6 @@
 .. autofunction:: make_subst_func
 .. autofunction:: substitute
 
-.. autoclass:: Callable[[AlgebraicLeaf], Expression | None]
-
 References
 ----------
 
@@ -38,8 +36,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-import sys
-from dataclasses import dataclass
+
 from typing import TYPE_CHECKING, Any
 
 from typing_extensions import override
@@ -56,17 +53,14 @@ if TYPE_CHECKING:
     from pymbolic.typing import Expression
 
 
-if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
-    from collections.abc import Callable  # noqa: TC003
-
-
-@dataclass
 class SubstitutionMapper(IdentityMapper[[]]):
-
     subst_func: Callable[[AlgebraicLeaf], Expression | None]
 
-    def __post_init__(self) -> None:
+    def __init__(
+            self, subst_func: Callable[[AlgebraicLeaf], Expression | None]
+        ) -> None:
         super().__init__()
+        self.subst_func = subst_func
 
     @override
     def map_variable(self, expr: Variable) -> Expression:

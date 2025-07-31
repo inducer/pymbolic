@@ -43,7 +43,6 @@ THE SOFTWARE.
 """
 
 import operator
-import sys
 from typing import TYPE_CHECKING, Protocol, TypeVar, cast, overload
 from warnings import warn
 
@@ -53,10 +52,6 @@ from pytools import MovedFunctionDeprecationWrapper, memoize
 if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
-
-
-if getattr(sys, "_BUILDING_SPHINX_DOCS", None):
-    import numpy as np  # noqa: TC002
 
 
 # {{{ integer powers
