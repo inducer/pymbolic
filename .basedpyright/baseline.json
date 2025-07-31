@@ -56,14 +56,6 @@
                     "endColumn": 70,
                     "lineCount": 1
                 }
-            },
-            {
-                "code": "reportAttributeAccessIssue",
-                "range": {
-                    "startColumn": 4,
-                    "endColumn": 25,
-                    "lineCount": 1
-                }
             }
         ],
         "./experiments/traversal-benchmark.py": [
@@ -26551,6 +26543,14 @@
             }
         ],
         "./pymbolic/mapper/substitutor.py": [
+            {
+                "code": "reportUnsafeMultipleInheritance",
+                "range": {
+                    "startColumn": 6,
+                    "endColumn": 30,
+                    "lineCount": 1
+                }
+            },
             {
                 "code": "reportMissingParameterType",
                 "range": {
