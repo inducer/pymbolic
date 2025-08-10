@@ -45,6 +45,8 @@ sphinxconfig_missing_reference_aliases = {
     "DTypeLike": "obj:numpy.typing.DTypeLike",
     "np.inexact": "class:numpy.inexact",
     "np.generic": "class:numpy.generic",
+    "np.dtype": "class:numpy.dtype",
+    "np.ndarray": "class:numpy.ndarray",
     # pytools typing
     "T": "class:pytools.T",
     "ShapeT": "class:pytools.obj_array.ShapeT",
