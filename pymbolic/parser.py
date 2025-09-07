@@ -339,7 +339,7 @@ class Parser:
     def parse_arith_expression(self, pstate: LexIterator, min_precedence: int = 0):
         expr = self.parse_expression(pstate, min_precedence)
         assert is_arithmetic_expression(expr)
-        return cast("ArithmeticExpression", expr)
+        return expr
 
     def parse_postfix(self,
                 pstate: LexIterator,
