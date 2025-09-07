@@ -658,7 +658,7 @@ class MultiVector(Generic[CoeffT]):
 
             dimensions: int
             dimensions, = data.shape
-            data_dict = {(i,): cast("CoeffT", xi) for i, xi in enumerate(data)}
+            data_dict = {(i,): xi for i, xi in enumerate(data)}
 
             if space is None:
                 space = cast("Space[CoeffT]", get_euclidean_space(dimensions))
