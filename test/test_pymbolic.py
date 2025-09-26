@@ -201,8 +201,9 @@ def test_fft_with_floats():
 
     from pymbolic.algorithm import fft, ifft
 
+    rng = np.random.default_rng(seed=42)
     for n in [2**i for i in range(4, 10)]+[17, 12, 948]:
-        a = np.random.rand(n) + 1j*np.random.rand(n)
+        a = rng.random(n) + 1j*rng.random(n)
         f_a = fft(a, complex_dtype=np.complex128)
         a2 = ifft(f_a, complex_dtype=np.complex128)
         assert np.linalg.norm(a-a2) < 1e-10
@@ -423,11 +424,12 @@ def test_geometric_algebra(dims):
 
     from pymbolic.geometric_algebra import MultiVector as MV  # noqa: N817
 
-    vec1 = MV(np.random.randn(dims))
-    vec2 = MV(np.random.randn(dims))
-    vec3 = MV(np.random.randn(dims))
-    vec4 = MV(np.random.randn(dims))
-    vec5 = MV(np.random.randn(dims))
+    rng = np.random.default_rng(seed=dims)
+    vec1 = MV(rng.normal(size=dims))
+    vec2 = MV(rng.normal(size=dims))
+    vec3 = MV(rng.normal(size=dims))
+    vec4 = MV(rng.normal(size=dims))
+    vec5 = MV(rng.normal(size=dims))
 
     # Fundamental identity
     assert ((vec1 ^ vec2) + (vec1 | vec2)).close_to(vec1*vec2)
