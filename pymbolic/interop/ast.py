@@ -29,6 +29,7 @@ THE SOFTWARE.
 import ast
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from constantdict import constantdict
 from typing_extensions import override
 
 import pymbolic.primitives as p
@@ -203,10 +204,10 @@ class ASTToPymbolic(ASTMapper):
         func = self.rec(expr.func)
         args = tuple([self.rec(arg) for arg in expr.args])
         if getattr(expr, "keywords", []):
-            return p.CallWithKwargs(func, args,
-                    {
-                        kw.arg: self.rec(kw.value)
-                        for kw in expr.keywords})
+            return p.CallWithKwargs(
+                func,
+                args,
+                constantdict({kw.arg: self.rec(kw.value) for kw in expr.keywords}))
         else:
             return p.Call(func, args)
 
