@@ -96,6 +96,9 @@ extend-ignore = [
 "doc/conf.py" = ["I002"]
 "experiments/*.py" = ["I002"]
 
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = ["map_*"]
+
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
 docstring-quotes = "double"
@@ -103,7 +106,7 @@ multiline-quotes = "double"
 
 [tool.typos.default]
 extend-ignore-re = [
-  "(?Rm)^.*(#|//)\\s*spellchecker:\\s*disable-line$"
+  "(?Rm)^.*(#|//)\\s*spellchecker:\\s*disable-line"
 ]
 
 [tool.typos.default.extend-words]

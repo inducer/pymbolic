@@ -75,10 +75,10 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
 
     # }}}
 
-    def map_Symbol(self, expr):  # noqa: N802
+    def map_Symbol(self, expr):
         return prim.Variable(str(expr.name))
 
-    def map_Rational(self, expr):  # noqa: N802
+    def map_Rational(self, expr):
         p, q = expr.p, expr.q
 
         num = self.rec(p)
@@ -88,30 +88,30 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
             return num
         return prim.Quotient(num, denom)
 
-    def map_Integer(self, expr):  # noqa: N802
+    def map_Integer(self, expr):
         return int(expr)
 
-    def map_Add(self, expr):  # noqa: N802
+    def map_Add(self, expr):
         return prim.Sum(tuple([self.rec(arg) for arg in expr.args]))
 
-    def map_Mul(self, expr):  # noqa: N802
+    def map_Mul(self, expr):
         return prim.Product(tuple([self.rec(arg) for arg in expr.args]))
 
-    def map_Pow(self, expr):  # noqa: N802
+    def map_Pow(self, expr):
         base, exp = expr.args
         return prim.Power(self.rec(base), self.rec(exp))
 
-    def map_Subs(self, expr):  # noqa: N802
+    def map_Subs(self, expr):
         return prim.Substitution(self.rec(expr.expr),
                 tuple([v.name for v in expr.variables]),
                 tuple([self.rec(v) for v in expr.point]),
                 )
 
-    def map_Derivative(self, expr):  # noqa: N802
+    def map_Derivative(self, expr):
         return prim.Derivative(self.rec(expr.expr),
                 tuple([v.name for v in expr.variables]))
 
-    def map_UnevaluatedExpr(self, expr):  # noqa: N802
+    def map_UnevaluatedExpr(self, expr):
         return self.rec(expr.args[0])
 
     def not_supported(self, expr):
@@ -134,12 +134,12 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
         right = self.rec(expr.args[1])
         return prim.Comparison(left, operator, right)
 
-    map_Equality = partial(_comparison_operator, operator="==")  # noqa: N815
-    map_Unequality = partial(_comparison_operator, operator="!=")  # noqa: N815  # spellchecker: disable-line
-    map_GreaterThan = partial(_comparison_operator, operator=">=")  # noqa: N815
-    map_LessThan = partial(_comparison_operator, operator="<=")  # noqa: N815
-    map_StrictGreaterThan = partial(_comparison_operator, operator=">")  # noqa: N815
-    map_StrictLessThan = partial(_comparison_operator, operator="<")  # noqa: N815
+    map_Equality = partial(_comparison_operator, operator="==")
+    map_Unequality = partial(_comparison_operator, operator="!=")  # spellchecker: disable-line  # noqa: E501
+    map_GreaterThan = partial(_comparison_operator, operator=">=")
+    map_LessThan = partial(_comparison_operator, operator="<=")
+    map_StrictGreaterThan = partial(_comparison_operator, operator=">")
+    map_StrictLessThan = partial(_comparison_operator, operator="<")
 
 # }}}
 

@@ -47,12 +47,12 @@ __doc__ = """
 
 class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 
-    def map_ImaginaryUnit(self, expr):  # noqa: N802
+    def map_ImaginaryUnit(self, expr):
         return 1j
 
-    map_Float = SympyLikeToPymbolicMapper.to_float  # noqa: N815
+    map_Float = SympyLikeToPymbolicMapper.to_float
 
-    map_NumberSymbol = SympyLikeToPymbolicMapper.to_float  # noqa: N815
+    map_NumberSymbol = SympyLikeToPymbolicMapper.to_float
 
     def function_name(self, expr):
         return type(expr).__name__
@@ -61,7 +61,7 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
     def map_long(self, expr):
         return long(expr)  # noqa: F821
 
-    def map_Indexed(self, expr):  # noqa: N802
+    def map_Indexed(self, expr):
         if len(expr.args) == 2:
             return prim.Subscript(
                 self.rec(expr.args[0].args[0]),
@@ -73,11 +73,11 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
             tuple([self.rec(i) for i in expr.args[1:]])
             )
 
-    def map_CSE(self, expr):  # noqa: N802
+    def map_CSE(self, expr):
         return prim.CommonSubexpression(
                 self.rec(expr.args[0]), expr.prefix, expr.scope)
 
-    def map_Piecewise(self, expr):  # noqa: N802
+    def map_Piecewise(self, expr):
         # We only handle piecewises with 2 arguments!
         if not len(expr.args) == 2:
             raise NotImplementedError
