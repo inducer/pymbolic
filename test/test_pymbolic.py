@@ -195,19 +195,20 @@ def test_sympy_interaction():
 # {{{ fft
 
 def test_fft_with_floats():
-    numpy = pytest.importorskip("numpy")
-    import numpy.linalg as la
+    pytest.importorskip("numpy")
+
+    import numpy as np
 
     from pymbolic.algorithm import fft, ifft
 
     for n in [2**i for i in range(4, 10)]+[17, 12, 948]:
-        a = numpy.random.rand(n) + 1j*numpy.random.rand(n)
-        f_a = fft(a)
-        a2 = ifft(f_a)
-        assert la.norm(a-a2) < 1e-10
+        a = np.random.rand(n) + 1j*np.random.rand(n)
+        f_a = fft(a, complex_dtype=np.complex128)
+        a2 = ifft(f_a, complex_dtype=np.complex128)
+        assert np.linalg.norm(a-a2) < 1e-10
 
-        f_a_numpy = numpy.fft.fft(a)
-        assert la.norm(f_a-f_a_numpy) < 1e-10
+        f_a_numpy = np.fft.fft(a)
+        assert np.linalg.norm(f_a-f_a_numpy) < 1e-10
 
 
 class NearZeroKiller(IdentityMapper):
@@ -225,15 +226,17 @@ class NearZeroKiller(IdentityMapper):
 
 
 def test_fft():
-    numpy = pytest.importorskip("numpy")
+    pytest.importorskip("numpy")
+
+    import numpy as np
 
     from pymbolic import var
     from pymbolic.algorithm import fft, sym_fft
 
-    vars = numpy.array([var(chr(97+i)) for i in range(16)], dtype=object)
+    vars = np.array([var(chr(97+i)) for i in range(16)], dtype=object)
     logger.info("vars: %s", vars)
 
-    logger.info("fft: %s", fft(vars))
+    logger.info("fft: %s", fft(vars, complex_dtype=np.complex128))
     traced_fft = sym_fft(vars)
 
     from pymbolic.mapper.c_code import CCodeMapper
