@@ -126,7 +126,7 @@ class FinalizedTuple(tuple, FinalizedContainer):
 
 class FinalizedList(list, FinalizedContainer):
     @memoize_method
-    def __hash__(self) -> int:  # type: ignore[override]
+    def __hash__(self) -> int:
         result = hash(type(self).__name__)
         for it in self:
             result ^= hash(it)

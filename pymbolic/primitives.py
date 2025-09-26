@@ -592,7 +592,7 @@ class ExpressionNode:
 
     if not TYPE_CHECKING:
         # Subscript has an attribute 'index' which can't coexist with this.
-        # Thus we're hiding this from mypy until it goes away.
+        # Thus we're hiding this from type checkers until it goes away.
 
         def index(self, subscript: ExpressionNode) -> ExpressionNode:
             """Return an expression representing ``self[subscript]``.
@@ -1023,7 +1023,7 @@ def _augment_expression_dataclass(
 
     # set a marker to detect classes whose subclasses may not be expr_dataclasses
     # type ignore because we don't want to announce the existence of this to the world.
-    cls._is_expr_dataclass = True  # type: ignore[attr-defined]
+    cls._is_expr_dataclass = True
 
     # {{{ assign mapper_method
 
@@ -1075,10 +1075,8 @@ def expr_dataclass(
         # We provide __eq__/__hash__ below, don't redundantly generate it.
         dc_cls = dataclass(init=init, eq=False, frozen=__debug__, repr=False)(cls)
 
-        # FIXME: I'm not sure how to tell mypy that dc_cls is type[DataclassInstance]
-        # It should just understand that?
         _augment_expression_dataclass(
-                  dc_cls,  # type: ignore[arg-type]
+                  dc_cls,
                   generate_eq=eq and "__eq__" not in cls.__dict__,
                   generate_hash=hash and "__hash__" not in cls.__dict__,
                   )

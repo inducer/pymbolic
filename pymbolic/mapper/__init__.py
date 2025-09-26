@@ -146,8 +146,7 @@ class UnsupportedExpressionError(ValueError):
 ResultT = TypeVar("ResultT")
 
 # This ParamSpec could be marked contravariant (just like Callable is contravariant
-# in its arguments). As of mypy 1.14/Py3.13 (Nov 2024), mypy complains of as-yet
-# undefined semantics, so it's probably too soon.
+# in its arguments). Unfortunately, this is not yet supported by type checkers.
 P = ParamSpec("P")
 
 
@@ -1058,7 +1057,7 @@ class IdentityMapper(Mapper[Expression, P]):
             ) -> Expression:
 
         # True fact: lists aren't expressions
-        return [self.rec(child, *args, **kwargs) for child in expr]  # type: ignore[return-value]
+        return [self.rec(child, *args, **kwargs) for child in expr]
 
     @override
     def map_tuple(self,
@@ -1081,8 +1080,7 @@ class IdentityMapper(Mapper[Expression, P]):
         for i in ndindex(expr.shape):
             result[i] = self.rec(expr[i], *args, **kwargs)
 
-        # True fact: ndarrays aren't expressions
-        return result  # type: ignore[return-value]
+        return result
 
     @override
     def map_multivector(self,
@@ -1091,7 +1089,7 @@ class IdentityMapper(Mapper[Expression, P]):
             ) -> Expression:
         # True fact: MultiVectors aren't expressions
         return expr.map(lambda ch: cast("ArithmeticExpression",
-                                        self.rec(ch, *args, **kwargs)))  # type: ignore[return-value]
+                                        self.rec(ch, *args, **kwargs)))
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression,
