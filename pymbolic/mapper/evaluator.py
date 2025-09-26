@@ -153,8 +153,6 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
     @override
     def map_bitwise_not(self, expr: p.BitwiseNot) -> ResultT:
-        # ??? Why, pylint, why ???
-        # pylint: disable=invalid-unary-operand-type
         return ~self.rec(expr.child)  # type: ignore[operator]
 
     @override

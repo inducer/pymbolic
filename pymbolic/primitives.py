@@ -412,7 +412,7 @@ class ExpressionNode:
         raise NotImplementedError
 
     @_classproperty
-    def __match_args__(cls):  # noqa: N805  # pylint: disable=no-self-argument
+    def __match_args__(cls):  # noqa: N805
         return cls.init_arg_names
 
     @property
