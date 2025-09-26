@@ -418,7 +418,7 @@ def test_geometric_algebra(dims):
 
     import numpy as np
 
-    from pymbolic.geometric_algebra import MultiVector as MV  # noqa
+    from pymbolic.geometric_algebra import MultiVector as MV  # noqa: N817
 
     vec1 = MV(np.random.randn(dims))
     vec2 = MV(np.random.randn(dims))

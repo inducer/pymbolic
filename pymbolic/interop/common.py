@@ -75,10 +75,10 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
 
     # }}}
 
-    def map_Symbol(self, expr):  # noqa
+    def map_Symbol(self, expr):  # noqa: N802
         return prim.Variable(str(expr.name))
 
-    def map_Rational(self, expr):  # noqa
+    def map_Rational(self, expr):  # noqa: N802
         p, q = expr.p, expr.q
 
         num = self.rec(p)
@@ -88,30 +88,30 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase):
             return num
         return prim.Quotient(num, denom)
 
-    def map_Integer(self, expr):  # noqa
+    def map_Integer(self, expr):  # noqa: N802
         return int(expr)
 
-    def map_Add(self, expr):  # noqa
+    def map_Add(self, expr):  # noqa: N802
         return prim.Sum(tuple([self.rec(arg) for arg in expr.args]))
 
-    def map_Mul(self, expr):  # noqa
+    def map_Mul(self, expr):  # noqa: N802
         return prim.Product(tuple([self.rec(arg) for arg in expr.args]))
 
-    def map_Pow(self, expr):  # noqa
+    def map_Pow(self, expr):  # noqa: N802
         base, exp = expr.args
         return prim.Power(self.rec(base), self.rec(exp))
 
-    def map_Subs(self, expr):  # noqa
+    def map_Subs(self, expr):  # noqa: N802
         return prim.Substitution(self.rec(expr.expr),
                 tuple([v.name for v in expr.variables]),
                 tuple([self.rec(v) for v in expr.point]),
                 )
 
-    def map_Derivative(self, expr):  # noqa
+    def map_Derivative(self, expr):  # noqa: N802
         return prim.Derivative(self.rec(expr.expr),
                 tuple([v.name for v in expr.variables]))
 
-    def map_UnevaluatedExpr(self, expr):  # noqa
+    def map_UnevaluatedExpr(self, expr):  # noqa: N802
         return self.rec(expr.args[0])
 
     def not_supported(self, expr):

@@ -46,7 +46,7 @@ __doc__ = """
 
 class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 
-    def map_Pow(self, expr):  # noqa
+    def map_Pow(self, expr):  # noqa: N802
         # SymEngine likes to use as e**a to express exp(a); we undo that here.
         base, exp = expr.args
         if base == symengine.E:
@@ -54,17 +54,17 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
         else:
             return prim.Power(self.rec(base), self.rec(exp))
 
-    def map_Constant(self, expr):  # noqa
+    def map_Constant(self, expr):  # noqa: N802
         return self.rec(expr.n())
 
     map_Complex = map_Constant  # noqa: N815
 
-    def map_ComplexDouble(self, expr):  # noqa
+    def map_ComplexDouble(self, expr):  # noqa: N802
         return complex(expr)
 
     map_RealDouble = SympyLikeToPymbolicMapper.to_float  # noqa: N815
 
-    def map_Piecewise(self, expr):  # noqa
+    def map_Piecewise(self, expr):  # noqa: N802
         # We only handle piecewises with 2 statements!
         if not len(expr.args) == 4:
             raise NotImplementedError
