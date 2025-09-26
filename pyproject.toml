@@ -74,10 +74,10 @@ extend-select = [
     "N",    # pep8-naming
     "Q",    # flake8-quotes
     "RUF",  # ruff
+    "SIM",  # flake8-simplify
+    "TC",   # flake8-type-checking
     "UP",   # pyupgrade
     "W",    # pycodestyle
-    "TC",   # type checking
-    "SIM",
 ]
 extend-ignore = [
     "C409", # remove comprehension within tuple call
