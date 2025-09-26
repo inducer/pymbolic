@@ -48,7 +48,7 @@ jobs:
                 . ./ci-support-v0
                 build_py_project_in_venv
                 pip install -e .[test]
-                python -m pip install numpy pexpect sympy scipy scipy-stubs
+                python -m pip install numpy pexpect sympy scipy scipy-stubs optype
                 python -m pip install basedpyright
                 basedpyright
 

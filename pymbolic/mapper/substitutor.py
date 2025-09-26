@@ -3,13 +3,6 @@
 .. autoclass:: CachedSubstitutionMapper
 .. autofunction:: make_subst_func
 .. autofunction:: substitute
-
-References
-----------
-
-.. class:: SupportsGetItem
-
-    A protocol with a ``__getitem__`` method.
 """
 
 from __future__ import annotations
@@ -37,7 +30,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from typing_extensions import override
 
@@ -45,12 +38,18 @@ from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Set
 
-    from useful_types import SupportsGetItem, SupportsItems
+    import optype
 
     from pymbolic.primitives import AlgebraicLeaf, Lookup, Subscript, Variable
     from pymbolic.typing import Expression
+
+    _KT_co = TypeVar("_KT_co", covariant=True)
+    _VT_co = TypeVar("_VT_co", covariant=True)
+
+    class CanItems(Protocol[_KT_co, _VT_co]):
+        def items(self) -> Set[tuple[_KT_co, _VT_co]]: ...
 
 
 class SubstitutionMapper(IdentityMapper[[]]):
@@ -98,7 +97,7 @@ class CachedSubstitutionMapper(CachedIdentityMapper[[]], SubstitutionMapper):
 def make_subst_func(
     # "Any" here avoids the whole Mapping variance disaster
     # e.g. https://github.com/python/typing/issues/445
-    variable_assignments: SupportsGetItem[Any, Expression],
+    variable_assignments: optype.CanGetitem[Any, Expression],
 ) -> Callable[[AlgebraicLeaf], Expression | None]:
     import pymbolic.primitives as primitives
 
@@ -119,7 +118,7 @@ def make_subst_func(
 
 def substitute(
     expression: Expression,
-    variable_assignments: SupportsItems[AlgebraicLeaf | str, Expression] | None
+    variable_assignments: CanItems[AlgebraicLeaf | str, Expression] | None
     = None,
     mapper_cls=CachedSubstitutionMapper,
     **kwargs: Expression,

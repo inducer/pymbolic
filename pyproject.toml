@@ -41,10 +41,9 @@ numpy = [
 ]
 test = [
     "basedpyright",
+    "optype",
     "pytest",
     "ruff",
-    # only needed for type checking
-    "useful-types",
 ]
 
 [project.urls]
