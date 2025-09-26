@@ -37,6 +37,7 @@ nitpick_ignore_regex = [
     # Sphinx started complaining about these in 8.2.1(-ish)
     # -AK, 2025-02-24
     ["py:class", r"TypeAliasForwardRef"],
+    ["py:class", r"optype.*"],
 ]
 
 sphinxconfig_missing_reference_aliases = {
