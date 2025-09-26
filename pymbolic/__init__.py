@@ -69,7 +69,7 @@ from .typing import (
     RealNumber,
     Scalar,
 )
-from pymbolic.version import VERSION_TEXT as __version__  # noqa
+from pymbolic.version import VERSION_TEXT as __version__  # noqa: F401,N811
 
 
 __all__ = (

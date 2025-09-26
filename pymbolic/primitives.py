@@ -1502,7 +1502,7 @@ class If(ExpressionNode):
 
 # {{{ misc stuff
 
-class cse_scope:  # noqa
+class cse_scope:  # noqa: N801
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
 
     .. attribute:: EVALUATION

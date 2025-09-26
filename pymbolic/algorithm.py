@@ -117,12 +117,12 @@ def extended_euclidean(q, r):
         p, a, b = extended_euclidean(r, q)
         return p, b, a
 
-    Q = 1, 0  # noqa
-    R = 0, 1  # noqa
+    Q = 1, 0  # noqa: N806
+    R = 0, 1  # noqa: N806
 
     while r:
         quot, t = divmod(q, r)
-        T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # noqa
+        T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # noqa: N806
         q, r = r, t
         Q, R = R, T  # noqa: N806
 
@@ -299,7 +299,7 @@ def sym_fft(x, sign=1):
 # }}}
 
 
-def csr_matrix_multiply(S, x):  # noqa
+def csr_matrix_multiply(S, x):  # noqa: N803
     """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
     h, _w = S.shape
