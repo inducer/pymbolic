@@ -84,9 +84,9 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
             return type(expr).__name__
 
     def not_supported(self, expr):
-        from symengine.lib.symengine_wrapper import PyFunction  # pylint: disable=E0611
+        from symengine.lib.symengine_wrapper import PyFunction
         if isinstance(expr, PyFunction) and \
-                self.function_name(expr) == "CSE":       # pylint: disable=E0611
+                self.function_name(expr) == "CSE":
             sympy_expr = expr._sympy_()
             return prim.CommonSubexpression(
                 self.rec(expr.args[0]), sympy_expr.prefix, sympy_expr.scope)

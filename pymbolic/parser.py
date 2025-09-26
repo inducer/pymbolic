@@ -264,7 +264,7 @@ class Parser:
             left_exp = self.parse_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_minus):
             pstate.advance()
-            left_exp = -self.parse_expression(pstate, _PREC_UNARY)  # pylint:disable=invalid-unary-operand-type
+            left_exp = -self.parse_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_not):
             pstate.advance()
             from pymbolic.primitives import LogicalNot
@@ -397,7 +397,7 @@ class Parser:
             pstate.advance()
             right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
             assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Sum((left_exp, -right_exp))  # pylint:disable=invalid-unary-operand-type
+            left_exp = primitives.Sum((left_exp, -right_exp))
             did_something = True
         elif next_tag is _times and min_precedence < _PREC_TIMES:
             pstate.advance()

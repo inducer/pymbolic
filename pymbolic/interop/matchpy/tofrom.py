@@ -120,7 +120,6 @@ class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
 
     @override
     def map_comparison(self, expr: p.Comparison) -> m.Comparison:
-        # pylint: disable=too-many-function-args
         return m.Comparison(self.rec(expr.left),
                             m.ComparisonOp(expr.operator),
                             self.rec(expr.right),
@@ -128,7 +127,6 @@ class ToMatchpyExpressionMapper(BasePymMapper[MatchpyExpression, []]):
 
     @override
     def map_if(self, expr: p.If) -> m.If:
-        # pylint: disable=too-many-function-args
         return m.If(self.rec(expr.condition),
                     self.rec(expr.then),
                     self.rec(expr.else_))

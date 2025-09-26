@@ -308,7 +308,7 @@ def csr_matrix_multiply(S, x):  # noqa
     result = numpy.empty_like(x)
 
     for i in range(h):
-        result[i] = sum(S.data[idx]*x[S.indices[idx]]  # pylint:disable=unsupported-assignment-operation
+        result[i] = sum(S.data[idx]*x[S.indices[idx]]
                 for idx in range(S.indptr[i], S.indptr[i+1]))
 
     return result
