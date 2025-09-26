@@ -29,17 +29,6 @@ Python 3 Conda:
     reports:
       junit: test/pytest.xml
 
-Pylint:
-  script:
-  - EXTRA_INSTALL="numpy sympy symengine scipy pexpect"
-  - PY_EXE=python3
-  - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-pylint.sh
-  - ". ./prepare-and-run-pylint.sh pymbolic test/test_*.py"
-  tags:
-  - python3
-  except:
-  - tags
-
 Documentation:
   script:
   - EXTRA_INSTALL="numpy sympy"
