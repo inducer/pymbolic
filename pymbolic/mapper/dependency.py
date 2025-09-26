@@ -146,8 +146,7 @@ class DependencyMapper(
         if self.include_cses:
             return {expr}
         else:
-            # FIXME: These look like mypy bugs, revisit
-            return Collector.map_common_subexpression(self, expr, *args, **kwargs)  # type: ignore[return-value, arg-type]
+            return Collector.map_common_subexpression(self, expr, *args, **kwargs)
 
     @override
     def map_slice(
