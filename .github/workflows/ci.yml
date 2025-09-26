@@ -34,27 +34,6 @@ jobs:
                 pip install ruff
                 ruff check
 
-    pylint:
-        name: Pylint
-        runs-on: ubuntu-latest
-        steps:
-        -   uses: actions/checkout@v5
-        -
-            uses: actions/setup-python@v6
-            with:
-                python-version: '3.x'
-        -   name: "Main Script"
-            run: |
-                EXTRA_INSTALL="numpy sympy scipy pexpect"
-                curl -L -O https://tiker.net/ci-support-v0
-                . ./ci-support-v0
-                build_py_project_in_venv
-
-                # https://github.com/inducer/pymbolic/pull/66#issuecomment-950371315
-                pip install symengine || true
-
-                run_pylint pymbolic test/test_*.py
-
     basedpyright:
         runs-on: ubuntu-latest
 
