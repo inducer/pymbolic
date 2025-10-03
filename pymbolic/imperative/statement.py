@@ -82,7 +82,7 @@ class Statement:
     """
 
     depends_on: Set[str]
-    """A :class:`frozenset` of instruction ids that are reuqired to be
+    """A :class:`frozenset` of instruction ids that are required to be
     executed within this execution context before this instruction can be
     executed."""
 
