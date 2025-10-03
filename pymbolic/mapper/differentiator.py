@@ -32,7 +32,6 @@ from pytools import ndindex
 
 import pymbolic
 import pymbolic.mapper
-import pymbolic.mapper.evaluator
 import pymbolic.primitives as primitives
 
 
