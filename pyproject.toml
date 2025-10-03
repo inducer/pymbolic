@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pymbolic"
-version = "2024.2.2"
+version = "2025.1"
 description = "A package for symbolic computation"
 readme = "README.rst"
 license = "MIT"
