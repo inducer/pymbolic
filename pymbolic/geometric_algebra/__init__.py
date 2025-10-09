@@ -1248,6 +1248,12 @@ class MultiVector(Generic[CoeffT]):
 @overload
 def componentwise(
             f: Callable[[CoeffT], CoeffT],
+            expr: CoeffT
+        ) -> CoeffT: ...
+
+@overload
+def componentwise(
+            f: Callable[[CoeffT], CoeffT],
             expr: MultiVector[CoeffT]
         ) -> MultiVector[CoeffT]: ...
 
@@ -1260,8 +1266,8 @@ def componentwise(
 
 def componentwise(
             f: Callable[[CoeffT], CoeffT],
-            expr: MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]
-        ) -> MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]:
+            expr: CoeffT | MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]
+        ) -> CoeffT | MultiVector[CoeffT] | ObjectArray[ShapeT, CoeffT]:
     """Apply function *f* componentwise to object arrays and
     :class:`MultiVector` instances. *expr* is also allowed to
     be a scalar.
