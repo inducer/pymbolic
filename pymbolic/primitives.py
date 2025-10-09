@@ -1147,13 +1147,11 @@ class Call(AlgebraicLeaf):
     .. autoattribute:: function
     .. autoattribute:: parameters
     """
+
     function: _Expression
     """Evaluates to the function to be called."""
-
     parameters: tuple[_Expression, ...]
-    """
-    A :class:`tuple` of positional parameters.
-    """
+    """A :class:`tuple` of positional parameters."""
 
 
 @expr_dataclass()
@@ -1167,14 +1165,10 @@ class CallWithKwargs(AlgebraicLeaf):
 
     function: _Expression
     """Evaluates to the function to be called."""
-
     parameters: tuple[_Expression, ...]
-    """A :class:`tuple` of positional parameters.
-    """
-
+    """A :class:`tuple` of positional parameters."""
     kw_parameters: Mapping[str, _Expression]
-    """A dictionary mapping names to arguments.
-    """
+    """A dictionary mapping names to arguments."""
 
     def __post_init__(self):
         try:
@@ -1225,10 +1219,6 @@ class Lookup(AlgebraicLeaf):
 class Sum(ExpressionNode):
     """
     .. autoattribute:: children
-
-    .. automethod:: __add__
-    .. automethod:: __radd__
-    .. automethod:: __sub__
     .. automethod:: __bool__
     """
 
@@ -1250,9 +1240,6 @@ class Sum(ExpressionNode):
 class Product(ExpressionNode):
     """
     .. autoattribute:: children
-
-    .. automethod:: __mul__
-    .. automethod:: __rmul__
     .. automethod:: __bool__
     """
 
