@@ -44,19 +44,18 @@ if TYPE_CHECKING:
     from pymbolic.typing import Expression
 
 __doc__ = """
-.. class:: SymEngineToPymbolicMapper
-
-    .. method:: __call__(expr)
-
-.. class:: PymbolicToSymEngineMapper
-
-    .. method:: __call__(expr)
+.. autoclass:: SymEngineToPymbolicMapper
+.. autoclass:: PymbolicToSymEngineMapper
 """
 
 
 # {{{ symengine -> pymbolic
 
 class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
+    """
+    .. automethod:: __call__
+    """
+
     def map_Pow(self, expr: sp.Pow) -> Expression:
         # SymEngine likes to use as e**a to express exp(a); we undo that here.
         base, exp = expr.args
@@ -118,6 +117,10 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 # {{{ pymbolic -> symengine
 
 class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
+    """
+    .. automethod:: __call__
+    """
+
     @property
     @override
     def sym(self) -> Any:

@@ -45,19 +45,20 @@ if TYPE_CHECKING:
     from pymbolic.typing import Expression
 
 __doc__ = """
-.. class:: SympyToPymbolicMapper
+.. autofunction:: make_cse
 
-    .. method:: __call__(expr)
-
-.. class:: PymbolicToSympyMapper
-
-    .. method:: __call__(expr)
+.. autoclass:: SympyToPymbolicMapper
+.. autoclass:: PymbolicToSympyMapper
 """
 
 
 # {{{ sympy -> pymbolic
 
 class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
+    """
+    .. automethod:: __call__
+    """
+
     @override
     def function_name(self, expr: object) -> str:
         return type(expr).__name__
@@ -107,6 +108,10 @@ class SympyToPymbolicMapper(SympyLikeToPymbolicMapper):
 # {{{ pymbolic -> sympy
 
 class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
+    """
+    .. automethod:: __call__
+    """
+
     @property
     @override
     def sym(self) -> Any:
@@ -135,7 +140,13 @@ class CSE(sp.Function):
 
 def make_cse(arg: SympyLikeExpression,
              prefix: str | None = None,
-             scope: str | None = None) -> CSE:
+             scope: str | None = None) -> sp.Function:
+    """Create an expression compatible with
+    :class:`~pymbolic.primitives.CommonSubexpression`.
+
+    This is used by the mappers (e.g. :class:`SympyToPymbolicMapper`) to
+    correctly convert a subexpression to :mod:`pymbolic`'s CSE.
+    """
     result = CSE(arg)
 
     # FIXME: make these parts of the CSE class properly?
