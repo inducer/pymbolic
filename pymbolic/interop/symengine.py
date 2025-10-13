@@ -25,11 +25,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import symengine
+from typing import TYPE_CHECKING, Any
+
+import symengine as sp
+from typing_extensions import override
 
 import pymbolic.primitives as prim
-from pymbolic.interop.common import PymbolicToSympyLikeMapper, SympyLikeToPymbolicMapper
+from pymbolic.interop.common import (
+    PymbolicToSympyLikeMapper,
+    SympyLikeExpression,
+    SympyLikeToPymbolicMapper,
+)
 
+
+if TYPE_CHECKING:
+    import optype
+
+    from pymbolic.typing import Expression
 
 __doc__ = """
 .. class:: SymEngineToPymbolicMapper
@@ -45,37 +57,41 @@ __doc__ = """
 # {{{ symengine -> pymbolic
 
 class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
-
-    def map_Pow(self, expr):
+    def map_Pow(self, expr: sp.Pow) -> Expression:
         # SymEngine likes to use as e**a to express exp(a); we undo that here.
         base, exp = expr.args
-        if base == symengine.E:
+        if base == sp.E:
             return prim.Variable("exp")(self.rec(exp))
         else:
             return prim.Power(self.rec(base), self.rec(exp))
 
-    def map_Constant(self, expr):
+    def map_Constant(self, expr: object) -> Expression:
         return self.rec(expr.n())
 
-    map_Complex = map_Constant
+    def map_Complex(self, expr: object) -> Expression:
+        return self.rec(expr.n())
 
-    def map_ComplexDouble(self, expr):
+    def map_ComplexDouble(self, expr: optype.CanComplex) -> Expression:
         return complex(expr)
 
-    map_RealDouble = SympyLikeToPymbolicMapper.to_float
+    def map_RealDouble(self, expr: optype.CanFloat) -> Expression:
+        return self.to_float(expr)
 
-    def map_Piecewise(self, expr):
+    def map_Piecewise(self, expr: sp.Piecewise) -> Expression:
         # We only handle piecewises with 2 statements!
         if not len(expr.args) == 4:
             raise NotImplementedError
+
         # We only handle if/else cases
         if not (expr.args[3].is_Boolean and bool(expr.args[3]) is True):
             raise NotImplementedError
+
         rec_args = [self.rec(arg) for arg in expr.args[:3]]
         then, cond, else_ = rec_args
         return prim.If(cond, then, else_)
 
-    def function_name(self, expr):
+    @override
+    def function_name(self, expr: object) -> str:
         try:
             # For FunctionSymbol instances
             return expr.get_name()
@@ -83,15 +99,15 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
             # For builtin functions
             return type(expr).__name__
 
-    def not_supported(self, expr):
+    @override
+    def not_supported(self, expr: object) -> Expression:
         from symengine.lib.symengine_wrapper import PyFunction
-        if isinstance(expr, PyFunction) and \
-                self.function_name(expr) == "CSE":
+
+        if isinstance(expr, PyFunction) and self.function_name(expr) == "CSE":
             sympy_expr = expr._sympy_()
             return prim.CommonSubexpression(
                 self.rec(expr.args[0]), sympy_expr.prefix, sympy_expr.scope)
-        elif isinstance(expr, symengine.Function) and \
-                self.function_name(expr) == "CSE":
+        elif isinstance(expr, sp.Function) and self.function_name(expr) == "CSE":
             return prim.CommonSubexpression(
                 self.rec(expr.args[0]), scope=prim.cse_scope.EVALUATION)
         return SympyLikeToPymbolicMapper.not_supported(self, expr)
@@ -102,20 +118,25 @@ class SymEngineToPymbolicMapper(SympyLikeToPymbolicMapper):
 # {{{ pymbolic -> symengine
 
 class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
+    @property
+    @override
+    def sym(self) -> Any:
+        return sp
 
-    sym = symengine
-
-    def raise_conversion_error(self, expr):
+    @override
+    def raise_conversion_error(self, expr: object) -> None:
         raise RuntimeError(f"do not know how to translate '{expr}' to symengine")
 
 
 # }}}
 
 
-CSE = symengine.Function("CSE")
+CSE = sp.Function("CSE")
 
 
-def make_cse(arg, prefix=None, scope=None):
+def make_cse(arg: SympyLikeExpression,
+             prefix: str | None = None,
+             scope: str | None = None) -> sp.Function:
     # SymEngine's classes can't be inherited, but there's a
     # mechanism to create one based on SymPy's ones which stores
     # the SymPy object inside the C++ object.
@@ -124,8 +145,10 @@ def make_cse(arg, prefix=None, scope=None):
     # so use it only if necessary.
     if prefix is None and scope is None:
         return CSE(arg)
+
     from pymbolic.interop.sympy import make_cse as make_cse_sympy
     sympy_result = make_cse_sympy(arg, prefix=prefix, scope=scope)
-    return symengine.sympify(sympy_result)
+
+    return sp.sympify(sympy_result)
 
 # vim: fdm=marker
