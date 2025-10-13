@@ -180,9 +180,9 @@ class Mapper(Generic[ResultT, P]):
 
         This method is intended as the top-level dispatch entry point and may
         be overridden by subclasses to present a different/more convenient
-        interface. :meth:`rec` on the other hand is intended as the recursive
-        dispatch method to be used to recurse within mapper method
-        implementations.
+        interface. :meth:`~pymbolic.mapper.Mapper.rec` on the other hand is
+        intended as the recursive dispatch method to be used to recurse within
+        mapper method implementations.
         """
 
         method_name = getattr(expr, "mapper_method", None)

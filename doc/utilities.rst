@@ -26,6 +26,11 @@ Interoperability with :mod:`sympy`
 
 .. automodule:: pymbolic.interop.sympy
 
+Interoperability with ``symengine``
+-----------------------------------
+
+.. automodule:: pymbolic.interop.symengine
+
 Interoperability with Maxima
 ----------------------------
 
