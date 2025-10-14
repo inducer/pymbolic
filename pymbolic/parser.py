@@ -23,15 +23,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+__doc__ = """
+.. autoclass:: Parser
+"""
+
 from sys import intern
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 from constantdict import constantdict
 
 import pytools.lex
-from pytools import memoize_method
+from pytools import T, memoize_method
 
-from pymbolic.primitives import Slice, is_arithmetic_expression
+import pymbolic.primitives as prim
 
 
 if TYPE_CHECKING:
@@ -105,26 +109,27 @@ _PREC_CALL = 250
 
 
 def _join_to_slice(
-            left: Slice | ArithmeticExpression | None,
-            right: ArithmeticExpression | None):
-    from pymbolic.primitives import Slice
-    if isinstance(right, Slice):
-        return Slice((left, *right.children))
+            left: ArithmeticExpression | None,
+            right: prim.Slice | ArithmeticExpression | None) -> prim.Slice:
+    if isinstance(right, prim.Slice):
+        return prim.Slice((left, *right.children))
     else:
-        return Slice((left, right))
+        return prim.Slice((left, right))
 
 
 class FinalizedContainer:
-    """A base class for containers  that may not have elements appended to it,
-    because they were terminated by a closing delimiter.
+    """A base class for "finalized" containers.
+
+    These containers may not have elements appended to them, because e.g.
+    they were terminated by a closing delimiter.
     """
 
 
-class FinalizedTuple(tuple, FinalizedContainer):
+class FinalizedTuple(tuple[T, ...], FinalizedContainer):
     pass
 
 
-class FinalizedList(list, FinalizedContainer):
+class FinalizedList(list[T], FinalizedContainer):
     @memoize_method
     def __hash__(self) -> int:
         result = hash(type(self).__name__)
@@ -135,6 +140,10 @@ class FinalizedList(list, FinalizedContainer):
 
 
 class Parser:
+    """
+    .. automethod:: __call__
+    """
+
     lex_table: ClassVar[pytools.lex.LexTable] = [
             (_equal, pytools.lex.RE(r"==")),
             (_notequal, pytools.lex.RE(r"!=")),
@@ -209,12 +218,12 @@ class Parser:
             _notequal: "!=",
             }
 
-    def parse_float(self, s: str):
+    def parse_float(self, s: str) -> float:
         return float(s.replace("d", "e").replace("D", "e"))
 
-    def parse_terminal(self, pstate: LexIterator):
-        import pymbolic.primitives as primitives
-
+    def parse_terminal(
+            self, pstate: LexIterator,
+        ) -> bool | int | float | complex | prim.Variable:
         next_tag = pstate.next_tag()
         if next_tag is _int:
             return int(pstate.next_str_and_advance())
@@ -229,18 +238,17 @@ class Parser:
             assert pstate.next_str_and_advance() == "False"
             return False
         elif next_tag is _identifier:
-            return primitives.Variable(pstate.next_str_and_advance())
+            return prim.Variable(pstate.next_str_and_advance())
         elif next_tag is _if:
             from warnings import warn
             warn("Usage of 'if' as an identifier is deprecated due to"
-                    " introduction of python style 'if-else' expressions.",
+                    " introduction of Python style 'if-else' expressions.",
                     DeprecationWarning, stacklevel=2)
-            return primitives.Variable(pstate.next_str_and_advance())
+            return prim.Variable(pstate.next_str_and_advance())
         else:
             pstate.expected("terminal")
 
-    def parse_prefix(self, pstate: LexIterator):
-        import pymbolic.primitives as primitives
+    def parse_prefix(self, pstate: LexIterator) -> Expression:
         pstate.expect_not_end()
 
         if pstate.is_next(_colon):
@@ -252,29 +260,29 @@ class Parser:
                 next_expr = self.parse_arith_expression(expr_pstate, _PREC_SLICE)
             except ParseError:
                 # no expression follows, too bad.
-                left_exp = primitives.Slice((None,))
+                left_exp = prim.Slice((None,))
             else:
+                assert prim.is_arithmetic_expression(next_expr)
                 left_exp = _join_to_slice(None, next_expr)
                 pstate.assign(expr_pstate)
         elif pstate.is_next(_times):
             pstate.advance()
-            left_exp = primitives.Wildcard()
+            left_exp = prim.Wildcard()
         elif pstate.is_next(_plus):
             pstate.advance()
             left_exp = self.parse_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_minus):
             pstate.advance()
-            left_exp = -self.parse_expression(pstate, _PREC_UNARY)
+            # NOTE(pyright): this currently errors because ArithmeticExpression
+            # contains `np.integer[Any]`, which could be `np.unsignedinteger`,
+            # which does not seem to have a `-x` operation defined.
+            left_exp = -self.parse_arith_expression(pstate, _PREC_UNARY)
         elif pstate.is_next(_not):
             pstate.advance()
-            from pymbolic.primitives import LogicalNot
-            left_exp = LogicalNot(
-                    self.parse_expression(pstate, _PREC_UNARY))
+            left_exp = prim.LogicalNot(self.parse_expression(pstate, _PREC_UNARY))
         elif pstate.is_next(_bitwisenot):
             pstate.advance()
-            from pymbolic.primitives import BitwiseNot
-            left_exp = BitwiseNot(
-                    self.parse_expression(pstate, _PREC_UNARY))
+            left_exp = prim.BitwiseNot(self.parse_expression(pstate, _PREC_UNARY))
         elif pstate.is_next(_openpar):
             pstate.advance()
 
@@ -318,7 +326,12 @@ class Parser:
 
         return left_exp
 
-    def parse_expression(self, pstate: LexIterator, min_precedence: int = 0):
+    # FIXME(typing): this should actually return `Expression | FinalizedContainer`,
+    # but that causes a lot of errors in all the parts which expect just an
+    # Expression out of this function..
+    def parse_expression(self,
+                         pstate: LexIterator,
+                         min_precedence: int = 0) -> Expression:
         left_exp = self.parse_prefix(pstate)
 
         did_something = True
@@ -327,8 +340,7 @@ class Parser:
             if pstate.is_at_end():
                 return left_exp
 
-            result = self.parse_postfix(
-                    pstate, min_precedence, cast("Expression", left_exp))
+            result = self.parse_postfix(pstate, min_precedence, left_exp)
             left_exp, did_something = result
 
         if isinstance(left_exp, FinalizedTuple):
@@ -336,17 +348,17 @@ class Parser:
 
         return left_exp
 
-    def parse_arith_expression(self, pstate: LexIterator, min_precedence: int = 0):
+    def parse_arith_expression(self, pstate: LexIterator,
+                               min_precedence: int = 0) -> ArithmeticExpression:
         expr = self.parse_expression(pstate, min_precedence)
-        assert is_arithmetic_expression(expr)
+        assert prim.is_arithmetic_expression(expr)
+
         return expr
 
     def parse_postfix(self,
                 pstate: LexIterator,
                 min_precedence: int,
-                left_exp: Expression):
-        import pymbolic.primitives as primitives
-
+                left_exp: Expression) -> tuple[Expression, bool]:
         did_something = False
 
         next_tag = pstate.next_tag()
@@ -356,21 +368,19 @@ class Parser:
             args, kwargs = self.parse_arglist(pstate)
 
             if kwargs:
-                left_exp = primitives.CallWithKwargs(
-                        left_exp, args, constantdict(kwargs))
+                left_exp = prim.CallWithKwargs(left_exp, args, constantdict(kwargs))
             else:
-                left_exp = primitives.Call(left_exp, args)
+                left_exp = prim.Call(left_exp, args)
 
             did_something = True
         elif next_tag is _openbracket and min_precedence < _PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
-            left_exp = primitives.Subscript(left_exp, self.parse_expression(pstate))
+            left_exp = prim.Subscript(left_exp, self.parse_expression(pstate))
             pstate.expect(_closebracket)
             pstate.advance()
             did_something = True
         elif next_tag is _if and min_precedence < _PREC_IF:
-            from pymbolic.primitives import If
             then_expr = left_exp
             pstate.advance()
             pstate.expect_not_end()
@@ -378,110 +388,102 @@ class Parser:
             pstate.expect(_else)
             pstate.advance()
             else_expr = self.parse_expression(pstate)
-            left_exp = If(condition, then_expr, else_expr)
+            left_exp = prim.If(condition, then_expr, else_expr)
             did_something = True
         elif next_tag is _dot and min_precedence < _PREC_CALL:
             pstate.advance()
             pstate.expect(_identifier)
-            left_exp = primitives.Lookup(left_exp, pstate.next_str())
+            left_exp = prim.Lookup(left_exp, pstate.next_str())
             pstate.advance()
             did_something = True
         elif next_tag is _plus and min_precedence < _PREC_PLUS:
             pstate.advance()
             right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Sum((left_exp, right_exp))
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Sum((left_exp, right_exp))
 
             did_something = True
         elif next_tag is _minus and min_precedence < _PREC_PLUS:
             pstate.advance()
             right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Sum((left_exp, -right_exp))
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Sum((left_exp, -right_exp))
             did_something = True
         elif next_tag is _times and min_precedence < _PREC_TIMES:
             pstate.advance()
             right_exp = self.parse_arith_expression(pstate, _PREC_PLUS)
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Product((left_exp, right_exp))
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Product((left_exp, right_exp))
             did_something = True
         elif next_tag is _floordiv and min_precedence < _PREC_TIMES:
             pstate.advance()
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.FloorDiv(
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.FloorDiv(
                     left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _over and min_precedence < _PREC_TIMES:
             pstate.advance()
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Quotient(
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Quotient(
                     left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _modulo and min_precedence < _PREC_TIMES:
             pstate.advance()
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Remainder(
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Remainder(
                     left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _power and min_precedence < _PREC_POWER:
             pstate.advance()
-            assert is_arithmetic_expression(left_exp)
-            left_exp = primitives.Power(
+            assert prim.is_arithmetic_expression(left_exp)
+
+            left_exp = prim.Power(
                     left_exp, self.parse_arith_expression(pstate, _PREC_TIMES))
             did_something = True
         elif next_tag is _and and min_precedence < _PREC_LOGICAL_AND:
             pstate.advance()
-            from pymbolic.primitives import LogicalAnd
-            left_exp = LogicalAnd((
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_LOGICAL_AND)))
+            left_exp = prim.LogicalAnd((
+                    left_exp, self.parse_expression(pstate, _PREC_LOGICAL_AND)))
             did_something = True
         elif next_tag is _or and min_precedence < _PREC_LOGICAL_OR:
             pstate.advance()
-            from pymbolic.primitives import LogicalOr
-            left_exp = LogicalOr((
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_LOGICAL_OR)))
+            left_exp = prim.LogicalOr((
+                    left_exp, self.parse_expression(pstate, _PREC_LOGICAL_OR)))
             did_something = True
         elif next_tag is _bitwiseor and min_precedence < _PREC_BITWISE_OR:
             pstate.advance()
-            from pymbolic.primitives import BitwiseOr
-            left_exp = BitwiseOr((
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_BITWISE_OR)))
+            left_exp = prim.BitwiseOr((
+                    left_exp, self.parse_expression(pstate, _PREC_BITWISE_OR)))
             did_something = True
         elif next_tag is _bitwisexor and min_precedence < _PREC_BITWISE_XOR:
             pstate.advance()
-            from pymbolic.primitives import BitwiseXor
-            left_exp = BitwiseXor((
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_BITWISE_XOR)))
+            left_exp = prim.BitwiseXor((
+                    left_exp, self.parse_expression(pstate, _PREC_BITWISE_XOR)))
             did_something = True
         elif next_tag is _bitwiseand and min_precedence < _PREC_BITWISE_AND:
             pstate.advance()
-            from pymbolic.primitives import BitwiseAnd
-            left_exp = BitwiseAnd((
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_BITWISE_AND)))
+            left_exp = prim.BitwiseAnd((
+                    left_exp, self.parse_expression(pstate, _PREC_BITWISE_AND)))
             did_something = True
         elif next_tag is _rightshift and min_precedence < _PREC_SHIFT:
             pstate.advance()
-            from pymbolic.primitives import RightShift
-            left_exp = RightShift(
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_SHIFT))
+            left_exp = prim.RightShift(
+                    left_exp, self.parse_expression(pstate, _PREC_SHIFT))
             did_something = True
         elif next_tag is _leftshift and min_precedence < _PREC_SHIFT:
             pstate.advance()
-            from pymbolic.primitives import LeftShift
-            left_exp = LeftShift(
-                    left_exp,
-                    self.parse_expression(pstate, _PREC_SHIFT))
+            left_exp = prim.LeftShift(
+                    left_exp, self.parse_expression(pstate, _PREC_SHIFT))
             did_something = True
         elif next_tag in self._COMP_TABLE and min_precedence < _PREC_COMPARISON:
             pstate.advance()
-            from pymbolic.primitives import Comparison
-            left_exp = Comparison(
+            left_exp = prim.Comparison(
                     left_exp,
                     self._COMP_TABLE[next_tag],
                     self.parse_expression(pstate, _PREC_COMPARISON))
@@ -490,15 +492,15 @@ class Parser:
             pstate.advance()
             expr_pstate = pstate.copy()
 
-            assert not isinstance(left_exp, primitives.Slice)
-            assert is_arithmetic_expression(left_exp)
+            assert not isinstance(left_exp, prim.Slice)
+            assert prim.is_arithmetic_expression(left_exp)
 
             from pytools.lex import ParseError
             try:
                 next_expr = self.parse_arith_expression(expr_pstate, _PREC_SLICE)
             except ParseError:
                 # no expression follows, too bad.
-                left_exp = primitives.Slice((left_exp, None,))
+                left_exp = prim.Slice((left_exp, None,))
             else:
                 left_exp = _join_to_slice(left_exp, next_expr)
                 pstate.assign(expr_pstate)
@@ -510,16 +512,18 @@ class Parser:
 
             pstate.advance()
             if pstate.is_at_end() or pstate.next_tag() is _closepar:
-                if isinstance(left_exp, tuple | list) \
-                        and not isinstance(left_exp, FinalizedContainer):
+                if (
+                        isinstance(left_exp, (tuple, list))
+                        and not isinstance(left_exp, FinalizedContainer)):
                     # left_expr is a container with trailing commas
                     pass
                 else:
                     left_exp = (left_exp,)
             else:
                 new_el = self.parse_expression(pstate, _PREC_COMMA)
-                if isinstance(left_exp, tuple | list) \
-                        and not isinstance(left_exp, FinalizedContainer):
+                if (
+                        isinstance(left_exp, (tuple, list))
+                        and not isinstance(left_exp, FinalizedContainer)):
                     left_exp = (*left_exp, new_el)
                 else:
                     left_exp = (left_exp, new_el)
@@ -528,11 +532,13 @@ class Parser:
 
         return left_exp, did_something
 
-    def parse_arglist(self, pstate: LexIterator):
+    def parse_arglist(
+                self, pstate: LexIterator,
+        ) -> tuple[tuple[Expression, ...], dict[str, Expression]]:
         pstate.expect_not_end()
 
-        args = []
-        kwargs = {}
+        args: list[Expression] = []
+        kwargs: dict[str, Expression] = {}
 
         comma_allowed = False
         while True:
@@ -572,6 +578,11 @@ class Parser:
             comma_allowed = True
 
     def __call__(self, expr_str: str, min_precedence: int = 0) -> Expression:
+        """
+        :arg min_precedence: ??
+        :returns: a :class:`pymbolic.primitives.ExpressionNode` tree corresponding
+            to *expr_str*.
+        """
         lex_result = [(tag, s, idx, match_obj)
                 for (tag, s, idx, match_obj) in pytools.lex.lex(
                     self.lex_table, expr_str,
@@ -582,7 +593,13 @@ class Parser:
         result = self. parse_expression(pstate, min_precedence)
         if not pstate.is_at_end():
             pstate.raise_parse_error("leftover input after completed parse")
+
         return result
 
 
-parse = Parser()
+def parse(expr_str: str) -> Expression:
+    """
+    :returns: a :class:`pymbolic.primitives.ExpressionNode` tree corresponding
+        to *expr_str*.
+    """
+    return Parser()(expr_str)
