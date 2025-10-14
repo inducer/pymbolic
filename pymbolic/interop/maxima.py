@@ -204,7 +204,7 @@ class MaximaParser(ParserBase):
             did_something = True
         elif next_tag is p._times and min_precedence < p._PREC_TIMES:
             pstate.advance()
-            left_exp *= self.parse_expression(pstate, p._PREC_TIMES)  # pyright: ignore[reportOperatorIssue, reportAssignmentType]
+            left_exp *= self.parse_expression(pstate, p._PREC_TIMES)
             did_something = True
         elif next_tag is p._over and min_precedence < p._PREC_TIMES:
             pstate.advance()
@@ -231,9 +231,9 @@ class MaximaParser(ParserBase):
                 new_el = self.parse_expression(pstate, p._PREC_COMMA)
                 if isinstance(left_exp, tuple) \
                         and not isinstance(left_exp, FinalizedTuple):
-                    left_exp = (*left_exp, new_el)  # pyright: ignore[reportAssignmentType]
+                    left_exp = (*left_exp, new_el)
                 else:
-                    left_exp = (left_exp, new_el)  # pyright: ignore[reportAssignmentType]
+                    left_exp = (left_exp, new_el)
 
             did_something = True
 
