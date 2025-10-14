@@ -55,15 +55,16 @@ sphinxconfig_missing_reference_aliases = {
     "ObjectArray1D": "class:pytools.obj_array.ObjectArray",
     # pymbolic typing
     "ArithmeticExpression": "data:pymbolic.typing.ArithmeticExpression",
-    "Expression": "data:pymbolic.typing.Expression",
-    "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
-    "ExpressionNode": "class:pymbolic.primitives.ExpressionNode",
-    "_Expression": "data:pymbolic.typing.Expression",
-    "Lookup": "class:pymbolic.primitives.Lookup",
-    "LogicalAnd": "class:pymbolic.primitives.LogicalAnd",
-    "LogicalOr": "class:pymbolic.primitives.LogicalOr",
-    "LogicalNot": "class:pymbolic.primitives.LogicalNot",
     "Comparison": "class:pymbolic.primitives.Comparison",
+    "Expression": "data:pymbolic.typing.Expression",
+    "ExpressionNode": "class:pymbolic.primitives.ExpressionNode",
+    "LogicalAnd": "class:pymbolic.primitives.LogicalAnd",
+    "LogicalNot": "class:pymbolic.primitives.LogicalNot",
+    "LogicalOr": "class:pymbolic.primitives.LogicalOr",
+    "Lookup": "class:pymbolic.primitives.Lookup",
+    "_Expression": "data:pymbolic.typing.Expression",
+    "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
+    "prim.Variable": "class:pymbolic.primitives.Variable",
 }
 
 

@@ -23,14 +23,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import math
+__doc__ = """
+.. autoclass:: CompileMapper
+    :show-inheritance:
+.. autoclass:: CompiledExpression
+    :members:
+"""
 
-import pymbolic
+import math
+from typing import TYPE_CHECKING, Any
+
+from typing_extensions import override
+
+import pymbolic.primitives as prim
 from pymbolic.mapper.stringifier import PREC_NONE, StringifyMapper
 
 
-class CompileMapper(StringifyMapper):
-    def map_constant(self, expr, enclosing_prec):
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from numpy.typing import NDArray
+
+    from pymbolic.typing import Expression
+
+
+class CompileMapper(StringifyMapper[[]]):
+    @override
+    def map_constant(self, expr: object, enclosing_prec: int) -> str:
         # work around numpy bug #1137 (locale-sensitive repr)
         # https://github.com/numpy/numpy/issues/1735
         try:
@@ -45,10 +64,11 @@ class CompileMapper(StringifyMapper):
 
         return repr(expr)
 
-    def map_numpy_array(self, expr, enclosing_prec):
-        def stringify_leading_dimension(ary):
-            if len(ary.shape) == 1:
-                def rec(expr):
+    @override
+    def map_numpy_array(self, expr: NDArray[Any], enclosing_prec: int) -> str:
+        def stringify_leading_dimension(ary: NDArray[Any], /) -> str:
+            if ary.ndim == 1:
+                def rec(expr: NDArray[Any], /) -> str:
                     return self.rec(expr, PREC_NONE)
             else:
                 rec = stringify_leading_dimension
@@ -57,7 +77,8 @@ class CompileMapper(StringifyMapper):
 
         return "numpy.array({})".format(stringify_leading_dimension(expr))
 
-    def map_foreign(self, expr, enclosing_prec):
+    @override
+    def map_foreign(self, expr: object, enclosing_prec: int) -> str:
         return StringifyMapper.map_foreign(self, expr, enclosing_prec)
 
 
@@ -66,23 +87,33 @@ class CompiledExpression:
     for faster evaluation.
 
     Its instances (unlike plain lambdas) are pickleable.
+
+    .. automethod:: __call__
     """
 
-    def __init__(self, expression, variables=None):
+    _Expression: Expression
+    _Variables: list[prim.Variable]
+    _code: Callable[..., Any]
+
+    def __init__(self,
+                 expression: Expression,
+                 variables: Sequence[str | prim.Variable] | None = None) -> None:
         """
         :arg variables: The first arguments (as strings or
             :class:`pymbolic.primitives.Variable` instances) to be used for the
-            compiled function.  All variables used by the expression and not
+            compiled function. All variables used by the expression and not
             present here are added in lexicographic order.
         """
         if variables is None:
             variables = []
+
         self._compile(expression, variables)
 
-    def _compile(self, expression, variables):
-        import pymbolic.primitives as primi
+    def _compile(self,
+                 expression: Expression,
+                 variables: Sequence[str | prim.Variable]) -> None:
         self._Expression = expression
-        self._Variables = [primi.make_variable(v) for v in variables]
+        self._Variables = [prim.make_variable(v) for v in variables]
         ctx = self.context().copy()
 
         try:
@@ -96,7 +127,7 @@ class CompiledExpression:
         used_variables = DependencyMapper(
                 composite_leaves=False)(self._Expression)
         used_variables -= set(self._Variables)
-        used_variables -= {pymbolic.var(key) for key in list(ctx.keys())}
+        used_variables -= {prim.Variable(key) for key in list(ctx.keys())}
         used_variables = list(used_variables)
         used_variables.sort()
         all_variables = self._Variables + used_variables
@@ -106,16 +137,16 @@ class CompiledExpression:
                 expr_s)
         self._code = eval(func_s, ctx)
 
-    def __getstate__(self):
+    def __getstate__(self) -> tuple[Any, ...]:
         return self._Expression, self._Variables
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: tuple[Any, ...]) -> None:
         self._compile(*state)
 
-    def __call__(self, *args):
+    def __call__(self, *args: Any) -> Any:
         return self._code(*args)
 
-    def context(self):
+    def context(self) -> dict[str, Any]:
         return {"math": math}
 
 
