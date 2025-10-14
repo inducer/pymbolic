@@ -6,17 +6,12 @@ Parser
 
 .. currentmodule:: pymbolic
 
-.. function:: parse(expr_str)
-
-    Return a :class:`pymbolic.primitives.ExpressionNode` tree corresponding
-    to *expr_str*.
+.. autofunction:: parse
 
 The parser is also relatively easy to extend. See the source code of the following
 class.
 
 .. automodule:: pymbolic.parser
-
-.. autoclass:: Parser
 
 Compiler
 --------
