@@ -23,10 +23,6 @@ Compiler
 
 .. automodule:: pymbolic.compiler
 
-.. autoclass:: CompiledExpression
-
-    .. method:: __call__(*args)
-
 Interoperability with other symbolic systems
 ============================================
 
