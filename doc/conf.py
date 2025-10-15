@@ -48,6 +48,8 @@ sphinxconfig_missing_reference_aliases = {
     "np.generic": "class:numpy.generic",
     "np.dtype": "class:numpy.dtype",
     "np.ndarray": "class:numpy.ndarray",
+    # matchpy typing
+    "ReplacementRule": "class:matchpy.functions.ReplacementRule",
     # pytools typing
     "T": "class:pytools.T",
     "ShapeT": "class:pytools.obj_array.ShapeT",
@@ -58,10 +60,12 @@ sphinxconfig_missing_reference_aliases = {
     "Comparison": "class:pymbolic.primitives.Comparison",
     "Expression": "data:pymbolic.typing.Expression",
     "ExpressionNode": "class:pymbolic.primitives.ExpressionNode",
+    "FromMatchpyT": "obj:pymbolic.interop.matchpy.FromMatchpyT",
     "LogicalAnd": "class:pymbolic.primitives.LogicalAnd",
     "LogicalNot": "class:pymbolic.primitives.LogicalNot",
     "LogicalOr": "class:pymbolic.primitives.LogicalOr",
     "Lookup": "class:pymbolic.primitives.Lookup",
+    "ToMatchpyT": "obj:pymbolic.interop.matchpy.ToMatchpyT",
     "_Expression": "data:pymbolic.typing.Expression",
     "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
     "prim.Variable": "class:pymbolic.primitives.Variable",
