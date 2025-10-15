@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-import dataclasses
 
-from typing_extensions import dataclass_transform
-
-
-"""
+__doc__ = """
 Interoperability with :mod:`matchpy.functions` for pattern-matching and
 term-rewriting.
 
@@ -14,9 +10,11 @@ term-rewriting.
 .. autofunction:: replace_all
 .. autofunction:: make_replacement_rule
 
-
 Internal API
 ^^^^^^^^^^^^
+
+.. autoclass:: ToMatchpyT
+.. autoclass:: FromMatchpyT
 
 .. autoclass:: PymbolicOp
 .. autoclass:: Wildcard
@@ -44,33 +42,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-
 import abc
-from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, fields
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias, TypeVar
 
 from matchpy import (
     Arity,
-    Atom as BaseAtom,
-    Expression,
+    Atom,
+    Expression as MatchpyExpression,
     Operation,
     ReplacementRule,
     Wildcard as BaseWildcard,
 )
+from typing_extensions import dataclass_transform
 
-from pymbolic.typing import Expression as PbExpression, Scalar as PbScalar
+from pymbolic.typing import Expression as _Expression, Scalar as _Scalar
 
 
 if TYPE_CHECKING:
-    import pymbolic.primitives as p
+    from collections.abc import Callable, Iterable, Iterator, Mapping
+
+    from pymbolic.primitives import ExpressionNode
 
 
-ExprT: TypeAlias = Expression
 ConstantT = TypeVar("ConstantT")
-ToMatchpyT = Callable[[PbExpression], ExprT]
-FromMatchpyT = Callable[[ExprT], PbExpression]
+ToMatchpyT: TypeAlias = "Callable[[_Expression], MatchpyExpression]"
+FromMatchpyT: TypeAlias = "Callable[[MatchpyExpression], _Expression]"
 
 
 _NOT_OPERAND_METADATA = {"not_an_operand": True}
@@ -81,10 +79,7 @@ _T = TypeVar("_T")
 non_operand_field = partial(field, metadata=_NOT_OPERAND_METADATA)
 
 
-@dataclass_transform(frozen_default=True, field_specifiers=(
-                     dataclasses.field,
-                     # non_operand_field,
-                     ))
+@dataclass_transform(frozen_default=True, field_specifiers=(field,))
 def op_dataclass(
         ) -> Callable[[type[_T]], type[_T]]:
 
@@ -97,7 +92,7 @@ def op_dataclass(
 # {{{ Matchable expression types
 
 @op_dataclass()
-class _Constant(BaseAtom, Generic[ConstantT]):
+class _Constant(Atom, Generic[ConstantT]):
     value: ConstantT
     variable_name: str | None = None
 
@@ -105,9 +100,9 @@ class _Constant(BaseAtom, Generic[ConstantT]):
     def head(self):
         return self
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         # Used by matchpy internally to order subexpressions
-        if not isinstance(other, Expression):
+        if not isinstance(other, MatchpyExpression):
             return NotImplemented
         if type(other) is type(self):
             if self.value == other.value:
@@ -117,7 +112,7 @@ class _Constant(BaseAtom, Generic[ConstantT]):
 
 
 @op_dataclass()
-class Scalar(_Constant[PbScalar]):
+class Scalar(_Constant[_Scalar]):
     _mapper_method: str = "map_scalar"
 
 
@@ -133,7 +128,7 @@ class ComparisonOp(_Constant[str]):
 
 @op_dataclass()
 class TupleOp(Operation):
-    _operands: tuple[ExprT, ...]
+    _operands: tuple[MatchpyExpression, ...]
     variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.variadic
@@ -158,7 +153,7 @@ class PymbolicOp(abc.ABC, Operation):  # pyright: ignore[reportUnsafeMultipleInh
         pass
 
     @property
-    def operands(self) -> tuple[Expression, ...]:
+    def operands(self) -> tuple[MatchpyExpression, ...]:
         return tuple(getattr(self, field.name)
                      for field in fields(self)
                      if not field.metadata.get("not_an_operand", False))
@@ -185,7 +180,7 @@ class Variable(PymbolicOp):
 
 @op_dataclass()
 class Call(PymbolicOp):
-    function: ExprT
+    function: MatchpyExpression
     args: TupleOp
     variable_name: str | None = non_operand_field(default=None)
 
@@ -195,7 +190,7 @@ class Call(PymbolicOp):
 
 @op_dataclass()
 class Subscript(PymbolicOp):
-    aggregate: ExprT
+    aggregate: MatchpyExpression
     indices: TupleOp
     variable_name: str | None = non_operand_field(default=None)
 
@@ -207,8 +202,8 @@ class Subscript(PymbolicOp):
 
 @op_dataclass()
 class _BinaryOp(PymbolicOp):
-    x1: ExprT
-    x2: ExprT
+    x1: MatchpyExpression
+    x2: MatchpyExpression
 
     arity: ClassVar[Arity] = Arity.binary
     variable_name: str | None = non_operand_field(default=None)
@@ -253,19 +248,19 @@ variadic_op_dataclass = dataclass(init=False, frozen=True, repr=True)
 
 @variadic_op_dataclass
 class _VariadicCommAssocOp(PymbolicOp):
-    children: tuple[ExprT, ...]
+    children: tuple[MatchpyExpression, ...]
     variable_name: str | None = non_operand_field(default=None)
 
     commutative: ClassVar[bool] = True
     associative: ClassVar[bool] = True
     arity: ClassVar[Arity] = Arity.variadic
 
-    def __init__(self, *children: ExprT, variable_name=None):
+    def __init__(self, *children: MatchpyExpression, variable_name=None):
         object.__setattr__(self, "children", children)
         object.__setattr__(self, "variable_name", variable_name)
 
     @property
-    def operands(self) -> tuple[ExprT, ...]:
+    def operands(self) -> tuple[MatchpyExpression, ...]:
         return self.children
 
 
@@ -310,7 +305,7 @@ class BitwiseXor(_VariadicCommAssocOp):
 
 @op_dataclass()
 class _UnaryOp(PymbolicOp):
-    x: ExprT
+    x: MatchpyExpression
     arity: ClassVar[Arity] = Arity.unary
     variable_name: str | None = non_operand_field(default=None)
 
@@ -329,9 +324,9 @@ class BitwiseNot(_UnaryOp):
 
 @op_dataclass()
 class Comparison(PymbolicOp):
-    left: ExprT
+    left: MatchpyExpression
     operator: ComparisonOp
-    right: ExprT
+    right: MatchpyExpression
     variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.ternary
@@ -340,9 +335,9 @@ class Comparison(PymbolicOp):
 
 @op_dataclass()
 class If(PymbolicOp):
-    condition: ExprT
-    then: ExprT
-    else_: ExprT
+    condition: MatchpyExpression
+    then: MatchpyExpression
+    else_: MatchpyExpression
     variable_name: str | None = non_operand_field(default=None)
 
     arity: ClassVar[Arity] = Arity.ternary
@@ -382,11 +377,11 @@ def _get_operand_at_path(expr: PymbolicOp, path: tuple[int, ...]) -> PymbolicOp:
     return result
 
 
-def match(subject: p.ExpressionNode,
-          pattern: p.ExpressionNode,
+def match(subject: ExpressionNode,
+          pattern: ExpressionNode,
           to_matchpy_expr: ToMatchpyT | None = None,
           from_matchpy_expr: FromMatchpyT | None = None
-          ) -> Iterator[Mapping[str, PbExpression]]:
+          ) -> Iterator[Mapping[str, _Expression]]:
     from matchpy import Pattern, match
 
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
@@ -405,11 +400,11 @@ def match(subject: p.ExpressionNode,
                for name, expr in subst.items()}
 
 
-def match_anywhere(subject: p.ExpressionNode,
-                   pattern: p.ExpressionNode,
+def match_anywhere(subject: ExpressionNode,
+                   pattern: ExpressionNode,
                    to_matchpy_expr: ToMatchpyT | None = None,
                    from_matchpy_expr: FromMatchpyT | None = None
-                   ) -> Iterator[tuple[Mapping[str, PbExpression], PbExpression]]:
+                   ) -> Iterator[tuple[Mapping[str, _Expression], _Expression]]:
     from matchpy import Pattern, match_anywhere
 
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
@@ -429,8 +424,8 @@ def match_anywhere(subject: p.ExpressionNode,
                from_matchpy_expr(_get_operand_at_path(m_subject, path)))
 
 
-def make_replacement_rule(pattern: PbExpression,
-                          replacement: Callable[..., PbExpression],
+def make_replacement_rule(pattern: _Expression,
+                          replacement: Callable[..., _Expression],
                           to_matchpy_expr: ToMatchpyT | None = None,
                           from_matchpy_expr: FromMatchpyT | None = None
                           ) -> ReplacementRule:
@@ -457,11 +452,11 @@ def make_replacement_rule(pattern: PbExpression,
                                                         from_matchpy_expr))
 
 
-def replace_all(expression: PbExpression,
+def replace_all(expression: _Expression,
                 rules: Iterable[ReplacementRule],
                 to_matchpy_expr: ToMatchpyT | None = None,
                 from_matchpy_expr: FromMatchpyT | None = None
-                ) -> PbExpression:
+                ) -> _Expression:
     import collections.abc as abc
 
     from matchpy import replace_all
