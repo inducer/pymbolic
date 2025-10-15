@@ -42,7 +42,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import abc
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias, TypeVar
@@ -52,10 +52,14 @@ from matchpy import (
     Atom,
     Expression as MatchpyExpression,
     Operation,
+    Pattern,
     ReplacementRule,
     Wildcard as BaseWildcard,
+    match as _match,
+    match_anywhere as _match_anywhere,
+    replace_all as _replace_all,
 )
-from typing_extensions import dataclass_transform
+from typing_extensions import dataclass_transform, override
 
 from pymbolic.typing import Expression as _Expression, Scalar as _Scalar
 
@@ -137,36 +141,43 @@ class TupleOp(Operation):
     unpacked_args_to_init: ClassVar[bool] = True
 
     @property
-    def operands(self):
+    @override
+    def operands(self) -> tuple[MatchpyExpression, ...]:
         return self._operands
 
 
 @op_dataclass()
-class PymbolicOp(abc.ABC, Operation):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class PymbolicOp(ABC, Operation):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """
     A base class for all pymbolic-like operations.
     """
     unpacked_args_to_init: ClassVar[bool] = True
 
-    @abc.abstractproperty
-    def variable_name(self):
+    @property
+    @abstractmethod
+    def variable_name(self) -> str:  # pyright: ignore[reportImplicitOverride]
         pass
 
     @property
+    @override
     def operands(self) -> tuple[MatchpyExpression, ...]:
         return tuple(getattr(self, field.name)
                      for field in fields(self)
                      if not field.metadata.get("not_an_operand", False))
 
-    def __lt__(self, other):
+    @override
+    def __lt__(self, other: object) -> bool:
         if type(other) is type(self):
             if self.operands == other.operands:
                 return (self.variable_name or "") < (other.variable_name or "")
+
             return str(self.operands) < str(other.operands)
+
         return type(self).__name__ < type(other).__name__
 
     @property
-    def name(self) -> str:
+    @override
+    def name(self) -> str:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self.__class__.__name__
 
 
@@ -255,11 +266,14 @@ class _VariadicCommAssocOp(PymbolicOp):
     associative: ClassVar[bool] = True
     arity: ClassVar[Arity] = Arity.variadic
 
-    def __init__(self, *children: MatchpyExpression, variable_name=None):
+    def __init__(self,  # pyright: ignore[reportMissingSuperCall]
+                 *children: MatchpyExpression,
+                 variable_name: str | None = None) -> None:
         object.__setattr__(self, "children", children)
         object.__setattr__(self, "variable_name", variable_name)
 
     @property
+    @override
     def operands(self) -> tuple[MatchpyExpression, ...]:
         return self.children
 
@@ -349,16 +363,16 @@ class Wildcard(BaseWildcard):
     # {{{ FIXME: This should go into matchpy itself.
 
     @classmethod
-    def dot(cls, name=None) -> Wildcard:
+    def dot(cls, name: str | None = None) -> Wildcard:
         return cls(min_count=1, fixed_size=True, variable_name=name)
 
     @classmethod
-    def star(cls, name=None) -> Wildcard:
+    def star(cls, name: str | None = None) -> Wildcard:
         # FIXME: This should go into matchpy itself.
         return cls(min_count=0, fixed_size=False, variable_name=name)
 
     @classmethod
-    def plus(cls, name=None) -> Wildcard:
+    def plus(cls, name: str | None = None) -> Wildcard:
         # FIXME: This should go into matchpy itself.
         return cls(min_count=1, fixed_size=False, variable_name=name)
 
@@ -382,8 +396,6 @@ def match(subject: ExpressionNode,
           to_matchpy_expr: ToMatchpyT | None = None,
           from_matchpy_expr: FromMatchpyT | None = None
           ) -> Iterator[Mapping[str, _Expression]]:
-    from matchpy import Pattern, match
-
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
@@ -393,7 +405,7 @@ def match(subject: ExpressionNode,
 
     m_subject = to_matchpy_expr(subject)
     m_pattern = Pattern(to_matchpy_expr(pattern))
-    matches = match(m_subject, m_pattern)
+    matches = _match(m_subject, m_pattern)
 
     for subst in matches:
         yield {name: from_matchpy_expr(expr)
@@ -405,8 +417,6 @@ def match_anywhere(subject: ExpressionNode,
                    to_matchpy_expr: ToMatchpyT | None = None,
                    from_matchpy_expr: FromMatchpyT | None = None
                    ) -> Iterator[tuple[Mapping[str, _Expression], _Expression]]:
-    from matchpy import Pattern, match_anywhere
-
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
@@ -416,7 +426,7 @@ def match_anywhere(subject: ExpressionNode,
 
     m_subject = to_matchpy_expr(subject)
     m_pattern = Pattern(to_matchpy_expr(pattern))
-    matches = match_anywhere(m_subject, m_pattern)
+    matches = _match_anywhere(m_subject, m_pattern)
 
     for subst, path in matches:
         yield ({name: from_matchpy_expr(expr)
@@ -433,8 +443,6 @@ def make_replacement_rule(pattern: _Expression,
     Returns a :class:`matchpy.functions.ReplacementRule` from the objects
     declared via :mod:`pymbolic.primitives` instances.
     """
-    from matchpy import Pattern
-
     from .tofrom import (
         FromMatchpyExpressionMapper,
         ToFromReplacement,
@@ -457,10 +465,6 @@ def replace_all(expression: _Expression,
                 to_matchpy_expr: ToMatchpyT | None = None,
                 from_matchpy_expr: FromMatchpyT | None = None
                 ) -> _Expression:
-    import collections.abc as abc
-
-    from matchpy import replace_all
-
     from .tofrom import FromMatchpyExpressionMapper, ToMatchpyExpressionMapper
 
     if to_matchpy_expr is None:
@@ -469,8 +473,10 @@ def replace_all(expression: _Expression,
         from_matchpy_expr = FromMatchpyExpressionMapper()
 
     m_expr = to_matchpy_expr(expression)
-    result = replace_all(m_expr, rules)
-    if isinstance(result, abc.Sequence):
+    result = _replace_all(m_expr, rules)
+
+    from collections.abc import Sequence
+    if isinstance(result, Sequence):
         return tuple(from_matchpy_expr(e) for e in result)
     else:
         return from_matchpy_expr(result)
