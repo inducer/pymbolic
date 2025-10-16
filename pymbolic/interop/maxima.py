@@ -26,7 +26,6 @@ THE SOFTWARE.
 """
 
 __doc__ = """
-
 .. autoclass:: MaximaStringifyMapper
 .. autoclass:: MaximaParser
 .. autoclass:: MaximaKernel
@@ -38,6 +37,7 @@ __doc__ = """
 
 # Inspired by similar code in Sage at:
 # https://github.com/sagemath/sage/blob/master/src/sage/interfaces/maxima.py
+
 import re
 from sys import intern
 from typing import TYPE_CHECKING, ClassVar
@@ -45,16 +45,21 @@ from typing import TYPE_CHECKING, ClassVar
 import numpy as np
 from typing_extensions import override
 
-import pytools
+import pytools.lex
+from pytools import memoize
 
+import pymbolic.primitives as prim
 from pymbolic.mapper.stringifier import StringifyMapper
-from pymbolic.parser import FinalizedTuple, Parser as ParserBase
+from pymbolic.parser import FinalizedTuple, Parser
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import pexpect
+
     from pytools.lex import LexIterator, LexTable
 
-    from pymbolic.primitives import Power
     from pymbolic.typing import Expression
 
 
@@ -76,8 +81,9 @@ class MaximaError(RuntimeError):
 
 class MaximaStringifyMapper(StringifyMapper[[]]):
     @override
-    def map_power(self, expr: Power, enclosing_prec):
+    def map_power(self, expr: prim.Power, enclosing_prec: int) -> str:
         from pymbolic.mapper.stringifier import PREC_POWER
+
         return self.parenthesize_if_needed(
                 self.format("%s^%s",
                     self.rec(expr.base, PREC_POWER),
@@ -85,16 +91,18 @@ class MaximaStringifyMapper(StringifyMapper[[]]):
                 enclosing_prec, PREC_POWER)
 
     @override
-    def map_constant(self, expr: object, enclosing_prec):
+    def map_constant(self, expr: object, enclosing_prec: int) -> str:
         from pymbolic.mapper.stringifier import PREC_SUM
+
         if isinstance(expr, complex):
             result = f"{expr.real!r} + {expr.imag!r}*%i"
         else:
             result = repr(expr)
 
-        if not (result.startswith("(") and result.endswith(")")) \
-                and ("-" in result or "+" in result) \
-                and (enclosing_prec > PREC_SUM):
+        if (
+                not (result.startswith("(") and result.endswith(")"))
+                and ("-" in result or "+" in result)
+                and (enclosing_prec > PREC_SUM)):
             return self.parenthesize(result)
         else:
             return result
@@ -105,19 +113,20 @@ class MaximaStringifyMapper(StringifyMapper[[]]):
 
 # {{{ parser
 
-class MaximaParser(ParserBase):
-    power_sym = intern("power")
-    imag_unit = intern("imag_unit")
-    euler_number = intern("euler_number")
+class MaximaParser(Parser):
+    power_sym: ClassVar[str] = intern("power")
+    imag_unit: ClassVar[str] = intern("imag_unit")
+    euler_number: ClassVar[str] = intern("euler_number")
 
     lex_table: ClassVar[LexTable] = [
             (power_sym, pytools.lex.RE(r"\^")),
             (imag_unit, pytools.lex.RE(r"%i")),
             (euler_number, pytools.lex.RE(r"%e")),
-            *ParserBase.lex_table
+            *Parser.lex_table
             ]
 
-    def parse_prefix(self, pstate: LexIterator):
+    @override
+    def parse_prefix(self, pstate: LexIterator) -> Expression:
         pstate.expect_not_end()
 
         from pymbolic.parser import _closebracket, _openbracket
@@ -133,9 +142,10 @@ class MaximaParser(ParserBase):
 
         return left_exp
 
-    def parse_terminal(self, pstate: LexIterator):
-        import pymbolic.primitives as primitives
-
+    @override
+    def parse_terminal(
+                self, pstate: LexIterator
+        ) -> bool | int | float | complex | prim.Variable:
         next_tag = pstate.next_tag()
         import pymbolic.parser as p
         if next_tag is p._int:
@@ -149,88 +159,96 @@ class MaximaParser(ParserBase):
             pstate.advance()
             return np.e
         elif next_tag is p._identifier:
-            return primitives.Variable(pstate.next_str_and_advance())
+            return prim.Variable(pstate.next_str_and_advance())
         else:
             pstate.expected("terminal")
 
-    def parse_postfix(self, pstate: LexIterator, min_precedence, left_exp: Expression):
-        import pymbolic.parser as p
-        import pymbolic.primitives as primitives
+    @override
+    def parse_postfix(self,
+                      pstate: LexIterator,
+                      min_precedence: int,
+                      left_exp: Expression) -> tuple[Expression, bool]:
+        from pymbolic import parser
 
         did_something = False
-
         next_tag = pstate.next_tag()
 
-        if next_tag is p._openpar and min_precedence < p._PREC_CALL:
+        if next_tag is parser._openpar and min_precedence < parser._PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
-            if next_tag is p._closepar:
+            if next_tag is parser._closepar:
                 pstate.advance()
-                left_exp = primitives.Call(left_exp, ())
+                left_exp = prim.Call(left_exp, ())
             else:
                 args = self.parse_expression(pstate)
                 if not isinstance(args, tuple):
                     args = (args,)
 
-                pstate.expect(p._closepar)
+                pstate.expect(parser._closepar)
                 pstate.advance()
 
-                if left_exp == primitives.Variable("matrix"):
+                if left_exp == prim.Variable("matrix"):
                     left_exp = np.array([list(row) for row in args])  # pyright: ignore[reportAssignmentType]
                 else:
-                    left_exp = primitives.Call(left_exp, args)
+                    left_exp = prim.Call(left_exp, args)
 
             did_something = True
-        elif next_tag is p._openbracket and min_precedence < p._PREC_CALL:
+        elif next_tag is parser._openbracket and min_precedence < parser._PREC_CALL:
             pstate.advance()
             pstate.expect_not_end()
-            left_exp = primitives.Subscript(left_exp, self.parse_expression(pstate))
-            pstate.expect(p._closebracket)
+            left_exp = prim.Subscript(left_exp, self.parse_expression(pstate))
+            pstate.expect(parser._closebracket)
             pstate.advance()
             did_something = True
-        elif next_tag is p._dot and min_precedence < p._PREC_CALL:
+        elif next_tag is parser._dot and min_precedence < parser._PREC_CALL:
             pstate.advance()
-            pstate.expect(p._identifier)
-            left_exp = primitives.Lookup(left_exp, pstate.next_str())
+            pstate.expect(parser._identifier)
+            left_exp = prim.Lookup(left_exp, pstate.next_str())
             pstate.advance()
             did_something = True
-        elif next_tag is p._plus and min_precedence < p._PREC_PLUS:
+        elif next_tag is parser._plus and min_precedence < parser._PREC_PLUS:
             pstate.advance()
-            left_exp += self.parse_expression(pstate, p._PREC_PLUS)  # pyright: ignore[reportOperatorIssue]
+            assert prim.is_arithmetic_expression(left_exp)
+            left_exp += self.parse_arith_expression(pstate, parser._PREC_PLUS)
             did_something = True
-        elif next_tag is p._minus and min_precedence < p._PREC_PLUS:
+        elif next_tag is parser._minus and min_precedence < parser._PREC_PLUS:
             pstate.advance()
-            left_exp -= self.parse_expression(pstate, p._PREC_PLUS)  # pyright: ignore[reportOperatorIssue]
+            assert prim.is_arithmetic_expression(left_exp)
+            left_exp -= self.parse_arith_expression(pstate, parser._PREC_PLUS)
             did_something = True
-        elif next_tag is p._times and min_precedence < p._PREC_TIMES:
+        elif next_tag is parser._times and min_precedence < parser._PREC_TIMES:
             pstate.advance()
-            left_exp *= self.parse_expression(pstate, p._PREC_TIMES)
+            assert prim.is_arithmetic_expression(left_exp)
+            left_exp *= self.parse_arith_expression(pstate, parser._PREC_TIMES)
             did_something = True
-        elif next_tag is p._over and min_precedence < p._PREC_TIMES:
+        elif next_tag is parser._over and min_precedence < parser._PREC_TIMES:
             pstate.advance()
-            from pymbolic.primitives import Quotient
-            left_exp = Quotient(
-                    left_exp, self.parse_expression(pstate, p._PREC_TIMES))  # pyright: ignore[reportArgumentType]
+            assert prim.is_arithmetic_expression(left_exp)
+            left_exp = prim.Quotient(
+                    left_exp,
+                    self.parse_arith_expression(pstate, parser._PREC_TIMES))
             did_something = True
-        elif next_tag is self.power_sym and min_precedence < p._PREC_POWER:
+        elif next_tag is self.power_sym and min_precedence < parser._PREC_POWER:
             pstate.advance()
-            exponent = self.parse_expression(pstate, p._PREC_POWER)
+            assert prim.is_arithmetic_expression(left_exp)
+            exponent = self.parse_expression(pstate, parser._PREC_POWER)
             if left_exp == np.e:
                 from pymbolic.primitives import Call, Variable
                 left_exp = Call(Variable("exp"), (exponent,))
             else:
                 left_exp **= exponent  # pyright: ignore[reportOperatorIssue]
             did_something = True
-        elif next_tag is p._comma and min_precedence < p._PREC_COMMA:
+        elif next_tag is parser._comma and min_precedence < parser._PREC_COMMA:
             # The precedence makes the comma left-associative.
 
             pstate.advance()
-            if pstate.is_at_end() or pstate.next_tag() is p._closepar:
+            if pstate.is_at_end() or pstate.next_tag() is parser._closepar:
                 left_exp = (left_exp,)
             else:
-                new_el = self.parse_expression(pstate, p._PREC_COMMA)
-                if isinstance(left_exp, tuple) \
-                        and not isinstance(left_exp, FinalizedTuple):
+                new_el = self.parse_expression(pstate, parser._PREC_COMMA)
+                if (
+                        isinstance(left_exp, tuple)
+                        and not isinstance(left_exp, FinalizedTuple)):
                     left_exp = (*left_exp, new_el)
                 else:
                     left_exp = (left_exp, new_el)
@@ -244,20 +262,22 @@ class MaximaParser(ParserBase):
 
 # {{{ pexpect-based driver
 
-_DEBUG = False
+_DEBUG: bool | int = False
 
 
-def set_debug(level):
+def set_debug(level: int) -> None:
     global _DEBUG
-    _DEBUG = level
+    _DEBUG = level  # pyright: ignore[reportConstantRedefinition]
 
 
-def _strify_assignments_and_expr(assignments, expr):
+def _strify_assignments_and_expr(
+            assignments: Sequence[str | tuple[str, Expression] | Expression],
+            expr: str | Expression) -> tuple[tuple[str, ...], str]:
     strify = MaximaStringifyMapper()
 
     expr_str = expr if isinstance(expr, str) else strify(expr)
 
-    def make_setup(assignment):
+    def make_setup(assignment: str | tuple[str, Expression] | Expression) -> str:
         if isinstance(assignment, str):
             return assignment
         if isinstance(assignment, tuple):
@@ -279,7 +299,13 @@ class MaximaKernel:
     .. automethod:: eval_expr
     """
 
-    def __init__(self, executable="maxima", timeout=30):
+    executable: str
+    timeout: int
+
+    child: pexpect.spawn[bytes]
+    current_prompt: int
+
+    def __init__(self, executable: str = "maxima", timeout: int = 30) -> None:
         self.executable = executable
         self.timeout = timeout
 
@@ -335,33 +361,44 @@ class MaximaKernel:
         self.exec_str("keepfloat:true")
         self.exec_str("linel:16384")
 
-    def _expect_prompt(self, prompt_re, enforce_prompt_numbering=True):
+    def _expect_prompt(self, prompt_re: re.Pattern[bytes],
+                       enforce_prompt_numbering: bool = True) -> None:
         if prompt_re is IN_PROMPT_RE:
             self.current_prompt += 1
 
         which = self.child.expect([prompt_re, ERROR_PROMPT_RE, ASK_RE])
         if which == 0:
+            match = self.child.match
+            assert isinstance(match, re.Match)
             if enforce_prompt_numbering:
-                assert int(self.child.match.group(1)) == self.current_prompt, (
-                        "found prompt: {}, expected: {}".format(
-                            self.child.match.group(1).decode(),
-                            self.current_prompt))
+                assert int(match.group(1)) == self.current_prompt, (
+                    f"found prompt: {match.group(1).decode()!r}, "
+                    f"expected: {self.current_prompt}")
             else:
-                self.current_prompt = int(self.child.match.group(1).decode())
+                self.current_prompt = int(match.group(1))
 
             return
 
-        if which == 1:
-            txt = self.child.before+self.child.after+self.child.readline()
-            txt = txt.decode()
+        before = self.child.before
+        after = self.child.after
+        line = self.child.readline()
+        is_valid = before is not None and isinstance(after, bytes)
+
+        if is_valid and which == 1:
+            assert before is not None
+            assert isinstance(after, bytes)
+            txt = (before + after + line).decode()
             self.restart()
+
             raise MaximaError(
                     "maxima encountered an error and had to be restarted:"
                     "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
-        elif which == 2:
-            txt = self.child.before+self.child.after+self.child.readline()
-            txt = txt.decode()
+        elif is_valid and which == 2:
+            assert before is not None
+            assert isinstance(after, bytes)
+            txt = (before + after + line).decode()
             self.restart()
+
             raise MaximaError(
                     "maxima asked a question and had to be restarted:"
                     "\n{}\n{}\n{}".format(75*"-", txt.rstrip("\n"), 75*"-"))
@@ -373,7 +410,7 @@ class MaximaKernel:
 
     # {{{ execution control
 
-    def restart(self):
+    def restart(self) -> None:
         # https://github.com/pexpect/pexpect/issues/462
         # caused issues like
         # https://gitlab.tiker.net/inducer/pymbolic/-/jobs/50932
@@ -383,7 +420,7 @@ class MaximaKernel:
         self.child.close(force=True)
         self._initialize()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self._sendline("quit();")
         # Exit shell
         self._sendline("exit")
@@ -395,49 +432,51 @@ class MaximaKernel:
 
     # {{{ string interface
 
-    def _check_debug(self):
+    def _check_debug(self) -> None:
         if _DEBUG & 4:
             import sys
             self.child.logfile = sys.stdout
 
-    def _sendline(self, line):
+    def _sendline(self, line: str) -> None:
         self._check_debug()
         self.child.sendline(line)
 
-    def exec_str(self, s, enforce_prompt_numbering=True):
-        cmd = s+";"
-        if _DEBUG & 1:
-            print("[MAXIMA INPUT]", cmd)
-
-        self._sendline(s+";")
-        self._expect_prompt(
-                IN_PROMPT_RE,
-                enforce_prompt_numbering=enforce_prompt_numbering)
-
-    def eval_str(self, s, enforce_prompt_numbering=True):
-        self._check_debug()
-
-        cmd = s+";"
+    def exec_str(self, s: str, enforce_prompt_numbering: bool = True) -> None:
+        cmd = f"{s};"
         if _DEBUG & 1:
             print("[MAXIMA INPUT]", cmd)
 
         self._sendline(cmd)
+        self._expect_prompt(
+                IN_PROMPT_RE,
+                enforce_prompt_numbering=enforce_prompt_numbering)
 
+    def eval_str(self, s: str, enforce_prompt_numbering: bool = True) -> str:
+        self._check_debug()
+
+        cmd = f"{s};"
+        if _DEBUG & 1:
+            print("[MAXIMA INPUT]", cmd)
+
+        self._sendline(cmd)
         self._expect_prompt(OUT_PROMPT_RE,
                 enforce_prompt_numbering=enforce_prompt_numbering)
         self._expect_prompt(IN_PROMPT_RE)
 
-        result, _ = MULTI_WHITESPACE.subn(b" ", self.child.before)
+        result = self.child.before
+        assert result is not None
+        result, _ = MULTI_WHITESPACE.subn(b" ", result)
 
         if _DEBUG & 1:
             print("[MAXIMA RESPONSE]", result)
+
         return result.decode()
 
-    def reset(self):
+    def reset(self) -> None:
         self.current_prompt = 0
         self.exec_str("kill(all)")
 
-    def clean_eval_str_with_setup(self, setup_lines, s):
+    def clean_eval_str_with_setup(self, setup_lines: Sequence[str], s: str) -> str:
         self.reset()
         for line in setup_lines:
             self.exec_str(line)
@@ -448,21 +487,27 @@ class MaximaKernel:
 
     # {{{ expression interface
 
-    def eval_expr(self, expr):
+    def eval_expr(self, expr: Expression) -> Expression:
         input_str = MaximaStringifyMapper()(expr)
         result_str = self.eval_str(input_str)
+
         parsed = MaximaParser()(result_str)
         if _DEBUG & 2:
             print("[MAXIMA PARSED]", parsed)
+
         return parsed
 
-    def clean_eval_expr_with_setup(self, assignments, expr):
+    def clean_eval_expr_with_setup(
+                self,
+                assignments: Sequence[str | tuple[str, Expression] | Expression],
+                expr: str | Expression) -> Expression:
         result_str = self.clean_eval_str_with_setup(
                 *_strify_assignments_and_expr(assignments, expr))
 
         parsed = MaximaParser()(result_str)
         if _DEBUG & 2:
-            print("[MAXIMA PARSED  ]", parsed)
+            print("[MAXIMA PARSED]", parsed)
+
         return parsed
 
     # }}}
@@ -475,8 +520,10 @@ class MaximaKernel:
 _kernel_instance = None
 
 
-@pytools.memoize
-def _cached_eval_expr_with_setup(assignments, expr):
+@memoize
+def _cached_eval_expr_with_setup(
+            assignments: tuple[str, ...],
+            expr: str) -> Expression:
     global _kernel_instance
     if _kernel_instance is None:
         _kernel_instance = MaximaKernel()
@@ -484,20 +531,26 @@ def _cached_eval_expr_with_setup(assignments, expr):
     return _kernel_instance.clean_eval_expr_with_setup(assignments, expr)
 
 
-def eval_expr_with_setup(assignments, expr):
-    assignments, expr = _strify_assignments_and_expr(assignments, expr)
-    return _cached_eval_expr_with_setup(assignments, expr)
+def eval_expr_with_setup(
+            assignments: Sequence[str | tuple[str, Expression] | Expression],
+            expr: Expression) -> Expression:
+    s_assignments, s_expr = _strify_assignments_and_expr(assignments, expr)
+    return _cached_eval_expr_with_setup(s_assignments, s_expr)
 
 # }}}
 
 
 # {{{ "classic" CAS functionality
 
-def diff(expr, var, count=1, assignments=()):
-    from pymbolic import var as sym
+def diff(expr: Expression,
+         var: str | prim.Variable,
+         count: int = 1,
+         assignments: Sequence[str | tuple[str, Expression] | Expression] = ()
+         ) -> Expression:
     if isinstance(var, str):
-        var = sym(var)
-    return eval_expr_with_setup(assignments, sym("diff")(expr, var, count))
+        var = prim.Variable(var)
+
+    return eval_expr_with_setup(assignments, prim.Variable("diff")(expr, var, count))
 
 # }}}
 
