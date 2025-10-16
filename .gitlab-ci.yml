@@ -31,7 +31,7 @@ Python 3 Conda:
 
 Documentation:
   script:
-  - EXTRA_INSTALL="numpy sympy"
+  - EXTRA_INSTALL="numpy sympy symengine"
   - curl -L -O https://gitlab.tiker.net/inducer/ci-support/raw/main/build-docs.sh
   - ". ./build-docs.sh"
   tags:
