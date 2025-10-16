@@ -60,6 +60,8 @@ _openbracket = intern("openbracket")
 _closebracket = intern("closebracket")
 _true = intern("True")
 _false = intern("False")
+_inf = intern("inf")
+_nan = intern("nan")
 _identifier = intern("identifier")
 _whitespace = intern("whitespace")
 _comma = intern("comma")
@@ -202,6 +204,8 @@ class Parser:
             (_closebracket, pytools.lex.RE(r"\]")),
             (_true, pytools.lex.RE(r"True")),
             (_false, pytools.lex.RE(r"False")),
+            (_inf, pytools.lex.RE(r"inf")),
+            (_nan, pytools.lex.RE(r"nan")),
             (_identifier, pytools.lex.RE(r"[@$a-z_A-Z_][@$a-zA-Z_0-9]*")),
             (_whitespace, pytools.lex.RE("[ \n\t]*")),
             (_comma, pytools.lex.RE(",")),
@@ -237,6 +241,14 @@ class Parser:
         elif next_tag is _false:
             assert pstate.next_str_and_advance() == "False"
             return False
+        elif next_tag is _inf:
+            from math import inf
+            assert pstate.next_str_and_advance() == "inf"
+            return inf
+        elif next_tag is _nan:
+            from math import nan
+            assert pstate.next_str_and_advance() == "nan"
+            return nan
         elif next_tag is _identifier:
             return prim.Variable(pstate.next_str_and_advance())
         elif next_tag is _if:
