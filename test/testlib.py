@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 
 from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -33,6 +34,10 @@ from pytools import UniqueNameGenerator
 import pymbolic.primitives as prim
 from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 from pymbolic.mapper.optimize import optimize_mapper
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import ArithmeticExpression
 
 
 @dataclass(frozen=True, eq=True)
@@ -47,7 +52,7 @@ class RandomExpressionGeneratorContext:
 
 
 def _generate_random_expr_inner(
-        context: RandomExpressionGeneratorContext) -> prim.ExpressionNode:
+        context: RandomExpressionGeneratorContext) -> ArithmeticExpression:
 
     if context.current_depth >= context.max_depth:
         # force expression to be a leaf type
@@ -58,28 +63,26 @@ def _generate_random_expr_inner(
     # {{{ set some distribution of expression types
 
     # 'weight' is proportional to the probability of seeing an expression type
-    weights = [1, 1, 1, 1, 1]
-    expr_types = [prim.Variable, prim.Sum, prim.Product, prim.Quotient,
-                  prim.Call]
-    assert len(weights) == len(expr_types)
+    expr_types = [prim.Variable, prim.Sum, prim.Product, prim.Quotient, prim.Call]
+    weights = np.array([1] * len(expr_types), dtype=np.float64)
 
     # }}}
 
-    buckets = np.cumsum(weights, dtype="float64")/np.sum(weights)
+    buckets = np.cumsum(weights, dtype=np.float64) / np.sum(weights)
 
     expr_type = expr_types[np.searchsorted(buckets, bucket)]
 
-    if expr_type == prim.Variable:
+    if expr_type is prim.Variable:
         return prim.Variable(context.vng("x"))
-    elif expr_type in [prim.Sum, prim.Product]:
+    elif expr_type in {prim.Sum, prim.Product}:
         left = _generate_random_expr_inner(context.with_increased_depth())
         right = _generate_random_expr_inner(context.with_increased_depth())
         return expr_type((left, right))
-    elif expr_type == prim.Quotient:
+    elif expr_type is prim.Quotient:
         num = _generate_random_expr_inner(context.with_increased_depth())
         den = _generate_random_expr_inner(context.with_increased_depth())
         return prim.Quotient(num, den)
-    elif expr_type == prim.Call:
+    elif expr_type is prim.Call:
         nargs = 3
         return prim.Variable(context.vng("f"))(
             *[_generate_random_expr_inner(context.with_increased_depth())
@@ -88,7 +91,7 @@ def _generate_random_expr_inner(
         raise NotImplementedError(expr_type)
 
 
-def generate_random_expression(seed: int, max_depth: int = 8) -> prim.ExpressionNode:
+def generate_random_expression(seed: int, max_depth: int = 8) -> ArithmeticExpression:
     from numpy.random import default_rng
     rng = default_rng(seed)
     vng = UniqueNameGenerator()
