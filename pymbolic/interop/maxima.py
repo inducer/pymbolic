@@ -289,6 +289,13 @@ def _strify_assignments_and_expr(
     return tuple(make_setup(assignment) for assignment in assignments), expr_str
 
 
+PEXPECT_SHELL = "bash"
+PRE_MAXIMA_COMMANDS = (
+    # Makes long line inputs possible.
+    ("stty -icanon",)
+)
+
+
 class MaximaKernel:
     """
     .. automethod:: restart
@@ -314,34 +321,25 @@ class MaximaKernel:
     # {{{ internal
 
     def _initialize(self):
-
-        PEXPECT_SHELL = "bash"  # noqa: N806
-
-        PRE_MAXIMA_COMMANDS = (  # noqa: N806
-            # Makes long line inputs possible.
-            ("stty -icanon",)
-        )
-
         import pexpect
+
         self.child = pexpect.spawn(PEXPECT_SHELL, timeout=self.timeout, echo=False)
         for command in PRE_MAXIMA_COMMANDS:
             self.child.sendline(command)
 
         # {{{ check for maxima command
 
-        self.child.sendline(
-            f'hash "{self.executable}"; echo $?')
+        self.child.sendline(f'hash "{self.executable}"; echo $?')
 
         hash_output = self.child.expect(["0\r\n", "1\r\n"])
         if hash_output != 0:
-            raise RuntimeError(
-                f"maxima executable '{self.executable}' not found")
+            raise RuntimeError(f"maxima executable '{self.executable}' not found")
 
         # }}}
 
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".lisp") as maxima_init_f:
 
+        with tempfile.NamedTemporaryFile(suffix=".lisp") as maxima_init_f:
             # https://sourceforge.net/p/maxima/bugs/3909/
             # FIXME assumes gcl in use
             maxima_init_f.write(
@@ -370,6 +368,7 @@ class MaximaKernel:
         if which == 0:
             match = self.child.match
             assert isinstance(match, re.Match)
+
             if enforce_prompt_numbering:
                 assert int(match.group(1)) == self.current_prompt, (
                     f"found prompt: {match.group(1).decode()!r}, "
