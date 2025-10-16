@@ -550,6 +550,18 @@ def test_ast_interop():
 
             logger.info("lhs %s rhs %s", lhs, rhs)
 
+
+def test_ast_interop_bitwise() -> None:
+    from pymbolic.interop.ast import ASTToPymbolic, PymbolicToASTMapper
+    ast2p = ASTToPymbolic()
+    p2ast = PymbolicToASTMapper()
+
+    expr = prim.BitwiseNot(prim.Variable("x"))
+    assert ast2p(p2ast(expr)) == expr
+
+    expr = prim.RightShift(prim.Variable("shiftee"), prim.Variable("shift"))
+    assert ast2p(p2ast(expr)) == expr
+
 # }}}
 
 

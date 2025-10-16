@@ -173,7 +173,7 @@ class ASTToPymbolic(ASTMapper[Expression, []]):
 
     unary_op_map: ClassVar[
         dict[type[ast.unaryop], Callable[..., ArithmeticExpression]]] = {
-            ast.Invert: _neg,
+            ast.Invert: p.BitwiseNot,
             ast.Not: p.LogicalNot,
             # ast.UAdd:
             ast.USub: _neg,
