@@ -27,22 +27,45 @@ THE SOFTWARE.
 """
 
 import ast
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 
 from constantdict import constantdict
 from typing_extensions import override
 
 import pymbolic.primitives as p
-from pymbolic.mapper import CachedMapper
+from pymbolic.mapper import CachedMapper, P, ResultT
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
 if TYPE_CHECKING:
-    from pymbolic.typing import Expression
+    import sys
+    from collections.abc import Callable
 
+    from numpy.typing import NDArray
+
+    from pymbolic.geometric_algebra import MultiVector
+
+    # NOTE: these are removed in Python 3.14
+    if sys.version_info < (3, 14):
+        from ast import (
+            Bytes as AstBytes,  # pyright: ignore[reportDeprecated]
+            Num as AstNum,  # pyright: ignore[reportDeprecated]
+            Str as AstStr,  # pyright: ignore[reportDeprecated]
+        )
+    else:
+        AstNum: TypeAlias = Any
+        AstStr: TypeAlias = Any
+        AstBytes: TypeAlias = Any
 
 __doc__ = r'''
+An example:
 
-An example::
+.. code:: python
+
+    import ast
+
+    from pymbolic.interop.ast import ASTToPymbolic
+
 
     src = """
     def f():
@@ -50,14 +73,10 @@ An example::
         yy = f(x, y=y)
     """
 
-    import ast
     mod = ast.parse(src.replace("\n    ", "\n"))
-
     print(ast.dump(mod))
 
-    from pymbolic.interop.ast import ASTToPymbolic
     ast2p = ASTToPymbolic()
-
     for f in mod.body:
         if not isinstance(f, ast.FunctionDef):
             continue
@@ -73,57 +92,60 @@ An example::
             print(lhs, rhs)
 
 .. autoclass:: ASTToPymbolic
+.. autoclass:: PymbolicToASTMapper
+.. autofunction:: to_python_ast
+.. autofunction:: to_evaluatable_python_function
 '''
 
 
-class ASTMapper:
-    def __call__(self, expr, *args, **kwargs):
+class ASTMapper(Generic[ResultT, P]):
+    def __call__(self, expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         return self.rec(expr, *args, **kwargs)
 
-    def rec(self, expr, *args, **kwargs):
+    def rec(self, expr: object, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         mro = list(type(expr).__mro__)
         dispatch_class = kwargs.pop("dispatch_class", type(self))
 
         while mro:
-            method_name = "map_"+mro.pop(0).__name__
+            method_name = f"map_{mro[0].__name__}"
+            mro.pop(0)
 
-            try:
-                method = getattr(dispatch_class, method_name)
-            except AttributeError:
-                pass
-            else:
+            method = getattr(dispatch_class, method_name, None)
+            if method is not None:
                 return method(self, expr, *args, **kwargs)
 
         return self.not_supported(expr)
 
-    def not_supported(self, expr):
+    def not_supported(self, expr: object) -> ResultT:
         raise NotImplementedError(
-                "{} does not know how to map type '{}'".format(
-                    type(self).__name__,
-                    type(expr).__name__))
+                f"{type(self)} does not know how to map type {type(expr)}")
 
 
 # {{{ mapper
 
-def _add(x, y):
+def _add(x: ArithmeticExpression, y: ArithmeticExpression) -> ArithmeticExpression:
     return p.Sum((x, y))
 
 
-def _sub(x, y):
+def _sub(x: ArithmeticExpression, y: ArithmeticExpression) -> ArithmeticExpression:
     return p.Sum((x, p.Product(((-1), y))))
 
 
-def _mult(x, y):
+def _mult(x: ArithmeticExpression, y: ArithmeticExpression) -> ArithmeticExpression:
     return p.Product((x, y))
 
 
-def _neg(x):
+def _neg(x: ArithmeticExpression) -> ArithmeticExpression:
     return -x
 
 
-class ASTToPymbolic(ASTMapper):
+class ASTToPymbolic(ASTMapper[Expression, []]):
+    """
+    .. automethod:: __call__
+    """
 
-    bin_op_map: ClassVar[dict[type[ast.operator], Any]] = {
+    bin_op_map: ClassVar[
+        dict[type[ast.operator], Callable[..., ArithmeticExpression]]] = {
             ast.Add: _add,
             ast.Sub: _sub,
             ast.Mult: _mult,
@@ -137,36 +159,37 @@ class ASTToPymbolic(ASTMapper):
             ast.BitOr: p.BitwiseOr,
             ast.BitXor: p.BitwiseXor,
             ast.BitAnd: p.BitwiseAnd,
-            }
+        }
 
-    def map_BinOp(self, expr):
+    def map_BinOp(self, expr: ast.BinOp) -> Expression:
         try:
             op_constructor = self.bin_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                f"{type(self).__name__} does not know how to map operator "
-                f"'{type(expr.op).__name__}'") from None
+                f"{type(self)} does not know how to map operator "
+                f"{type(expr.op)}") from None
 
         return op_constructor(self.rec(expr.left), self.rec(expr.right))
 
-    unary_op_map: ClassVar[dict[type[ast.unaryop], Any]] = {
+    unary_op_map: ClassVar[
+        dict[type[ast.unaryop], Callable[..., ArithmeticExpression]]] = {
             ast.Invert: _neg,
             ast.Not: p.LogicalNot,
             # ast.UAdd:
             ast.USub: _neg,
-            }
+        }
 
-    def map_UnaryOp(self, expr):
+    def map_UnaryOp(self, expr: ast.UnaryOp) -> Expression:
         try:
             op_constructor = self.unary_op_map[type(expr.op)]
         except KeyError:
             raise NotImplementedError(
-                f"{type(self).__name__} does not know how to map operator "
-                f"'{type(expr.op).__name__}'") from None
+                f"{type(self)} does not know how to map operator "
+                f"{type(expr.op)}") from None
 
         return op_constructor(self.rec(expr.operand))
 
-    def map_IfExp(self, expr):
+    def map_IfExp(self, expr: ast.IfExp) -> Expression:
         # (expr test, expr body, expr orelse)
         return p.If(self.rec(expr.test), self.rec(expr.body), self.rec(expr.orelse))
 
@@ -183,7 +206,7 @@ class ASTToPymbolic(ASTMapper):
             # NotIn
             }
 
-    def map_Compare(self, expr):
+    def map_Compare(self, expr: ast.Compare) -> Expression:
         # (expr left, cmpop* ops, expr* comparators)
         op, = expr.ops
 
@@ -191,15 +214,14 @@ class ASTToPymbolic(ASTMapper):
             comp = self.comparison_op_map[type(op)]
         except KeyError:
             raise NotImplementedError(
-                f"{type(self).__name__} does not know how to map operator "
-                f"'{type(expr.op).__name__}'") from None
+                f"{type(self)} does not know how to map operator {op}") from None
 
         # FIXME: Support strung-together comparisons
         right, = expr.comparators
 
         return p.Comparison(self.rec(expr.left), comp, self.rec(right))
 
-    def map_Call(self, expr):
+    def map_Call(self, expr: ast.Call) -> Expression:
         # (expr func, expr* args, keyword* keywords)
         func = self.rec(expr.func)
         args = tuple([self.rec(arg) for arg in expr.args])
@@ -211,27 +233,31 @@ class ASTToPymbolic(ASTMapper):
         else:
             return p.Call(func, args)
 
-    def map_Num(self, expr):
+    # {{{ removed in Python 3.14
+
+    def map_Num(self, expr: AstNum) -> Expression:
         # (object n) -- a number as a PyObject.
         return expr.n
 
-    def map_Str(self, expr):
+    def map_Str(self, expr: AstStr) -> Expression:
         return expr.s
 
-    def map_Bytes(self, expr):
+    def map_Bytes(self, expr: AstBytes) -> Expression:
         return expr.s
 
-    def map_Constant(self, expr):
+    # }}}
+
+    def map_Constant(self, expr: ast.Constant) -> Expression:
         # (singleton value)
         return expr.value
 
-    def map_Attribute(self, expr):
+    def map_Attribute(self, expr: ast.Attribute) -> Expression:
         # (expr value, identifier attr, expr_context ctx)
         return p.Lookup(self.rec(expr.value), expr.attr)
 
-    def map_Subscript(self, expr):
+    def map_Subscript(self, expr: ast.Subscript) -> Expression:
         # (expr value, slice slice, expr_context ctx)
-        def none_or_rec(x):
+        def none_or_rec(x: object) -> Expression | None:
             if x is None:
                 return x
             else:
@@ -245,17 +271,15 @@ class ASTToPymbolic(ASTMapper):
         else:
             index = none_or_rec(expr.slice)
 
-        return p.Subscript(
-                self.rec(expr.value),
-                index)
+        return p.Subscript(self.rec(expr.value), index)
 
     # def map_Starred(self, expr):
 
-    def map_Name(self, expr):
+    def map_Name(self, expr: ast.Name) -> Expression:
         # (identifier id, expr_context ctx)
         return p.Variable(expr.id)
 
-    def map_Tuple(self, expr):
+    def map_Tuple(self, expr: ast.Tuple) -> Expression:
         # (expr* elts, expr_context ctx)
         return tuple([self.rec(ti) for ti in expr.elts])
 
@@ -265,8 +289,12 @@ class ASTToPymbolic(ASTMapper):
 # {{{ PymbolicToASTMapper
 
 class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
+    """
+    .. automethod:: __call__
+    """
+
     @override
-    def map_variable(self, expr) -> ast.expr:
+    def map_variable(self, expr: p.Variable) -> ast.expr:
         return ast.Name(id=expr.name)
 
     def _map_multi_children_op(self,
@@ -300,7 +328,7 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
         )
 
     @override
-    def map_call_with_kwargs(self, expr) -> ast.expr:
+    def map_call_with_kwargs(self, expr: p.CallWithKwargs) -> ast.expr:
         return ast.Call(
             func=self.rec(expr.function),
             args=[self.rec(param) for param in expr.parameters],
@@ -311,90 +339,84 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
                 for kw, param in sorted(expr.kw_parameters.items())])
 
     @override
-    def map_subscript(self, expr) -> ast.expr:
+    def map_subscript(self, expr: p.Subscript) -> ast.expr:
         return ast.Subscript(value=self.rec(expr.aggregate),
                              slice=self.rec(expr.index))
 
     @override
-    def map_lookup(self, expr) -> ast.expr:
+    def map_lookup(self, expr: p.Lookup) -> ast.expr:
         return ast.Attribute(self.rec(expr.aggregate),
                              expr.name)
 
     @override
-    def map_quotient(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.numerator,
-                                            expr.denominator),
+    def map_quotient(self, expr: p.Quotient) -> ast.expr:
+        return self._map_multi_children_op((expr.numerator, expr.denominator),
                                            ast.Div())
 
     @override
-    def map_floor_div(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.numerator,
-                                            expr.denominator),
+    def map_floor_div(self, expr: p.FloorDiv) -> ast.expr:
+        return self._map_multi_children_op((expr.numerator, expr.denominator),
                                            ast.FloorDiv())
 
     @override
-    def map_remainder(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.numerator,
-                                            expr.denominator),
+    def map_remainder(self, expr: p.Remainder) -> ast.expr:
+        return self._map_multi_children_op((expr.numerator, expr.denominator),
                                            ast.Mod())
 
     @override
-    def map_power(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.base,
-                                            expr.exponent),
+    def map_power(self, expr: p.Power) -> ast.expr:
+        return self._map_multi_children_op((expr.base, expr.exponent),
                                            ast.Pow())
 
     @override
-    def map_left_shift(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.shiftee,
-                                            expr.shift),
+    def map_left_shift(self, expr: p.LeftShift) -> ast.expr:
+        return self._map_multi_children_op((expr.shiftee, expr.shift),
                                            ast.LShift())
 
     @override
-    def map_right_shift(self, expr) -> ast.expr:
-        return self._map_multi_children_op((expr.numerator,
-                                            expr.denominator),
+    def map_right_shift(self, expr: p.RightShift) -> ast.expr:
+        return self._map_multi_children_op((expr.shiftee, expr.shift),
                                            ast.RShift())
 
     @override
-    def map_bitwise_not(self, expr) -> ast.expr:
+    def map_bitwise_not(self, expr: p.BitwiseNot) -> ast.expr:
         return ast.UnaryOp(ast.Invert(), self.rec(expr.child))
 
     @override
-    def map_bitwise_or(self, expr) -> ast.expr:
+    def map_bitwise_or(self, expr: p.BitwiseOr) -> ast.expr:
         return self._map_multi_children_op(expr.children,
                                            ast.BitOr())
 
     @override
-    def map_bitwise_xor(self, expr) -> ast.expr:
+    def map_bitwise_xor(self, expr: p.BitwiseXor) -> ast.expr:
         return self._map_multi_children_op(expr.children,
                                            ast.BitXor())
 
     @override
-    def map_bitwise_and(self, expr) -> ast.expr:
+    def map_bitwise_and(self, expr: p.BitwiseAnd) -> ast.expr:
         return self._map_multi_children_op(expr.children,
                                            ast.BitAnd())
 
     @override
-    def map_logical_not(self, expr) -> ast.expr:
+    def map_logical_not(self, expr: p.LogicalNot) -> ast.expr:
         return ast.UnaryOp(ast.Not(), self.rec(expr.child))
 
     @override
-    def map_logical_or(self, expr) -> ast.expr:
+    def map_logical_or(self, expr: p.LogicalOr) -> ast.expr:
         return ast.BoolOp(ast.Or(), [self.rec(child)
                                      for child in expr.children])
 
     @override
-    def map_logical_and(self, expr) -> ast.expr:
+    def map_logical_and(self, expr: p.LogicalAnd) -> ast.expr:
         return ast.BoolOp(ast.And(), [self.rec(child)
                                      for child in expr.children])
 
     @override
-    def map_list(self, expr: list[Any]) -> ast.expr:
+    def map_list(self, expr: list[Expression]) -> ast.expr:
         return ast.List([self.rec(el) for el in expr])
 
     @override
-    def map_tuple(self, expr: tuple[Any, ...]) -> ast.expr:
+    def map_tuple(self, expr: tuple[Expression, ...]) -> ast.expr:
         return ast.Tuple([self.rec(el) for el in expr])
 
     @override
@@ -421,22 +443,22 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
                            for child in expr.children])
 
     @override
-    def map_numpy_array(self, expr) -> ast.expr:
+    def map_numpy_array(self, expr: NDArray[Any]) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_multivector(self, expr) -> ast.expr:
+    def map_multivector(self, expr: MultiVector[Any]) -> ast.expr:
         raise NotImplementedError
 
-    def map_common_subexpression(self, expr) -> ast.expr:
-        raise NotImplementedError
-
-    @override
-    def map_substitution(self, expr) -> ast.expr:
+    def map_common_subexpression(self, expr: p.CommonSubexpression) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_derivative(self, expr) -> ast.expr:
+    def map_substitution(self, expr: p.Substitution) -> ast.expr:
+        raise NotImplementedError
+
+    @override
+    def map_derivative(self, expr: p.Derivative) -> ast.expr:
         raise NotImplementedError
 
     @override
@@ -444,42 +466,40 @@ class PymbolicToASTMapper(CachedMapper[ast.expr, []]):
         raise NotImplementedError
 
     @override
-    def map_wildcard(self, expr) -> ast.expr:
+    def map_wildcard(self, expr: p.Wildcard) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_dot_wildcard(self, expr) -> ast.expr:
+    def map_dot_wildcard(self, expr: p.DotWildcard) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_star_wildcard(self, expr) -> ast.expr:
+    def map_star_wildcard(self, expr: p.StarWildcard) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_function_symbol(self, expr) -> ast.expr:
+    def map_function_symbol(self, expr: p.FunctionSymbol) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_min(self, expr) -> ast.expr:
+    def map_min(self, expr: p.Min) -> ast.expr:
         raise NotImplementedError
 
     @override
-    def map_max(self, expr) -> ast.expr:
+    def map_max(self, expr: p.Max) -> ast.expr:
         raise NotImplementedError
 
 
-def to_python_ast(expr) -> ast.expr:
+def to_python_ast(expr: Expression) -> ast.expr:
     """
     Maps *expr* to :class:`ast.expr`.
     """
     return PymbolicToASTMapper()(expr)
 
 
-def to_evaluatable_python_function(expr: Expression,
-                                   fn_name: str
-                                   ) -> str:
+def to_evaluatable_python_function(expr: Expression, fn_name: str) -> str:
     """
-    Returns a :class:`str` of the python code with a single function *fn_name*
+    Returns a :class:`str` of the Python code with a single function *fn_name*
     that takes in the variables in *expr* as keyword-only arguments and returns
     the evaluated value of *expr*.
 
