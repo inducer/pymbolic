@@ -1233,8 +1233,6 @@ class Sum(ExpressionNode):
             # FIXME: Right semantics?
             return True
 
-    __nonzero__ = __bool__
-
 
 @expr_dataclass()
 class Product(ExpressionNode):
@@ -1247,8 +1245,6 @@ class Product(ExpressionNode):
 
     def __bool__(self):
         return all(not is_zero(i) for i in self.children)
-
-    __nonzero__ = __bool__
 
 
 @expr_dataclass()
@@ -1282,8 +1278,6 @@ class QuotientBase(ExpressionNode):
 
     def __bool__(self):
         return bool(self.numerator)
-
-    __nonzero__ = __bool__
 
 
 @expr_dataclass()
@@ -1604,8 +1598,6 @@ class Slice(ExpressionNode):
 
     def __bool__(self):
         return True
-
-    __nonzero__ = __bool__
 
     @property
     def start(self):
