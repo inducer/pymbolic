@@ -48,8 +48,6 @@ class Rational(primitives.ExpressionNode):
     def __bool__(self):
         return bool(self.Numerator)
 
-    __nonzero__ = __bool__
-
     def __neg__(self):
         return Rational(-self.Numerator, self.Denominator)
 
