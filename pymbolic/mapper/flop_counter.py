@@ -23,20 +23,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING
+
+from typing_extensions import override
+
+import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, CombineMapper
+from pymbolic.typing import ArithmeticExpression
 
 
-class FlopCounterBase(CombineMapper):
-    def combine(self, values):
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+
+class FlopCounterBase(CombineMapper[ArithmeticExpression, []]):
+    @override
+    def combine(self, values: Iterable[ArithmeticExpression]) -> ArithmeticExpression:
         return sum(values)
 
-    def map_constant(self, expr):
+    @override
+    def map_constant(self, expr: object) -> ArithmeticExpression:
         return 0
 
-    def map_variable(self, expr):
+    @override
+    def map_variable(self, expr: p.Variable) -> ArithmeticExpression:
         return 0
 
-    def map_sum(self, expr):
+    @override
+    def map_sum(self, expr: p.Sum | p.Product) -> ArithmeticExpression:
         if expr.children:
             return len(expr.children) - 1 + sum(self.rec(ch) for ch in expr.children)
         else:
@@ -44,24 +58,29 @@ class FlopCounterBase(CombineMapper):
 
     map_product = map_sum
 
-    def map_quotient(self, expr, *args):
+    @override
+    def map_quotient(self, expr: p.Quotient | p.FloorDiv) -> ArithmeticExpression:
         return 1 + self.rec(expr.numerator) + self.rec(expr.denominator)
 
     map_floor_div = map_quotient
 
-    def map_power(self, expr, *args):
+    @override
+    def map_power(self, expr: p.Power) -> ArithmeticExpression:
         return 1 + self.rec(expr.base) + self.rec(expr.exponent)
 
-    def map_if_positive(self, expr):
-        return self.rec(expr.criterion) + max(
-                self.rec(expr.then),
-                self.rec(expr.else_))
+    @override
+    def map_if(self, expr: p.If) -> ArithmeticExpression:
+        rec_then = self.rec(expr.then)
+        rec_else = self.rec(expr.else_)
+        if isinstance(rec_then, int) and isinstance(rec_else, int):
+            eval_flops = max(rec_then, rec_else)
+        else:
+            eval_flops = p.Max((rec_then, rec_else))
+        return self.rec(expr.condition) + eval_flops
 
 
-class FlopCounter(CachedMapper, FlopCounterBase):
-    def __init__(self) -> None:
-        FlopCounterBase.__init__(self)
-        CachedMapper.__init__(self)
+class FlopCounter(CachedMapper[int, []], FlopCounterBase):  # pyright: ignore[reportGeneralTypeIssues]
+    pass
 
 
 class CSEAwareFlopCounter(FlopCounterBase):
@@ -75,9 +94,12 @@ class CSEAwareFlopCounter(FlopCounterBase):
     """
     def __init__(self):
         super().__init__()
-        self.cse_seen_set = set()
+        self.cse_seen_set: set[p.CommonSubexpression] = set()
 
-    def map_common_subexpression(self, expr):
+    @override
+    def map_common_subexpression(self,
+                expr: p.CommonSubexpression
+            ) -> ArithmeticExpression:
         if expr in self.cse_seen_set:
             return 0
         else:
