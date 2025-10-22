@@ -177,7 +177,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase[Expression, []]):
 
 # {{{ pymbolic -> sympy like
 
-SympyLikeExpression: TypeAlias = "sp.Basic"
+SympyLikeExpression: TypeAlias = "sp.Expr"
 
 
 class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
