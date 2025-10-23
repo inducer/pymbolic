@@ -126,11 +126,6 @@ class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
     def sym(self) -> Any:
         return sp
 
-    def to_expr(self, expr: Expression) -> sp.Expr:
-        # Don't be tempted to insert type-asserts here. Symengine's class hierarchy
-        # does not agree with sympy, for example a Symbol is not an Expr in symengine.
-        return self(expr)
-
     @override
     def raise_conversion_error(self, expr: object) -> None:
         raise RuntimeError(f"do not know how to translate '{expr}' to symengine")

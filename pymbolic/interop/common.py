@@ -189,6 +189,12 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
     def sym(self) -> Any:
         raise NotImplementedError
 
+    def to_expr(self, expr: Expression) -> sp.Expr:
+        result = self(expr)
+        import sympy as sp
+        assert isinstance(result, sp.Expr)
+        return result
+
     def raise_conversion_error(self, expr: object) -> None:
         raise NotImplementedError
 

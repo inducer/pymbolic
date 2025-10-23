@@ -117,11 +117,6 @@ class PymbolicToSympyMapper(PymbolicToSympyLikeMapper):
     def sym(self) -> Any:
         return sp
 
-    def to_expr(self, expr: Expression) -> sp.Expr:
-        result = self(expr)
-        assert isinstance(result, sp.Expr)
-        return result
-
     @override
     def raise_conversion_error(self, expr: object) -> None:
         raise RuntimeError(f"do not know how to translate '{expr}' to sympy")
