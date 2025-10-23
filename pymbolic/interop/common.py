@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING, Any, Generic, TypeAlias
+from typing import TYPE_CHECKING, Any, Generic, TypeAlias, cast
 
 from typing_extensions import override
 
@@ -191,9 +191,8 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
 
     def to_expr(self, expr: Expression) -> sp.Expr:
         result = self(expr)
-        import sympy as sp
-        assert isinstance(result, sp.Expr)
-        return result
+        assert isinstance(result, self.sym.Expr)  # pyright: ignore[reportAny]
+        return cast("sp.Expr", result)
 
     def raise_conversion_error(self, expr: object) -> None:
         raise NotImplementedError
