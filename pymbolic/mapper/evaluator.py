@@ -8,6 +8,7 @@
 .. autofunction:: evaluate_kw
 .. autofunction:: evaluate_to_float
 """
+
 from __future__ import annotations
 
 from pytools import ndindex
@@ -36,7 +37,7 @@ THE SOFTWARE.
 """
 import operator as op
 from functools import reduce
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from typing_extensions import override
 
@@ -51,6 +52,7 @@ if TYPE_CHECKING:
 
     import pymbolic.primitives as p
     from pymbolic.geometric_algebra import MultiVector
+    from pymbolic.rational import Rational
     from pymbolic.typing import Expression
 
 
@@ -192,7 +194,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
         return result
 
     @override
-    def map_multivector(self, expr: MultiVector) -> ResultT:
+    def map_multivector(self, expr: MultiVector[Any]) -> ResultT:
         return expr.map(lambda ch: self.rec(ch))
 
     @override
@@ -234,24 +236,28 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
 
 class CachedEvaluationMapper(CachedMapper[ResultT, []], EvaluationMapper[ResultT]):
-    def __init__(self, context=None):
+    def __init__(self, context: Mapping[str, ResultT] | None = None) -> None:
         CachedMapper.__init__(self)
         EvaluationMapper.__init__(self, context=context)
 
 
 class FloatEvaluationMapper(EvaluationMapper[float]):
-    def map_constant(self, expr) -> float:
+    @override
+    def map_constant(self, expr: object) -> float:
         return float(expr)
 
-    def map_rational(self, expr) -> float:
+    @override
+    def map_rational(self, expr: Rational) -> float:
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
 class CachedFloatEvaluationMapper(CachedEvaluationMapper[float]):
-    def map_constant(self, expr) -> float:
+    @override
+    def map_constant(self, expr: object) -> float:
         return float(expr)
 
-    def map_rational(self, expr) -> float:
+    @override
+    def map_rational(self, expr: Rational) -> float:
         return self.rec(expr.numerator) / self.rec(expr.denominator)
 
 
@@ -266,6 +272,7 @@ def evaluate(
     """
     if context is None:
         context = {}
+
     return mapper_cls(context)(expression)
 
 
@@ -281,12 +288,16 @@ def evaluate_kw(
     return mapper_cls(context)(expression)
 
 
-def evaluate_to_float(expression, context=None,
-                      mapper_cls=CachedFloatEvaluationMapper) -> float:
+def evaluate_to_float(
+            expression: Expression,
+            context: dict[str, float] | None = None,
+            mapper_cls: type[EvaluationMapper[float]] = CachedFloatEvaluationMapper,
+        ) -> float:
     """
     :arg mapper_cls: A :class:`type` of the evaluation mapper
         whose instance performs the evaluation.
     """
     if context is None:
         context = {}
+
     return mapper_cls(context)(expression)
