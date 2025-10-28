@@ -664,6 +664,23 @@ def test_unifier():
     assert len(recs) == 1
     assert match_found(recs, {(a, b), (b, c), (c, d)})
 
+
+def test_unifier_map_sum() -> None:
+    """Tests that the UnifierBase.map_sum implementation does not crash."""
+    from pymbolic.mapper.unifier import UnifierBase
+
+    class TestUnifier(UnifierBase):
+        def treat_mismatch(
+                    self,
+                    expr: Expression,
+                    other: Expression,
+                    urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
+            raise ValueError(f"mismatched expressions: '{expr}' and '{other}'")
+
+    # FIXME: add a more relevant test that actually has a non-trivial result
+    recs = TestUnifier()(prim.Sum((1, 2)), prim.Sum((2, 1)))
+    assert len(recs) == 1
+
 # }}}
 
 
