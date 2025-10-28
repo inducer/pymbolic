@@ -24,7 +24,7 @@ THE SOFTWARE.
 """
 
 from collections.abc import Collection, Mapping
-from typing import Literal, TypeAlias, cast
+from typing import Literal, TypeAlias
 
 from typing_extensions import override
 
@@ -37,6 +37,8 @@ CoeffsT: TypeAlias = Mapping[p.AlgebraicLeaf | Literal[1], ArithmeticExpression]
 
 
 class CoefficientCollector(Mapper[CoeffsT, []]):
+    target_names: Collection[str] | None
+
     def __init__(self, target_names: Collection[str] | None = None) -> None:
         self.target_names = target_names
 
@@ -72,7 +74,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
         for i, child_coeffs in enumerate(children_coeffs):
             if i != idx_of_child_with_vars:
                 assert len(child_coeffs) == 1
-                other_coeffs *= cast("ArithmeticExpression", child_coeffs[1])
+                other_coeffs *= child_coeffs[1]
 
         if idx_of_child_with_vars is None:
             return {1: other_coeffs}
