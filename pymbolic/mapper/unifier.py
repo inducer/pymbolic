@@ -67,7 +67,7 @@ class UnificationRecord:
     def __init__(self,
             equations: Collection[tuple[Expression, Expression]],
             lmap: Mapping[str, Expression] | None = None,
-            rmap: Mapping[str, Expression] | None = None):
+            rmap: Mapping[str, Expression] | None = None) -> None:
         self.equations = equations
 
         # lmap and rmap just serve as a tool to reject
@@ -106,7 +106,7 @@ class UnificationRecord:
             list(new_equations), new_lmap, new_rmap)
 
     @override
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "UnificationRecord({})".format(
                 ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
                 )
@@ -141,7 +141,7 @@ class UnifierBase(Mapper[
     def __init__(self,
             lhs_mapping_candidates: Collection[str] | None = None,
             rhs_mapping_candidates: Collection[str] | None = None,
-            force_var_match: bool = True):
+            force_var_match: bool = True) -> None:
         """
         :arg lhs_mapping_candidates: list or set of  variable names that may be
           assigned in the left-hand ("first") expression
@@ -227,7 +227,7 @@ class UnifierBase(Mapper[
     def map_call(self,
                  expr: p.Call,
                  other: Expression,
-                 urecs: Sequence[UnificationRecord]):
+                 urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -239,7 +239,7 @@ class UnifierBase(Mapper[
                 self,
                 expr: p. Subscript,
                 other: Expression,
-                urecs: Sequence[UnificationRecord]):
+                urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -359,7 +359,7 @@ class UnifierBase(Mapper[
                 self,
                 expr: p.BitwiseNot | p.LogicalNot,
                 other: Expression,
-                urecs: Sequence[UnificationRecord]):
+                urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
         if not isinstance(other, type(expr)):
             return self.treat_mismatch(expr, other, urecs)
 
@@ -384,7 +384,7 @@ class UnifierBase(Mapper[
                 self,
                 expr: p.Comparison,
                 other: Expression,
-                urecs: Sequence[UnificationRecord]):
+                urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
         if (not isinstance(other, type(expr))
                 or expr.operator != other.operator):
             return self.treat_mismatch(expr, other, urecs)
