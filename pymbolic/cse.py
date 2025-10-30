@@ -25,14 +25,14 @@ THE SOFTWARE.
 
 from typing import TYPE_CHECKING, cast
 
-from typing_extensions import override
+from typing_extensions import Self, override
 
 import pymbolic.primitives as prim
-from pymbolic.mapper import IdentityMapper, WalkMapper
+from pymbolic.mapper import IdentityMapper, P, WalkMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Hashable
+    from collections.abc import Callable, Hashable, Iterable, Sequence, Set
 
     from pymbolic.typing import Expression
 
@@ -41,9 +41,9 @@ COMMUTATIVE_CLASSES = (prim.Sum, prim.Product)
 
 
 class NormalizedKeyGetter:
-    def __call__(self, expr):
+    def __call__(self, expr: object, /) -> Hashable:
         if isinstance(expr, COMMUTATIVE_CLASSES):
-            kid_count = {}
+            kid_count: dict[Expression, int] = {}
             for child in expr.children:
                 kid_count[child] = kid_count.get(child, 0) + 1
 
@@ -52,12 +52,16 @@ class NormalizedKeyGetter:
             return expr
 
 
-class UseCountMapper(WalkMapper):
-    def __init__(self, get_key):
+class UseCountMapper(WalkMapper[P]):
+    subexpr_counts: dict[Hashable, int]
+    get_key: Callable[[object], Hashable]
+
+    def __init__(self, get_key: Callable[[object], Hashable]) -> None:
         self.subexpr_counts = {}
         self.get_key = get_key
 
-    def visit(self, expr):
+    @override
+    def visit(self, expr: object, /, *args: P.args, **kwargs: P.kwargs) -> bool:
         key = self.get_key(expr)
 
         if key in self.subexpr_counts:
@@ -71,7 +75,9 @@ class UseCountMapper(WalkMapper):
             # continue traversing
             return True
 
-    def map_common_subexpression(self, expr, *args, **kwargs):
+    @override
+    def map_common_subexpression(self, expr: prim.CommonSubexpression, /,
+                                 *args: P.args, **kwargs: P.kwargs) -> None:
         # For existing CSEs, reuse has already been decided.
         # Add to
 
@@ -82,18 +88,23 @@ class UseCountMapper(WalkMapper):
             # This order reversal matters: Since get_key removes the outer
             # CSE, need to traverse first, then add to counter.
 
-            self.rec(expr.child)
+            self.rec(expr.child, *args, **kwargs)
             self.subexpr_counts[key] = 1
 
 
 class CSEMapper(IdentityMapper[[]]):
-    def __init__(self, to_eliminate, get_key):
+    to_eliminate: Set[Hashable]
+    get_key: Callable[[object], Hashable]
+    canonical_subexprs: dict[Hashable, Expression]
+
+    def __init__(self,
+                 to_eliminate: Set[Hashable],
+                 get_key: Callable[[object], Hashable]) -> None:
         self.to_eliminate = to_eliminate
-        self.get_key: Callable[[Expression], Hashable] = get_key
+        self.get_key = get_key
+        self.canonical_subexprs = {}
 
-        self.canonical_subexprs: dict[Hashable, Expression] = {}
-
-    def get_cse(self, expr: prim.ExpressionNode, key: Hashable = None):
+    def get_cse(self, expr: prim.ExpressionNode, /, key: Hashable = None) -> Expression:
         if key is None:
             key = self.get_key(expr)
 
@@ -111,8 +122,8 @@ class CSEMapper(IdentityMapper[[]]):
                 expr: (prim.Sum | prim.Product | prim.Power
                     | prim.Quotient | prim.Remainder | prim.FloorDiv
                     | prim.Call
-                )
-            ):
+                ), /
+            ) -> Expression:
         key = self.get_key(expr)
         if key in self.to_eliminate:
             result = self.get_cse(expr, key)
@@ -120,15 +131,15 @@ class CSEMapper(IdentityMapper[[]]):
         else:
             return getattr(IdentityMapper, expr.mapper_method)(self, expr)
 
-    map_product = map_sum
-    map_power = map_sum
-    map_quotient = map_sum
-    map_remainder = map_sum
-    map_floor_div = map_sum
-    map_call = map_sum
+    map_product: Callable[[Self, prim.Product], Expression] = map_sum
+    map_power: Callable[[Self, prim.Power], Expression] = map_sum
+    map_quotient: Callable[[Self, prim.Quotient], Expression] = map_sum
+    map_remainder: Callable[[Self, prim.Remainder], Expression] = map_sum
+    map_floor_div: Callable[[Self, prim.FloorDiv], Expression] = map_sum
+    map_call: Callable[[Self, prim.Call], Expression] = map_sum
 
     @override
-    def map_common_subexpression(self, expr: prim.CommonSubexpression):
+    def map_common_subexpression(self, expr: prim.CommonSubexpression, /) -> Expression:
         # Avoid creating CSE(CSE(...))
         if type(expr) is prim.CommonSubexpression:
             return prim.make_common_subexpression(
@@ -143,14 +154,15 @@ class CSEMapper(IdentityMapper[[]]):
             return type(expr)(result, expr.prefix, expr.scope,
                               **expr.get_extra_properties())
 
-    def map_substitution(self, expr):
+    @override
+    def map_substitution(self, expr: prim.Substitution, /) -> Expression:
         return type(expr)(
                 expr.child,
                 expr.variables,
                 tuple([self.rec(v) for v in expr.values]))
 
 
-def tag_common_subexpressions(exprs):
+def tag_common_subexpressions(exprs: Iterable[Expression]) -> Sequence[Expression]:
     get_key = NormalizedKeyGetter()
     ucm = UseCountMapper(get_key)
 
