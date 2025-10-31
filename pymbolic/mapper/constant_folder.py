@@ -30,12 +30,14 @@ THE SOFTWARE.
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import Self, override
+
+import pymbolic.primitives as prim
 from pymbolic.mapper import (
     CSECachingMapperMixin,
     IdentityMapper,
     Mapper,
 )
-from pymbolic.primitives import Product, Sum, is_arithmetic_expression
 from pymbolic.typing import ArithmeticExpression, Expression
 
 
@@ -44,19 +46,20 @@ if TYPE_CHECKING:
 
 
 class ConstantFoldingMapperBase(Mapper[Expression, []]):
-    def is_constant(self, expr):
+    def is_constant(self, expr: Expression, /) -> bool:
         from pymbolic.mapper.dependency import DependencyMapper
         return not bool(DependencyMapper()(expr))
 
-    def evaluate(self, expr):
+    def evaluate(self, expr: Expression, /) -> Expression | None:
         from pymbolic import evaluate
+
         try:
             return evaluate(expr)
         except ValueError:
             return None
 
     def fold(self,
-             expr: Sum | Product,
+             expr: prim.Sum | prim.Product,
              op: Callable[
                  [ArithmeticExpression, ArithmeticExpression],
                  ArithmeticExpression],
@@ -72,10 +75,10 @@ class ConstantFoldingMapperBase(Mapper[Expression, []]):
         queue = list(expr.children)
         while queue:
             child = self.rec(queue.pop(0))
-            assert is_arithmetic_expression(child)
+            assert prim.is_arithmetic_expression(child)
 
             if isinstance(child, klass):
-                assert isinstance(child, Sum | Product)
+                assert isinstance(child, (prim.Sum, prim.Product))
                 queue = list(child.children) + queue
             else:
                 if self.is_constant(child):
@@ -95,7 +98,8 @@ class ConstantFoldingMapperBase(Mapper[Expression, []]):
         else:
             return constructor(tuple(nonconstants))
 
-    def map_sum(self, expr: Sum) -> Expression:
+    @override
+    def map_sum(self, expr: prim.Sum, /) -> Expression:
         import operator
 
         from pymbolic.primitives import flattened_sum
@@ -104,7 +108,8 @@ class ConstantFoldingMapperBase(Mapper[Expression, []]):
 
 
 class CommutativeConstantFoldingMapperBase(ConstantFoldingMapperBase):
-    def map_product(self, expr):
+    @override
+    def map_product(self, expr: prim.Product, /) -> Expression:
         import operator
 
         from pymbolic.primitives import flattened_product
@@ -117,8 +122,9 @@ class ConstantFoldingMapper(
         ConstantFoldingMapperBase,
         IdentityMapper[[]]):
 
-    map_common_subexpression_uncached = \
-            IdentityMapper.map_common_subexpression
+    map_common_subexpression_uncached: (
+        Callable[[Self, prim.CommonSubexpression], Expression]) = (
+            IdentityMapper.map_common_subexpression)
 
 
 class CommutativeConstantFoldingMapper(
@@ -126,5 +132,6 @@ class CommutativeConstantFoldingMapper(
         CommutativeConstantFoldingMapperBase,
         IdentityMapper[[]]):
 
-    map_common_subexpression_uncached = \
-            IdentityMapper.map_common_subexpression
+    map_common_subexpression_uncached: (
+        Callable[[Self, prim.CommonSubexpression], Expression]) = (
+            IdentityMapper.map_common_subexpression)
