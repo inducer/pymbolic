@@ -1,4 +1,5 @@
 """
+.. autoclass:: ExpressionCallable
 .. autoclass:: DistributeMapper
 .. autofunction:: distribute
 """
@@ -27,9 +28,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
-import pymbolic
+from typing_extensions import override
+
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 from pymbolic.mapper.collector import TermCollector
@@ -37,7 +39,16 @@ from pymbolic.mapper.constant_folder import CommutativeConstantFoldingMapper
 
 
 if TYPE_CHECKING:
-    from pymbolic.typing import Expression
+    from pymbolic.typing import ArithmeticExpression, Expression
+
+
+class ExpressionCallable(Protocol):
+    """Inherits: :class:`typing.Protocol`.
+
+    .. automethod:: __call__
+    """
+
+    def __call__(self, expr: Expression, /) -> Expression: ...
 
 
 class DistributeMapper(IdentityMapper[[]]):
@@ -53,7 +64,12 @@ class DistributeMapper(IdentityMapper[[]]):
         7*x**6 + 21*x**5 + 21*x**2 + 35*x**3 + 1 + 35*x**4 + 7*x + x**7
     """
 
-    def __init__(self, collector=None, const_folder=None) -> None:
+    collector: ExpressionCallable
+    const_folder: ExpressionCallable
+
+    def __init__(self,
+                 collector: ExpressionCallable | None = None,
+                 const_folder: ExpressionCallable | None = None) -> None:
         if collector is None:
             collector = TermCollector()
         if const_folder is None:
@@ -62,22 +78,24 @@ class DistributeMapper(IdentityMapper[[]]):
         self.collector = collector
         self.const_folder = const_folder
 
-    def collect(self, expr):
+    def collect(self, expr: Expression) -> Expression:
         return self.collector(self.const_folder(expr))
 
-    def map_sum(self, expr):
+    @override
+    def map_sum(self, expr: p.Sum, /) -> Expression:
         res = IdentityMapper.map_sum(self, expr)
         if isinstance(res, p.Sum):
             return self.collect(res)
         else:
             return res
 
-    def map_product(self, expr: p.Product) -> Expression:
-        def dist(prod):
+    @override
+    def map_product(self, expr: p.Product, /) -> Expression:
+        def dist(prod: ArithmeticExpression) -> ArithmeticExpression:
             if not isinstance(prod, p.Product):
                 return prod
 
-            leading = []
+            leading: list[ArithmeticExpression] = []
             for i in prod.children:
                 if isinstance(i, p.Sum):
                     break
@@ -86,47 +104,49 @@ class DistributeMapper(IdentityMapper[[]]):
 
             if len(leading) == len(prod.children):
                 # no more sums found
-                result = pymbolic.flattened_product(prod.children)
+                result = p.flattened_product(prod.children)
                 return result
             else:
                 sum = prod.children[len(leading)]
                 assert isinstance(sum, p.Sum)
+
                 rest = prod.children[len(leading)+1:]
                 rest = dist(p.Product(rest)) if rest else 1
 
-                result = self.collect(pymbolic.flattened_sum([
-                       pymbolic.flattened_product(leading) * dist(sumchild*rest)
+                result = self.collect(p.flattened_sum([
+                       p.flattened_product(leading) * dist(sumchild*rest)
                        for sumchild in sum.children
                        ]))
+                assert p.is_arithmetic_expression(result)
+
                 return result
 
         return dist(IdentityMapper.map_product(self, expr))
 
-    def map_quotient(self, expr):
+    @override
+    def map_quotient(self, expr: p.Quotient, /) -> Expression:
         if p.is_zero(expr.numerator - 1):
             return expr
         else:
             # not the smartest thing we can do, but at least *something*
-            return pymbolic.flattened_product([
-                    type(expr)(1, self.rec(expr.denominator)),
-                    self.rec(expr.numerator)
+            return p.flattened_product([
+                    type(expr)(1, self.rec_arith(expr.denominator)),
+                    self.rec_arith(expr.numerator)
                     ])
 
-    def map_power(self, expr: p.Power) -> Expression:
+    @override
+    def map_power(self, expr: p.Power, /) -> Expression:
         from pymbolic.primitives import Sum
 
         newbase = self.rec(expr.base)
         if isinstance(newbase, p.Product):
-            return self.rec(pymbolic.flattened_product([
-                child**expr.exponent
-                    for child in newbase.children
+            return self.rec(p.flattened_product([
+                child**expr.exponent for child in newbase.children
                 ]))
 
         if isinstance(expr.exponent, int):
             if isinstance(newbase, Sum):
-                return self.rec(
-                        pymbolic.flattened_product(
-                            expr.exponent*(newbase,)))
+                return self.rec(p.flattened_product(expr.exponent*(newbase,)))
             else:
                 return IdentityMapper.map_power(self, expr)
         else:
@@ -134,10 +154,13 @@ class DistributeMapper(IdentityMapper[[]]):
 
 
 def distribute(
-            expr: Expression, parameters=None, commutative=True
+            expr: Expression,
+            parameters: frozenset[p.AlgebraicLeaf] | None = None,
+            commutative: bool = True
         ) -> Expression:
     if parameters is None:
         parameters = frozenset()
+
     if commutative:
         return DistributeMapper(TermCollector(parameters))(expr)
     else:
