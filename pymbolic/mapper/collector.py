@@ -26,9 +26,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-import pymbolic
+from typing_extensions import override
+
 import pymbolic.primitives as p
 from pymbolic.mapper import IdentityMapper
 
@@ -48,9 +49,12 @@ class TermCollector(IdentityMapper[[]]):
     coefficients and are not used for term collection.
     """
 
-    def __init__(self, parameters: Set[p.AlgebraicLeaf] | None = None):
+    parameters: Set[p.AlgebraicLeaf]
+
+    def __init__(self, parameters: Set[p.AlgebraicLeaf] | None = None) -> None:
         if parameters is None:
             parameters = set()
+
         self.parameters = parameters
 
     def get_dependencies(self, expr: Expression) -> Dependencies:
@@ -102,8 +106,8 @@ class TermCollector(IdentityMapper[[]]):
             else:
                 base2exp[mybase] = myexp
 
-        coefficients = []
-        cleaned_base2exp = {}
+        coefficients: list[ArithmeticExpression] = []
+        cleaned_base2exp: dict[ArithmeticExpression, ArithmeticExpression] = {}
         for item_base, item_exp in base2exp.items():
             term = item_base**item_exp
             if self.get_dependencies(term) <= self.parameters:
@@ -113,10 +117,13 @@ class TermCollector(IdentityMapper[[]]):
 
         base_exp_set = frozenset(
                 (base, exp) for base, exp in cleaned_base2exp.items())
-        return base_exp_set, cast("ArithmeticExpression",
-                self.rec(pymbolic.flattened_product(coefficients)))
+        coeffs = self.rec(p.flattened_product(coefficients))
+        assert p.is_arithmetic_expression(coeffs)
 
-    def map_sum(self, expr: p.Sum) -> Expression:
+        return base_exp_set, coeffs
+
+    @override
+    def map_sum(self, expr: p.Sum, /) -> Expression:
         term2coeff: dict[
             Set[tuple[ArithmeticExpression, ArithmeticExpression]],
             ArithmeticExpression] = {}
@@ -124,10 +131,12 @@ class TermCollector(IdentityMapper[[]]):
             term, coeff = self.split_term(child)
             term2coeff[term] = term2coeff.get(term, 0) + coeff
 
-        def rep2term(rep):
-            return pymbolic.flattened_product([base**exp for base, exp in rep])
+        def rep2term(
+                rep: Set[tuple[ArithmeticExpression, ArithmeticExpression]]
+            ) -> ArithmeticExpression:
+            return p.flattened_product([base**exp for base, exp in rep])
 
-        result = pymbolic.flattened_sum([
+        result = p.flattened_sum([
             coeff*rep2term(termrep) for termrep, coeff in term2coeff.items()
             ])
         return result
