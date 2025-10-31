@@ -23,10 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import pymbolic.mapper
+from pymbolic.mapper import IdentityMapper
 
 
-class ConstantToNumpyConversionMapper(pymbolic.mapper.IdentityMapper):
+class ConstantToNumpyConversionMapper(IdentityMapper[[]]):
     """Because of `this numpy bug <https://github.com/numpy/numpy/issues/9438>`__,
     sized :mod:`numpy` number (i.e. ones with definite bit width, such as
     :class:`numpy.complex64`) have a low likelihood of surviving expression
