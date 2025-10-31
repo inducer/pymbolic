@@ -23,50 +23,65 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING
 
+from typing_extensions import Self, override
+
+import pymbolic.primitives as prim
 from pymbolic.mapper import IdentityMapper, WalkMapper
-from pymbolic.primitives import CommonSubexpression, cse_scope
 
 
-class CSEWalkMapper(WalkMapper):
-    def __init__(self):
+if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable
+
+    from pymbolic.typing import Expression
+
+
+class CSEWalkMapper(WalkMapper[[]]):
+    subexpr_histogram: dict[Hashable, int]
+
+    def __init__(self) -> None:
         self.subexpr_histogram = {}
 
-    def visit(self, expr):
+    @override
+    def visit(self, expr: object) -> bool:
         self.subexpr_histogram[expr] = self.subexpr_histogram.get(expr, 0) + 1
         return True
 
 
-class CSETagMapper(IdentityMapper):
-    def __init__(self, walk_mapper):
+class CSETagMapper(IdentityMapper[[]]):
+    subexpr_histogram: dict[Hashable, int]
+
+    def __init__(self, walk_mapper: CSEWalkMapper) -> None:
         self.subexpr_histogram = walk_mapper.subexpr_histogram
 
-    def map_call(self, expr):
+    def _map_subexpr(self, expr: prim.ExpressionNode, /) -> Expression:
         if self.subexpr_histogram.get(expr, 0) > 1:
-            return CommonSubexpression(expr, scope=cse_scope.EVALUATION)
+            return prim.CommonSubexpression(expr, scope=prim.cse_scope.EVALUATION)
         else:
             return getattr(IdentityMapper, expr.mapper_method)(self, expr)
 
-    map_sum = map_call
-    map_product = map_call
-    map_quotient = map_call
-    map_floor_div = map_call
-    map_remainder = map_call
-    map_power = map_call
+    map_call: Callable[[Self, prim.Call], Expression] = _map_subexpr
+    map_sum: Callable[[Self, prim.Sum], Expression] = _map_subexpr
+    map_product: Callable[[Self, prim.Product], Expression] = _map_subexpr
+    map_quotient: Callable[[Self, prim.Quotient], Expression] = _map_subexpr
+    map_floor_div: Callable[[Self, prim.FloorDiv], Expression] = _map_subexpr
+    map_remainder: Callable[[Self, prim.Remainder], Expression] = _map_subexpr
+    map_power: Callable[[Self, prim.Power], Expression] = _map_subexpr
 
-    map_left_shift = map_call
-    map_right_shift = map_call
+    map_left_shift: Callable[[Self, prim.LeftShift], Expression] = _map_subexpr
+    map_right_shift: Callable[[Self, prim.RightShift], Expression] = _map_subexpr
 
-    map_bitwise_not = map_call
-    map_bitwise_or = map_call
-    map_bitwise_xor = map_call
-    map_bitwise_and = map_call
+    map_bitwise_not: Callable[[Self, prim.BitwiseNot], Expression] = _map_subexpr
+    map_bitwise_or: Callable[[Self, prim.BitwiseOr], Expression] = _map_subexpr
+    map_bitwise_xor: Callable[[Self, prim.BitwiseXor], Expression] = _map_subexpr
+    map_bitwise_and: Callable[[Self, prim.BitwiseAnd], Expression] = _map_subexpr
 
-    map_comparison = map_call
+    map_comparison: Callable[[Self, prim.Comparison], Expression] = _map_subexpr
 
-    map_logical_not = map_call
-    map_logical_and = map_call
-    map_logical_or = map_call
+    map_logical_not: Callable[[Self, prim.LogicalNot], Expression] = _map_subexpr
+    map_logical_and: Callable[[Self, prim.LogicalAnd], Expression] = _map_subexpr
+    map_logical_or: Callable[[Self, prim.LogicalOr], Expression] = _map_subexpr
 
-    map_if = map_call
-    map_if_positive = map_call
+    map_if: Callable[[Self, prim.If], Expression] = _map_subexpr
+    map_if_positive: Callable[[Self, prim.If], Expression] = _map_subexpr
