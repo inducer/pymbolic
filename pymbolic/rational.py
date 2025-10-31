@@ -122,7 +122,7 @@ class Rational(primitives.ExpressionNode):
     def __getinitargs__(self):
         return (self.Numerator, self.Denominator)
 
-    def reciprocal(self):
+    def reciprocal(self) -> Rational:
         return Rational(self.Denominator, self.Numerator)
 
     mapper_method = intern("map_rational")
