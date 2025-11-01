@@ -26,7 +26,7 @@ THE SOFTWARE.
 import ast
 import contextlib
 from functools import cached_property, lru_cache
-from typing import TYPE_CHECKING, TextIO, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TextIO, TypeVar, cast
 
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ def _get_ast_for_module_name(module_name: str) -> ast.Module:
     return _get_ast_for_file(_get_file_name_for_module_name(module_name))
 
 
-def _get_module_ast_for_object(obj):
+def _get_module_ast_for_object(obj: object) -> ast.Module:
     return _get_ast_for_module_name(obj.__module__)
 
 
@@ -87,7 +87,7 @@ def _get_ast_for_class(cls: type) -> ast.ClassDef:
             mod_ast.body, cls.__name__, ast.ClassDef)
 
 
-def _get_ast_for_method(f: Callable) -> ast.FunctionDef:
+def _get_ast_for_method(f: Callable[..., Any]) -> ast.FunctionDef:
     dot_components = f.__qualname__.split(".")
     assert dot_components[-1] == f.__name__
     cls_name, = dot_components[:-1]
