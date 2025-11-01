@@ -222,7 +222,7 @@ class Mapper(Generic[ResultT, P]):
     def map_algebraic_leaf(self,
             expr: p.AlgebraicLeaf, /,
             *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_variable(self,
             expr: p.Variable, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
@@ -247,110 +247,110 @@ class Mapper(Generic[ResultT, P]):
 
     def map_if(self,
             expr: p.If, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_sum(self,
             expr: p.Sum, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_product(self,
             expr: p.Product, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_rational(self,
             expr: Rational, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_quotient(self,
             expr: p.Quotient, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_floor_div(self,
             expr: p.FloorDiv, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_remainder(self,
             expr: p.Remainder, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_power(self,
             expr: p.Power, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_constant(self,
             expr: object, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_comparison(self,
             expr: p.Comparison, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_min(self,
             expr: p.Min, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_max(self,
             expr: p.Max, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_list(self,
             expr: list[Expression], /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_tuple(self,
             expr: tuple[Expression, ...], /,
             *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_numpy_array(self,
             expr: NDArray[np.generic], /,
             *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_left_shift(self,
             expr: p.LeftShift, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_right_shift(self,
                 expr: p.RightShift, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_bitwise_not(self,
                 expr: p.BitwiseNot, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_bitwise_or(self,
                 expr: p.BitwiseOr, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_bitwise_and(self,
                 expr: p.BitwiseAnd, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_bitwise_xor(self,
                 expr: p.BitwiseXor, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_logical_not(self,
                 expr: p.LogicalNot, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_logical_or(self,
                 expr: p.LogicalOr, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_logical_and(self,
                 expr: p.LogicalAnd, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_nan(self,
                 expr: p.NaN, /, *args: P.args, **kwargs: P.kwargs
@@ -360,26 +360,26 @@ class Mapper(Generic[ResultT, P]):
     def map_wildcard(self,
                 expr: p.Wildcard, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_dot_wildcard(self,
                 expr: p.DotWildcard, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_star_wildcard(self, expr: p.StarWildcard, /,
                      *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_function_symbol(self, expr: p.FunctionSymbol, /,
                      *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_multivector(self,
                 expr: MultiVector[ArithmeticExpression], /,
                 *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     # def map_common_subexpression deliberately unimplemented to avoid breaking
     # multiple inheritance with CSE-caching mappers
@@ -387,17 +387,17 @@ class Mapper(Generic[ResultT, P]):
     def map_substitution(self,
                  expr: p.Substitution, /,
                  *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_derivative(self,
                 expr: p.Derivative, /,
                 *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_slice(self,
                 expr: p.Slice, /,
                 *args: P.args, **kwargs: P.kwargs) -> ResultT:
-        raise NotImplementedError
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_foreign(self,
                 expr: object, /,
@@ -501,10 +501,7 @@ class CombineMapper(Mapper[ResultT, P]):
     the current expression, and then call :meth:`combine` on a tuple of
     results.
 
-    .. method:: combine(values)
-
-        Combine the mapped results of multiple expressions (given in *values*)
-        into a single result, often by summing or taking set unions.
+    .. automethod:: combine
 
     The :class:`pymbolic.mapper.flop_counter.FlopCounter` is a very simple
     example.  (Look at its source for an idea of how to derive from
@@ -513,7 +510,10 @@ class CombineMapper(Mapper[ResultT, P]):
     """
 
     def combine(self, values: Iterable[ResultT], /) -> ResultT:
-        raise NotImplementedError
+        """Combine the mapped results of multiple expressions (given in *values*)
+        into a single result, often by summing or taking set unions.
+        """
+        raise NotImplementedError(type(self).__name__)
 
     @override
     def map_call(self,
@@ -1650,7 +1650,7 @@ class CSECachingMapperMixin(ABC, Generic[ResultT, P]):
     :class:`pymbolic.primitives.CommonSubexpression`,
     subclasses should implement the following method:
 
-    .. method:: map_common_subexpression_uncached(expr)
+    .. automethod:: map_common_subexpression_uncached
 
     This method deliberately does not support extra arguments in mapper
     dispatch, to avoid spurious dependencies of the cache on these arguments.
