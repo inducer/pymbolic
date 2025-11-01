@@ -163,7 +163,7 @@ class Mapper(Generic[ResultT, P]):
     """
 
     def handle_unsupported_expression(self,
-            expr: object, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+            expr: p.ExpressionNode, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Mapper method that is invoked for
         :class:`pymbolic.ExpressionNode` subclasses for which a mapper
         method does not exist in this mapper.
