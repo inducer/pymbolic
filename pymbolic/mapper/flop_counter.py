@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 from typing import TYPE_CHECKING
 
-from typing_extensions import override
+from typing_extensions import Self, override
 
 import pymbolic.primitives as p
 from pymbolic.mapper import CachedMapper, CombineMapper
@@ -33,7 +33,7 @@ from pymbolic.typing import ArithmeticExpression
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class FlopCounterBase(CombineMapper[ArithmeticExpression, []]):
@@ -56,13 +56,13 @@ class FlopCounterBase(CombineMapper[ArithmeticExpression, []]):
         else:
             return 0
 
-    map_product = map_sum
+    map_product: Callable[[Self, p.Product], ArithmeticExpression] = map_sum
 
     @override
     def map_quotient(self, expr: p.Quotient | p.FloorDiv) -> ArithmeticExpression:
         return 1 + self.rec(expr.numerator) + self.rec(expr.denominator)
 
-    map_floor_div = map_quotient
+    map_floor_div: Callable[[Self, p.FloorDiv], ArithmeticExpression] = map_quotient
 
     @override
     def map_power(self, expr: p.Power) -> ArithmeticExpression:
