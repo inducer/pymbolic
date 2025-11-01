@@ -39,10 +39,7 @@ from pymbolic.mapper import IdentityMapper
 
 
 if TYPE_CHECKING:
-    from pymbolic.typing import (
-        ArithmeticOrExpressionT,
-        Expression,
-    )
+    from pymbolic.typing import ArithmeticOrExpressionT, Expression
 
 
 class FlattenMapper(IdentityMapper[[]]):
