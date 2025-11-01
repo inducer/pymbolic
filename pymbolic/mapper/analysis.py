@@ -23,8 +23,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING
+
+from typing_extensions import override
 
 from pymbolic.mapper import CachedWalkMapper
+
+
+if TYPE_CHECKING:
+    from pymbolic.typing import Expression
 
 
 __doc__ = """
@@ -35,7 +42,7 @@ __doc__ = """
 
 # {{{ NodeCountMapper
 
-class NodeCountMapper(CachedWalkMapper):
+class NodeCountMapper(CachedWalkMapper[[]]):
     """
     Counts the number of nodes in an expression tree. Nodes that occur
     repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
@@ -46,18 +53,23 @@ class NodeCountMapper(CachedWalkMapper):
        The number of nodes.
     """
 
+    count: int
+
     def __init__(self) -> None:
         super().__init__()
         self.count = 0
 
-    def post_visit(self, expr) -> None:
+    @override
+    def post_visit(self, expr: object) -> None:
         self.count += 1
 
 
-def get_num_nodes(expr) -> int:
-    """Returns the number of nodes in *expr*. Nodes that occur
-    repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
-    nodes are only counted once."""
+def get_num_nodes(expr: Expression) -> int:
+    """
+    :returns: the number of nodes in *expr*. Nodes that occur
+        repeatedly as well as :class:`~pymbolic.primitives.CommonSubexpression`
+        nodes are only counted once.
+    """
 
     ncm = NodeCountMapper()
     ncm(expr)

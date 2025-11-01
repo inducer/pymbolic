@@ -55,6 +55,11 @@ class DependencyMapper(
     instances are included.
     """
 
+    include_subscripts: bool
+    include_lookups: bool
+    include_calls: bool | Literal["descend_args"]
+    include_cses: bool
+
     def __init__(
         self,
         include_subscripts: bool = True,
@@ -87,13 +92,13 @@ class DependencyMapper(
 
     @override
     def map_variable(
-        self, expr: p.Variable, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Variable, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         return {expr}
 
     @override
     def map_call(
-        self, expr: p.Call, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Call, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         if self.include_calls == "descend_args":
             return self.combine([
@@ -106,14 +111,14 @@ class DependencyMapper(
 
     @override
     def map_call_with_kwargs(
-        self, expr: p.CallWithKwargs, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.CallWithKwargs, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         if self.include_calls == "descend_args":
             return self.combine(
                 [self.rec(child, *args, **kwargs) for child in expr.parameters]
                 + [
                     self.rec(val, *args, **kwargs)
-                    for name, val in expr.kw_parameters.items()
+                    for _name, val in expr.kw_parameters.items()
                 ]
             )
         elif self.include_calls:
@@ -123,7 +128,7 @@ class DependencyMapper(
 
     @override
     def map_lookup(
-        self, expr: p.Lookup, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Lookup, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         if self.include_lookups:
             return {expr}
@@ -132,7 +137,7 @@ class DependencyMapper(
 
     @override
     def map_subscript(
-        self, expr: p.Subscript, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Subscript, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         if self.include_subscripts:
             return {expr}
@@ -141,7 +146,7 @@ class DependencyMapper(
 
     @override
     def map_common_subexpression_uncached(
-        self, expr: p.CommonSubexpression, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.CommonSubexpression, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         if self.include_cses:
             return {expr}
@@ -150,7 +155,7 @@ class DependencyMapper(
 
     @override
     def map_slice(
-        self, expr: p.Slice, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Slice, /, *args: P.args, **kwargs: P.kwargs
     ) -> Dependencies:
         return self.combine([
             self.rec(child, *args, **kwargs)
@@ -159,7 +164,8 @@ class DependencyMapper(
         ])
 
     @override
-    def map_nan(self, expr: p.NaN, *args: P.args, **kwargs: P.kwargs) -> Dependencies:
+    def map_nan(self, expr: p.NaN, /,
+                *args: P.args, **kwargs: P.kwargs) -> Dependencies:
         return set()
 
 

@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class MultiVectorVariable(Variable):
-    mapper_method = "map_multivector_variable"
+    mapper_method: ClassVar[str] = "map_multivector_variable"
 
 
 # {{{ geometric calculus

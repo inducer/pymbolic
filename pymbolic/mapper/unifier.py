@@ -107,9 +107,8 @@ class UnificationRecord:
 
     @override
     def __repr__(self) -> str:
-        return "UnificationRecord({})".format(
-                ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
-                )
+        eqs = ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
+        return f"{type(self).__name__}({eqs})"
 
 
 def unify_many(
@@ -163,7 +162,7 @@ class UnifierBase(Mapper[
                 other: Expression,
                 urecs: Sequence[UnificationRecord]
             ) -> Sequence[UnificationRecord]:
-        raise NotImplementedError
+        pass
 
     def unification_record_from_equation(
                 self, lhs: Expression, rhs: Expression) -> UnificationRecord | None:

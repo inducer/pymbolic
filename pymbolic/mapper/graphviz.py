@@ -26,10 +26,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING
+
+from typing_extensions import Self, override
+
 from pymbolic.mapper import WalkMapper
 
 
-class GraphvizMapper(WalkMapper):
+if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable
+
+    import pymbolic.primitives as prim
+    from pymbolic.geometric_algebra.primitives import Nabla, NablaComponent
+
+
+class GraphvizMapper(WalkMapper[[]]):
     """Produces code for `dot <https://graphviz.org>`__ that yields
     an expression tree of the traversed expression(s).
 
@@ -38,7 +49,14 @@ class GraphvizMapper(WalkMapper):
     .. versionadded:: 2015.1
     """
 
-    def __init__(self):
+    lines: list[str]
+    parent_stack: list[Hashable]
+
+    next_unique_id: int
+    nodes_visited: set[int]
+    common_subexpressions: dict[prim.CommonSubexpression, prim.CommonSubexpression]
+
+    def __init__(self) -> None:
         self.lines = []
         self.parent_stack = []
 
@@ -46,21 +64,21 @@ class GraphvizMapper(WalkMapper):
         self.nodes_visited = set()
         self.common_subexpressions = {}
 
-    def get_dot_code(self):
+    def get_dot_code(self) -> str:
         """Return the dot source code for a previously traversed expression."""
 
-        return "digraph expression {\n%s\n}" % (
-            "\n".join("  "+line for line in self.lines))
+        lines = "\n".join(f"  {line}" for line in self.lines)
+        return f"digraph expression {{\n{lines}\n}}"
 
-    def get_id(self, expr):
+    def get_id(self, expr: object) -> str:
         """Generate a unique node ID for dot for *expr*"""
 
         return f"id{id(expr)}"
 
-    def map_leaf(self, expr):
-        self.lines.append(
-                '{} [label="{}", shape=box];'.format(
-                    self.get_id(expr), str(expr).replace("\\", "\\\\")))
+    def map_leaf(self, expr: prim.ExpressionNode):
+        sid = self.get_id(expr)
+        sexpr = str(expr).replace("\\", "\\\\")
+        self.lines.append(f'{sid} [label="{sexpr}", shape=box];')
 
         if self.visit(expr, node_printed=True):
             self.post_visit(expr)
@@ -69,16 +87,19 @@ class GraphvizMapper(WalkMapper):
         self.next_unique_id += 1
         return f"uid{self.next_unique_id}"
 
-    def visit(self, expr, node_printed=False, node_id=None):
+    @override
+    def visit(self,
+              expr: object, /,
+              node_printed: bool = False,
+              node_id: str | None = None) -> bool:
         # {{{ print connectivity
 
         if node_id is None:
             node_id = self.get_id(expr)
 
         if self.parent_stack:
-            self.lines.append("{} -> {};".format(
-                self.get_id(self.parent_stack[-1]),
-                node_id))
+            sid = self.get_id(self.parent_stack[-1])
+            self.lines.append(f"{sid} -> {node_id};")
 
         # }}}
 
@@ -87,20 +108,20 @@ class GraphvizMapper(WalkMapper):
         self.nodes_visited.add(id(expr))
 
         if not node_printed:
-            self.lines.append(
-                    '{} [label="{}"];'.format(
-                        self.get_id(expr),
-                        type(expr).__name__))
+            sid = self.get_id(expr)
+            self.lines.append(f'{sid} [label="{type(expr).__name__}"];')
 
         self.parent_stack.append(expr)
         return True
 
-    def post_visit(self, expr):
+    @override
+    def post_visit(self, expr: object, /) -> None:
         self.parent_stack.pop(-1)
 
-    def map_sum(self, expr):
-        self.lines.append(
-                '{} [label="+",shape=circle];'.format(self.get_id(expr)))
+    @override
+    def map_sum(self, expr: prim.Sum, /) -> None:
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="+",shape=circle];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -109,9 +130,10 @@ class GraphvizMapper(WalkMapper):
 
         self.post_visit(expr)
 
-    def map_product(self, expr):
-        self.lines.append(
-                '{} [label="*",shape=circle];'.format(self.get_id(expr)))
+    @override
+    def map_product(self, expr: prim.Product, /) -> None:
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="*",shape=circle];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -120,55 +142,52 @@ class GraphvizMapper(WalkMapper):
 
         self.post_visit(expr)
 
-    def map_variable(self, expr):
+    @override
+    def map_variable(self, expr: prim.Variable, /) -> None:
         # Shared nodes for variables do not make for pretty graphs.
         # So we generate our own unique IDs for them.
 
         node_id = self.generate_unique_id()
 
-        self.lines.append(
-                '{} [label="{}",shape=box];'.format(
-                    node_id,
-                    expr.name))
+        self.lines.append(f'{node_id} [label="{expr.name}",shape=box];')
         if not self.visit(expr, node_printed=True, node_id=node_id):
             return
 
         self.post_visit(expr)
 
-    def map_lookup(self, expr):
-        self.lines.append(
-                '{} [label="Lookup[{}]",shape=box];'.format(
-                    self.get_id(expr), expr.name))
+    @override
+    def map_lookup(self, expr: prim.Lookup, /) -> None:
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="Lookup[{expr.name}]",shape=box];')
         if not self.visit(expr, node_printed=True):
             return
 
         self.rec(expr.aggregate)
         self.post_visit(expr)
 
-    def map_constant(self, expr):
+    @override
+    def map_constant(self, expr: object) -> None:
         # Some constants (Python ints notably) are shared among small (and
         # common) values. While accurate, this doesn't make for pretty
         # trees. So we generate our own unique IDs for them.
 
         node_id = self.generate_unique_id()
 
-        self.lines.append(
-                '{} [label="{}",shape=ellipse];'.format(
-                    node_id,
-                    str(expr)))
+        self.lines.append(f'{node_id} [label="{expr}",shape=ellipse];')
         if not self.visit(expr, node_printed=True, node_id=node_id):
             return
 
         self.post_visit(expr)
 
-    def map_call(self, expr):
+    @override
+    def map_call(self, expr: prim.Call) -> None:
         from pymbolic.primitives import Variable
+
         if not isinstance(expr.function, Variable):
             return super().map_call(expr)
 
-        self.lines.append(
-                '{} [label="Call[{}]",shape=box];'.format(
-                    self.get_id(expr), str(expr.function)))
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="Call[{expr.function}]",shape=box];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -177,7 +196,8 @@ class GraphvizMapper(WalkMapper):
 
         self.post_visit(expr)
 
-    def map_common_subexpression(self, expr):
+    @override
+    def map_common_subexpression(self, expr: prim.CommonSubexpression) -> None:
         try:
             expr = self.common_subexpressions[expr]
         except KeyError:
@@ -192,7 +212,7 @@ class GraphvizMapper(WalkMapper):
 
     # {{{ geometric algebra
 
-    map_nabla_component = map_leaf
-    map_nabla = map_leaf
+    map_nabla_component: Callable[[Self, NablaComponent], None] = map_leaf
+    map_nabla: Callable[[Self, Nabla], None] = map_leaf
 
     # }}}

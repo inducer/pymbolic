@@ -23,49 +23,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING
 
 import pymbolic.primitives as p
 
 
-def sin(x):
+if TYPE_CHECKING:
+    from pymbolic.typing import ArithmeticExpression
+
+
+def sin(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "sin"), (x,))
 
 
-def cos(x):
+def cos(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "cos"), (x,))
 
 
-def tan(x):
+def tan(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "tan"), (x,))
 
 
-def log(x):
+def log(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "log"), (x,))
 
 
-def exp(x):
+def exp(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "exp"), (x,))
 
 
-def sinh(x):
+def sinh(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "sinh"), (x,))
 
 
-def cosh(x):
+def cosh(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "cosh"), (x,))
 
 
-def tanh(x):
+def tanh(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "tanh"), (x,))
 
 
-def expm1(x):
+def expm1(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "expm1"), (x,))
 
 
-def fabs(x):
+def fabs(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "fabs"), (x,))
 
 
-def sign(x):
+def sign(x: ArithmeticExpression) -> ArithmeticExpression:
     return p.Call(p.Lookup(p.Variable("math"), "copysign"), (1, x,))

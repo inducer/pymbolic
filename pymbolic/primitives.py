@@ -1738,19 +1738,22 @@ def flattened_product(terms: Iterable[ArithmeticExpression]) -> ArithmeticExpres
         return Product(tuple(done))
 
 
-def quotient(numerator, denominator):
+def quotient(numerator: ArithmeticExpression,
+             denominator: ArithmeticExpression) -> ArithmeticExpression:
     if not (denominator-1):
         return numerator
 
-    import pymbolic.rational as rat
-    if isinstance(numerator, rat.Rational) and \
-            isinstance(denominator, rat.Rational):
+    from pymbolic.rational import Rational
+
+    if (
+            isinstance(numerator, Rational)
+            and isinstance(denominator, Rational)):
         return numerator * denominator.reciprocal()
 
     try:
         c_traits = traits.common_traits(numerator, denominator)
         if isinstance(c_traits, traits.EuclideanRingTraits):
-            return rat.Rational(numerator, denominator)
+            return Rational(numerator, denominator)
     except traits.NoCommonTraitsError:
         pass
     except traits.NoTraitsError:
