@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-from typing import TYPE_CHECKING, ClassVar, Concatenate
+from typing import TYPE_CHECKING, Any, ClassVar, Concatenate
 from warnings import warn
 
 from typing_extensions import deprecated, override
@@ -34,13 +34,13 @@ from pymbolic.mapper import CachedMapper, Mapper, P
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
     import numpy as np
     from numpy.typing import NDArray
 
     from pymbolic.geometric_algebra import MultiVector
-    from pymbolic.typing import Expression
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 __doc__ = """
@@ -68,11 +68,7 @@ Mappers
 *******
 
 .. autoclass:: StringifyMapper
-
-    .. automethod:: __call__
-
 .. autoclass:: CSESplittingStringifyMapperMixin
-
 .. autoclass:: LaTeXMapper
 """
 
@@ -105,6 +101,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     When it encounters an unsupported :class:`pymbolic.ExpressionNode`
     subclass, it calls its :meth:`pymbolic.ExpressionNode.make_stringifier`
     method to get a :class:`StringifyMapper` that potentially does.
+
+    .. automethod:: __call__
     """
 
     # {{{ replaceable string composition interface
@@ -118,7 +116,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     # {{{ deprecated junk
 
     @deprecated("interface not type-safe, use rec_with_parens_around_types")
-    def rec_with_force_parens_around(self, expr, *args, **kwargs):
+    def rec_with_force_parens_around(
+                self, expr, *args: P.args, **kwargs: P.kwargs) -> str:
         warn(
             "rec_with_force_parens_around is deprecated and will be removed in 2025. "
             "Use rec_with_parens_around_types instead. ",
@@ -142,8 +141,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         joiner: str,
         seq: Sequence[Expression],
         prec: int,
-        *args,
-        **kwargs,  # force_with_parens_around may hide in here
+        *args: P.args,
+        **kwargs: P.kwargs,  # force_with_parens_around may hide in here
     ) -> str:
         f = joiner.join("%s" for _ in seq)
 
@@ -219,16 +218,18 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def handle_unsupported_expression(
-        self, expr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.ExpressionNode,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         strifier = expr.make_stringifier(self)
         if isinstance(self, type(strifier)):
             raise ValueError(f"stringifier '{self}' can't handle '{expr.__class__}'")
+
         return strifier(expr, enclosing_prec, *args, **kwargs)
 
     @override
     def map_constant(
-        self, expr: object, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: object, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         result = str(expr)
 
@@ -242,21 +243,19 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             return result
 
     @override
-    def map_variable(
-        self, expr: p.Variable, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
-    ) -> str:
+    def map_variable(self, expr: p.Variable, /,
+                     enclosing_prec: int, *args: P.args, **kwargs: P.kwargs) -> str:
         return expr.name
 
     @override
-    def map_wildcard(
-        self, expr: p.Wildcard, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
-    ) -> str:
+    def map_wildcard(self, expr: p.Wildcard, /,
+                     enclosing_prec: int, *args: P.args, **kwargs: P.kwargs) -> str:
         return "*"
 
     @override
     def map_function_symbol(
         self,
-        expr: p.FunctionSymbol,
+        expr: p.FunctionSymbol, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -265,7 +264,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_call(
-        self, expr: p.Call, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Call, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.format(
             "%s(%s)",
@@ -276,7 +275,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_call_with_kwargs(
         self,
-        expr: p.CallWithKwargs,
+        expr: p.CallWithKwargs, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -295,7 +294,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_subscript(
-        self, expr: p.Subscript, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Subscript, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         if isinstance(expr.index, tuple):
             index_str = self.join_rec(", ", expr.index, PREC_NONE, *args, **kwargs)
@@ -314,7 +314,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_lookup(
-        self, expr: p.Lookup, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Lookup, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -326,7 +327,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_sum(
-        self, expr: p.Sum, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Sum, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec(" + ", expr.children, PREC_SUM, *args, **kwargs),
@@ -336,11 +337,12 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     # {{{ multiplicative operators
 
-    multiplicative_primitives = (p.Product, p.Quotient, p.FloorDiv, p.Remainder)
+    multiplicative_primitives: tuple[type[p.ExpressionNode], ...] = (
+        p.Product, p.Quotient, p.FloorDiv, p.Remainder)
 
     @override
     def map_product(
-        self, expr: p.Product, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Product, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec_with_parens_around_types(
@@ -357,7 +359,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_quotient(
-        self, expr: p.Quotient, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Quotient, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -385,7 +388,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_floor_div(
-        self, expr: p.FloorDiv, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.FloorDiv, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -411,7 +415,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_remainder(
-        self, expr: p.Remainder, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Remainder, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -439,7 +444,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_power(
-        self, expr: p.Power, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Power, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -453,7 +459,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_left_shift(
-        self, expr: p.LeftShift, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.LeftShift, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             # +1 to address
@@ -469,11 +476,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_right_shift(
-        self,
-        expr: p.RightShift,
-        enclosing_prec: int,
-        *args: P.args,
-        **kwargs: P.kwargs,
+        self, expr: p.RightShift, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs,
     ) -> str:
         return self.parenthesize_if_needed(
             # +1 to address
@@ -490,7 +494,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_bitwise_not(
         self,
-        expr: p.BitwiseNot,
+        expr: p.BitwiseNot, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -503,7 +507,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_bitwise_or(
-        self, expr: p.BitwiseOr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.BitwiseOr, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec(" | ", expr.children, PREC_BITWISE_OR, *args, **kwargs),
@@ -514,7 +519,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_bitwise_xor(
         self,
-        expr: p.BitwiseXor,
+        expr: p.BitwiseXor, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -528,7 +533,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_bitwise_and(
         self,
-        expr: p.BitwiseAnd,
+        expr: p.BitwiseAnd, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -541,7 +546,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_comparison(
-        self, expr: p.Comparison, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Comparison, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -557,7 +563,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_logical_not(
         self,
-        expr: p.LogicalNot,
+        expr: p.LogicalNot, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -570,7 +576,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_logical_or(
-        self, expr: p.LogicalOr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.LogicalOr, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec(" or ", expr.children, PREC_LOGICAL_OR, *args, **kwargs),
@@ -581,7 +588,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_logical_and(
         self,
-        expr: p.LogicalAnd,
+        expr: p.LogicalAnd, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -595,7 +602,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_list(
         self,
-        expr: list[Expression],
+        expr: list[Expression], /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -604,12 +611,10 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
             "[%s]", self.join_rec(", ", expr, PREC_NONE, *args, **kwargs)
         )
 
-    map_vector = map_list
-
     @override
     def map_tuple(
         self,
-        expr: tuple[Expression, ...],
+        expr: tuple[Expression, ...], /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -625,7 +630,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_numpy_array(
         self,
-        expr: NDArray[np.generic],
+        expr: NDArray[np.generic], /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -655,7 +660,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_multivector(
         self,
-        expr: MultiVector,
+        expr: MultiVector[Any], /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -664,14 +669,14 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     def map_common_subexpression(
         self,
-        expr: p.CommonSubexpression,
+        expr: p.CommonSubexpression, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> str:
-        from pymbolic.primitives import CommonSubexpression
-
-        type_name = "CSE" if type(expr) is CommonSubexpression else type(expr).__name__
+        type_name = (
+                "CSE" if type(expr) is p.CommonSubexpression
+                else type(expr).__name__)
 
         return self.format(
             "%s(%s)", type_name, self.rec(expr.child, PREC_NONE, *args, **kwargs)
@@ -679,7 +684,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_if(
-        self, expr: p.If, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.If, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             "{} if {} else {}".format(
@@ -693,7 +699,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_min(
-        self, expr: p.Min, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Min, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         what = type(expr).__name__.lower()
         return self.format(
@@ -704,7 +710,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_max(
-        self, expr: p.Max, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Max, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         what = type(expr).__name__.lower()
         return self.format(
@@ -715,7 +721,8 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_derivative(
-        self, expr: p.Derivative, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Derivative, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         derivs = " ".join(f"d/d{v}" for v in expr.variables)
 
@@ -726,7 +733,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     @override
     def map_substitution(
         self,
-        expr: p.Substitution,
+        expr: p.Substitution, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -740,9 +747,9 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_slice(
-        self, expr: p.Slice, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Slice, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
-        children = []
+        children: list[str] = []
         for child in expr.children:
             if child is None:
                 children.append("")
@@ -755,14 +762,15 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
 
     @override
     def map_nan(
-        self, expr: p.NaN, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.NaN, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return "NaN"
 
     # }}}
 
     @override
-    def __call__(self, expr, prec=PREC_NONE, *args: P.args, **kwargs: P.kwargs) -> str:
+    def __call__(self, expr: Expression, /, prec: int = PREC_NONE,
+                 *args: P.args, **kwargs: P.kwargs) -> str:
         """Return a string corresponding to *expr*. If the enclosing
         precedence level *prec* is higher than *prec* (see :ref:`prec-constants`),
         parenthesize the result.
@@ -771,13 +779,16 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         return Mapper.__call__(self, expr, prec, *args, **kwargs)
 
 
-class CachedStringifyMapper(StringifyMapper[P], CachedMapper):
+class CachedStringifyMapper(StringifyMapper[P],
+                            CachedMapper[str, Concatenate[int, P]]):
     def __init__(self) -> None:
         StringifyMapper.__init__(self)
         CachedMapper.__init__(self)
 
-    def __call__(self, expr, prec=PREC_NONE, *args: P.args, **kwargs: P.kwargs) -> str:
-        return CachedMapper.__call__(expr, prec, *args, **kwargs)
+    @override
+    def __call__(self, expr: Expression, /, prec: int = PREC_NONE,
+                 *args: P.args, **kwargs: P.kwargs) -> str:
+        return CachedMapper.__call__(self, expr, prec, *args, **kwargs)
 
 
 # }}}
@@ -823,7 +834,7 @@ class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
 
     def map_common_subexpression(
         self,
-        expr: p.CommonSubexpression,
+        expr: p.CommonSubexpression, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -835,24 +846,28 @@ class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
 
             if expr.prefix is not None:
 
-                def generate_cse_names():
+                def generate_cse_names() -> Iterator[str]:
+                    assert expr.prefix is not None
+
                     yield expr.prefix
                     i = 2
                     while True:
-                        yield expr.prefix + f"_{i}"
+                        yield f"{expr.prefix}_{i}"
                         i += 1
 
             else:
 
-                def generate_cse_names():
+                def generate_cse_names() -> Iterator[str]:
                     i = 0
                     while True:
                         yield "CSE" + str(i)
                         i += 1
 
+            cse_name = None
             for cse_name in generate_cse_names():
                 if cse_name not in self.cse_names:
                     break
+            assert cse_name is not None
 
             self.cse_name_list.append((cse_name, str_child))
             self.cse_to_name[expr.child] = cse_name
@@ -861,9 +876,10 @@ class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
         return cse_name
 
     def get_cse_strings(self) -> list[str]:
+        cse_name_list: list[tuple[str, str]] = getattr(self, "cse_name_list", [])
         return [
             f"{cse_name} : {cse_str}"
-            for cse_name, cse_str in sorted(getattr(self, "cse_name_list", []))
+            for cse_name, cse_str in sorted(cse_name_list)
         ]
 
 
@@ -874,19 +890,23 @@ class CSESplittingStringifyMapperMixin(Mapper[str, Concatenate[int, P]]):
 
 
 class SortingStringifyMapper(StringifyMapper[P]):
-    def __init__(self, reverse=True):
+    reverse: bool
+
+    def __init__(self, reverse: bool = True) -> None:
         super().__init__()
         self.reverse = reverse
 
+    @override
     def map_sum(
-        self, expr: p.Sum, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Sum, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         entries = [self.rec(i, PREC_SUM, *args, **kwargs) for i in expr.children]
         entries.sort(reverse=self.reverse)
         return self.parenthesize_if_needed("+".join(entries), enclosing_prec, PREC_SUM)
 
+    @override
     def map_product(
-        self, expr: p.Product, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Product, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         entries = [self.rec(i, PREC_PRODUCT, *args, **kwargs) for i in expr.children]
         entries.sort(reverse=self.reverse)
@@ -902,31 +922,32 @@ class SortingStringifyMapper(StringifyMapper[P]):
 
 
 class SimplifyingSortingStringifyMapper(StringifyMapper[P]):
-    def __init__(self, reverse=True):
+    reverse: bool
+
+    def __init__(self, reverse: bool = True) -> None:
         super().__init__()
         self.reverse = reverse
 
+    @override
     def map_sum(
-        self, expr: p.Sum, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Sum, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
-        def get_neg_product(expr):
-            from pymbolic.primitives import Product, is_zero
-
+        def get_neg_product(expr: ArithmeticExpression) -> ArithmeticExpression | None:
             if (
-                isinstance(expr, Product)
+                isinstance(expr, p.Product)
                 and len(expr.children)
-                and is_zero(expr.children[0] + 1)
+                and p.is_zero(expr.children[0] + 1)
             ):
                 if len(expr.children) == 2:
                     # only the minus sign and the other child
                     return expr.children[1]
                 else:
-                    return Product(expr.children[1:])
+                    return p.Product(expr.children[1:])
             else:
                 return None
 
-        positives = []
-        negatives = []
+        positives: list[str] = []
+        negatives: list[str] = []
 
         for ch in expr.children:
             neg_prod = get_neg_product(ch)
@@ -944,10 +965,11 @@ class SimplifyingSortingStringifyMapper(StringifyMapper[P]):
 
         return self.parenthesize_if_needed(result, enclosing_prec, PREC_SUM)
 
+    @override
     def map_product(
-        self, expr: p.Product, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Product, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
-        entries = []
+        entries: list[str] = []
         i = 0
 
         while i < len(expr.children):
@@ -955,7 +977,7 @@ class SimplifyingSortingStringifyMapper(StringifyMapper[P]):
             if False:
                 # NOTE: That space needs to be there.
                 # Otherwise two unary minus signs merge into a pre-decrement.
-                entries.append(
+                entries.append(  # pyright: ignore[reportUnreachable]
                     self.format(
                         "- %s",
                         self.rec(expr.children[i + 1], PREC_UNARY, *args, **kwargs),
@@ -988,8 +1010,10 @@ class LaTeXMapper(StringifyMapper[P]):
         ">": r">",
     }
 
+    @override
     def map_remainder(
-        self, expr: p.Remainder, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Remainder, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.format(
             r"(%s \bmod %s)",
@@ -997,8 +1021,10 @@ class LaTeXMapper(StringifyMapper[P]):
             self.rec(expr.denominator, PREC_POWER, *args, **kwargs),
         )
 
+    @override
     def map_left_shift(
-        self, expr: p.LeftShift, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.LeftShift, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -1010,9 +1036,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_SHIFT,
         )
 
+    @override
     def map_right_shift(
         self,
-        expr: p.RightShift,
+        expr: p.RightShift, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -1027,9 +1054,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_SHIFT,
         )
 
+    @override
     def map_bitwise_xor(
         self,
-        expr: p.BitwiseXor,
+        expr: p.BitwiseXor, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -1042,8 +1070,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_BITWISE_XOR,
         )
 
+    @override
     def map_product(
-        self, expr: p.Product, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Product, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec(" ", expr.children, PREC_PRODUCT, *args, **kwargs),
@@ -1051,8 +1081,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_PRODUCT,
         )
 
+    @override
     def map_power(
-        self, expr: p.Power, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Power, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -1064,8 +1096,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_NONE,
         )
 
+    @override
     def map_min(
-        self, expr: p.Min, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Min, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         from pytools import is_single_valued
 
@@ -1079,8 +1113,10 @@ class LaTeXMapper(StringifyMapper[P]):
             self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_max(
-        self, expr: p.Max, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Max, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         from pytools import is_single_valued
 
@@ -1094,8 +1130,10 @@ class LaTeXMapper(StringifyMapper[P]):
             self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_floor_div(
-        self, expr: p.FloorDiv, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.FloorDiv, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.format(
             r"\lfloor {%s} / {%s} \rfloor",
@@ -1103,8 +1141,10 @@ class LaTeXMapper(StringifyMapper[P]):
             self.rec(expr.denominator, PREC_NONE, *args, **kwargs),
         )
 
+    @override
     def map_subscript(
-        self, expr: p.Subscript, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Subscript, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         if isinstance(expr.index, tuple):
             index_str = self.join_rec(", ", expr.index, PREC_NONE, *args, **kwargs)
@@ -1115,9 +1155,10 @@ class LaTeXMapper(StringifyMapper[P]):
             "{%s}_{%s}", self.rec(expr.aggregate, PREC_CALL, *args, **kwargs), index_str
         )
 
+    @override
     def map_logical_not(
         self,
-        expr: p.LogicalNot,
+        expr: p.LogicalNot, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -1128,8 +1169,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_UNARY,
         )
 
+    @override
     def map_logical_or(
-        self, expr: p.LogicalOr, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.LogicalOr, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.join_rec(r" \vee ", expr.children, PREC_LOGICAL_OR, *args, **kwargs),
@@ -1137,9 +1180,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_LOGICAL_OR,
         )
 
+    @override
     def map_logical_and(
         self,
-        expr: p.LogicalAnd,
+        expr: p.LogicalAnd, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -1152,8 +1196,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_LOGICAL_AND,
         )
 
+    @override
     def map_comparison(
-        self, expr: p.Comparison, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Comparison, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         return self.parenthesize_if_needed(
             self.format(
@@ -1166,9 +1212,10 @@ class LaTeXMapper(StringifyMapper[P]):
             PREC_COMPARISON,
         )
 
+    @override
     def map_substitution(
         self,
-        expr: p.Substitution,
+        expr: p.Substitution, /,
         enclosing_prec: int,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -1182,8 +1229,10 @@ class LaTeXMapper(StringifyMapper[P]):
             r"[%s]\{%s\}", self.rec(expr.child, PREC_NONE, *args, **kwargs), substs
         )
 
+    @override
     def map_derivative(
-        self, expr: p.Derivative, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+        self, expr: p.Derivative, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
         derivs = " ".join(r"\frac{\partial}{\partial %s}" % v for v in expr.variables)
 
