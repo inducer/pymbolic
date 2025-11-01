@@ -223,7 +223,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
     ) -> str:
         strifier = expr.make_stringifier(self)
         if isinstance(self, type(strifier)):
-            raise ValueError(f"stringifier '{self}' can't handle '{expr.__class__}'")
+            raise ValueError(f"stringifier '{self}' cannot handle '{type(expr)}'")
 
         return strifier(expr, enclosing_prec, *args, **kwargs)
 
