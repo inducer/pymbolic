@@ -283,7 +283,7 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         args_strings = tuple([
             self.rec(ch, PREC_NONE, *args, **kwargs) for ch in expr.parameters
         ]) + tuple([
-            "{}={}".format(name, self.rec(ch, PREC_NONE, *args, **kwargs))
+            f"{name}={self.rec(ch, PREC_NONE, *args, **kwargs)}"
             for name, ch in expr.kw_parameters.items()
         ])
         return self.format(
@@ -651,11 +651,9 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
                 "  {}: {}\n".format(",".join(str(i_i) for i_i in i), val)
                 for i, val in numpy.ndenumerate(str_array)
             ]
-            if max_length > 70:
-                splitter = "  " + "-" * 75 + "\n"
-                return "array(\n{})".format(splitter.join(lines))
-            else:
-                return "array(\n{})".format("".join(lines))
+            splitter = ("  " + "-" * 75 + "\n") if max_length > 70 else ""
+
+            return f"array(\n{splitter.join(lines)})"
 
     @override
     def map_multivector(
@@ -687,12 +685,12 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         self, expr: p.If, /,
         enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
+        then_ = self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs)
+        cond_ = self.rec(expr.condition, PREC_LOGICAL_OR, *args, **kwargs)
+        else_ = self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs)
+
         return self.parenthesize_if_needed(
-            "{} if {} else {}".format(
-                self.rec(expr.then, PREC_LOGICAL_OR, *args, **kwargs),
-                self.rec(expr.condition, PREC_LOGICAL_OR, *args, **kwargs),
-                self.rec(expr.else_, PREC_LOGICAL_OR, *args, **kwargs),
-            ),
+            f"{then_} if {cond_} else {else_}",
             enclosing_prec,
             PREC_IF,
         )
@@ -724,11 +722,9 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         self, expr: p.Derivative, /,
         enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
-        derivs = " ".join(f"d/d{v}" for v in expr.variables)
-
-        return "{} {}".format(
-            derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs)
-        )
+        ddv = " ".join(f"d/d{v}" for v in expr.variables)
+        child = self.rec(expr.child, PREC_PRODUCT, *args, **kwargs)
+        return f"{ddv} {child}"
 
     @override
     def map_substitution(
@@ -739,11 +735,12 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         **kwargs: P.kwargs,
     ) -> str:
         substs = ", ".join(
-            "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
+            f"{name}={self.rec(val, PREC_NONE, *args, **kwargs)}"
             for name, val in zip(expr.variables, expr.values, strict=True)
         )
+        child = self.rec(expr.child, PREC_NONE, *args, **kwargs)
 
-        return "[%s]{%s}" % (self.rec(expr.child, PREC_NONE, *args, **kwargs), substs)
+        return f"[{child}]{substs}"
 
     @override
     def map_slice(
@@ -1221,7 +1218,7 @@ class LaTeXMapper(StringifyMapper[P]):
         **kwargs: P.kwargs,
     ) -> str:
         substs = ", ".join(
-            "{}={}".format(name, self.rec(val, PREC_NONE, *args, **kwargs))
+            f"{name}={self.rec(val, PREC_NONE, *args, **kwargs)}"
             for name, val in zip(expr.variables, expr.values, strict=True)
         )
 
@@ -1234,11 +1231,10 @@ class LaTeXMapper(StringifyMapper[P]):
         self, expr: p.Derivative, /,
         enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
     ) -> str:
-        derivs = " ".join(r"\frac{\partial}{\partial %s}" % v for v in expr.variables)
+        ddv = " ".join(fr"\frac{{\partial}}{{\partial {v}}}" for v in expr.variables)
+        child = self.rec(expr.child, PREC_PRODUCT, *args, **kwargs)
 
-        return self.format(
-            "%s %s", derivs, self.rec(expr.child, PREC_PRODUCT, *args, **kwargs)
-        )
+        return self.format("%s %s", ddv, child)
 
 
 # }}}

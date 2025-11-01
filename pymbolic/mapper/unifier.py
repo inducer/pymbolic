@@ -107,9 +107,8 @@ class UnificationRecord:
 
     @override
     def __repr__(self) -> str:
-        return "UnificationRecord({})".format(
-                ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
-                )
+        eqs = ", ".join(f"{lhs} = {rhs}" for lhs, rhs in self.equations)
+        return f"{type(self).__name__}({eqs})"
 
 
 def unify_many(

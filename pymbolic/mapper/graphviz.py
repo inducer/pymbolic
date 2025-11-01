@@ -76,9 +76,9 @@ class GraphvizMapper(WalkMapper[[]]):
         return f"id{id(expr)}"
 
     def map_leaf(self, expr: prim.ExpressionNode):
-        self.lines.append(
-                '{} [label="{}", shape=box];'.format(
-                    self.get_id(expr), str(expr).replace("\\", "\\\\")))
+        sid = self.get_id(expr)
+        sexpr = str(expr).replace("\\", "\\\\")
+        self.lines.append(f'{sid} [label="{sexpr}", shape=box];')
 
         if self.visit(expr, node_printed=True):
             self.post_visit(expr)
@@ -98,9 +98,8 @@ class GraphvizMapper(WalkMapper[[]]):
             node_id = self.get_id(expr)
 
         if self.parent_stack:
-            self.lines.append("{} -> {};".format(
-                self.get_id(self.parent_stack[-1]),
-                node_id))
+            sid = self.get_id(self.parent_stack[-1])
+            self.lines.append(f"{sid} -> {node_id};")
 
         # }}}
 
@@ -109,10 +108,8 @@ class GraphvizMapper(WalkMapper[[]]):
         self.nodes_visited.add(id(expr))
 
         if not node_printed:
-            self.lines.append(
-                    '{} [label="{}"];'.format(
-                        self.get_id(expr),
-                        type(expr).__name__))
+            sid = self.get_id(expr)
+            self.lines.append(f'{sid} [label="{type(expr).__name__}"];')
 
         self.parent_stack.append(expr)
         return True
@@ -123,8 +120,8 @@ class GraphvizMapper(WalkMapper[[]]):
 
     @override
     def map_sum(self, expr: prim.Sum, /) -> None:
-        self.lines.append(
-                '{} [label="+",shape=circle];'.format(self.get_id(expr)))
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="+",shape=circle];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -135,8 +132,8 @@ class GraphvizMapper(WalkMapper[[]]):
 
     @override
     def map_product(self, expr: prim.Product, /) -> None:
-        self.lines.append(
-                '{} [label="*",shape=circle];'.format(self.get_id(expr)))
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="*",shape=circle];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -152,10 +149,7 @@ class GraphvizMapper(WalkMapper[[]]):
 
         node_id = self.generate_unique_id()
 
-        self.lines.append(
-                '{} [label="{}",shape=box];'.format(
-                    node_id,
-                    expr.name))
+        self.lines.append(f'{node_id} [label="{expr.name}",shape=box];')
         if not self.visit(expr, node_printed=True, node_id=node_id):
             return
 
@@ -163,9 +157,8 @@ class GraphvizMapper(WalkMapper[[]]):
 
     @override
     def map_lookup(self, expr: prim.Lookup, /) -> None:
-        self.lines.append(
-                '{} [label="Lookup[{}]",shape=box];'.format(
-                    self.get_id(expr), expr.name))
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="Lookup[{expr.name}]",shape=box];')
         if not self.visit(expr, node_printed=True):
             return
 
@@ -180,10 +173,7 @@ class GraphvizMapper(WalkMapper[[]]):
 
         node_id = self.generate_unique_id()
 
-        self.lines.append(
-                '{} [label="{}",shape=ellipse];'.format(
-                    node_id,
-                    str(expr)))
+        self.lines.append(f'{node_id} [label="{expr}",shape=ellipse];')
         if not self.visit(expr, node_printed=True, node_id=node_id):
             return
 
@@ -196,9 +186,8 @@ class GraphvizMapper(WalkMapper[[]]):
         if not isinstance(expr.function, Variable):
             return super().map_call(expr)
 
-        self.lines.append(
-                '{} [label="Call[{}]",shape=box];'.format(
-                    self.get_id(expr), str(expr.function)))
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="Call[{expr.function}]",shape=box];')
         if not self.visit(expr, node_printed=True):
             return
 
