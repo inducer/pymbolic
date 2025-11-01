@@ -136,10 +136,12 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
     @override
     def map_constant(self, x: object, /, enclosing_prec: int) -> str:
         if isinstance(x, complex):
-            return "std::complex<{}>({}, {})".format(
-                    self.complex_constant_base_type,
-                    self.map_constant(x.real, PREC_NONE),
-                    self.map_constant(x.imag, PREC_NONE))
+            base = self.complex_constant_base_type
+            real = self.map_constant(x.real, PREC_NONE)
+            imag = self.map_constant(x.imag, PREC_NONE)
+
+            # FIXME: C99 has _Complex, which could work better here
+            return f"std::complex<{base}>({real}, {imag})"
         else:
             return super().map_constant(x, enclosing_prec)
 
@@ -151,7 +153,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
             func = self.rec(expr.function, PREC_CALL)
 
         return self.format("%s(%s)",
-                func, self.join_rec(", ", expr.parameters, PREC_NONE))
+                func,
+                self.join_rec(", ", expr.parameters, PREC_NONE))
 
     @override
     def map_power(self, expr: p.Power, /, enclosing_prec: int) -> str:
@@ -181,9 +184,8 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
 
     @override
     def map_logical_not(self, expr: p.LogicalNot, /, enclosing_prec: int) -> str:
-        return self.parenthesize_if_needed(
-                "!" + self.rec(expr.child, PREC_UNARY),
-                enclosing_prec, PREC_UNARY)
+        child = self.rec(expr.child, PREC_UNARY)
+        return self.parenthesize_if_needed(f"!{child}", enclosing_prec, PREC_UNARY)
 
     @override
     def map_logical_and(self, expr: p.LogicalAnd, /, enclosing_prec: int) -> str:

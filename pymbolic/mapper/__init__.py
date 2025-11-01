@@ -170,8 +170,7 @@ class Mapper(Generic[ResultT, P]):
         """
 
         raise UnsupportedExpressionError(
-                "{} cannot handle expressions of type {}".format(
-                    type(self), type(expr)))
+                f"{type(self)} cannot handle expressions of type {type(expr)}")
 
     def __call__(self,
              expr: Expression, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
@@ -421,8 +420,7 @@ class Mapper(Generic[ResultT, P]):
             return self.map_list(cast("list[Expression]", expr), *args, **kwargs)
         else:
             raise ValueError(
-                    "{} encountered invalid foreign object: {}".format(
-                        self.__class__, repr(expr)))
+                    f"{type(self)} encountered invalid foreign object: {expr!r}")
 
 
 class _NotInCache:
