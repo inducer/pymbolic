@@ -97,7 +97,9 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
         try:
             return self.context[expr.name]
         except KeyError:
-            raise UnknownVariableError(expr.name) from None
+            raise UnknownVariableError(
+                f"cannot find '{expr.name}' in context (pass it in on evaluation)"
+            ) from None
 
     @override
     def map_call(self, expr: p.Call, /) -> ResultT:

@@ -227,7 +227,7 @@ def _get_cache_key_expr(mdef):
             return stmt.value
         else:
             raise ValueError("unexpected statement type in get_cache_key: "
-                             "{type(stmt).__name__} --- must only contain a single "
+                             f"{type(stmt).__name__} --- must only contain a single "
                              "return statement")
 
 

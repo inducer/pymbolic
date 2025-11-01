@@ -94,7 +94,7 @@ class TermCollector(IdentityMapper[[]]):
                 or not bool(self.get_dependencies(mul_term))):
             terms = [mul_term]
         else:
-            raise RuntimeError("split_term expects a multiplicative term")
+            raise RuntimeError(f"split_term expects a multiplicative term: {mul_term}")
 
         base2exp: dict[ArithmeticExpression, ArithmeticExpression] = {}
         for term in terms:

@@ -66,8 +66,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
                 if k != 1:
                     if (idx_of_child_with_vars is not None
                             and idx_of_child_with_vars != i):
-                        raise RuntimeError(
-                                "nonlinear expression")
+                        raise RuntimeError("nonlinear expression")
                     idx_of_child_with_vars = i
 
         other_coeffs: ArithmeticExpression = 1
