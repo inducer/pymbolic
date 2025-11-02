@@ -140,8 +140,10 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
             real = self.map_constant(x.real, PREC_NONE)
             imag = self.map_constant(x.imag, PREC_NONE)
 
-            # FIXME: C99 has _Complex, which could work better here
-            return f"std::complex<{base}>({real}, {imag})"
+            # NOTE: this will need the <complex.h> include to work
+            # FIXME: MSVC does not support <complex.h>, so this will not work.
+            # (AFAIK, it uses a struct instead and does not support arithmetic)
+            return f"({base} complex)({real} + {imag} * _Imaginary_I)"
         else:
             return super().map_constant(x, enclosing_prec)
 
