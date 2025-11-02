@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 import contextlib
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
@@ -50,7 +50,8 @@ from pymbolic.primitives import expr_dataclass, is_zero
 
 
 if TYPE_CHECKING:
-    from numpy.typing import DTypeLike, NDArray
+    import optype.numpy as onp
+    from numpy.typing import DTypeLike
 
 
 __doc__ = """
@@ -228,7 +229,7 @@ class Space(Generic[CoeffT]):
     basis_names: Sequence[str]
     "A sequence of names of basis vectors."
 
-    metric_matrix: NDArray[np.generic]
+    metric_matrix: onp.Array2D[np.generic]
     """
     A *(dims, dims)*-shaped matrix, whose *(i, j)*-th entry represents the
     inner product of basis vector *i* and basis vector *j*.
@@ -236,7 +237,7 @@ class Space(Generic[CoeffT]):
 
     def __init__(self,
                  basis: Sequence[str] | int | None = None,
-                 metric_matrix: NDArray[np.generic] | None = None) -> None:
+                 metric_matrix: onp.Array2D[np.generic] | None = None) -> None:
         """
         :arg basis: A sequence of names of basis vectors, or an integer (the
             number of dimensions) to use the default names ``e0`` through ``eN``.
@@ -293,7 +294,7 @@ class Space(Generic[CoeffT]):
 
     def __getitem__(self, idx: tuple[int, int]) -> CoeffT:
         i, j = idx
-        return self.metric_matrix[i, j]
+        return cast("CoeffT", self.metric_matrix[i, j])
 
     @property
     @memoize_method
@@ -369,6 +370,7 @@ class _GAProduct(ABC, Generic[CoeffT]):
 
 class _OuterProduct(_GAProduct[CoeffT]):
     @staticmethod
+    @override
     def generic_blade_product_weight(
                 a_bits: int,
                 b_bits: int,
@@ -376,7 +378,14 @@ class _OuterProduct(_GAProduct[CoeffT]):
             ) -> CoeffT | int:
         return int(not a_bits & b_bits)
 
-    orthogonal_blade_product_weight = generic_blade_product_weight
+    @staticmethod
+    @override
+    def orthogonal_blade_product_weight(
+                a_bits: int,
+                b_bits: int,
+                space: Space[CoeffT]
+            ) -> CoeffT | int:
+        return int(not a_bits & b_bits)
 
 
 class _GeometricProduct(_GAProduct[CoeffT]):
@@ -501,9 +510,10 @@ class _ScalarProduct(_GAProduct[CoeffT]):
 
 # {{{ multivector
 
-def _cast_to_mv(obj: Any, space: Space[CoeffT]) -> MultiVector[CoeffT]:
+def _cast_to_mv(obj: int | CoeffT | MultiVector[CoeffT],
+                space: Space[CoeffT]) -> MultiVector[CoeffT]:
     if isinstance(obj, MultiVector):
-        return cast("MultiVector[CoeffT]", obj)
+        return obj
     else:
         return MultiVector(obj, space)
 
@@ -626,7 +636,7 @@ class MultiVector(Generic[CoeffT]):
                 self,
                 data: (Mapping[int, CoeffT | int]
                        | Mapping[tuple[int, ...], CoeffT | int]
-                       | NDArray[np.generic]
+                       | onp.Array1D[np.generic]
                        | ObjectArray1D[CoeffT]
                        | CoeffT
                        | int),
@@ -656,8 +666,7 @@ class MultiVector(Generic[CoeffT]):
                     "Only numpy vectors (not higher-rank objects) "
                     f"are supported for 'data': shape {data.shape}")
 
-            dimensions: int
-            dimensions, = data.shape
+            dimensions, = cast("tuple[int]", data.shape)
             data_dict = {(i,): xi for i, xi in enumerate(data)}
 
             if space is None:
@@ -712,7 +721,7 @@ class MultiVector(Generic[CoeffT]):
     def stringify(self,
                 coeff_stringifier: Callable[[CoeffT, int], str] | None,
                 enclosing_prec: int
-            ):
+            ) -> str:
         from pymbolic.mapper.stringifier import PREC_PRODUCT, PREC_SUM
 
         terms: list[str] = []
@@ -758,12 +767,12 @@ class MultiVector(Generic[CoeffT]):
         return f"MV({result})"
 
     @override
-    def __str__(self):
+    def __str__(self) -> str:
         from pymbolic.mapper.stringifier import PREC_NONE
         return self.stringify(None, PREC_NONE)
 
     @override
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"MultiVector({self.data}, {self.space!r})"
 
     # }}}
@@ -911,7 +920,10 @@ class MultiVector(Generic[CoeffT]):
     def __pow__(self, other: int):
         """Return *self* to the integer power *other*."""
 
-        other = int(other)
+        try:
+            other = int(other)
+        except ValueError:
+            return NotImplemented
 
         from pymbolic.algorithm import integer_power
         return integer_power(
@@ -923,14 +935,12 @@ class MultiVector(Generic[CoeffT]):
         """Return ``self*(1/other)``.
         """
         other = _cast_to_mv(other, self.space)
-
         return self*other.inv()
 
     def __rtruediv__(self, other):
         """Return ``other * (1/self)``.
         """
-        other = MultiVector(other, self.space)
-
+        other = _cast_to_mv(other, self.space)
         return other * self.inv()
 
     __div__ = __truediv__
@@ -939,7 +949,7 @@ class MultiVector(Generic[CoeffT]):
 
     # {{{ unary operations
 
-    def inv(self):
+    def inv(self) -> MultiVector[CoeffT]:
         """Return the *multiplicative inverse* of the blade *self*.
 
         Often written :math:`A^{-1}`.
@@ -972,13 +982,13 @@ class MultiVector(Generic[CoeffT]):
 
         return MultiVector({bits: coeff}, self.space)
 
-    def rev(self):
+    def rev(self) -> MultiVector[CoeffT]:
         r"""Return the *reverse* of *self*, i.e. the multivector obtained by
         reversing the order of all component blades.
 
         Often written :math:`A^\dagger`.
         """
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             grade = bits.bit_count()
             if grade*(grade-1)//2 % 2 == 0:
@@ -988,13 +998,13 @@ class MultiVector(Generic[CoeffT]):
 
         return MultiVector(new_data, self.space)
 
-    def invol(self):
+    def invol(self) -> MultiVector[CoeffT]:
         r"""Return the grade involution (see Section 2.9.5 of [DFM]), i.e.
         all odd-grade blades have their signs flipped.
 
         Often written :math:`\widehat A`.
         """
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             grade = bits.bit_count()
             if grade % 2 == 0:
@@ -1019,7 +1029,7 @@ class MultiVector(Generic[CoeffT]):
     def norm_squared(self) -> CoeffT | int:
         return self.rev().scalar_product(self)
 
-    def __abs__(self):
+    def __abs__(self) -> CoeffT | int:
         return self.norm_squared()**0.5
 
     @property
@@ -1033,25 +1043,25 @@ class MultiVector(Generic[CoeffT]):
     # {{{ comparisons
 
     @memoize_method
-    def __hash__(self):
+    def __hash__(self) -> int:
         result = hash(self.space)
         for bits, coeff in self.data.items():
             result ^= hash(bits) ^ hash(coeff)
 
         return result
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.data)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         other = _cast_to_mv(other, self.space)
 
         return self.data == other.data
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
-    def zap_near_zeros(self, tol=None):
+    def zap_near_zeros(self, tol: float | None = None) -> MultiVector[CoeffT]:
         """Remove blades whose coefficient is close to zero
         relative to the norm of *self*.
         """
@@ -1068,14 +1078,14 @@ class MultiVector(Generic[CoeffT]):
 
         return MultiVector(new_data, self.space)
 
-    def close_to(self, other, tol=None):
+    def close_to(self, other, tol: float | None = None) -> bool:
         return not (self-other).zap_near_zeros(tol=tol)
 
     # }}}
 
     # {{{ grade manipulation
 
-    def gen_blades(self, grade=None):
+    def gen_blades(self, grade: int | None = None) -> Iterator[MultiVector[CoeffT]]:
         """Generate all blades in *self*, optionally only those of a specific
         *grade*.
         """
@@ -1088,12 +1098,12 @@ class MultiVector(Generic[CoeffT]):
                 if bits.bit_count() == grade:
                     yield MultiVector({bits: coeff}, self.space)
 
-    def project(self, r: int):
+    def project(self, r: int) -> MultiVector[CoeffT]:
         r"""Return a new multivector containing only the blades of grade *r*.
 
         Often written :math:`\langle A\rangle_r`.
         """
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             if bits.bit_count() == r:
                 new_data[bits] = coeff
@@ -1105,12 +1115,14 @@ class MultiVector(Generic[CoeffT]):
     def xproject(self, r: Literal[0], dtype: DTypeLike = None) -> CoeffT | int: ...  # pyright: ignore[reportOverlappingOverload]
 
     @overload
-    def xproject(self, r: Literal[1], dtype: DTypeLike = None) -> NDArray[Any]: ...
+    def xproject(self, r: Literal[1], dtype: DTypeLike = None) -> onp.Array1D[np.generic]: ...  # noqa: E501
 
     @overload
-    def xproject(self, r: int, dtype: DTypeLike = None) -> Self: ...
+    def xproject(self, r: int, dtype: DTypeLike = None) -> MultiVector[CoeffT]: ...
 
-    def xproject(self, r: int, dtype: DTypeLike = None):
+    def xproject(
+                self, r: int, dtype: DTypeLike = None
+            ) -> int | CoeffT | onp.Array1D[np.generic] | MultiVector[CoeffT]:
         r"""If ``r == 0``, return ``self.project(0).as_scalar()``.
         If ``r == 1``, return ``self.project(1).as_vector(dtype)``.
         Otherwise, return ``self.project(r)``.
@@ -1122,12 +1134,12 @@ class MultiVector(Generic[CoeffT]):
         else:
             return self.project(r)
 
-    def all_grades(self):
+    def all_grades(self) -> set[int]:
         """Return a :class:`set` of grades occurring in *self*."""
 
-        return {bits.bit_count() for bits, coeff in self.data.items()}
+        return {bits.bit_count() for bits, _coeff in self.data.items()}
 
-    def get_pure_grade(self):
+    def get_pure_grade(self) -> int | None:
         """If *self* only has components of a single grade, return
         that as an integer. Otherwise, return *None*.
         """
@@ -1147,32 +1159,32 @@ class MultiVector(Generic[CoeffT]):
 
         return result
 
-    def odd(self):
+    def odd(self) -> MultiVector[CoeffT]:
         """Extract the odd-grade blades."""
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             if bits.bit_count() % 2:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
 
-    def even(self):
+    def even(self) -> MultiVector[CoeffT]:
         """Extract the even-grade blades."""
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             if bits.bit_count() % 2 == 0:
                 new_data[bits] = coeff
 
         return MultiVector(new_data, self.space)
 
-    def project_min_grade(self):
+    def project_min_grade(self) -> MultiVector[CoeffT]:
         """
         .. versionadded:: 2014.2
         """
 
         return self.project(min(self.all_grades()))
 
-    def project_max_grade(self):
+    def project_max_grade(self) -> MultiVector[CoeffT]:
         """
         .. versionadded:: 2014.2
         """
@@ -1190,31 +1202,27 @@ class MultiVector(Generic[CoeffT]):
 
     def as_vector(self,
                 dtype: DTypeLike = None
-            ) -> np.ndarray[tuple[int], np.dtype[Any]]:
+            ) -> onp.Array1D[Any]:
         """Return a :mod:`numpy` vector corresponding to the grade-1
         :class:`MultiVector` *self*.
 
         If *self* is not grade-1, :exc:`ValueError` is raised.
         """
-
         if dtype is not None:
+            # NOTE: this needs to be an ndarray from the beginning because we
+            # can't do `np.array(result)` for object arrays and other things
             result = np.zeros(self.space.dimensions, dtype=dtype)
         else:
-            result = [0] * self.space.dimensions
+            result = [cast("CoeffT", 0)] * self.space.dimensions
 
         log_table = {2**i: i for i in range(self.space.dimensions)}
         try:
             for bits, coeff in self.data.items():
-                # type ignore because: too hard to make precise
-                result[log_table[bits]] = coeff  # pyright: ignore[reportArgumentType]
+                result[log_table[bits]] = coeff
         except KeyError:
             raise ValueError("multivector is not a purely grade-1") from None
 
-        if dtype is not None:
-            assert isinstance(result, np.ndarray)
-            return result
-        else:
-            return np.array(result)
+        return np.array(result) if isinstance(result, list) else result
 
     # }}}
 
@@ -1226,7 +1234,7 @@ class MultiVector(Generic[CoeffT]):
         new coefficient.
         """
         changed = False
-        new_data = {}
+        new_data: dict[int, CoeffT] = {}
         for bits, coeff in self.data.items():
             new_coeff = f(coeff)
             new_data[bits] = new_coeff
