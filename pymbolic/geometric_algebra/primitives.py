@@ -26,10 +26,12 @@ THE SOFTWARE.
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
 
-from typing import TYPE_CHECKING, ClassVar, TypeAlias
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar, TypeAlias, TypeVar
 
 import pytools.obj_array as obj_array
 
+from pymbolic.geometric_algebra import MultiVector
 from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 
 
@@ -46,71 +48,107 @@ class MultiVectorVariable(Variable):
 # {{{ geometric calculus
 
 class _GeometricCalculusExpression(ExpressionNode):
-    def stringifier(self):
+    def stringifier(self, originating_stringifier=None):
         from pymbolic.geometric_algebra.mapper import StringifyMapper
-        return StringifyMapper
+        return StringifyMapper()
 
 
 NablaId: TypeAlias = "Hashable"
 
+# TODO: move these somewhere pytential can make use of them.
+# Maybe just `pymbolic.typing`? (this module is not yet stable and documented)
+
+Operand: TypeAlias = """
+    ArithmeticExpression
+    | MultiVector[ArithmeticExpression]
+    | obj_array.ObjectArray1D[ArithmeticExpression]
+    | obj_array.ObjectArray2D[ArithmeticExpression]
+    | obj_array.ObjectArrayND[ArithmeticExpression]"""
+r"""A type alias for allowable expressions that can act as an operand in
+arithmetic. This includes expressions, but also
+:class:`~pymbolic.geometry_algebra.MultiVector`\ s and (object) :mod:`numpy` arrays.
+"""
+OperandTc = TypeVar(
+    "OperandTc",
+    "ArithmeticExpression",
+    "MultiVector[ArithmeticExpression]",
+    "obj_array.ObjectArray1D[ArithmeticExpression]",
+    "obj_array.ObjectArray2D[ArithmeticExpression]",
+    "obj_array.ObjectArrayND[ArithmeticExpression]",
+)
+"""A :class:`~typing.TypeVar` constrained to the types in :class:`Operand`. Note
+that this does not use :class:`Operand` as a bound.
+"""
+
 
 @expr_dataclass()
 class NablaComponent(_GeometricCalculusExpression):
+    """
+    .. autoattribute:: ambient_axis
+    .. autoattribute:: NablaId
+    """
     ambient_axis: int
     nabla_id: NablaId
 
 
 @expr_dataclass()
 class Nabla(_GeometricCalculusExpression):
-    nabla_id: Hashable
+    """
+    .. autoattribute:: nabla_id
+    """
+    nabla_id: NablaId
 
 
 @expr_dataclass()
 class DerivativeSource(_GeometricCalculusExpression):
+    """
+    .. autoattribute:: operand
+    .. autoattribute:: nabla_id
+    """
     operand: Expression
     nabla_id: Hashable
 
 
-class Derivative:
+class Derivative(ABC):
     """This mechanism cannot be used to take more than one derivative at a time.
 
     .. autoproperty:: nabla
-    .. automethod:: __call__
     .. automethod:: dnabla
     .. automethod:: resolve
+    .. automethod:: __call__
     """
+
+    my_id: str
     _next_id: ClassVar[list[int]] = [0]
 
-    def __init__(self):
-        self.my_id: str = f"id{self._next_id[0]}"
+    def __init__(self) -> None:
+        self.my_id = f"id{self._next_id[0]}"
         self._next_id[0] += 1
 
     @property
-    def nabla(self):
+    def nabla(self) -> Nabla:
         return Nabla(self.my_id)
 
-    def dnabla(self, ambient_dim: int):
-        from pymbolic.geometric_algebra import MultiVector
+    def dnabla(self, ambient_dim: int) -> MultiVector[ArithmeticExpression]:
         nablas: list[ArithmeticExpression] = [
             NablaComponent(axis, self.my_id)
             for axis in range(ambient_dim)]
         return MultiVector(obj_array.new_1d(nablas))
 
-    def __call__(self, operand):
-        from pymbolic.geometric_algebra import MultiVector
-        if isinstance(operand, MultiVector):
-            return operand.map(
-                    lambda coeff: DerivativeSource(coeff, self.my_id))
-        else:
-            return DerivativeSource(operand, self.my_id)
+    def __call__(self, operand: OperandTc) -> OperandTc:
+        from pymbolic.geometric_algebra import componentwise
+
+        def func(coeff: ArithmeticExpression) -> ArithmeticExpression:
+            return DerivativeSource(coeff, self.my_id)
+
+        return componentwise(func, operand)  # pyright: ignore[reportReturnType]
 
     @staticmethod
-    def resolve(expr):
+    @abstractmethod
+    def resolve(expr: Expression) -> Expression:
         # This method will need to be overridden by codes using this
         # infrastructure to use the appropriate subclass of DerivativeBinder.
-
-        from pymbolic.geometric_algebra.mapper import DerivativeBinder
-        return DerivativeBinder()(expr)
+        pass
 
 # }}}
 
