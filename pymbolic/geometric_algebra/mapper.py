@@ -25,13 +25,16 @@ THE SOFTWARE.
 
 # This is experimental, undocumented, and could go away any second.
 # Consider yourself warned.
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Set
 from typing import TYPE_CHECKING, ClassVar
 
-from typing_extensions import override
+from typing_extensions import Self, override
 
 import pytools.obj_array as obj_array
 
-import pymbolic.geometric_algebra.primitives as prim
+import pymbolic.geometric_algebra.primitives as gp
 from pymbolic.geometric_algebra import MultiVector
 from pymbolic.mapper import (
     CachedMapper,
@@ -52,29 +55,27 @@ from pymbolic.mapper.stringifier import (
     PREC_NONE,
     StringifyMapper as StringifyMapperBase,
 )
-from pymbolic.typing import ArithmeticExpression
+from pymbolic.typing import ArithmeticExpression, Expression
 
 
 if TYPE_CHECKING:
-    from collections.abc import Set
-
-    from pymbolic.primitives import ExpressionNode
+    import pymbolic.primitives as p
 
 
 class IdentityMapper(IdentityMapperBase[P]):
     def map_nabla(
-                self, expr: prim.Nabla, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionNode:
+                self, expr: gp.Nabla, /, *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
         return expr
 
     def map_nabla_component(self,
-                expr: prim.NablaComponent, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionNode:
+                expr: gp.NablaComponent, /, *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
         return expr
 
     def map_derivative_source(self,
-                expr: prim.DerivativeSource, *args: P.args, **kwargs: P.kwargs
-            ) -> ExpressionNode:
+                expr: gp.DerivativeSource, /, *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
         operand = self.rec(expr.operand, *args, **kwargs)
         if operand is expr.operand:
             return expr
@@ -84,36 +85,36 @@ class IdentityMapper(IdentityMapperBase[P]):
 
 class CombineMapper(CombineMapperBase[ResultT, P]):
     def map_derivative_source(
-                self, expr: prim.DerivativeSource, *args: P.args, **kwargs: P.kwargs
+                self, expr: gp.DerivativeSource, /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
         return self.rec(expr.operand, *args, **kwargs)
 
 
 class Collector(CollectorBase[CollectedT, P]):
     def map_nabla(self,
-                expr: prim.Nabla, *args: P.args, **kwargs: P.kwargs
+                expr: gp.Nabla, /, *args: P.args, **kwargs: P.kwargs
             ) -> Set[CollectedT]:
         return set()
 
     def map_nabla_component(self,
-                expr: prim.NablaComponent, *args: P.args, **kwargs: P.kwargs
+                expr: gp.NablaComponent, /, *args: P.args, **kwargs: P.kwargs
             ) -> Set[CollectedT]:
         return set()
 
 
 class WalkMapper(WalkMapperBase[P]):
-    def map_nabla(self, expr: prim.Nabla, *args: P.args, **kwargs: P.kwargs) -> None:
+    def map_nabla(self, expr: gp.Nabla, /, *args: P.args, **kwargs: P.kwargs) -> None:
         self.visit(expr, *args, **kwargs)
         self.post_visit(expr, *args, **kwargs)
 
     def map_nabla_component(
-                self, expr: prim.NablaComponent, *args: P.args, **kwargs: P.kwargs
+                self, expr: gp.NablaComponent, /, *args: P.args, **kwargs: P.kwargs
             ) -> None:
         self.visit(expr, *args, **kwargs)
         self.post_visit(expr, *args, **kwargs)
 
     def map_derivative_source(
-                self, expr, *args: P.args, **kwargs: P.kwargs
+                self, expr: gp.DerivativeSource, /, *args: P.args, **kwargs: P.kwargs
             ) -> None:
         if not self.visit(expr, *args, **kwargs):
             return
@@ -127,13 +128,14 @@ class EvaluationMapper(EvaluationMapperBase[ResultT]):
 
 
 class EvaluationRewriter(EvaluationMapperBase[ArithmeticExpression]):
-    def map_nabla_component(self, expr: prim.NablaComponent) -> ArithmeticExpression:
+    def map_nabla(self, expr: gp.Nabla, /) -> ArithmeticExpression:
         return expr
 
-    map_nabla = map_nabla_component
+    def map_nabla_component(self, expr: gp.NablaComponent, /) -> ArithmeticExpression:
+        return expr
 
-    def map_derivative_source(self,
-                expr: prim.DerivativeSource
+    def map_derivative_source(
+                self, expr: gp.DerivativeSource, /
             ) -> ArithmeticExpression:
         operand = self.rec(expr.operand)
         if operand is expr.operand:
@@ -145,23 +147,25 @@ class EvaluationRewriter(EvaluationMapperBase[ArithmeticExpression]):
 class StringifyMapper(StringifyMapperBase[[]]):
     AXES: ClassVar[dict[int, str]] = {0: "x", 1: "y", 2: "z"}
 
-    def map_nabla(self, expr, enclosing_prec):
+    def map_nabla(self, expr: gp.Nabla, /, enclosing_prec: int) -> str:
         return f"∇[{expr.nabla_id}]"
 
-    def map_nabla_component(self, expr, enclosing_prec):
-        return "∇{}[{}]".format(
-                self.AXES.get(expr.ambient_axis, expr.ambient_axis),
-                expr.nabla_id)
+    def map_nabla_component(
+                self, expr: gp.NablaComponent, /, enclosing_prec: int) -> str:
+        axis = self.AXES.get(expr.ambient_axis, expr.ambient_axis)
+        return f"∇{axis}[{expr.nabla_id}]"
 
-    def map_derivative_source(self, expr, enclosing_prec):
-        return r"D[{}]({})".format(expr.nabla_id, self.rec(expr.operand, PREC_NONE))
+    def map_derivative_source(
+                self, expr: gp.DerivativeSource, /, enclosing_prec: int) -> str:
+        operand = self.rec(expr.operand, PREC_NONE)
+        return f"D[{expr.nabla_id}]({operand})"
 
 
 class GraphvizMapper(GraphvizMapperBase):
-    def map_derivative_source(self, expr):
-        self.lines.append(
-                '{} [label="D[{}]",shape=ellipse];'.format(
-                    self.get_id(expr), expr.nabla_id))
+    def map_derivative_source(self, expr: gp.DerivativeSource, /) -> None:
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="D[{expr.nabla_id}]",shape=ellipse];')
+
         if not self.visit(expr, node_printed=True):
             return
 
@@ -171,37 +175,41 @@ class GraphvizMapper(GraphvizMapperBase):
 
 # {{{ dimensionalizer
 
-class Dimensionalizer(EvaluationRewriter):
+class Dimensionalizer(EvaluationRewriter, ABC):
     """
-    .. attribute:: ambient_dim
-
-        Dimension of ambient space. Must be provided by subclass.
+    .. autoproperty:: ambient_dim
     """
 
     @property
+    @abstractmethod
     def ambient_dim(self) -> int:
-        raise NotImplementedError
+        """Dimension of ambient space. Must be provided by subclass."""
 
-    def map_multivector_variable(self, expr):
+    def map_multivector_variable(
+                self, expr: gp.MultiVectorVariable, /
+            ) -> MultiVector[ArithmeticExpression]:
         from pymbolic.primitives import make_sym_vector
-        return MultiVector(
-                make_sym_vector(expr.name, self.ambient_dim,
-                    var_factory=type(expr)))
+
+        vec = make_sym_vector(expr.name, self.ambient_dim, var_factory=type(expr))
+        return MultiVector(vec)
 
     @override
-    def map_nabla(self, expr):
-        return MultiVector(obj_array.new_1d(
-            [prim.NablaComponent(axis, expr.nabla_id)
-                for axis in range(self.ambient_dim)]))
+    def map_nabla(self, expr: gp.Nabla, /) -> MultiVector[ArithmeticExpression]:
+        nabla = obj_array.new_1d([
+            gp.NablaComponent(axis, expr.nabla_id)
+            for axis in range(self.ambient_dim)
+        ])
+        return MultiVector(nabla)
 
     @override
-    def map_derivative_source(self, expr: prim.DerivativeSource):
+    def map_derivative_source(
+                self, expr: gp.DerivativeSource, /,
+            ) -> ArithmeticExpression | MultiVector[ArithmeticExpression]:
         rec_op = self.rec(expr.operand)
 
         if isinstance(rec_op, MultiVector):
-            from pymbolic.geometric_algebra.primitives import DerivativeSource
             return rec_op.map(
-                    lambda coeff: DerivativeSource(coeff, expr.nabla_id))
+                lambda coeff: gp.DerivativeSource(coeff, expr.nabla_id))
         else:
             return super().map_derivative_source(expr)
 
@@ -210,32 +218,44 @@ class Dimensionalizer(EvaluationRewriter):
 
 # {{{ derivative binder
 
-class DerivativeSourceAndNablaComponentCollector(CachedMapper, Collector):
+class DerivativeSourceAndNablaComponentCollector(
+            CachedMapper[Set[ArithmeticExpression], []],
+            Collector[ArithmeticExpression, []]):
     def __init__(self) -> None:
         Collector.__init__(self)
         CachedMapper.__init__(self)
 
-    def map_nabla(self, expr):
-        raise RuntimeError("DerivativeOccurrenceMapper must be invoked after "
-                "Dimensionalizer--Nabla found, not allowed")
+    @override
+    def map_nabla(self, expr: gp.Nabla, /) -> Set[ArithmeticExpression]:
+        raise RuntimeError(
+                f"{type(self).__name__} must be invoked after "
+                "Dimensionalizer -- Nabla expression found and not allowed")
 
-    def map_nabla_component(self, expr):
+    @override
+    def map_nabla_component(
+                self, expr: gp.NablaComponent, /) -> Set[ArithmeticExpression]:
         return {expr}
 
-    def map_derivative_source(self, expr):
+    def map_derivative_source(
+                self, expr: gp.DerivativeSource, /) -> Set[ArithmeticExpression]:
         return {expr} | self.rec(expr.operand)
 
 
 class NablaComponentToUnitVector(EvaluationRewriter):
-    def __init__(self, nabla_id, ambient_axis):
-        self.nabla_id: prim.NablaId = nabla_id
-        self.ambient_axis: int = ambient_axis
+    nabla_id: gp.NablaId
+    ambient_axis: int
 
-    def map_variable(self, expr):
+    def __init__(self, nabla_id: gp.NablaId, ambient_axis: int) -> None:
+        super().__init__()
+        self.nabla_id = nabla_id
+        self.ambient_axis = ambient_axis
+
+    @override
+    def map_variable(self, expr: p.Variable, /) -> ArithmeticExpression:
         return expr
 
     @override
-    def map_nabla_component(self, expr: prim.NablaComponent) -> ArithmeticExpression:
+    def map_nabla_component(self, expr: gp.NablaComponent, /) -> ArithmeticExpression:
         if expr.nabla_id == self.nabla_id:
             if expr.ambient_axis == self.ambient_axis:
                 return 1
@@ -252,39 +272,60 @@ class DerivativeSourceFinder(EvaluationRewriter):
     on the source's argument.
     """
 
-    def __init__(self, nabla_id, binder, ambient_axis):
-        self.nabla_id: prim.NablaId = nabla_id
-        self.binder: DerivativeBinder = binder
-        self.ambient_axis: int = ambient_axis
+    nabla_id: gp.NablaId
+    binder: DerivativeBinder
+    ambient_axis: int
 
-    def map_derivative_source(self, expr):
+    def __init__(self,
+                 nabla_id: gp.NablaId,
+                 binder: DerivativeBinder,
+                 ambient_axis: int) -> None:
+        super().__init__()
+        self.nabla_id = nabla_id
+        self.binder = binder
+        self.ambient_axis = ambient_axis
+
+    @override
+    def map_derivative_source(
+                self, expr: gp.DerivativeSource, /) -> ArithmeticExpression:
         if expr.nabla_id == self.nabla_id:
             return self.binder.take_derivative(self.ambient_axis, expr.operand)
         else:
             return super().map_derivative_source(expr)
 
 
-class DerivativeBinder(IdentityMapper[[]]):
-    derivative_source_and_nabla_component_collector = \
-            DerivativeSourceAndNablaComponentCollector
-    nabla_component_to_unit_vector = NablaComponentToUnitVector
-    derivative_source_finder = DerivativeSourceFinder
+class DerivativeBinder(IdentityMapper[[]], ABC):
+    derivative_source_and_nabla_component_collector: (
+        ClassVar[type[DerivativeSourceAndNablaComponentCollector]]) = (
+            DerivativeSourceAndNablaComponentCollector)
+    nabla_component_to_unit_vector: (
+        ClassVar[type[NablaComponentToUnitVector]]) = NablaComponentToUnitVector
+    derivative_source_finder: (
+        ClassVar[type[DerivativeSourceFinder]]) = DerivativeSourceFinder
 
-    def __init__(self, restrict_to_id=None):
-        self.derivative_collector = \
-                self.derivative_source_and_nabla_component_collector()
+    derivative_collector: DerivativeSourceAndNablaComponentCollector
+    restrict_to_id: gp.NablaId | None
+
+    def __init__(self, restrict_to_id: gp.NablaId | None = None) -> None:
+        self.derivative_collector = (
+                self.derivative_source_and_nabla_component_collector())
         self.restrict_to_id = restrict_to_id
 
-    def take_derivative(self, ambient_axis, expr):
-        raise NotImplementedError
+    @abstractmethod
+    def take_derivative(
+                self, ambient_axis: int, expr: Expression
+            ) -> ArithmeticExpression:
+        ...
 
-    def map_product(self, expr):
+    @override
+    def map_product(
+                self, expr: p.Product | p.BitwiseOr | p.BitwiseXor, /) -> Expression:
         # {{{ gather NablaComponents and DerivativeSources
 
-        d_source_nabla_ids_per_child = []
+        d_source_nabla_ids_per_child: list[set[gp.NablaId]] = []
 
         # id to set((child index, axis), ...)
-        nabla_finder = {}
+        nabla_finder: dict[gp.NablaId, set[tuple[int, int]]] = {}
         has_d_source_nablas = False
 
         for child_idx, child in enumerate(expr.children):
@@ -293,15 +334,15 @@ class DerivativeBinder(IdentityMapper[[]]):
                 d_source_nabla_ids_per_child.append(set())
                 continue
 
-            nabla_component_ids = set()
-            derivative_source_ids = set()
+            nabla_component_ids: set[gp.NablaId] = set()
+            derivative_source_ids: set[gp.NablaId] = set()
 
-            nablas = []
+            nablas: list[gp.NablaComponent] = []
             for d_or_n in d_or_ns:
-                if isinstance(d_or_n, prim.NablaComponent):
+                if isinstance(d_or_n, gp.NablaComponent):
                     nabla_component_ids.add(d_or_n.nabla_id)
                     nablas.append(d_or_n)
-                elif isinstance(d_or_n, prim.DerivativeSource):
+                elif isinstance(d_or_n, gp.DerivativeSource):
                     derivative_source_ids.add(d_or_n.nabla_id)
                 else:
                     raise RuntimeError("unexpected result from "
@@ -312,8 +353,10 @@ class DerivativeBinder(IdentityMapper[[]]):
                 has_d_source_nablas = True
 
             for ncomp in nablas:
-                nabla_finder.setdefault(
-                        ncomp.nabla_id, set()).add((child_idx, ncomp.ambient_axis))
+                if ncomp.nabla_id not in nabla_finder:
+                    nabla_finder[ncomp.nabla_id] = set()
+
+                nabla_finder[ncomp.nabla_id].add((child_idx, ncomp.ambient_axis))
 
         if nabla_finder and not any(d_source_nabla_ids_per_child):
             raise ValueError(f"no derivative source found to resolve in '{expr}'"
@@ -321,7 +364,7 @@ class DerivativeBinder(IdentityMapper[[]]):
                     "derivative taken in 'Derivative()(term)'?")
 
         if not has_d_source_nablas:
-            rec_children = [self.rec(child) for child in expr.children]
+            rec_children = [self.rec_arith(child) for child in expr.children]
             if all(rec_child is child
                     for rec_child, child in zip(
                             rec_children, expr.children, strict=True)):
@@ -332,7 +375,7 @@ class DerivativeBinder(IdentityMapper[[]]):
         # }}}
 
         # a list of lists, the outer level presenting a sum, the inner a product
-        result = [list(expr.children)]
+        result: list[list[ArithmeticExpression]] = [list(expr.children)]
 
         for child_idx, (d_source_nabla_ids, _child) in enumerate(
                 zip(d_source_nabla_ids_per_child, expr.children, strict=True)):
@@ -345,26 +388,26 @@ class DerivativeBinder(IdentityMapper[[]]):
 
             nabla_id, = d_source_nabla_ids
             try:
-                nablas = nabla_finder[nabla_id]
+                nablas_idx_and_axis = nabla_finder[nabla_id]
             except KeyError:
                 continue
 
             if self.restrict_to_id is not None and nabla_id != self.restrict_to_id:
                 continue
 
-            n_axes = max(axis for _, axis in nablas) + 1
+            n_axes = max(axis for _, axis in nablas_idx_and_axis) + 1
 
-            new_result = []
+            new_result: list[list[ArithmeticExpression]] = []
             for prod_term_list in result:
                 for axis in range(n_axes):
                     new_ptl = prod_term_list[:]
                     dsfinder = self.derivative_source_finder(nabla_id, self, axis)
 
                     new_ptl[child_idx] = dsfinder(new_ptl[child_idx])
-                    for nabla_child_index, _ in nablas:
-                        new_ptl[nabla_child_index] = \
+                    for nabla_child_index, _ in nablas_idx_and_axis:
+                        new_ptl[nabla_child_index] = (
                                 self.nabla_component_to_unit_vector(nabla_id, axis)(
-                                        new_ptl[nabla_child_index])
+                                        new_ptl[nabla_child_index]))
 
                     new_result.append(new_ptl)
 
@@ -373,24 +416,27 @@ class DerivativeBinder(IdentityMapper[[]]):
         from pymbolic.primitives import flattened_product, flattened_sum
         return flattened_sum([
                     flattened_product([
-                        self.rec(prod_term) for prod_term in prod_term_list
+                        self.rec_arith(prod_term) for prod_term in prod_term_list
                         ])
                     for prod_term_list in result
                     ])
 
-    map_bitwise_xor = map_product
-    map_bitwise_or = map_product
-    map_left_shift = map_product
-    map_right_shift = map_product
+    map_bitwise_xor: Callable[[Self, p.BitwiseXor], Expression] = map_product
+    map_bitwise_or: Callable[[Self, p.BitwiseOr], Expression] = map_product
+    # FIXME: these cannot be assigned to `map_product`, since that expects they
+    # have a `children` attribute
+    map_left_shift: Callable[[Self, p.LeftShift], Expression] = map_product
+    map_right_shift: Callable[[Self, p.RightShift], Expression] = map_product
 
-    def map_derivative_source(self, expr):
+    @override
+    def map_derivative_source(self, expr: gp.DerivativeSource, /) -> Expression:
         rec_operand = self.rec(expr.operand)
 
-        nablas = []
+        nablas: list[gp.NablaComponent] = []
         for d_or_n in self.derivative_collector(rec_operand):
-            if isinstance(d_or_n, prim.NablaComponent):
+            if isinstance(d_or_n, gp.NablaComponent):
                 nablas.append(d_or_n)
-            elif isinstance(d_or_n, prim.DerivativeSource):
+            elif isinstance(d_or_n, gp.DerivativeSource):
                 pass
             else:
                 raise RuntimeError("unexpected result from "
@@ -411,7 +457,7 @@ class DerivativeBinder(IdentityMapper[[]]):
 # }}}
 
 
-class ConstantFoldingMapper(IdentityMapper, ConstantFoldingMapperBase):
+class ConstantFoldingMapper(IdentityMapper[[]], ConstantFoldingMapperBase):
     pass
 
 # vim: foldmethod=marker
