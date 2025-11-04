@@ -2,33 +2,56 @@
 Typing helpers
 --------------
 
+.. |br| raw:: html
+
+   <br/>
+
 .. currentmodule:: pymbolic
 
 .. autodata:: Bool
+
+    Supported boolean types. |br|
+
 .. autodata:: RealNumber
 
+    Supported real number types (integer and floating point).
+
     Mainly distinguished from :data:`Number` by having a total ordering, i.e.
-    not including the complex numbers.
+    not including the complex numbers. |br|
 
 .. autodata:: Number
+
+    Supported number types. |br|
+
 .. autodata:: Scalar
+
+    Supported scalar types. |br|
+
 .. autodata:: ArithmeticExpression
 
     A narrower type alias than :class:`~pymbolic.typing.Expression` that is returned
-    by arithmetic operators, to allow continue doing arithmetic with the result.
+    by arithmetic operators, to allow continue doing arithmetic with the result. |br|
 
 .. currentmodule:: pymbolic.typing
 
+.. autodata:: Integer
+
+    Supported integer types. |br|
+
 .. autodata:: Expression
+
+    A union of types that are considered as part of an expression tree. |br|
 
 .. note::
 
-    For backward compatibility, ``pymbolic.Expression``  will alias
-    :class:`pymbolic.primitives.ExpressionNode` for now. Once its deprecation
-    period is up, it will be removed, and then, in the further future,
-    ``pymbolic.Expression`` may become this type alias.
+    For backward compatibility, ``pymbolic.Expression`` will alias
+    :class:`pymbolic.primitives.ExpressionNode` for now. Once its
+    deprecation period is up, it will be removed, and then, in the further
+    future, ``pymbolic.Expression`` may become this type alias.
 
 .. autoclass:: ArithmeticOrExpressionT
+
+.. autofunction:: not_none
 """
 
 from __future__ import annotations
@@ -59,7 +82,7 @@ THE SOFTWARE.
 from functools import partial
 from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
 
-from pytools import module_getattr_for_deprecations
+from pytools import T, module_getattr_for_deprecations
 
 
 # FIXME: This is a lie. Many more constant types (e.g. numpy and such)
@@ -93,6 +116,7 @@ _StdlibInexactNumberT = float | complex
 if TYPE_CHECKING:
     # Yes, type-checking pymbolic will require numpy. That's OK.
     import numpy as np
+
     Bool: TypeAlias = bool | np.bool_
     Integer: TypeAlias = int | np.integer
     RealNumber: TypeAlias = Integer | float | np.floating
@@ -106,21 +130,22 @@ else:
         RealNumber: TypeAlias = Integer | float
         InexactNumber: TypeAlias = _StdlibInexactNumberT
     else:
-        Bool = bool | np.bool_
-        Integer: TypeAlias = int | np.integer
-        RealNumber: TypeAlias = Integer | float | np.floating
+        Bool = Union[bool, np.bool_]  # noqa: UP007
+        Integer: TypeAlias = Union[int, np.integer]  # noqa: UP007
+        RealNumber: TypeAlias = Union[Integer, float, np.floating]  # noqa: UP007
         InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 
+# NOTE: these are Union because Sphinx seems to understand that better and
+# prints a nice "alias of ..." blurb
 
-Number: TypeAlias = Integer | InexactNumber
-Scalar: TypeAlias = Number | Bool
+Number: TypeAlias = Union[Integer, InexactNumber]  # noqa: UP007
+Scalar: TypeAlias = Union[Number, Bool]  # noqa: UP007
+
+# NOTE: These need to be Union because they will get used like
+# `ArithmeticExpression | None`, which does not work if it's a string.
 
 ArithmeticExpression: TypeAlias = Union[Number, "ExpressionNode"]
-Expression: TypeAlias = Union[
-    Scalar,
-    "ExpressionNode",
-    tuple["Expression", ...]]
-"""A union of types that are considered as part of an expression tree."""
+Expression: TypeAlias = Union[Scalar, "ExpressionNode", tuple["Expression", ...]]
 
 ArithmeticOrExpressionT = TypeVar(
                 "ArithmeticOrExpressionT",
@@ -129,8 +154,6 @@ ArithmeticOrExpressionT = TypeVar(
 """A type variable that can be either an :class:`~pymbolic.ArithmeticExpression`
 or an :class:`~pymbolic.typing.Expression`.
 """
-
-T = TypeVar("T")
 
 
 __getattr__ = partial(module_getattr_for_deprecations, __name__, {
@@ -143,5 +166,6 @@ __getattr__ = partial(module_getattr_for_deprecations, __name__, {
 
 
 def not_none(x: T | None) -> T:
+    """Backward compatible :func:`operator.is_not_none`."""
     assert x is not None
     return x
