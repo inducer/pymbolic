@@ -126,7 +126,9 @@ class Derivative(ABC):
 
     @staticmethod
     @abstractmethod
-    def resolve(expr: Expression) -> Expression:
+    def resolve(
+                expr: ArithmeticExpressionContainerTc
+            ) -> ArithmeticExpressionContainerTc:
         # This method will need to be overridden by codes using this
         # infrastructure to use the appropriate subclass of DerivativeBinder.
         pass
