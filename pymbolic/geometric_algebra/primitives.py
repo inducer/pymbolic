@@ -27,7 +27,7 @@ THE SOFTWARE.
 # Consider yourself warned.
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
 import pytools.obj_array as obj_array
 
@@ -38,7 +38,14 @@ from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from pymbolic.typing import ArithmeticExpression, Expression
+    from pymbolic.typing import (
+        ArithmeticExpression,
+        ArithmeticExpressionContainerTc,
+        Expression,
+    )
+
+
+NablaId: TypeAlias = "Hashable"
 
 
 class MultiVectorVariable(Variable):
@@ -51,34 +58,6 @@ class _GeometricCalculusExpression(ExpressionNode):
     def stringifier(self, originating_stringifier=None):
         from pymbolic.geometric_algebra.mapper import StringifyMapper
         return StringifyMapper()
-
-
-NablaId: TypeAlias = "Hashable"
-
-# TODO: move these somewhere pytential can make use of them.
-# Maybe just `pymbolic.typing`? (this module is not yet stable and documented)
-
-Operand: TypeAlias = """
-    ArithmeticExpression
-    | MultiVector[ArithmeticExpression]
-    | obj_array.ObjectArray1D[ArithmeticExpression]
-    | obj_array.ObjectArray2D[ArithmeticExpression]
-    | obj_array.ObjectArrayND[ArithmeticExpression]"""
-r"""A type alias for allowable expressions that can act as an operand in
-arithmetic. This includes expressions, but also
-:class:`~pymbolic.geometry_algebra.MultiVector`\ s and (object) :mod:`numpy` arrays.
-"""
-OperandTc = TypeVar(
-    "OperandTc",
-    "ArithmeticExpression",
-    "MultiVector[ArithmeticExpression]",
-    "obj_array.ObjectArray1D[ArithmeticExpression]",
-    "obj_array.ObjectArray2D[ArithmeticExpression]",
-    "obj_array.ObjectArrayND[ArithmeticExpression]",
-)
-"""A :class:`~typing.TypeVar` constrained to the types in :class:`Operand`. Note
-that this does not use :class:`Operand` as a bound.
-"""
 
 
 @expr_dataclass()
@@ -135,7 +114,9 @@ class Derivative(ABC):
             for axis in range(ambient_dim)]
         return MultiVector(obj_array.new_1d(nablas))
 
-    def __call__(self, operand: OperandTc) -> OperandTc:
+    def __call__(
+            self, operand: ArithmeticExpressionContainerTc,
+        ) -> ArithmeticExpressionContainerTc:
         from pymbolic.geometric_algebra import componentwise
 
         def func(coeff: ArithmeticExpression) -> ArithmeticExpression:
