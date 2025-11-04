@@ -51,6 +51,15 @@ Typing helpers
 
 .. autoclass:: ArithmeticOrExpressionT
 
+.. autodata:: ArithmeticExpressionContainer
+
+    A type alias for allowable expressions that can act as an operand in
+    arithmetic. This includes numbers and expressions, but also
+    :class:`~pymbolic.geometric_algebra.MultiVector` and (object) :mod:`numpy`
+    arrays. |br|
+
+.. autoclass:: ArithmeticExpressionContainerTc
+
 .. autofunction:: not_none
 """
 
@@ -82,7 +91,7 @@ THE SOFTWARE.
 from functools import partial
 from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
 
-from pytools import T, module_getattr_for_deprecations
+from pytools import T, module_getattr_for_deprecations, obj_array
 
 
 # FIXME: This is a lie. Many more constant types (e.g. numpy and such)
@@ -103,6 +112,7 @@ from pytools import T, module_getattr_for_deprecations
 
 if TYPE_CHECKING:
     from pymbolic import ExpressionNode
+    from pymbolic.geometric_algebra import MultiVector
 
 # Experience with depending packages showed that including Decimal and Fraction
 # from the stdlib was more trouble than it's worth because those types don't cleanly
@@ -151,10 +161,29 @@ ArithmeticOrExpressionT = TypeVar(
                 "ArithmeticOrExpressionT",
                 ArithmeticExpression,
                 Expression)
-"""A type variable that can be either an :class:`~pymbolic.ArithmeticExpression`
-or an :class:`~pymbolic.typing.Expression`.
+"""A :class:`~typing.TypeVar` that can be either an
+:class:`~pymbolic.ArithmeticExpression` or an :class:`~pymbolic.typing.Expression`.
 """
 
+ArithmeticExpressionContainer: TypeAlias = Union[
+    ArithmeticExpression,
+    "MultiVector[ArithmeticExpression]",
+    obj_array.ObjectArray1D[ArithmeticExpression],
+    obj_array.ObjectArray2D[ArithmeticExpression],
+    obj_array.ObjectArrayND[ArithmeticExpression]]
+
+ArithmeticExpressionContainerTc = TypeVar(
+    "ArithmeticExpressionContainerTc",
+    ArithmeticExpression,
+    "MultiVector[ArithmeticExpression]",
+    obj_array.ObjectArray1D[ArithmeticExpression],
+    obj_array.ObjectArray2D[ArithmeticExpression],
+    obj_array.ObjectArrayND[ArithmeticExpression],
+)
+"""A :class:`~typing.TypeVar` constrained to the types in
+:class:`ArithmeticExpressionContainer`. Note that this does not use
+:class:`ArithmeticExpressionContainer` as a bound.
+"""
 
 __getattr__ = partial(module_getattr_for_deprecations, __name__, {
         "ArithmeticExpressionT": ("ArithmeticExpression", ArithmeticExpression, 2026),

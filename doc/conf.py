@@ -40,6 +40,7 @@ nitpick_ignore_regex = [
     ["py:class", r"ast.expr"],
     ["py:class", r"onp.*"],
     ["py:class", r"optype.*"],
+    ["py:class", r"MultiVector\[ArithmeticExpression\]"],
 ]
 
 sphinxconfig_missing_reference_aliases = {
