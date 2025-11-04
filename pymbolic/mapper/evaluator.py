@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-from pytools import ndindex
-
 
 __copyright__ = "Copyright (C) 2009-2013 Andreas Kloeckner"
 
@@ -41,6 +39,8 @@ from typing import TYPE_CHECKING, Any, cast
 
 from typing_extensions import override
 
+from pytools import ndindex
+
 from pymbolic.mapper import CachedMapper, CSECachingMapperMixin, Mapper, ResultT
 
 
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
     import pymbolic.primitives as p
     from pymbolic.geometric_algebra import MultiVector
     from pymbolic.rational import Rational
-    from pymbolic.typing import Expression
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 class UnknownVariableError(Exception):
@@ -116,7 +116,14 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
     @override
     def map_subscript(self, expr: p.Subscript, /) -> ResultT:
-        return self.rec(expr.aggregate)[self.rec(expr.index)]
+        agg = self.rec(expr.aggregate)
+        index = self.rec(expr.index)
+        from pymbolic.primitives import EmptyOK, ExpressionNode
+        if isinstance(agg, ExpressionNode):
+            return cast("ResultT",
+                agg[EmptyOK(cast("ArithmeticExpression", index))])
+        else:
+            return agg[index]  # pyright: ignore[reportIndexIssue]
 
     @override
     def map_lookup(self, expr: p.Lookup, /) -> ResultT:
