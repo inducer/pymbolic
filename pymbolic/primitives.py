@@ -43,7 +43,7 @@ from typing import (
 from warnings import warn
 
 from constantdict import constantdict
-from typing_extensions import Self, TypeIs, dataclass_transform
+from typing_extensions import Self, TypeIs, dataclass_transform, override
 
 import pytools.obj_array as obj_array
 from pytools import T, module_getattr_for_deprecations, ndindex
@@ -347,7 +347,7 @@ class _AttributeLookupCreator:
     .. automethod:: __getattr__
     """
     def __init__(self, aggregate: _Expression) -> None:
-        self.aggregate = aggregate
+        self.aggregate: _Expression = aggregate
 
     def __getattr__(self, name: str) -> Lookup:
         return Lookup(self.aggregate, name)
@@ -408,7 +408,7 @@ class ExpressionNode:
 
     # {{{ init arg names (override by subclass)
 
-    def __getinitargs__(self):
+    def __getinitargs__(self) -> tuple[Any, ...]:
         raise NotImplementedError
 
     @_classproperty
@@ -584,7 +584,9 @@ class ExpressionNode:
     def __pos__(self) -> ExpressionNode:
         return self
 
-    def __call__(self, *args, **kwargs) -> Call | CallWithKwargs:
+    def __call__(self,
+                 *args: _Expression,
+                 **kwargs: _Expression) -> Call | CallWithKwargs:
         if kwargs:
             return CallWithKwargs(self, args, constantdict(kwargs))
         else:
@@ -655,6 +657,7 @@ class ExpressionNode:
         from pymbolic.mapper.stringifier import StringifyMapper
         return StringifyMapper()
 
+    @override
     def __str__(self) -> str:
         """Use the :meth:`make_stringifier` to return a human-readable
         string representation of *self*.
@@ -670,7 +673,7 @@ class ExpressionNode:
         if limit <= 0:
             return "..."
 
-        def strify_child(child, limit):
+        def strify_child(child: _Expression, limit: int) -> str:
             if isinstance(child, tuple):
                 # Make sure limit propagates at least through tuples
 
@@ -694,6 +697,7 @@ class ExpressionNode:
 
         return f"{self.__class__.__name__}({initargs_str})"
 
+    @override
     def __repr__(self) -> str:
         return self._safe_repr()
 
@@ -707,6 +711,7 @@ class ExpressionNode:
     _deprecation_warnings_issued: ClassVar[set[tuple[type[ExpressionNode], str]]] \
         = set()
 
+    @override
     def __eq__(self, other) -> bool:
         """Provides equality testing with quick positive and negative paths
         based on :func:`id` and :meth:`__hash__`.
@@ -726,9 +731,11 @@ class ExpressionNode:
         else:
             return self.is_equal(other)
 
+    @override
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
+    @override
     def __hash__(self) -> int:
         """Provides caching for hash values.
         """
@@ -745,13 +752,13 @@ class ExpressionNode:
         try:
             return self._hash_value
         except AttributeError:
-            self._hash_value: int = self.get_hash()
+            self._hash_value: int = self.get_hash()  # pyright: ignore[reportUninitializedInstanceVariable]
             return self._hash_value
 
-    def __getstate__(self) -> tuple[Any]:
+    def __getstate__(self) -> tuple[Any, ...]:
         return self.__getinitargs__()
 
-    def __setstate__(self, state) -> None:
+    def __setstate__(self, state: tuple[Any, ...]) -> None:
         # Can't use trivial pickling: _hash_value cache must stay unset
         assert len(self.init_arg_names) == len(state), type(self)
         for name, value in zip(self.init_arg_names, state, strict=True):
@@ -846,16 +853,16 @@ class ExpressionNode:
     # /!\ Don't be tempted to resolve these to Comparison.
 
     def __le__(self, other) -> NoReturn:
-        raise TypeError("expressions don't have an order")
+        raise TypeError("expressions do not have an order")
 
     def __lt__(self, other) -> NoReturn:
-        raise TypeError("expressions don't have an order")
+        raise TypeError("expressions do not have an order")
 
     def __ge__(self, other) -> NoReturn:
-        raise TypeError("expressions don't have an order")
+        raise TypeError("expressions do not have an order")
 
     def __gt__(self, other) -> NoReturn:
-        raise TypeError("expressions don't have an order")
+        raise TypeError("expressions do not have an order")
 
     # }}}
 
@@ -1023,7 +1030,7 @@ def _augment_expression_dataclass(
 
     # set a marker to detect classes whose subclasses may not be expr_dataclasses
     # type ignore because we don't want to announce the existence of this to the world.
-    cls._is_expr_dataclass = True
+    cls._is_expr_dataclass = True  # pyright: ignore[reportAttributeAccessIssue]
 
     # {{{ assign mapper_method
 
@@ -1505,9 +1512,9 @@ class cse_scope:  # noqa: N801
         The evaluated result lives until the execution context dies.
     """
 
-    EVALUATION = "pymbolic_eval"
-    EXPRESSION = "pymbolic_expr"
-    GLOBAL = "pymbolic_global"
+    EVALUATION: ClassVar[str] = "pymbolic_eval"
+    EXPRESSION: ClassVar[str] = "pymbolic_expr"
+    GLOBAL: ClassVar[str] = "pymbolic_global"
 
 
 @expr_dataclass()
@@ -1539,7 +1546,7 @@ class CommonSubexpression(ExpressionNode):
                  DeprecationWarning, stacklevel=3)
             object.__setattr__(self, "scope", cse_scope.EVALUATION)
 
-    def get_extra_properties(self):
+    def get_extra_properties(self) -> dict[str, Any]:
         """Return a dictionary of extra kwargs to be passed to the
         constructor from the identity mapper.
 
@@ -1647,7 +1654,7 @@ class NaN(AlgebraicLeaf):
     """
     data_type: Callable[[float], Any] | None = None
 
-    mapper_method = intern("map_nan")
+    mapper_method: ClassVar[str] = intern("map_nan")
 
 # }}}
 
@@ -1661,7 +1668,7 @@ def make_variable(var_or_string: Variable | str) -> Variable:
         return var_or_string
 
 
-def subscript(expression, index):
+def subscript(expression: _Expression, index: _Expression) -> Subscript:
     return Subscript(expression, index)
 
 
@@ -1774,8 +1781,8 @@ VALID_OPERANDS = (ExpressionNode,)
 
 try:
     import numpy
-    VALID_CONSTANT_CLASSES += (numpy.number, numpy.bool_)
-    _BOOL_CLASSES += (numpy.bool_, )
+    VALID_CONSTANT_CLASSES += (numpy.number, numpy.bool_)  # pyright: ignore[reportConstantRedefinition]
+    _BOOL_CLASSES += (numpy.bool_, )  # pyright: ignore[reportConstantRedefinition]
 except ImportError:
     pass
 
@@ -1807,18 +1814,18 @@ def is_arithmetic_expression(value: object) -> TypeIs[ArithmeticExpression]:
     return not isinstance(value, _BOOL_CLASSES) and is_valid_operand(value)
 
 
-def register_constant_class(class_):
+def register_constant_class(class_: type) -> None:
     global VALID_CONSTANT_CLASSES
 
-    VALID_CONSTANT_CLASSES += (class_,)
+    VALID_CONSTANT_CLASSES += (class_,)  # pyright: ignore[reportConstantRedefinition]
 
 
-def unregister_constant_class(class_):
+def unregister_constant_class(class_: type) -> None:
     global VALID_CONSTANT_CLASSES
 
     tmp = list(VALID_CONSTANT_CLASSES)
     tmp.remove(class_)
-    VALID_CONSTANT_CLASSES = tuple(tmp)
+    VALID_CONSTANT_CLASSES = tuple(tmp)  # pyright: ignore[reportConstantRedefinition]
 
 
 def is_nonzero(value: object) -> bool:
