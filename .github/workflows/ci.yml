@@ -18,14 +18,14 @@ jobs:
         name: Typos
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
         -   uses: crate-ci/typos@master
 
     ruff:
         name: Ruff
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
             with:
                 submodules: true
         -   uses: actions/setup-python@v6
@@ -38,7 +38,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
         -   uses: actions/setup-python@v6
             with:
                 python-version: '3.x'
@@ -59,7 +59,7 @@ jobs:
             matrix:
                 python-version: ["3.10", "3.12", "3.x"]
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
         -
             uses: actions/setup-python@v6
             with:
@@ -81,7 +81,7 @@ jobs:
         name: Documentation
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
         -
             uses: actions/setup-python@v6
             with:
@@ -102,7 +102,7 @@ jobs:
         name: Tests for downstream project ${{ matrix.downstream_project }}
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v6
         -   name: "Main Script"
             env:
                 DOWNSTREAM_PROJECT: ${{ matrix.downstream_project }}
