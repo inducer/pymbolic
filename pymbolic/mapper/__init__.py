@@ -60,37 +60,12 @@ Basic dispatch
 
     A type variable for the result returned by a :class:`Mapper`.
 
+.. class:: P
+
+    :class:`typing.ParamSpec` for :class:`Mapper` arguments.
+
 .. autoclass:: Mapper
-
-    .. automethod:: __call__
-
-    .. method:: rec(expr, *args, **kwargs)
-
-        Identical to :meth:`__call__`, but intended for use in recursive dispatch
-        in mapper methods.
-
-    .. automethod:: handle_unsupported_expression
-
-    .. rubric:: Handling objects that don't declare mapper methods
-
-    In particular, this includes many non-subclasses of
-    :class:`pymbolic.ExpressionNode`.
-
-    .. automethod:: map_foreign
-
-    These are abstract methods for foreign objects that should be overridden
-    in subclasses:
-
-    .. method:: map_constant(expr, *args, **kwargs)
-
-        Mapper method for constants.
-        See :func:`pymbolic.primitives.register_constant_class`.
-
-    .. method:: map_list(expr, *args, **kwargs)
-
-    .. method:: map_tuple(expr, *args, **kwargs)
-
-    .. method:: map_numpy_array(expr, *args, **kwargs)
+    :show-inheritance:
 
 Base classes for new mappers
 ----------------------------
@@ -151,15 +126,30 @@ P = ParamSpec("P")
 
 
 class Mapper(Generic[ResultT, P]):
-    """A visitor for trees of :class:`pymbolic.ExpressionNode`
-    subclasses. Each expression-derived object is dispatched to the
-    method named by the :attr:`pymbolic.ExpressionNode.mapper_method`
-    attribute and if not found, the methods named by the class attribute
-    *mapper_method* in the method resolution order of the object.
+    """A visitor for trees of :class:`pymbolic.ExpressionNode` subclasses.
 
-    ..automethod:: handle_unsupported_expression
-    ..automethod:: __call__
-    ..automethod:: rec
+    Each expression-derived object is dispatched to the method named by the
+    :attr:`pymbolic.ExpressionNode.mapper_method` attribute and, if not found,
+    the methods named by the class attribute *mapper_method* in the method
+    resolution order of the object.
+
+    .. automethod:: __call__
+    .. automethod:: rec
+    .. automethod:: handle_unsupported_expression
+
+    .. rubric:: Handling objects that do not declare mapper methods
+
+    In particular, this includes many non-subclasses of
+    :class:`pymbolic.ExpressionNode`.
+
+    .. automethod:: map_foreign
+
+    These are abstract methods for foreign objects that should be overridden
+    in subclasses:
+
+    .. automethod:: map_constant
+    .. automethod:: map_tuple
+    .. automethod:: map_numpy_array
     """
 
     def handle_unsupported_expression(self,
@@ -204,6 +194,9 @@ class Mapper(Generic[ResultT, P]):
             return self.map_foreign(expr, *args, **kwargs)
 
     rec = __call__
+    """Identical to :meth:`__call__`, but intended for use in recursive dispatch
+    in mapper methods.
+    """
 
     def rec_fallback(self,
             expr: object, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
@@ -279,6 +272,9 @@ class Mapper(Generic[ResultT, P]):
 
     def map_constant(self,
             expr: object, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        """Mapper method for constants.
+        See :func:`pymbolic.primitives.register_constant_class`.
+        """
         raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     def map_comparison(self,
