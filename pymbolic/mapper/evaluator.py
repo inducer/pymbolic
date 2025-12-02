@@ -1,8 +1,12 @@
 """
 .. autoclass:: EvaluationMapper
+    :show-inheritance:
 .. autoclass:: CachedEvaluationMapper
+    :show-inheritance:
 .. autoclass:: FloatEvaluationMapper
+    :show-inheritance:
 .. autoclass:: CachedFloatEvaluationMapper
+    :show-inheritance:
 
 .. autofunction:: evaluate
 .. autofunction:: evaluate_kw

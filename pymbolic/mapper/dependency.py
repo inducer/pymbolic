@@ -1,6 +1,8 @@
 """
 .. autoclass:: DependencyMapper
+    :show-inheritance:
 .. autoclass:: CachedDependencyMapper
+    :show-inheritance:
 """
 
 from __future__ import annotations

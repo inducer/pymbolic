@@ -1,6 +1,9 @@
 """
 .. autoclass:: SubstitutionMapper
+    :show-inheritance:
 .. autoclass:: CachedSubstitutionMapper
+    :show-inheritance:
+
 .. autofunction:: make_subst_func
 .. autofunction:: substitute
 """

@@ -70,29 +70,43 @@ Basic dispatch
 Base classes for new mappers
 ----------------------------
 
+.. class:: CollectedT
+
+    A type variable for the result returned by a :class:`Collector`.
+
 .. autoclass:: CombineMapper
+    :show-inheritance:
 
 .. autoclass:: Collector
+    :show-inheritance:
 
 .. autoclass:: IdentityMapper
+    :show-inheritance:
 
 .. autoclass:: WalkMapper
+    :show-inheritance:
 
 .. autoclass:: CSECachingMapperMixin
+    :show-inheritance:
 
 
 Base classes for mappers with memoization support
 -------------------------------------------------
 
 .. autoclass:: CachedMapper
+    :show-inheritance:
 
 .. autoclass:: CachedIdentityMapper
+    :show-inheritance:
 
 .. autoclass:: CachedCombineMapper
+    :show-inheritance:
 
 .. autoclass:: CachedCollector
+    :show-inheritance:
 
 .. autoclass:: CachedWalkMapper
+    :show-inheritance:
 """
 
 

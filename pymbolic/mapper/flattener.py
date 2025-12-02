@@ -1,5 +1,6 @@
 """
 .. autoclass:: FlattenMapper
+    :show-inheritance:
 
 .. currentmodule:: pymbolic
 

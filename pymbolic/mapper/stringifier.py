@@ -68,8 +68,14 @@ Mappers
 *******
 
 .. autoclass:: StringifyMapper
+    :show-inheritance:
+.. autoclass:: SortingStringifyMapper
+    :show-inheritance:
+.. autoclass:: SimplifyingSortingStringifyMapper
+    :show-inheritance:
 .. autoclass:: CSESplittingStringifyMapperMixin
 .. autoclass:: LaTeXMapper
+    :show-inheritance:
 """
 
 
