@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 
 __doc__ = """
 .. autoclass:: NodeCountMapper
+    :show-inheritance:
+
 .. autofunction:: get_num_nodes
 """
 

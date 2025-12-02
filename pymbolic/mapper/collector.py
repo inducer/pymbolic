@@ -1,5 +1,6 @@
 """
 .. autoclass:: TermCollector
+    :show-inheritance:
 """
 from __future__ import annotations
 

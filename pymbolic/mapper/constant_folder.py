@@ -1,6 +1,12 @@
 """
+.. autoclass:: ConstantFoldingMapperBase
+    :show-inheritance:
 .. autoclass:: ConstantFoldingMapper
+    :show-inheritance:
+.. autoclass:: CommutativeConstantFoldingMapperBase
+    :show-inheritance:
 .. autoclass:: CommutativeConstantFoldingMapper
+    :show-inheritance:
 """
 from __future__ import annotations
 

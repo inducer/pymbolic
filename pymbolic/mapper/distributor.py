@@ -1,6 +1,8 @@
 """
 .. autoclass:: ExpressionCallable
 .. autoclass:: DistributeMapper
+    :show-inheritance:
+
 .. autofunction:: distribute
 """
 from __future__ import annotations

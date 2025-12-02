@@ -1,5 +1,6 @@
 """
 .. autoclass:: GraphvizMapper
+    :show-inheritance:
 """
 from __future__ import annotations
 

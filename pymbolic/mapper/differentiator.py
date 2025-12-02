@@ -1,6 +1,7 @@
 """
 .. autoclass:: FunctionDerivativeTaker
 .. autoclass:: DifferentiationMapper
+    :show-inheritance:
 """
 from __future__ import annotations
 
