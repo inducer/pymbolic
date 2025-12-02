@@ -72,6 +72,8 @@ sphinxconfig_missing_reference_aliases = {
     "_Expression": "data:pymbolic.typing.Expression",
     "p.AlgebraicLeaf": "class:pymbolic.primitives.AlgebraicLeaf",
     "prim.Variable": "class:pymbolic.primitives.Variable",
+    "P.args": "obj:pymbolic.mapper.P",
+    "P.kwargs": "obj:pymbolic.mapper.P",
 }
 
 
