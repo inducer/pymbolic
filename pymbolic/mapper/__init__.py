@@ -846,9 +846,8 @@ class IdentityMapper(Mapper[Expression, P]):
             self.rec(child, *args, **kwargs) for child in expr.parameters
             ])
         if (function is expr.function
-            and all(child is orig_child
-                for child, orig_child in zip(
-                            expr.parameters, parameters, strict=True))):
+                and all(child is orig_child for child, orig_child in
+                        zip(expr.parameters, parameters, strict=True))):
             return expr
 
         return type(expr)(function, parameters)
@@ -866,11 +865,12 @@ class IdentityMapper(Mapper[Expression, P]):
                 for key, val in expr.kw_parameters.items()})
 
         if (function is expr.function
-            and all(child is orig_child for child, orig_child in
-                zip(parameters, expr.parameters, strict=True))
+                and all(child is orig_child for child, orig_child in
+                        zip(parameters, expr.parameters, strict=True))
                 and all(kw_parameters[k] is v for k, v in
                         expr.kw_parameters.items())):
             return expr
+
         return type(expr)(function, parameters, kw_parameters)
 
     @override
@@ -897,8 +897,8 @@ class IdentityMapper(Mapper[Expression, P]):
                 expr: p.Sum, /, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
         children = [self.rec_arith(child, *args, **kwargs) for child in expr.children]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children, strict=True)):
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
             return expr
 
         return type(expr)(tuple(children))
@@ -908,8 +908,8 @@ class IdentityMapper(Mapper[Expression, P]):
                 expr: p.Product, /, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
         children = [self.rec_arith(child, *args, **kwargs) for child in expr.children]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children, strict=True)):
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
             return expr
 
         return type(expr)(tuple(children))
@@ -922,7 +922,7 @@ class IdentityMapper(Mapper[Expression, P]):
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
             return expr
-        return expr.__class__(numerator, denominator)
+        return type(expr)(numerator, denominator)
 
     @override
     def map_floor_div(self,
@@ -932,7 +932,7 @@ class IdentityMapper(Mapper[Expression, P]):
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
             return expr
-        return expr.__class__(numerator, denominator)
+        return type(expr)(numerator, denominator)
 
     @override
     def map_remainder(self,
@@ -942,7 +942,7 @@ class IdentityMapper(Mapper[Expression, P]):
         denominator = self.rec_arith(expr.denominator, *args, **kwargs)
         if numerator is expr.numerator and denominator is expr.denominator:
             return expr
-        return expr.__class__(numerator, denominator)
+        return type(expr)(numerator, denominator)
 
     @override
     def map_power(self,
@@ -952,7 +952,7 @@ class IdentityMapper(Mapper[Expression, P]):
         exponent = self.rec_arith(expr.exponent, *args, **kwargs)
         if base is expr.base and exponent is expr.exponent:
             return expr
-        return expr.__class__(base, exponent)
+        return type(expr)(base, exponent)
 
     @override
     def map_left_shift(self,
@@ -1074,8 +1074,7 @@ class IdentityMapper(Mapper[Expression, P]):
                 expr: tuple[Expression, ...], /, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
         children = [self.rec(child, *args, **kwargs) for child in expr]
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr, strict=True)):
+        if all(a is b for a, b in zip(children, expr, strict=True)):
             return expr
 
         return tuple(children)
@@ -1092,6 +1091,7 @@ class IdentityMapper(Mapper[Expression, P]):
             result[i] = self.rec(expr[i], *args, **kwargs)
             is_same = is_same and result[i] is expr[i]
 
+        # True fact: ndarrays aren't expressions
         return expr if is_same else result
 
     @override
@@ -1133,8 +1133,9 @@ class IdentityMapper(Mapper[Expression, P]):
                  *args: P.args, **kwargs: P.kwargs) -> Expression:
         child = self.rec(expr.child, *args, **kwargs)
         values = tuple([self.rec(v, *args, **kwargs) for v in expr.values])
-        if child is expr.child and all(val is orig_val
-                for val, orig_val in zip(values, expr.values, strict=True)):
+        if (child is expr.child
+                and all(val is orig_val for val, orig_val in
+                        zip(values, expr.values, strict=True))):
             return expr
 
         return type(expr)(child, expr.variables, values)
@@ -1157,8 +1158,8 @@ class IdentityMapper(Mapper[Expression, P]):
             None if child is None else self.rec(child, *args, **kwargs)
             for child in expr.children
             ]))
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children, strict=True)):
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
             return expr
 
         return type(expr)(children)
@@ -1168,9 +1169,8 @@ class IdentityMapper(Mapper[Expression, P]):
         condition = self.rec(expr.condition, *args, **kwargs)
         then = self.rec(expr.then, *args, **kwargs)
         else_ = self.rec(expr.else_, *args, **kwargs)
-        if condition is expr.condition \
-                and then is expr.then \
-                and else_ is expr.else_:
+
+        if condition is expr.condition and then is expr.then and else_ is expr.else_:
             return expr
 
         return type(expr)(condition, then, else_)
@@ -1181,8 +1181,8 @@ class IdentityMapper(Mapper[Expression, P]):
         children = tuple([
             self.rec(child, *args, **kwargs) for child in expr.children
             ])
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children, strict=True)):
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
             return expr
 
         return type(expr)(children)
@@ -1193,8 +1193,8 @@ class IdentityMapper(Mapper[Expression, P]):
         children = tuple([
             self.rec(child, *args, **kwargs) for child in expr.children
             ])
-        if all(child is orig_child
-                for child, orig_child in zip(children, expr.children, strict=True)):
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
             return expr
 
         return type(expr)(children)
