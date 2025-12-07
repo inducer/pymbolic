@@ -1062,9 +1062,12 @@ class IdentityMapper(Mapper[Expression, P]):
     def map_list(self,
                 expr: list[Expression], /, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
+        children = [self.rec(child, *args, **kwargs) for child in expr]
+        if all(a is b for a, b in zip(children, expr, strict=True)):
+            return expr
 
         # True fact: lists aren't expressions
-        return [self.rec(child, *args, **kwargs) for child in expr]
+        return children
 
     @override
     def map_tuple(self,
@@ -1081,22 +1084,35 @@ class IdentityMapper(Mapper[Expression, P]):
     def map_numpy_array(self,
                 expr: NDArray[np.generic], /, *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
+        import numpy as np
 
-        import numpy
-        result = numpy.empty(expr.shape, dtype=object)
+        result = np.empty(expr.shape, dtype=object)
+        is_same = True
         for i in ndindex(expr.shape):
             result[i] = self.rec(expr[i], *args, **kwargs)
+            is_same = is_same and result[i] is expr[i]
 
-        return result
+        return expr if is_same else result
 
     @override
     def map_multivector(self,
                 expr: MultiVector[ArithmeticExpression], /,
                 *args: P.args, **kwargs: P.kwargs
             ) -> Expression:
+        is_same = True
+
+        def rec(ch: ArithmeticExpression) -> ArithmeticExpression:
+            nonlocal is_same
+
+            result = self.rec_arith(ch, *args, **kwargs)
+            is_same = is_same and result is ch
+
+            return result
+
+        result = expr.map(rec)
+
         # True fact: MultiVectors aren't expressions
-        return expr.map(lambda ch: cast("ArithmeticExpression",
-                                        self.rec(ch, *args, **kwargs)))
+        return expr if is_same else result
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression, /,
