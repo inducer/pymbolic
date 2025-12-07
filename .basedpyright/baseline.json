@@ -6370,8 +6370,16 @@
             {
                 "code": "reportReturnType",
                 "range": {
+                    "startColumn": 19,
+                    "endColumn": 23,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportReturnType",
+                "range": {
                     "startColumn": 15,
-                    "endColumn": 67,
+                    "endColumn": 23,
                     "lineCount": 1
                 }
             },
@@ -6387,7 +6395,7 @@
                 "code": "reportReturnType",
                 "range": {
                     "startColumn": 15,
-                    "endColumn": 21,
+                    "endColumn": 42,
                     "lineCount": 1
                 }
             },
@@ -6395,8 +6403,8 @@
                 "code": "reportReturnType",
                 "range": {
                     "startColumn": 15,
-                    "endColumn": 71,
-                    "lineCount": 2
+                    "endColumn": 42,
+                    "lineCount": 1
                 }
             },
             {
