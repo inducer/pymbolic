@@ -50,8 +50,13 @@ from pytools import MovedFunctionDeprecationWrapper, memoize
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy as np
     from numpy.typing import NDArray
+
+    from pymbolic.primitives import Variable
+    from pymbolic.typing import ArithmeticExpression, Expression
 
 
 # {{{ integer powers
@@ -429,34 +434,35 @@ gaussian_elimination = MovedFunctionDeprecationWrapper(reduced_row_echelon_form,
 
 # {{{ symbolic (linear) equation solving
 
-def solve_affine_equations_for(unknowns, equations):
+def solve_affine_equations_for(
+        unknowns: Sequence[str],
+        equations: Sequence[tuple[Expression, Expression]]
+    ) -> dict[Variable, ArithmeticExpression]:
     """
-    :arg unknowns: A list of variable names for which to solve.
-    :arg equations: A list of tuples ``(lhs, rhs)``.
+    :arg unknowns: a list of variable names for which to solve.
+    :arg equations: a list of tuples ``(lhs, rhs)``.
     :return: a dict mapping unknown names to their values.
     """
     import numpy as np
 
-    from pymbolic.mapper.dependency import DependencyMapper
+    from pymbolic.mapper.dependency import Dependency, DependencyMapper
     dep_map = DependencyMapper(composite_leaves=True)
 
     # fix an order for unknowns
     from pymbolic import var
-    unknowns = [var(u) for u in unknowns]
-    unknowns_set = set(unknowns)
-    unknown_idx_lut = {tgt_name: idx
-            for idx, tgt_name in enumerate(unknowns)}
+    unknown_variables = [var(u) for u in unknowns]
+    unknowns_set = set(unknown_variables)
+    unknown_idx_lut = {u: idx for idx, u in enumerate(unknown_variables)}
 
     # Find non-unknown variables, fix order for them
     # Last non-unknown is constant.
-    parameters = set()
+    parameters: set[Dependency] = set()
     for lhs, rhs in equations:
         parameters.update(dep_map(lhs) - unknowns_set)
         parameters.update(dep_map(rhs) - unknowns_set)
 
     parameters_list = list(parameters)
-    parameter_idx_lut = {var_name: idx
-            for idx, var_name in enumerate(parameters_list)}
+    parameter_idx_lut = {param: idx for idx, param in enumerate(parameters_list)}
 
     from pymbolic.mapper.coefficient import CoefficientCollector
     coeff_coll = CoefficientCollector()
@@ -470,6 +476,7 @@ def solve_affine_equations_for(unknowns, equations):
         for lhs_factor, coeffs in [(1, coeff_coll(lhs)), (-1, coeff_coll(rhs))]:
             for key, coeff in coeffs.items():
                 if key in unknowns_set:
+                    assert isinstance(key, var)
                     mat[i_eqn, unknown_idx_lut[key]] = lhs_factor*coeff
                 elif key in parameters:
                     rhs_mat[i_eqn, parameter_idx_lut[key]] = -lhs_factor*coeff
@@ -484,8 +491,8 @@ def solve_affine_equations_for(unknowns, equations):
 
     # FIXME /!\ Does not check for overdetermined system.
 
-    result = {}
-    for j, unknown in enumerate(unknowns):
+    result: dict[var, ArithmeticExpression] = {}
+    for j, unknown in enumerate(unknown_variables):
         (nonz_row,) = np.where(mat[:, j])
         if len(nonz_row) != 1:
             raise RuntimeError(f"cannot uniquely solve for '{unknown}'")
@@ -506,10 +513,10 @@ def solve_affine_equations_for(unknowns, equations):
 
     if 0:
         for lhs, rhs in equations:
-            print(lhs, "=", rhs)
+            print(f"{lhs} = {rhs}")
         print("-------------------")
         for lhs, rhs in result.items():
-            print(lhs, "=", rhs)
+            print(f"{lhs} = {rhs}")
 
     return result
 
