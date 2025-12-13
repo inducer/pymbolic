@@ -50,7 +50,7 @@ from pytools import MovedFunctionDeprecationWrapper, memoize
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection
 
     import numpy as np
     from numpy.typing import NDArray
@@ -435,8 +435,8 @@ gaussian_elimination = MovedFunctionDeprecationWrapper(reduced_row_echelon_form,
 # {{{ symbolic (linear) equation solving
 
 def solve_affine_equations_for(
-        unknowns: Sequence[str],
-        equations: Sequence[tuple[Expression, Expression]]
+        unknowns: Collection[str],
+        equations: Collection[tuple[Expression, Expression]]
     ) -> dict[Variable, ArithmeticExpression]:
     """
     :arg unknowns: a list of variable names for which to solve.
