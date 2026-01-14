@@ -8662,6 +8662,30 @@
                 }
             },
             {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 23,
+                    "endColumn": 38,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 40,
+                    "endColumn": 54,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 56,
+                    "endColumn": 70,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportUnknownParameterType",
                 "range": {
                     "startColumn": 31,
@@ -11214,14 +11238,6 @@
                 "range": {
                     "startColumn": 34,
                     "endColumn": 44,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnhashable",
-                "range": {
-                    "startColumn": 35,
-                    "endColumn": 39,
                     "lineCount": 1
                 }
             },
