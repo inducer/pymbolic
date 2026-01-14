@@ -608,18 +608,24 @@ class ExpressionNode:
             return self[subscript]
 
     @overload
-    def __getitem__(self, subscript: EmptyOK) -> Subscript:
+    def __getitem__(self, subscript: EmptyOK | slice) -> Subscript:
         ...
 
     @overload
     def __getitem__(self, subscript: _Expression) -> Self | Subscript:
         ...
 
-    def __getitem__(self, subscript: _Expression | EmptyOK) -> Self | Subscript:
+    def __getitem__(self, subscript: _Expression | EmptyOK | slice) -> Self | Subscript:
         """Return an expression representing ``self[subscript]``. """
 
         if isinstance(subscript, EmptyOK):
             return Subscript(self, subscript.child)
+
+        if isinstance(subscript, slice):
+            return Subscript(
+                self,
+                Slice((subscript.start, subscript.stop, subscript.step))
+            )
 
         if subscript == ():
             warn(f"{type(self).__name__}.__getitem__ called with an empty tuple as "

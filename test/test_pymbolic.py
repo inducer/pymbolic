@@ -1138,6 +1138,24 @@ def test_flatten():
 # }}}
 
 
+# {{{ test_subscript
+
+def test_subscript() -> None:
+    x = prim.Variable("x")
+
+    y = x[10:45]
+    assert isinstance(y, prim.Subscript)
+
+    i = prim.Variable("i")
+    n = prim.Variable("n")
+    z = x[i: i + n]
+    assert isinstance(z, prim.Subscript)
+
+    assert str(z) == "x[i:i + n:]"
+
+# }}}
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
