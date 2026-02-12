@@ -68,17 +68,11 @@ class FlattenMapper(IdentityMapper[[]]):
 
     @override
     def map_sum(self, expr: p.Sum, /) -> Expression:
-        from pymbolic.primitives import flattened_sum
-        return flattened_sum([
-                             self.rec_arith(ch)
-                             for ch in expr.children])
+        return p.flattened_sum([self.rec_arith(ch) for ch in expr.children])
 
     @override
     def map_product(self, expr: p.Product, /) -> Expression:
-        from pymbolic.primitives import flattened_product
-        return flattened_product([
-                                 self.rec_arith(ch)
-                                 for ch in expr.children])
+        return p.flattened_product([self.rec_arith(ch) for ch in expr.children])
 
     @override
     def map_quotient(self, expr: p.Quotient, /) -> Expression:

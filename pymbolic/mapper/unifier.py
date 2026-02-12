@@ -25,17 +25,13 @@ THE SOFTWARE.
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
-from typing import TYPE_CHECKING, final
+from typing import final
 
 from typing_extensions import Self, override
 
+import pymbolic.primitives as p
 from pymbolic.mapper import Mapper
-from pymbolic.primitives import Variable
 from pymbolic.typing import ArithmeticExpression, Expression
-
-
-if TYPE_CHECKING:
-    import pymbolic.primitives as p
 
 
 def unify_map(
@@ -78,9 +74,9 @@ class UnificationRecord:
             rmap = {}
 
             for lhs, rhs in equations:
-                if isinstance(lhs, Variable):
+                if isinstance(lhs, p.Variable):
                     lmap[lhs.name] = rhs
-                if isinstance(rhs, Variable):
+                if isinstance(rhs, p.Variable):
                     rmap[rhs.name] = lhs
 
         self.lmap = lmap
@@ -173,8 +169,8 @@ class UnifierBase(Mapper[
 
             return None
 
-        lhs_is_var = isinstance(lhs, Variable)
-        rhs_is_var = isinstance(rhs, Variable)
+        lhs_is_var = isinstance(lhs, p.Variable)
+        rhs_is_var = isinstance(rhs, p.Variable)
 
         if self.force_var_match and not (lhs_is_var or rhs_is_var):
             return None
@@ -212,7 +208,7 @@ class UnifierBase(Mapper[
 
         if new_uni_record is None:
             # Check if the variables match literally--that's ok, too.
-            if (isinstance(other, Variable) and other.name == expr.name
+            if (isinstance(other, p.Variable) and other.name == expr.name
                     and (
                         self.lhs_mapping_candidates is None
                         or expr.name not in self.lhs_mapping_candidates)):
@@ -466,10 +462,10 @@ class UnidirectionalUnifier(UnifierBase):
 
         # Partition expr into terms that are plain (free) variables and those
         # that are not.
-        plain_var_candidates: list[Variable] = []
+        plain_var_candidates: list[p.Variable] = []
         non_var_children: list[Expression] = []
         for child in expr.children:
-            if (isinstance(child, Variable)
+            if (isinstance(child, p.Variable)
                     and (
                         self.lhs_mapping_candidates is None
                         or child.name in self.lhs_mapping_candidates)):
@@ -566,8 +562,7 @@ class UnidirectionalUnifier(UnifierBase):
                 expr: p.Sum,
                 other: Expression,
                 urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
-        from pymbolic.primitives import flattened_sum
-        return list(self.map_commut_assoc(expr, other, urecs, flattened_sum))
+        return list(self.map_commut_assoc(expr, other, urecs, p.flattened_sum))
 
     @override
     def map_product(
@@ -575,5 +570,4 @@ class UnidirectionalUnifier(UnifierBase):
                 expr: p.Product,
                 other: Expression,
                 urecs: Sequence[UnificationRecord]) -> Sequence[UnificationRecord]:
-        from pymbolic.primitives import flattened_product
-        return list(self.map_commut_assoc(expr, other, urecs, flattened_product))
+        return list(self.map_commut_assoc(expr, other, urecs, p.flattened_product))
