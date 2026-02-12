@@ -503,6 +503,18 @@ class ExpressionNode:
 
         return Power(other, self)
 
+    def __matmul__(self, other: ArithmeticExpression) -> Matmul:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
+
+        return Matmul((self, other))
+
+    def __rmatmul__(self, other: ArithmeticExpression) -> Matmul:
+        if not is_arithmetic_expression(other):
+            return NotImplemented
+
+        return Matmul((other, self))
+
     # }}}
 
     # {{{ shifts
@@ -1329,6 +1341,16 @@ class Power(ExpressionNode):
 
     base: ArithmeticExpression
     exponent: ArithmeticExpression
+
+
+@expr_dataclass()
+class Matmul(ExpressionNode):
+    """Matrix multiplication operator ``@``.
+
+    .. autoattribute:: children
+    """
+
+    children: tuple[ArithmeticExpression, ...]
 
 # }}}
 
