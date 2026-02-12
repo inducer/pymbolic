@@ -6363,6 +6363,14 @@
                 "code": "reportUnannotatedClassAttribute",
                 "range": {
                     "startColumn": 4,
+                    "endColumn": 14,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportUnannotatedClassAttribute",
+                "range": {
+                    "startColumn": 4,
                     "endColumn": 18,
                     "lineCount": 1
                 }
@@ -6904,6 +6912,14 @@
                 }
             },
             {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 66,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportOperatorIssue",
                 "range": {
                     "startColumn": 15,
@@ -6964,6 +6980,14 @@
                 "range": {
                     "startColumn": 15,
                     "endColumn": 61,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 69,
                     "lineCount": 1
                 }
             },
