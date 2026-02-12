@@ -37,6 +37,8 @@ from pymbolic.mapper.stringifier import (
     PREC_LOGICAL_AND,
     PREC_LOGICAL_OR,
     PREC_NONE,
+    PREC_POWER,
+    PREC_PRODUCT,
     PREC_UNARY,
     SimplifyingSortingStringifyMapper,
 )
@@ -126,7 +128,6 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
 
     @override
     def map_product(self, expr: p.Product, /, enclosing_prec: int) -> str:
-        from pymbolic.mapper.stringifier import PREC_PRODUCT
         return self.parenthesize_if_needed(
                 # Spaces prevent '**z' (times dereference z), which
                 # is hard to read.
@@ -161,14 +162,12 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
 
     @override
     def map_power(self, expr: p.Power, /, enclosing_prec: int) -> str:
-        from pymbolic.mapper.stringifier import PREC_NONE
-        from pymbolic.primitives import is_constant, is_zero
-        if is_constant(expr.exponent):
-            if is_zero(expr.exponent):
+        if p.is_constant(expr.exponent):
+            if p.is_zero(expr.exponent):
                 return "1"
-            elif is_zero(expr.exponent - 1):
+            elif p.is_zero(expr.exponent - 1):
                 return self.rec(expr.base, enclosing_prec)
-            elif is_zero(expr.exponent - 2):
+            elif p.is_zero(expr.exponent - 2):
                 return self.rec(expr.base*expr.base, enclosing_prec)
 
         return self.format("pow(%s, %s)",
@@ -184,7 +183,6 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
         # Let's see how bad of an idea this is--sane people would only
         # apply this to integers, right?
 
-        from pymbolic.mapper.stringifier import PREC_POWER, PREC_PRODUCT
         return self.format("(%s/%s)",
                     self.rec(expr.numerator, PREC_PRODUCT),
                     self.rec(expr.denominator, PREC_POWER))  # analogous to ^{-1}
@@ -212,7 +210,6 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
         try:
             cse_name = self.cse_to_name[expr.child]
         except KeyError:
-            from pymbolic.mapper.stringifier import PREC_NONE
             cse_str = self.rec(expr.child, PREC_NONE)
 
             if expr.prefix is not None:
@@ -245,7 +242,6 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
 
     @override
     def map_if(self, expr: p.If, /, enclosing_prec: int) -> str:
-        from pymbolic.mapper.stringifier import PREC_NONE
         return self.format("(%s ? %s : %s)",
                 self.rec(expr.condition, PREC_NONE),
                 self.rec(expr.then, PREC_NONE),

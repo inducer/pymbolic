@@ -102,13 +102,13 @@ def make_subst_func(
     # e.g. https://github.com/python/typing/issues/445
     variable_assignments: optype.CanGetitem[Any, Expression],
 ) -> Callable[[AlgebraicLeaf], Expression | None]:
-    import pymbolic.primitives as primitives
+    from pymbolic.primitives import Variable
 
     def subst_func(var: AlgebraicLeaf) -> Expression | None:
         try:
             return variable_assignments[var]
         except KeyError:
-            if isinstance(var, primitives.Variable):
+            if isinstance(var, Variable):
                 try:
                     return variable_assignments[var.name]
                 except KeyError:

@@ -138,8 +138,6 @@ class DistributeMapper(IdentityMapper[[]]):
 
     @override
     def map_power(self, expr: p.Power, /) -> Expression:
-        from pymbolic.primitives import Sum
-
         newbase = self.rec(expr.base)
         if isinstance(newbase, p.Product):
             return self.rec(p.flattened_product([
@@ -147,7 +145,7 @@ class DistributeMapper(IdentityMapper[[]]):
                 ]))
 
         if isinstance(expr.exponent, int):
-            if isinstance(newbase, Sum):
+            if isinstance(newbase, p.Sum):
                 return self.rec(p.flattened_product(expr.exponent*(newbase,)))
             else:
                 return IdentityMapper.map_power(self, expr)

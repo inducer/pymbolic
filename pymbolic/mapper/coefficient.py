@@ -85,7 +85,6 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
 
     @override
     def map_quotient(self, expr: p.Quotient, /) -> CoeffsT:
-        from pymbolic.primitives import Quotient
         d_num = dict(self.rec(expr.numerator))
         d_den = self.rec(expr.denominator)
         # d_den should look like {1: k}
@@ -93,7 +92,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
             raise RuntimeError("nonlinear expression")
         val = d_den[1]
         for k in d_num:
-            d_num[k] = p.flattened_product((d_num[k], Quotient(1, val)))
+            d_num[k] = p.flattened_product((d_num[k], p.Quotient(1, val)))
         return d_num
 
     @override
@@ -111,8 +110,7 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
     @override
     def map_constant(self, expr: object, /) -> CoeffsT:
         assert p.is_arithmetic_expression(expr)
-        from pymbolic.primitives import is_zero
-        return {} if is_zero(expr) else {1: expr}
+        return {} if p.is_zero(expr) else {1: expr}
 
     @override
     def map_variable(self, expr: p.Variable, /) -> CoeffsT:

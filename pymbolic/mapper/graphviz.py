@@ -31,13 +31,13 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self, override
 
+import pymbolic.primitives as prim
 from pymbolic.mapper import WalkMapper
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable
 
-    import pymbolic.primitives as prim
     from pymbolic.geometric_algebra.primitives import Nabla, NablaComponent
 
 
@@ -194,9 +194,7 @@ class GraphvizMapper(WalkMapper[[]]):
 
     @override
     def map_call(self, expr: prim.Call) -> None:
-        from pymbolic.primitives import Variable
-
-        if not isinstance(expr.function, Variable):
+        if not isinstance(expr.function, prim.Variable):
             return super().map_call(expr)
 
         sid = self.get_id(expr)

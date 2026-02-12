@@ -74,24 +74,22 @@ class TermCollector(IdentityMapper[[]]):
 
         The argument `product' has to be fully expanded already.
         """
-        from pymbolic.primitives import AlgebraicLeaf, Power, Product
-
         def base(term: Expression) -> ArithmeticExpression:
-            if isinstance(term, Power):
+            if isinstance(term, p.Power):
                 return term.base
             else:
                 assert p.is_arithmetic_expression(term)
                 return term
 
         def exponent(term: Expression) -> ArithmeticExpression:
-            if isinstance(term, Power):
+            if isinstance(term, p.Power):
                 return term.exponent
             else:
                 return 1
 
-        if isinstance(mul_term, Product):
+        if isinstance(mul_term, p.Product):
             terms: Sequence[Expression] = mul_term.children
-        elif (isinstance(mul_term, Power | AlgebraicLeaf)
+        elif (isinstance(mul_term, (p.Power, p.AlgebraicLeaf))
                 or not bool(self.get_dependencies(mul_term))):
             terms = [mul_term]
         else:
