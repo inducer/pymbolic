@@ -284,6 +284,10 @@ class Mapper(Generic[ResultT, P]):
             expr: p.Power, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
+    def map_matmul(self,
+            expr: p.Matmul, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
+
     def map_constant(self,
             expr: object, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
         """Mapper method for constants.
@@ -595,6 +599,11 @@ class CombineMapper(Mapper[ResultT, P]):
         return self.combine((
                 self.rec(expr.base, *args, **kwargs),
                 self.rec(expr.exponent, *args, **kwargs)))
+
+    @override
+    def map_matmul(self,
+            expr: p.Matmul, /, *args: P.args, **kwargs: P.kwargs) -> ResultT:
+        return self.combine(self.rec(child, *args, **kwargs) for child in expr.children)
 
     @override
     def map_left_shift(self,
@@ -953,6 +962,17 @@ class IdentityMapper(Mapper[Expression, P]):
         if base is expr.base and exponent is expr.exponent:
             return expr
         return type(expr)(base, exponent)
+
+    @override
+    def map_matmul(self,
+                expr: p.Matmul, /, *args: P.args, **kwargs: P.kwargs
+            ) -> Expression:
+        children = [self.rec_arith(child, *args, **kwargs) for child in expr.children]
+        if all(child is orig_child for child, orig_child in
+               zip(children, expr.children, strict=True)):
+            return expr
+
+        return type(expr)(tuple(children))
 
     @override
     def map_left_shift(self,
@@ -1381,6 +1401,17 @@ class WalkMapper(Mapper[None, P]):
         self.post_visit(expr, *args, **kwargs)
 
     @override
+    def map_matmul(self, expr: p.Matmul, /,
+                    *args: P.args, **kwargs: P.kwargs) -> None:
+        if not self.visit(expr, *args, **kwargs):
+            return
+
+        for child in expr.children:
+            self.rec(child, *args, **kwargs)
+
+        self.post_visit(expr, *args, **kwargs)
+
+    @override
     def map_tuple(self,
                 expr: tuple[Expression, ...], /, *args: P.args, **kwargs: P.kwargs
             ) -> None:
@@ -1640,6 +1671,7 @@ class CallbackMapper(Mapper[ResultT, P]):
     map_floor_div = map_constant
     map_remainder = map_constant
     map_power = map_constant
+    map_matmul = map_constant
 
     map_left_shift = map_constant
     map_right_shift = map_constant

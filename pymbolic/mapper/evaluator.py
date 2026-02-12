@@ -132,8 +132,11 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
     @override
     def map_product(self, expr: p.Product, /) -> ResultT:
-        from pytools import product
-        return cast("ResultT", product(self.rec(child) for child in expr.children))
+        if not expr.children:
+            return cast("ResultT", 1)
+
+        from operator import mul
+        return reduce(mul, (self.rec(ch) for ch in expr.children))
 
     @override
     def map_quotient(self, expr: p.Quotient, /) -> ResultT:
@@ -150,6 +153,11 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
     @override
     def map_power(self, expr: p.Power, /) -> ResultT:
         return self.rec(expr.base) ** self.rec(expr.exponent)
+
+    @override
+    def map_matmul(self, expr: p.Matmul, /) -> ResultT:
+        from operator import matmul
+        return reduce(matmul, (self.rec(ch) for ch in expr.children))
 
     @override
     def map_left_shift(self, expr: p.LeftShift, /) -> ResultT:

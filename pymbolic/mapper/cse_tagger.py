@@ -68,6 +68,7 @@ class CSETagMapper(IdentityMapper[[]]):
     map_floor_div: Callable[[Self, prim.FloorDiv], Expression] = _map_subexpr
     map_remainder: Callable[[Self, prim.Remainder], Expression] = _map_subexpr
     map_power: Callable[[Self, prim.Power], Expression] = _map_subexpr
+    map_matmul: Callable[[Self, prim.Matmul], Expression] = _map_subexpr
 
     map_left_shift: Callable[[Self, prim.LeftShift], Expression] = _map_subexpr
     map_right_shift: Callable[[Self, prim.RightShift], Expression] = _map_subexpr

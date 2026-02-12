@@ -464,6 +464,23 @@ class StringifyMapper(Mapper[str, Concatenate[int, P]]):
         )
 
     @override
+    def map_matmul(
+        self, expr: p.Matmul, /, enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+    ) -> str:
+        return self.parenthesize_if_needed(
+            self.join_rec_with_parens_around_types(
+                " @ ",
+                expr.children,
+                PREC_PRODUCT,
+                self.multiplicative_primitives,
+                *args,
+                **kwargs,
+            ),
+            enclosing_prec,
+            PREC_PRODUCT,
+        )
+
+    @override
     def map_left_shift(
         self, expr: p.LeftShift, /,
         enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
@@ -1131,6 +1148,17 @@ class LaTeXMapper(StringifyMapper[P]):
             r"\%s(%s)",
             what,
             self.join_rec(", ", expr.children, PREC_NONE, *args, **kwargs),
+        )
+
+    @override
+    def map_matmul(
+        self, expr: p.Matmul, /,
+        enclosing_prec: int, *args: P.args, **kwargs: P.kwargs
+    ) -> str:
+        return self.parenthesize_if_needed(
+            self.join_rec(r" \cdot ", expr.children, PREC_PRODUCT, *args, **kwargs),
+            enclosing_prec,
+            PREC_PRODUCT,
         )
 
     @override
