@@ -144,6 +144,18 @@ class GraphvizMapper(WalkMapper[[]]):
         self.post_visit(expr)
 
     @override
+    def map_matmul(self, expr: prim.Matmul, /) -> None:
+        sid = self.get_id(expr)
+        self.lines.append(f'{sid} [label="@",shape=circle];')
+        if not self.visit(expr, node_printed=True):
+            return
+
+        for child in expr.children:
+            self.rec(child)
+
+        self.post_visit(expr)
+
+    @override
     def map_variable(self, expr: prim.Variable, /) -> None:
         # Shared nodes for variables do not make for pretty graphs.
         # So we generate our own unique IDs for them.

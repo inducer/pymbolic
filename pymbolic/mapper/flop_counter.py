@@ -49,14 +49,20 @@ class FlopCounterBase(CombineMapper[ArithmeticExpression, []]):
     def map_variable(self, expr: p.Variable) -> ArithmeticExpression:
         return 0
 
-    @override
-    def map_sum(self, expr: p.Sum | p.Product) -> ArithmeticExpression:
+    def _count_children(
+            self, expr: p.Sum | p.Product | p.Matmul
+        ) -> ArithmeticExpression:
         if expr.children:
             return len(expr.children) - 1 + sum(self.rec(ch) for ch in expr.children)
         else:
             return 0
 
-    map_product: Callable[[Self, p.Product], ArithmeticExpression] = map_sum
+    map_sum: Callable[[Self, p.Sum], ArithmeticExpression] = _count_children
+    map_product: Callable[[Self, p.Product], ArithmeticExpression] = _count_children
+
+    @override
+    def map_matmul(self, expr: p.Matmul) -> ArithmeticExpression:
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
 
     @override
     def map_quotient(self, expr: p.Quotient | p.FloorDiv) -> ArithmeticExpression:

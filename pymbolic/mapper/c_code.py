@@ -176,6 +176,10 @@ class CCodeMapper(SimplifyingSortingStringifyMapper[[]]):
                 self.rec(expr.exponent, PREC_NONE))
 
     @override
+    def map_matmul(self, expr: p.Matmul, /, enclosing_prec: int) -> str:
+        raise NotImplementedError(f"{type(self).__name__} cannot handle {type(expr)}")
+
+    @override
     def map_floor_div(self, expr: p.FloorDiv, /, enclosing_prec: int) -> str:
         # Let's see how bad of an idea this is--sane people would only
         # apply this to integers, right?
