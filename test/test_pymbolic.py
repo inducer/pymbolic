@@ -1156,6 +1156,34 @@ def test_subscript() -> None:
 # }}}
 
 
+# {{{ test_matmul
+
+def test_matmul() -> None:
+    x = prim.Variable("x")
+    y = prim.Variable("y")
+
+    r = x @ y
+    assert isinstance(r, prim.Matmul)
+    assert str(r) == "x @ y"
+
+    from pymbolic.mapper.stringifier import LaTeXMapper
+
+    assert LaTeXMapper()(r) == r"x \cdot y"
+
+    import numpy as np
+
+    rng = np.random.default_rng(seed=42)
+    xarr = rng.random((6, 10))
+    yarr = rng.random((10, 8))
+
+    from pymbolic.mapper.evaluator import EvaluationMapper
+
+    assert np.allclose(EvaluationMapper({"x": xarr, "y": yarr})(r), xarr @ yarr)
+
+
+# }}}
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
