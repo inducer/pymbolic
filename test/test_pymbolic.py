@@ -289,7 +289,7 @@ def test_parser():
     logger.info("%r", parse("0."))
     logger.info("%r", parse("0.e1"))
     assert parse("0.e1") == 0
-    assert parse("1e-12") == 1e-12
+    assert parse("1e-12") == 1e-12  # noqa: RUF069
     logger.info("%r", parse("a >= 1"))
     logger.info("%r", parse("a <= 1"))
 
