@@ -67,7 +67,7 @@ def _test_to_pymbolic(mapper, sym, use_symengine):
     # FIXME: Why isn't this exact?
     assert abs(mapper(sym.pi) - math.pi) < 1e-14
     assert abs(mapper(sym.E) - math.e) < 1e-14
-    assert mapper(sym.I) == 1j
+    assert mapper(sym.I) == 1j  # noqa: RUF069
 
 # }}}
 
