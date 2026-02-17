@@ -35,6 +35,7 @@ from typing import (
     Any,
     ClassVar,
     NoReturn,
+    ParamSpec,
     Protocol,
     TypeAlias,
     cast,
@@ -58,12 +59,15 @@ from . import traits
 from .typing import ArithmeticExpression, Expression as _Expression, Number, Scalar
 
 
+P = ParamSpec("P")
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
 
     from _typeshed import DataclassInstance
 
     from pymbolic.geometric_algebra import MultiVector
+    from pymbolic.mapper.stringifier import StringifyMapper
 
 
 def _have_numpy() -> bool:
@@ -663,7 +667,9 @@ class ExpressionNode:
         from pymbolic.mapper.evaluator import evaluate_to_float
         return evaluate_to_float(self)
 
-    def make_stringifier(self, originating_stringifier=None):
+    def make_stringifier(self,
+                originating_stringifier: StringifyMapper[P] | None = None
+            ) -> StringifyMapper[P]:
         """Return a :class:`pymbolic.mapper.Mapper` instance that can
         be used to generate a human-readable representation of *self*. Usually
         a subclass of :class:`pymbolic.mapper.stringifier.StringifyMapper`.
