@@ -27,7 +27,9 @@ THE SOFTWARE.
 # Consider yourself warned.
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, ClassVar, ParamSpec, TypeAlias
+
+from typing_extensions import override
 
 import pytools.obj_array as obj_array
 
@@ -38,6 +40,7 @@ from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
+    from pymbolic.mapper.stringifier import StringifyMapper
     from pymbolic.typing import (
         ArithmeticExpression,
         ArithmeticExpressionContainerTc,
@@ -46,6 +49,7 @@ if TYPE_CHECKING:
 
 
 NablaId: TypeAlias = "Hashable"
+P = ParamSpec("P")
 
 
 class MultiVectorVariable(Variable):
@@ -55,7 +59,10 @@ class MultiVectorVariable(Variable):
 # {{{ geometric calculus
 
 class _GeometricCalculusExpression(ExpressionNode):
-    def stringifier(self, originating_stringifier=None):
+    @override
+    def make_stringifier(self,
+                originating_stringifier: StringifyMapper[P] | None = None
+            ) -> StringifyMapper[P]:
         from pymbolic.geometric_algebra.mapper import StringifyMapper
         return StringifyMapper()
 
