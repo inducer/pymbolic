@@ -144,20 +144,28 @@ class EvaluationRewriter(EvaluationMapperBase[ArithmeticExpression]):
         return type(expr)(operand, expr.nabla_id)
 
 
-class StringifyMapper(StringifyMapperBase[[]]):
+class StringifyMapper(StringifyMapperBase[P]):
     AXES: ClassVar[dict[int, str]] = {0: "x", 1: "y", 2: "z"}
 
-    def map_nabla(self, expr: gp.Nabla, /, enclosing_prec: int) -> str:
+    def map_nabla(self,
+                expr: gp.Nabla,
+                /, enclosing_prec: int,
+                *args: P.args, **kwargs: P.kwargs
+            ) -> str:
         return f"∇[{expr.nabla_id}]"
 
     def map_nabla_component(
-                self, expr: gp.NablaComponent, /, enclosing_prec: int) -> str:
+                self, expr: gp.NablaComponent, /, enclosing_prec: int,
+                *args: P.args, **kwargs: P.kwargs,
+            ) -> str:
         axis = self.AXES.get(expr.ambient_axis, expr.ambient_axis)
         return f"∇{axis}[{expr.nabla_id}]"
 
     def map_derivative_source(
-                self, expr: gp.DerivativeSource, /, enclosing_prec: int) -> str:
-        operand = self.rec(expr.operand, PREC_NONE)
+                self, expr: gp.DerivativeSource, /, enclosing_prec: int,
+                *args: P.args, **kwargs: P.kwargs,
+            ) -> str:
+        operand = self.rec(expr.operand, PREC_NONE, *args, **kwargs)
         return f"D[{expr.nabla_id}]({operand})"
 
 
