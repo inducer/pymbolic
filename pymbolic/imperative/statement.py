@@ -34,7 +34,7 @@ from pymbolic.typing import Expression, not_none
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Set
+    from collections.abc import Callable, Set as AbstractSet
 
     from pymbolic.primitives import Variable
 
@@ -45,7 +45,7 @@ class BasicStatementLike(Protocol):
     @property
     def id(self) -> str: ...
     @property
-    def depends_on(self) -> Set[str]: ...
+    def depends_on(self) -> AbstractSet[str]: ...
 
     def copy(self, **kwargs: object) -> Self: ...
 
@@ -54,9 +54,9 @@ BasicStatementLikeT = TypeVar("BasicStatementLikeT", bound=BasicStatementLike)
 
 
 class StatementLike(BasicStatementLike, Protocol):
-    def get_written_variables(self) -> Set[str]: ...
+    def get_written_variables(self) -> AbstractSet[str]: ...
 
-    def get_read_variables(self) -> Set[str]: ...
+    def get_read_variables(self) -> AbstractSet[str]: ...
 
     def map_expressions(self,
                 mapper: Callable[[Expression], Expression],
@@ -81,7 +81,7 @@ class Statement:
     A string, a unique identifier for this instruction.
     """
 
-    depends_on: Set[str]
+    depends_on: AbstractSet[str]
     """A :class:`frozenset` of instruction ids that are required to be
     executed within this execution context before this instruction can be
     executed."""
@@ -90,13 +90,13 @@ class Statement:
         if isinstance(self.id, str):
             object.__setattr__(self, "id", intern(self.id))
 
-    def get_written_variables(self) -> Set[str]:
+    def get_written_variables(self) -> AbstractSet[str]:
         """Returns a :class:`frozenset` of variables being written by this
         instruction.
         """
         return frozenset()
 
-    def get_read_variables(self) -> Set[str]:
+    def get_read_variables(self) -> AbstractSet[str]:
         """Returns a :class:`frozenset` of variables being read by this
         instruction.
         """
@@ -151,7 +151,7 @@ class ConditionalStatement(Statement):
                 + self._condition_printing_suffix())
 
     @override
-    def get_read_variables(self) -> Set[str]:
+    def get_read_variables(self) -> AbstractSet[str]:
         dep_mapper = self.get_dependency_mapper()
         return (
                 super().get_read_variables()
@@ -185,16 +185,13 @@ class Assignment(Statement):
             raise TypeError("unexpected type of LHS")
 
     @override
-    def get_read_variables(self) -> Set[str]:
-        result = super().get_read_variables()
+    def get_read_variables(self) -> AbstractSet[str]:
         get_deps = self.get_dependency_mapper()
 
         def get_vars(expr: Expression):
             return frozenset(cast("Variable", dep).name for dep in get_deps(expr))
 
-        result = get_vars(self.rhs) | get_vars(self.lhs)
-
-        return result
+        return get_vars(self.rhs) | get_vars(self.lhs)
 
     @override
     def map_expressions(self,
@@ -209,11 +206,10 @@ class Assignment(Statement):
 
     @override
     def __str__(self):
-        result = "{assignee} <- {expr}".format(
+        return "{assignee} <- {expr}".format(
             assignee=str(self.lhs),
             expr=str(self.rhs),)
 
-        return result
 
 # }}}
 

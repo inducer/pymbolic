@@ -24,7 +24,7 @@ THE SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Hashable, Iterable, Mapping, Set
+from collections.abc import Callable, Hashable, Iterable, Mapping, Set as AbstractSet
 from typing import (
     TYPE_CHECKING,
     Concatenate,
@@ -192,8 +192,7 @@ class Mapper(Generic[ResultT, P]):
         if method_name is not None:
             method = getattr(self, method_name, None)
             if method is not None:
-                result = method(expr, *args, **kwargs)
-                return result
+                return method(expr, *args, **kwargs)
 
         if isinstance(expr, p.ExpressionNode):
             for cls in type(expr).__mro__[1:]:
@@ -202,8 +201,7 @@ class Mapper(Generic[ResultT, P]):
                     method = getattr(self, method_name, None)
                     if method:
                         return method(expr, *args, **kwargs)
-            else:
-                return self.handle_unsupported_expression(expr, *args, **kwargs)
+            return self.handle_unsupported_expression(expr, *args, **kwargs)
         else:
             return self.map_foreign(expr, *args, **kwargs)
 
@@ -221,8 +219,7 @@ class Mapper(Generic[ResultT, P]):
                     method = getattr(self, method_name, None)
                     if method:
                         return method(expr, *args, **kwargs)
-            else:
-                return self.handle_unsupported_expression(expr, *args, **kwargs)
+            return self.handle_unsupported_expression(expr, *args, **kwargs)
         else:
             return self.map_foreign(expr, *args, **kwargs)
 
@@ -731,7 +728,7 @@ class CachedCombineMapper(CachedMapper[ResultT, P], CombineMapper[ResultT, P]):
 CollectedT = TypeVar("CollectedT")
 
 
-class Collector(CombineMapper[Set[CollectedT], P]):
+class Collector(CombineMapper[AbstractSet[CollectedT], P]):
     """A subclass of :class:`CombineMapper` for the common purpose of
     collecting data derived from an expression in a set that gets 'unioned'
     across children at each non-leaf node in the expression tree.
@@ -742,7 +739,9 @@ class Collector(CombineMapper[Set[CollectedT], P]):
     """
 
     @override
-    def combine(self, values: Iterable[Set[CollectedT]], /) -> frozenset[CollectedT]:
+    def combine(self,
+                values: Iterable[AbstractSet[CollectedT]],
+            /) -> frozenset[CollectedT]:
         it = iter(values)
         try:
             first = next(it)
@@ -753,36 +752,38 @@ class Collector(CombineMapper[Set[CollectedT], P]):
 
     @override
     def map_constant(self, expr: object, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
     @override
     def map_variable(self, expr: p.Variable, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
     @override
     def map_wildcard(self, expr: p.Wildcard, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
     @override
     def map_dot_wildcard(self, expr: p.DotWildcard, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
     @override
     def map_star_wildcard(self, expr: p.StarWildcard, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
     @override
     def map_function_symbol(self, expr: p.FunctionSymbol, /,
-                     *args: P.args, **kwargs: P.kwargs) -> Set[CollectedT]:
+                     *args: P.args, **kwargs: P.kwargs) -> AbstractSet[CollectedT]:
         return set()
 
 
-class CachedCollector(CachedMapper[Set[CollectedT], P], Collector[CollectedT, P]):
+class CachedCollector(
+            CachedMapper[AbstractSet[CollectedT], P],
+            Collector[CollectedT, P]):
     pass
 
 # }}}
@@ -1441,7 +1442,7 @@ class WalkMapper(Mapper[None, P]):
         if not self.visit(expr, *args, **kwargs):
             return
 
-        for _bits, coeff in expr.data.items():
+        for coeff in expr.data.values():
             self.rec(coeff, *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)

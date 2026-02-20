@@ -36,7 +36,7 @@ from pymbolic.mapper import IdentityMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence, Set
+    from collections.abc import Sequence, Set as AbstractSet
 
     from pymbolic.mapper.dependency import Dependencies
     from pymbolic.typing import ArithmeticExpression, Expression
@@ -50,9 +50,9 @@ class TermCollector(IdentityMapper[[]]):
     coefficients and are not used for term collection.
     """
 
-    parameters: Set[p.AlgebraicLeaf]
+    parameters: AbstractSet[p.AlgebraicLeaf]
 
-    def __init__(self, parameters: Set[p.AlgebraicLeaf] | None = None) -> None:
+    def __init__(self, parameters: AbstractSet[p.AlgebraicLeaf] | None = None) -> None:
         if parameters is None:
             parameters = set()
 
@@ -63,7 +63,7 @@ class TermCollector(IdentityMapper[[]]):
         return DependencyMapper()(expr)
 
     def split_term(self, mul_term: Expression) -> tuple[
-        Set[tuple[ArithmeticExpression, ArithmeticExpression]],
+        AbstractSet[tuple[ArithmeticExpression, ArithmeticExpression]],
         ArithmeticExpression
     ]:
         """Returns  a pair consisting of:
@@ -124,18 +124,17 @@ class TermCollector(IdentityMapper[[]]):
     @override
     def map_sum(self, expr: p.Sum, /) -> Expression:
         term2coeff: dict[
-            Set[tuple[ArithmeticExpression, ArithmeticExpression]],
+            AbstractSet[tuple[ArithmeticExpression, ArithmeticExpression]],
             ArithmeticExpression] = {}
         for child in expr.children:
             term, coeff = self.split_term(child)
             term2coeff[term] = term2coeff.get(term, 0) + coeff
 
         def rep2term(
-                rep: Set[tuple[ArithmeticExpression, ArithmeticExpression]]
+                rep: AbstractSet[tuple[ArithmeticExpression, ArithmeticExpression]]
             ) -> ArithmeticExpression:
             return p.flattened_product([base**exp for base, exp in rep])
 
-        result = p.flattened_sum([
+        return p.flattened_sum([
             coeff*rep2term(termrep) for termrep, coeff in term2coeff.items()
             ])
-        return result

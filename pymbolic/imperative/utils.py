@@ -109,27 +109,26 @@ def get_dot_dependency_graph(
     while True:
         changed_something = False
 
-        for stmt_1 in dep_graph:
+        for stmt_1, deps in dep_graph.items():
             for stmt_2 in dep_graph.get(stmt_1, set()).copy():
                 for stmt_3 in dep_graph.get(stmt_2, set()).copy():
                     if stmt_3 not in dep_graph.get(stmt_1, set()):
                         changed_something = True
-                        dep_graph[stmt_1].add(stmt_3)
+                        deps.add(stmt_3)
 
         if not changed_something:
             break
 
-    for stmt_1 in dep_graph:
+    for stmt_1, deps in dep_graph.items():
         for stmt_2 in dep_graph.get(stmt_1, set()).copy():
             for stmt_3 in dep_graph.get(stmt_2, set()).copy():
                 if stmt_3 in dep_graph.get(stmt_1, set()):
-                    dep_graph[stmt_1].remove(stmt_3)
+                    deps.remove(stmt_3)
 
     # }}}
 
     for stmt_1 in dep_graph:
-        for stmt_2 in dep_graph.get(stmt_1, set()):
-            lines.append(f"{stmt_1} -> {stmt_2}")
+        lines.extend(f"{stmt_1} -> {stmt_2}" for stmt_2 in dep_graph.get(stmt_1, set()))
 
     for (stmt_1, stmt_2), annot in annotation_dep_graph.items():
         lines.append(f'{stmt_2} -> {stmt_1}  [label="{annot}", style="dashed"]')

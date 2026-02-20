@@ -28,7 +28,7 @@ THE SOFTWARE.
 from typing import TYPE_CHECKING, Any
 
 import symengine as sp
-from typing_extensions import override
+from typing_extensions import Never, override
 
 import pymbolic.primitives as prim
 from pymbolic.interop.common import (
@@ -127,7 +127,7 @@ class PymbolicToSymEngineMapper(PymbolicToSympyLikeMapper):
         return sp
 
     @override
-    def raise_conversion_error(self, expr: object) -> None:
+    def raise_conversion_error(self, expr: object) -> Never:
         raise RuntimeError(f"do not know how to translate '{expr}' to symengine")
 
 

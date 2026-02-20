@@ -391,7 +391,7 @@ def optimize_mapper(
 
         # }}}
 
-        exec(compile(
+        exec(compile(  # noqa: S102
             code_str,
             f"<'{_get_file_name_for_module_name(cls.__module__)}' "
             "modified by optimize_mapper>",
