@@ -41,7 +41,7 @@ from pymbolic.mapper import CachedIdentityMapper, IdentityMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Set
+    from collections.abc import Callable, Set as AbstractSet
 
     import optype
 
@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     _VT_co = TypeVar("_VT_co", covariant=True)
 
     class CanItems(Protocol[_KT_co, _VT_co]):
-        def items(self) -> Set[tuple[_KT_co, _VT_co]]: ...
+        def items(self) -> AbstractSet[tuple[_KT_co, _VT_co]]: ...
 
 
 class SubstitutionMapper(IdentityMapper[[]]):

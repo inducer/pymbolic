@@ -42,7 +42,7 @@ from pymbolic.mapper.stringifier import StringifyMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence, Set
+    from collections.abc import Collection, Sequence, Set as AbstractSet
 
     from pymbolic.mapper.unifier import UnificationRecord
     from pymbolic.typing import Expression
@@ -630,7 +630,7 @@ def test_unifier():
 
     def match_found(
             records: Sequence[UnificationRecord],
-            eqns: Set[tuple[Expression, Expression]]):
+            eqns: AbstractSet[tuple[Expression, Expression]]):
         return any(eqns <= set(record.equations) for record in records)
 
     def unify(candidates: Collection[str], expr: Expression, other: Expression):

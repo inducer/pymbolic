@@ -27,12 +27,12 @@ THE SOFTWARE.
 # Consider yourself warned.
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Set
+from collections.abc import Callable, Set as AbstractSet
 from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self, override
 
-import pytools.obj_array as obj_array
+from pytools import obj_array
 
 import pymbolic.geometric_algebra.primitives as gp
 from pymbolic.geometric_algebra import MultiVector
@@ -93,12 +93,12 @@ class CombineMapper(CombineMapperBase[ResultT, P]):
 class Collector(CollectorBase[CollectedT, P]):
     def map_nabla(self,
                 expr: gp.Nabla, /, *args: P.args, **kwargs: P.kwargs
-            ) -> Set[CollectedT]:
+            ) -> AbstractSet[CollectedT]:
         return set()
 
     def map_nabla_component(self,
                 expr: gp.NablaComponent, /, *args: P.args, **kwargs: P.kwargs
-            ) -> Set[CollectedT]:
+            ) -> AbstractSet[CollectedT]:
         return set()
 
 
@@ -227,25 +227,26 @@ class Dimensionalizer(EvaluationRewriter, ABC):
 # {{{ derivative binder
 
 class DerivativeSourceAndNablaComponentCollector(
-            CachedMapper[Set[ArithmeticExpression], []],
+            CachedMapper[AbstractSet[ArithmeticExpression], []],
             Collector[ArithmeticExpression, []]):
     def __init__(self) -> None:
         Collector.__init__(self)
         CachedMapper.__init__(self)
 
     @override
-    def map_nabla(self, expr: gp.Nabla, /) -> Set[ArithmeticExpression]:
+    def map_nabla(self, expr: gp.Nabla, /) -> AbstractSet[ArithmeticExpression]:
         raise RuntimeError(
                 f"{type(self).__name__} must be invoked after "
                 "Dimensionalizer -- Nabla expression found and not allowed")
 
     @override
     def map_nabla_component(
-                self, expr: gp.NablaComponent, /) -> Set[ArithmeticExpression]:
+                self, expr: gp.NablaComponent, /) -> AbstractSet[ArithmeticExpression]:
         return {expr}
 
     def map_derivative_source(
-                self, expr: gp.DerivativeSource, /) -> Set[ArithmeticExpression]:
+                self, expr: gp.DerivativeSource,
+            /) -> AbstractSet[ArithmeticExpression]:
         return {expr} | self.rec(expr.operand)
 
 

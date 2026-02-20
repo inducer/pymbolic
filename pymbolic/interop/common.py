@@ -23,9 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Generic, TypeAlias, cast
 
-from typing_extensions import override
+from typing_extensions import Never, override
 
 import pymbolic.primitives as prim
 from pymbolic.mapper import P, ResultT
@@ -182,7 +183,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase[Expression, []]):
 SympyLikeExpression: TypeAlias = "sp.Basic"
 
 
-class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
+class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression], ABC):
     # FIXME(pyright): Returning `Any` here is not great, but we would need a big
     # protocol or something if we want it to work for both sympy/symengine.
     @property
@@ -194,8 +195,9 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
         assert isinstance(result, self.sym.Expr)  # pyright: ignore[reportAny]
         return cast("sp.Expr", result)
 
-    def raise_conversion_error(self, expr: object) -> None:
-        raise NotImplementedError
+    @abstractmethod
+    def raise_conversion_error(self, expr: object) -> Never:
+        ...
 
     @override
     def map_variable(self, expr: prim.Variable) -> SympyLikeExpression:
@@ -221,7 +223,6 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
             return func(*[self.rec(par) for par in expr.parameters])
         else:
             self.raise_conversion_error(expr)
-            raise
 
     @override
     def map_subscript(self, expr: prim.Subscript) -> SympyLikeExpression:
@@ -232,7 +233,6 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression]):
                 *(self.rec(idx) for idx in expr.index_tuple))
         else:
             self.raise_conversion_error(expr)
-            raise
 
     @override
     def map_substitution(self, expr: prim.Substitution) -> SympyLikeExpression:

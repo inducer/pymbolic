@@ -46,8 +46,7 @@ from warnings import warn
 from constantdict import constantdict
 from typing_extensions import Self, TypeIs, dataclass_transform, override
 
-import pytools.obj_array as obj_array
-from pytools import T, module_getattr_for_deprecations, ndindex
+from pytools import T, module_getattr_for_deprecations, ndindex, obj_array
 from pytools.obj_array import (
     ObjectArray,
     ObjectArray1D,
@@ -909,7 +908,7 @@ _CAMEL_TO_SNAKE_RE = re.compile(
         (?<=[A-Z])      # preceded by lowercase
         (?=[A-Z][a-z])  # followed by uppercase, then lowercase
     """,
-    re.X,
+    re.VERBOSE,
 )
 
 
@@ -1048,7 +1047,7 @@ def _augment_expression_dataclass(
         """)
 
     exec_dict = {"cls": cls, "_MODULE_SOURCE_CODE": augment_code}
-    exec(compile(augment_code,
+    exec(compile(augment_code,  # noqa: S102
                  f"<dataclass augmentation code for {cls}>", "exec"),
          exec_dict)
 
@@ -1123,14 +1122,12 @@ class AlgebraicLeaf(ExpressionNode):
     """An expression that serves as a leaf for arithmetic evaluation.
     This may end up having child nodes still, but they're not reached by
     ways of arithmetic."""
-    pass
 
 
 @expr_dataclass()
 class Leaf(AlgebraicLeaf):
     """An expression that is irreducible, i.e. has no Expression-type parts
     whatsoever."""
-    pass
 
 
 @expr_dataclass()
@@ -1204,7 +1201,7 @@ class CallWithKwargs(AlgebraicLeaf):
     def __post_init__(self):
         try:
             hash(self.kw_parameters)
-        except Exception:
+        except Exception:  # noqa: BLE001
             warn("CallWithKwargs created with non-hashable kw_parameters. "
                  "This is deprecated and will stop working in 2025. "
                  "If you need an immutable mapping, "
@@ -1807,8 +1804,6 @@ def quotient(numerator: ArithmeticExpression,
 
 # {{{ tool functions
 
-global VALID_CONSTANT_CLASSES
-global VALID_OPERANDS
 VALID_CONSTANT_CLASSES: tuple[type, ...] = (int, float, complex)
 _BOOL_CLASSES: tuple[type, ...] = (bool,)
 VALID_OPERANDS = (ExpressionNode,)
@@ -1946,7 +1941,7 @@ def make_common_subexpression(
         scope = cse_scope.EVALUATION
 
     if (isinstance(expr, CommonSubexpression)
-            and (scope == cse_scope.EVALUATION or expr.scope == scope)):
+            and (scope in (cse_scope.EVALUATION, expr.scope))):
         return expr
 
     # handle MultiVector

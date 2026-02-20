@@ -60,12 +60,11 @@ def fuse_statement_streams_with_unique_ids(
         b_unique_statements.append(
                 stmtb.copy(id=new_id))
 
-    for stmtb in b_unique_statements:
-        new_statements.append(
-                stmtb.copy(
+    new_statements.extend(stmtb.copy(
                     depends_on=frozenset(
                         old_b_id_to_new_b_id[dep_id]
-                        for dep_id in stmtb.depends_on)))
+                        for dep_id in stmtb.depends_on))
+        for stmtb in b_unique_statements)
 
     return new_statements, old_b_id_to_new_b_id
 

@@ -30,7 +30,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections.abc import Set
+from collections.abc import Set as AbstractSet
 from typing import TYPE_CHECKING, Literal, TypeAlias
 
 from typing_extensions import override
@@ -40,7 +40,7 @@ from pymbolic.mapper import CachedMapper, Collector, CSECachingMapperMixin, P
 
 
 Dependency: TypeAlias = p.AlgebraicLeaf | p.CommonSubexpression
-Dependencies: TypeAlias = Set[Dependency]
+Dependencies: TypeAlias = AbstractSet[Dependency]
 
 if not TYPE_CHECKING:
     DependenciesT: TypeAlias = Dependencies

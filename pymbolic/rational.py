@@ -25,8 +25,7 @@ THE SOFTWARE.
 
 from sys import intern
 
-import pymbolic.primitives as primitives
-import pymbolic.traits as traits
+from pymbolic import primitives, traits
 
 
 class Rational(primitives.ExpressionNode):

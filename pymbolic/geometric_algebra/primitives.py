@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, ClassVar, ParamSpec, TypeAlias
 
 from typing_extensions import override
 
-import pytools.obj_array as obj_array
+from pytools import obj_array
 
 from pymbolic.geometric_algebra import MultiVector
 from pymbolic.primitives import ExpressionNode, Variable, expr_dataclass

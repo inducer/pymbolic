@@ -106,8 +106,7 @@ class DistributeMapper(IdentityMapper[[]]):
 
             if len(leading) == len(prod.children):
                 # no more sums found
-                result = p.flattened_product(prod.children)
-                return result
+                return p.flattened_product(prod.children)
             else:
                 sum = prod.children[len(leading)]
                 assert isinstance(sum, p.Sum)

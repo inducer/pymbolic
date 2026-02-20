@@ -42,8 +42,7 @@ from typing import (
 import numpy as np
 from typing_extensions import Self, override
 
-import pytools.obj_array as obj_array
-from pytools import memoize, memoize_method
+from pytools import memoize, memoize_method, obj_array
 from pytools.obj_array import ObjectArray, ObjectArray1D, ShapeT
 
 from pymbolic.primitives import expr_dataclass, is_zero
@@ -145,18 +144,18 @@ properties:
 
 
 class _HasArithmetic(Protocol):
-    def __neg__(self: CoeffT) -> CoeffT: ...
-    def __abs__(self: CoeffT) -> CoeffT: ...
+    def __neg__(self) -> Self: ...
+    def __abs__(self) -> Self: ...
 
-    def __add__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __radd__(self: CoeffT, other: int, /) -> CoeffT: ...
+    def __add__(self, other: Self, /) -> Self: ...
+    def __radd__(self, other: int, /) -> Self: ...
 
-    def __sub__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __sub__(self, other: Self, /) -> Self: ...
 
-    def __mul__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
-    def __rmul__(self: CoeffT, other: int, /) -> CoeffT: ...
+    def __mul__(self, other: Self, /) -> Self: ...
+    def __rmul__(self, other: int, /) -> Self: ...
 
-    def __pow__(self: CoeffT, other: CoeffT, /) -> CoeffT: ...
+    def __pow__(self, other: Self, /) -> Self: ...
 
 
 CoeffT = TypeVar("CoeffT", bound=_HasArithmetic)
@@ -1103,10 +1102,10 @@ class MultiVector(Generic[CoeffT]):
 
         Often written :math:`\langle A\rangle_r`.
         """
-        new_data: dict[int, CoeffT] = {}
-        for bits, coeff in self.data.items():
-            if bits.bit_count() == r:
-                new_data[bits] = coeff
+        new_data: dict[int, CoeffT] = {
+            bits: coeff
+            for bits, coeff in self.data.items()
+            if bits.bit_count() == r}
 
         return MultiVector(new_data, self.space)
 
@@ -1161,19 +1160,19 @@ class MultiVector(Generic[CoeffT]):
 
     def odd(self) -> MultiVector[CoeffT]:
         """Extract the odd-grade blades."""
-        new_data: dict[int, CoeffT] = {}
-        for bits, coeff in self.data.items():
-            if bits.bit_count() % 2:
-                new_data[bits] = coeff
+        new_data: dict[int, CoeffT] = {
+            bits: coeff
+            for bits, coeff in self.data.items()
+            if bits.bit_count() % 2}
 
         return MultiVector(new_data, self.space)
 
     def even(self) -> MultiVector[CoeffT]:
         """Extract the even-grade blades."""
-        new_data: dict[int, CoeffT] = {}
-        for bits, coeff in self.data.items():
-            if bits.bit_count() % 2 == 0:
-                new_data[bits] = coeff
+        new_data: dict[int, CoeffT] = {
+            bits: coeff
+            for bits, coeff in self.data.items()
+            if bits.bit_count() % 2 == 0}
 
         return MultiVector(new_data, self.space)
 

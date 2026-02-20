@@ -103,11 +103,11 @@ def test_strict_round_trip(knl: MaximaKernel) -> None:
         round_trips_correctly = result == expr
         if not round_trips_correctly:
             print("ORIGINAL:")
-            print("")
+            print()
             print(expr)
-            print("")
+            print()
             print("POST-MAXIMA:")
-            print("")
+            print()
             print(result)
         assert round_trips_correctly
 

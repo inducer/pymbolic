@@ -46,6 +46,8 @@ import operator
 from typing import TYPE_CHECKING, Protocol, TypeVar, cast, overload
 from warnings import warn
 
+from typing_extensions import Self
+
 from pytools import MovedFunctionDeprecationWrapper, memoize
 
 
@@ -62,7 +64,7 @@ if TYPE_CHECKING:
 # {{{ integer powers
 
 class _CanMultiply(Protocol):
-    def __mul__(self: _CanMultiplyT, other: _CanMultiplyT, /) -> _CanMultiplyT: ...
+    def __mul__(self, other: Self, /) -> Self: ...
 
 
 _CanMultiplyT = TypeVar("_CanMultiplyT", bound=_CanMultiply)
@@ -112,7 +114,7 @@ def extended_euclidean(q, r):
     `Wikipedia article on the Euclidean algorithm
     <https://en.wikipedia.org/wiki/Euclidean_algorithm>`__.
     """
-    import pymbolic.traits as traits
+    from pymbolic import traits
 
     # see [Davenport], Appendix, p. 214
 
@@ -379,7 +381,7 @@ def reduced_row_echelon_form(
                 rhs[i], rhs[nonz_row] = \
                         (rhs[nonz_row].copy(), rhs[i].copy())
 
-            for u in range(0, m):
+            for u in range(m):
                 if u == i:
                     continue
                 if not mat[u, j]:

@@ -32,7 +32,13 @@ from pymbolic.mapper import IdentityMapper, P, WalkMapper
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Hashable, Iterable, Sequence, Set
+    from collections.abc import (
+        Callable,
+        Hashable,
+        Iterable,
+        Sequence,
+        Set as AbstractSet,
+    )
 
     from pymbolic.typing import Expression
 
@@ -93,12 +99,12 @@ class UseCountMapper(WalkMapper[P]):
 
 
 class CSEMapper(IdentityMapper[[]]):
-    to_eliminate: Set[Hashable]
+    to_eliminate: AbstractSet[Hashable]
     get_key: Callable[[object], Hashable]
     canonical_subexprs: dict[Hashable, Expression]
 
     def __init__(self,
-                 to_eliminate: Set[Hashable],
+                 to_eliminate: AbstractSet[Hashable],
                  get_key: Callable[[object], Hashable]) -> None:
         self.to_eliminate = to_eliminate
         self.get_key = get_key
@@ -126,8 +132,7 @@ class CSEMapper(IdentityMapper[[]]):
             ) -> Expression:
         key = self.get_key(expr)
         if key in self.to_eliminate:
-            result = self.get_cse(expr, key)
-            return result
+            return self.get_cse(expr, key)
         else:
             return getattr(IdentityMapper, expr.mapper_method)(self, expr)
 
@@ -177,5 +182,4 @@ def tag_common_subexpressions(exprs: Iterable[Expression]) -> Sequence[Expressio
         if count > 1}
 
     cse_mapper = CSEMapper(to_eliminate, get_key)
-    result = [cse_mapper(expr) for expr in exprs]
-    return result
+    return [cse_mapper(expr) for expr in exprs]
