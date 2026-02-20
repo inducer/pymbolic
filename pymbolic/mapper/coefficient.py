@@ -91,8 +91,8 @@ class CoefficientCollector(Mapper[CoeffsT, []]):
         if len(d_den) > 1 or 1 not in d_den:
             raise RuntimeError("nonlinear expression")
         val = d_den[1]
-        for k in d_num:
-            d_num[k] = p.flattened_product((d_num[k], p.Quotient(1, val)))
+        for k, v in d_num.items():
+            d_num[k] = p.flattened_product((v, p.Quotient(1, val)))
         return d_num
 
     @override

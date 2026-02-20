@@ -1441,7 +1441,7 @@ class WalkMapper(Mapper[None, P]):
         if not self.visit(expr, *args, **kwargs):
             return
 
-        for _bits, coeff in expr.data.items():
+        for coeff in expr.data.values():
             self.rec(coeff, *args, **kwargs)
 
         self.post_visit(expr, *args, **kwargs)

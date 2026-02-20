@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self, override
 
-import pytools.obj_array as obj_array
+from pytools import obj_array
 
 import pymbolic.geometric_algebra.primitives as gp
 from pymbolic.geometric_algebra import MultiVector

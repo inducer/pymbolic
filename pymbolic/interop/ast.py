@@ -46,16 +46,16 @@ if TYPE_CHECKING:
     from pymbolic.geometric_algebra import MultiVector
 
     # NOTE: these are removed in Python 3.14
-    if sys.version_info < (3, 14):
+    if sys.version_info >= (3, 14):
+        AstNum: TypeAlias = Any
+        AstStr: TypeAlias = Any
+        AstBytes: TypeAlias = Any
+    else:
         from ast import (
             Bytes as AstBytes,  # pyright: ignore[reportDeprecated]
             Num as AstNum,  # pyright: ignore[reportDeprecated]
             Str as AstStr,  # pyright: ignore[reportDeprecated]
         )
-    else:
-        AstNum: TypeAlias = Any
-        AstStr: TypeAlias = Any
-        AstBytes: TypeAlias = Any
 
 __doc__ = r'''
 An example:

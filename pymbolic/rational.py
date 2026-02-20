@@ -25,11 +25,11 @@ THE SOFTWARE.
 
 from sys import intern
 
-import pymbolic.primitives as primitives
-import pymbolic.traits as traits
+import pymbolic.primitives as prim
+from pymbolic import traits
 
 
-class Rational(primitives.ExpressionNode):
+class Rational(prim.ExpressionNode):
     def __init__(self, numerator, denominator=1):
         d_unit = traits.traits(denominator).get_unit(denominator)
         numerator /= d_unit
@@ -67,11 +67,11 @@ class Rational(primitives.ExpressionNode):
             newnum = self.Numerator * newden/self.Denominator + \
                      newother.Numerator * newden/newother.Denominator
             gcd = t.gcd(newden, newnum)
-            return primitives.quotient(newnum/gcd, newden/gcd)
+            return prim.quotient(newnum/gcd, newden/gcd)
         except traits.NoTraitsError:
-            return primitives.ExpressionNode.__add__(self, other)
+            return prim.Sum((self, other))
         except traits.NoCommonTraitsError:
-            return primitives.ExpressionNode.__add__(self, other)
+            return prim.Sum((self, other))
 
     __radd__ = __add__
 
@@ -98,9 +98,9 @@ class Rational(primitives.ExpressionNode):
 
             return Rational(new_num, new_denom)
         except traits.NoTraitsError:
-            return primitives.ExpressionNode.__mul__(self, other)
+            return prim.Product((self, other))
         except traits.NoCommonTraitsError:
-            return primitives.ExpressionNode.__mul__(self, other)
+            return prim.Product((self, other))
 
     __rmul__ = __mul__
 

@@ -112,7 +112,7 @@ def extended_euclidean(q, r):
     `Wikipedia article on the Euclidean algorithm
     <https://en.wikipedia.org/wiki/Euclidean_algorithm>`__.
     """
-    import pymbolic.traits as traits
+    from pymbolic import traits
 
     # see [Davenport], Appendix, p. 214
 
