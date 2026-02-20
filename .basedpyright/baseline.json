@@ -9608,16 +9608,16 @@
             {
                 "code": "reportUnknownArgumentType",
                 "range": {
-                    "startColumn": 39,
-                    "endColumn": 49,
+                    "startColumn": 33,
+                    "endColumn": 43,
                     "lineCount": 1
                 }
             },
             {
                 "code": "reportUnknownArgumentType",
                 "range": {
-                    "startColumn": 51,
-                    "endColumn": 61,
+                    "startColumn": 45,
+                    "endColumn": 55,
                     "lineCount": 1
                 }
             },
