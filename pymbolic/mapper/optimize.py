@@ -262,18 +262,21 @@ def _set_and_return(
     return value
 
 
+MapperT = TypeVar("MapperT", bound=type)
+
+
 def optimize_mapper(
         *, drop_args: bool = False, drop_kwargs: bool = False,
         inline_rec: bool = False, inline_cache: bool = False,
         inline_get_cache_key: bool = False,
-        print_modified_code_file: TextIO | None = None) -> Callable[[type], type]:
+        print_modified_code_file: TextIO | None = None) -> Callable[[MapperT], MapperT]:
     """
     :param print_modified_code_file: a file-like object to which the modified
         code will be printed, or ``None``.
     """
     # This is a crime, an abomination. But a somewhat effective one.
 
-    def wrapper(cls: type) -> type:
+    def wrapper(cls: MapperT) -> MapperT:
         try:
             # Introduced in Py3.9
             ast.unparse  # noqa: B018
@@ -398,7 +401,7 @@ def optimize_mapper(
             "exec"),
              compile_dict)
 
-        return cast("type", compile_dict[cls.__name__])
+        return cast("MapperT", compile_dict[cls.__name__])
 
     return wrapper
 
