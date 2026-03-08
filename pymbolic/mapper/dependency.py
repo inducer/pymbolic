@@ -120,7 +120,7 @@ class DependencyMapper(
                 [self.rec(child, *args, **kwargs) for child in expr.parameters]
                 + [
                     self.rec(val, *args, **kwargs)
-                    for _name, val in expr.kw_parameters.items()
+                    for val in expr.kw_parameters.values()
                 ]
             )
         elif self.include_calls:

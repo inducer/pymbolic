@@ -1136,7 +1136,7 @@ class MultiVector(Generic[CoeffT]):
     def all_grades(self) -> set[int]:
         """Return a :class:`set` of grades occurring in *self*."""
 
-        return {bits.bit_count() for bits, _coeff in self.data.items()}
+        return {bits.bit_count() for bits in self.data}
 
     def get_pure_grade(self) -> int | None:
         """If *self* only has components of a single grade, return
