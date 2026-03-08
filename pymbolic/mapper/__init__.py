@@ -701,7 +701,7 @@ class CombineMapper(Mapper[ResultT, P]):
             ) -> ResultT:
         return self.combine(
                 self.rec(coeff, *args, **kwargs)
-                for _bits, coeff in expr.data.items())
+                for coeff in expr.data.values())
 
     def map_common_subexpression(self,
                 expr: p.CommonSubexpression, /, *args: P.args, **kwargs: P.kwargs
