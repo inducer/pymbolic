@@ -256,7 +256,7 @@ class PymbolicToSympyLikeMapper(EvaluationMapper[SympyLikeExpression], ABC):
         if expr.operator == "==":
             return self.sym.Equality(left, right)
         elif expr.operator == "!=":
-            return self.sym.Unequality(left, right)  # spellchecker: disable-line  # noqa: E501
+            return self.sym.Unequality(left, right)  # spellchecker: disable-line
         elif expr.operator == "<=":
             return self.sym.LessThan(left, right)
         elif expr.operator == ">=":
