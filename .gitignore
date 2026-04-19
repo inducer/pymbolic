@@ -13,3 +13,4 @@ setuptools.pth
 _build
 
 .cache
+.venv
