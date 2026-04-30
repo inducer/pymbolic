@@ -1673,6 +1673,7 @@ class CallbackMapper(Mapper[ResultT, P]):
     map_remainder = map_constant
     map_power = map_constant
     map_matmul = map_constant
+    map_nan = map_constant
 
     map_left_shift = map_constant
     map_right_shift = map_constant
