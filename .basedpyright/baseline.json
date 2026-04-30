@@ -6393,6 +6393,14 @@
                 "code": "reportUnannotatedClassAttribute",
                 "range": {
                     "startColumn": 4,
+                    "endColumn": 11,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportUnannotatedClassAttribute",
+                "range": {
+                    "startColumn": 4,
                     "endColumn": 18,
                     "lineCount": 1
                 }
