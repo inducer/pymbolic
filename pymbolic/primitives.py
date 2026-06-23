@@ -778,6 +778,7 @@ class ExpressionNode:
             self._hash_value: int = self.get_hash()  # pyright: ignore[reportUninitializedInstanceVariable]
             return self._hash_value
 
+    @override
     def __getstate__(self) -> tuple[Any, ...]:
         return self.__getinitargs__()
 
