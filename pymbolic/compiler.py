@@ -137,6 +137,7 @@ class CompiledExpression:
                 expr_s)
         self._code = eval(func_s, ctx)
 
+    @override
     def __getstate__(self) -> tuple[Any, ...]:
         return self._Expression, self._Variables
 
