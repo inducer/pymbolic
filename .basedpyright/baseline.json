@@ -1505,38 +1505,6 @@
                 "code": "reportUnknownVariableType",
                 "range": {
                     "startColumn": 4,
-                    "endColumn": 7,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 10,
-                    "endColumn": 18,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 8,
-                    "endColumn": 11,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 14,
-                    "endColumn": 22,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 4,
                     "endColumn": 12,
                     "lineCount": 1
                 }
@@ -1566,7 +1534,7 @@
                 }
             },
             {
-                "code": "reportUnknownMemberType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 21,
                     "endColumn": 39,
@@ -1574,7 +1542,7 @@
                 }
             },
             {
-                "code": "reportUnknownMemberType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 43,
                     "endColumn": 54,
@@ -1582,7 +1550,7 @@
                 }
             },
             {
-                "code": "reportUnknownMemberType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 25,
                     "endColumn": 43,
@@ -1590,7 +1558,7 @@
                 }
             },
             {
-                "code": "reportUnknownMemberType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 47,
                     "endColumn": 58,
@@ -1614,6 +1582,22 @@
                 }
             },
             {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 35,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 37,
+                    "endColumn": 46,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportUnknownVariableType",
                 "range": {
                     "startColumn": 16,
@@ -1630,6 +1614,14 @@
                 }
             },
             {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 38,
+                    "endColumn": 47,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportUnknownVariableType",
                 "range": {
                     "startColumn": 16,
@@ -1642,6 +1634,14 @@
                 "range": {
                     "startColumn": 33,
                     "endColumn": 36,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 38,
+                    "endColumn": 47,
                     "lineCount": 1
                 }
             },
@@ -1662,7 +1662,15 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 68,
+                    "lineCount": 4
+                }
+            },
+            {
+                "code": "reportAny",
                 "range": {
                     "startColumn": 23,
                     "endColumn": 24,
@@ -1670,7 +1678,7 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 23,
                     "endColumn": 24,
@@ -1682,30 +1690,6 @@
                 "range": {
                     "startColumn": 19,
                     "endColumn": 20,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 15,
-                    "endColumn": 18,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 15,
-                    "endColumn": 23,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportAny",
-                "range": {
-                    "startColumn": 9,
-                    "endColumn": 17,
                     "lineCount": 1
                 }
             },
@@ -1896,22 +1880,6 @@
                 "range": {
                     "startColumn": 16,
                     "endColumn": 73,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 37,
-                    "endColumn": 44,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 45,
-                    "endColumn": 52,
                     "lineCount": 1
                 }
             },
@@ -3342,14 +3310,6 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 11,
-                    "endColumn": 13,
-                    "lineCount": 1
-                }
-            },
-            {
                 "code": "reportArgumentType",
                 "range": {
                     "startColumn": 16,
@@ -3419,6 +3379,14 @@
                     "startColumn": 49,
                     "endColumn": 54,
                     "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 49,
+                    "lineCount": 11
                 }
             }
         ],
@@ -6118,38 +6086,6 @@
                 }
             },
             {
-                "code": "reportUnknownArgumentType",
-                "range": {
-                    "startColumn": 37,
-                    "endColumn": 39,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 62,
-                    "endColumn": 64,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 68,
-                    "endColumn": 77,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnnecessaryTypeIgnoreComment",
-                "range": {
-                    "startColumn": 98,
-                    "endColumn": 116,
-                    "lineCount": 1
-                }
-            },
-            {
                 "code": "reportReturnType",
                 "range": {
                     "startColumn": 19,
@@ -6838,14 +6774,6 @@
                 "range": {
                     "startColumn": 37,
                     "endColumn": 38,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 19,
-                    "endColumn": 29,
                     "lineCount": 1
                 }
             },
@@ -8574,7 +8502,7 @@
                 }
             },
             {
-                "code": "reportUnknownArgumentType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 49,
                     "endColumn": 52,
@@ -8582,7 +8510,7 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 58,
                     "endColumn": 61,
@@ -8590,7 +8518,7 @@
                 }
             },
             {
-                "code": "reportUnknownArgumentType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 69,
                     "endColumn": 72,
@@ -8598,15 +8526,7 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 20,
-                    "endColumn": 21,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
                     "startColumn": 23,
                     "endColumn": 26,
@@ -8706,23 +8626,7 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 12,
-                    "endColumn": 20,
-                    "lineCount": 1
-                }
-            },
-            {
                 "code": "reportReturnType",
-                "range": {
-                    "startColumn": 15,
-                    "endColumn": 23,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
                 "range": {
                     "startColumn": 15,
                     "endColumn": 23,
@@ -8742,14 +8646,6 @@
                 "range": {
                     "startColumn": 25,
                     "endColumn": 33,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownArgumentType",
-                "range": {
-                    "startColumn": 32,
-                    "endColumn": 54,
                     "lineCount": 1
                 }
             }
@@ -8784,14 +8680,6 @@
                 "range": {
                     "startColumn": 15,
                     "endColumn": 35,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownArgumentType",
-                "range": {
-                    "startColumn": 19,
-                    "endColumn": 33,
                     "lineCount": 1
                 }
             },
@@ -9794,14 +9682,6 @@
                 "range": {
                     "startColumn": 22,
                     "endColumn": 27,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownArgumentType",
-                "range": {
-                    "startColumn": 28,
-                    "endColumn": 34,
                     "lineCount": 1
                 }
             },
@@ -11592,6 +11472,14 @@
                 }
             },
             {
+                "code": "reportUnknownVariableType",
+                "range": {
+                    "startColumn": 8,
+                    "endColumn": 17,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportMissingTypeArgument",
                 "range": {
                     "startColumn": 21,
@@ -11896,10 +11784,10 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
+                    "startColumn": 14,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
@@ -11912,10 +11800,10 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
+                    "startColumn": 14,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
@@ -11928,10 +11816,10 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
+                    "startColumn": 14,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
@@ -11944,10 +11832,10 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
+                    "startColumn": 14,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
@@ -11960,10 +11848,10 @@
                 }
             },
             {
-                "code": "reportUnknownVariableType",
+                "code": "reportAny",
                 "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
+                    "startColumn": 14,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
@@ -11988,14 +11876,6 @@
                 "range": {
                     "startColumn": 11,
                     "endColumn": 40,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 4,
-                    "endColumn": 8,
                     "lineCount": 1
                 }
             },
@@ -12044,30 +11924,6 @@
                 "range": {
                     "startColumn": 11,
                     "endColumn": 31,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 8,
-                    "endColumn": 9,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 11,
-                    "endColumn": 12,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 14,
-                    "endColumn": 15,
                     "lineCount": 1
                 }
             },
@@ -12170,38 +12026,6 @@
             {
                 "code": "reportUnknownMemberType",
                 "range": {
-                    "startColumn": 21,
-                    "endColumn": 24,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 45,
-                    "endColumn": 48,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownVariableType",
-                "range": {
-                    "startColumn": 12,
-                    "endColumn": 15,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 43,
-                    "endColumn": 49,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
                     "startColumn": 19,
                     "endColumn": 43,
                     "lineCount": 1
@@ -12266,24 +12090,8 @@
             {
                 "code": "reportUnknownMemberType",
                 "range": {
-                    "startColumn": 38,
-                    "endColumn": 41,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
                     "startColumn": 15,
                     "endColumn": 33,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportUnknownMemberType",
-                "range": {
-                    "startColumn": 36,
-                    "endColumn": 39,
                     "lineCount": 1
                 }
             },
