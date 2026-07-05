@@ -6006,6 +6006,30 @@
                 }
             },
             {
+                "code": "reportUnknownArgumentType",
+                "range": {
+                    "startColumn": 37,
+                    "endColumn": 39,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportUnknownVariableType",
+                "range": {
+                    "startColumn": 62,
+                    "endColumn": 64,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportGeneralTypeIssues",
+                "range": {
+                    "startColumn": 68,
+                    "endColumn": 77,
+                    "lineCount": 1
+                }
+            },
+            {
                 "code": "reportReturnType",
                 "range": {
                     "startColumn": 19,
