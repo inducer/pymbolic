@@ -692,7 +692,7 @@ class CombineMapper(Mapper[ResultT, P]):
                 expr: NDArray[np.generic], /, *args: P.args, **kwargs: P.kwargs
             ) -> ResultT:
         # FIXME Can the type-ignore be avoided?
-        return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)  # pyright: ignore[reportArgumentType]
+        return self.combine(self.rec(el, *args, **kwargs) for el in expr.flat)
 
     @override
     def map_multivector(self,
