@@ -319,7 +319,7 @@ class UnifierBase(Mapper[
 
     map_floor_div: Callable[[Self, p.FloorDiv, Expression, Sequence[UnificationRecord]],
                             Sequence[UnificationRecord]] = map_quotient
-    map_remainder: Callable[[Self, p.Remainder, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_remainder: Callable[[Self, p.Remainder, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                             Sequence[UnificationRecord]] = map_quotient
 
     @override
@@ -346,7 +346,7 @@ class UnifierBase(Mapper[
         return self.rec(expr.shiftee, other.shiftee,
                 self.rec(expr.shift, other.shift, urecs))
 
-    map_right_shift: Callable[[Self, p.RightShift, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_right_shift: Callable[[Self, p.RightShift, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                               Sequence[UnificationRecord]] = map_left_shift
 
     @override
@@ -360,18 +360,18 @@ class UnifierBase(Mapper[
 
         return self.rec(expr.child, other.child, urecs)
 
-    map_bitwise_or: Callable[[Self, p.BitwiseOr, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_bitwise_or: Callable[[Self, p.BitwiseOr, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                              Sequence[UnificationRecord]] = map_sum
-    map_bitwise_xor: Callable[[Self, p.BitwiseXor, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_bitwise_xor: Callable[[Self, p.BitwiseXor, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                               Sequence[UnificationRecord]] = map_sum
-    map_bitwise_and: Callable[[Self, p.BitwiseAnd, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_bitwise_and: Callable[[Self, p.BitwiseAnd, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                               Sequence[UnificationRecord]] = map_sum
 
-    map_logical_not: Callable[[Self, p.LogicalNot, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_logical_not: Callable[[Self, p.LogicalNot, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                              Sequence[UnificationRecord]] = map_bitwise_not
-    map_logical_or: Callable[[Self, p.LogicalOr, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_logical_or: Callable[[Self, p.LogicalOr, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                              Sequence[UnificationRecord]] = map_sum
-    map_logical_and: Callable[[Self, p.LogicalAnd, Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_logical_and: Callable[[Self, p.LogicalAnd, Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                               Sequence[UnificationRecord]] = map_sum
 
     @override
@@ -420,7 +420,7 @@ class UnifierBase(Mapper[
 
         return urecs
 
-    map_tuple: Callable[[Self, tuple[Expression, ...], Expression, Sequence[UnificationRecord]],  # noqa: E501
+    map_tuple: Callable[[Self, tuple[Expression, ...], Expression, Sequence[UnificationRecord]],  # ruff:ignore[line-too-long]
                         Sequence[UnificationRecord]] = map_list
 
     @override

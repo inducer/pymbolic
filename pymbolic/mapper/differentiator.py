@@ -139,7 +139,7 @@ class DifferentiationMapper(Mapper[Expression, P],
         >>> from pymbolic.mapper.differentiator import DifferentiationMapper as DM
         >>> print(flatten(DM(x)(expr)))
         (((x + 5)**3 + x*3*(x + 5)**2)*(x + -1)**2 + (-1)*2*(x + -1)*x*(x + 5)**3) / (x + -1)**2**2
-    """  # noqa: E501
+    """  # ruff:ignore[line-too-long]
 
     variable: prim.Variable | prim.Subscript
     function_map: FunctionDerivativeTaker

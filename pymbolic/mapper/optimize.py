@@ -279,7 +279,7 @@ def optimize_mapper(
     def wrapper(cls: MapperT) -> MapperT:
         try:
             # Introduced in Py3.9
-            ast.unparse  # noqa: B018
+            ast.unparse  # ruff:ignore[useless-expression]
         except AttributeError:
             return cls
 
@@ -394,7 +394,7 @@ def optimize_mapper(
 
         # }}}
 
-        exec(compile(  # noqa: S102
+        exec(compile(  # ruff:ignore[exec-builtin]
             code_str,
             f"<'{_get_file_name_for_module_name(cls.__module__)}' "
             "modified by optimize_mapper>",

@@ -91,7 +91,7 @@ def disambiguate_identifiers(
             should_disambiguate_name: Callable[[str], bool] | None = None,
         ):
     if should_disambiguate_name is None:
-        should_disambiguate_name = lambda name: True  # noqa: E731
+        should_disambiguate_name = lambda name: True  # ruff:ignore[lambda-assignment]
 
     from pymbolic.imperative.analysis import get_all_used_identifiers
 

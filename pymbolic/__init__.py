@@ -45,7 +45,7 @@ from .mapper.evaluator import evaluate, evaluate_kw
 from .mapper.flattener import flatten
 from .mapper.substitutor import substitute
 from .parser import parse
-from .primitives import (  # noqa: N813
+from .primitives import (  # ruff:ignore[camelcase-imported-as-lowercase]
     ExpressionNode,
     Variable,
     Variable as var,
@@ -69,7 +69,9 @@ from .typing import (
     RealNumber,
     Scalar,
 )
-from pymbolic.version import VERSION_TEXT as __version__  # noqa: F401,N811
+from pymbolic.version import (
+    VERSION_TEXT as __version__,  # ruff:ignore[unused-import, constant-imported-as-non-constant]
+)
 
 
 __all__ = (
