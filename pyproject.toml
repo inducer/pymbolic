@@ -82,23 +82,23 @@ extend-select = [
     "W",    # pycodestyle
 ]
 extend-ignore = [
-    "C409", # remove comprehension within tuple call
     "C90",  # McCabe complexity
-    "E226", # missing whitespace around arithmetic operator
-    "E241", # multiple spaces after comma
-    "E242", # tab after comma
-    "E402", # module level import not at the top of file
-    "UP031", # use f-strings instead of %
-    "UP032", # use f-strings instead of .format
-    "RUF067", # no code in __init__ *shrug*
-    "TRY004",
+    "unnecessary-literal-within-tuple-call",
+    "missing-whitespace-around-arithmetic-operator",
+    "multiple-spaces-after-comma",
+    "tab-after-comma",
+    "module-import-not-at-top-of-file",
+    "printf-string-formatting",
+    "f-string",
+    "non-empty-init-module",
+    "type-check-without-type-error",
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"experiments/traversal-benchmark.py" = ["E501"]
-"doc/conf.py" = ["I002", "S102"]
-"experiments/*.py" = ["I002"]
-"test/*.py" = ["S102"]
+"experiments/traversal-benchmark.py" = ["line-too-long"]
+"doc/conf.py" = ["missing-required-import", "exec-builtin"]
+"experiments/*.py" = ["missing-required-import"]
+"test/*.py" = ["exec-builtin"]
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["map_*"]

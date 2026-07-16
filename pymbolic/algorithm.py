@@ -124,14 +124,14 @@ def extended_euclidean(q, r):
         p, a, b = extended_euclidean(r, q)
         return p, b, a
 
-    Q = 1, 0  # noqa: N806
-    R = 0, 1  # noqa: N806
+    Q = 1, 0  # ruff:ignore[non-lowercase-variable-in-function]
+    R = 0, 1  # ruff:ignore[non-lowercase-variable-in-function]
 
     while r:
         quot, t = divmod(q, r)
-        T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # noqa: N806
+        T = Q[0] - quot*R[0], Q[1] - quot*R[1]  # ruff:ignore[non-lowercase-variable-in-function]
         q, r = r, t
-        Q, R = R, T  # noqa: N806
+        Q, R = R, T  # ruff:ignore[non-lowercase-variable-in-function]
 
     return q, Q[0], Q[1]
 
@@ -225,7 +225,7 @@ def fft(x, sign: int = 1,
     if n == 1:
         return x
 
-    N1, N2 = find_factors(n)  # noqa: N806
+    N1, N2 = find_factors(n)  # ruff:ignore[non-lowercase-variable-in-function]
 
     scalar_tp = complex_dtype.type
     sub_ffts = [
@@ -306,7 +306,7 @@ def sym_fft(x, sign=1):
 # }}}
 
 
-def csr_matrix_multiply(S, x):  # noqa: N803
+def csr_matrix_multiply(S, x):  # ruff:ignore[invalid-argument-name]
     """Multiplies a :class:`scipy.sparse.csr_matrix` S by an object-array vector x.
     """
     h, _w = S.shape

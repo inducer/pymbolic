@@ -140,16 +140,16 @@ else:
         RealNumber: TypeAlias = Integer | float
         InexactNumber: TypeAlias = _StdlibInexactNumberT
     else:
-        Bool = Union[bool, np.bool_]  # noqa: UP007
-        Integer: TypeAlias = Union[int, np.integer]  # noqa: UP007
-        RealNumber: TypeAlias = Union[Integer, float, np.floating]  # noqa: UP007
+        Bool = Union[bool, np.bool_]  # ruff:ignore[non-pep604-annotation-union]
+        Integer: TypeAlias = Union[int, np.integer]  # ruff:ignore[non-pep604-annotation-union]
+        RealNumber: TypeAlias = Union[Integer, float, np.floating]  # ruff:ignore[non-pep604-annotation-union]
         InexactNumber: TypeAlias = _StdlibInexactNumberT | np.inexact
 
 # NOTE: these are Union because Sphinx seems to understand that better and
 # prints a nice "alias of ..." blurb
 
-Number: TypeAlias = Union[Integer, InexactNumber]  # noqa: UP007
-Scalar: TypeAlias = Union[Number, Bool]  # noqa: UP007
+Number: TypeAlias = Union[Integer, InexactNumber]  # ruff:ignore[non-pep604-annotation-union]
+Scalar: TypeAlias = Union[Number, Bool]  # ruff:ignore[non-pep604-annotation-union]
 
 # NOTE: These need to be Union because they will get used like
 # `ArithmeticExpression | None`, which does not work if it's a string.

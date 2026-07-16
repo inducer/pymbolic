@@ -289,7 +289,7 @@ def test_parser():
     logger.info("%r", parse("0."))
     logger.info("%r", parse("0.e1"))
     assert parse("0.e1") == 0
-    assert parse("1e-12") == 1e-12  # noqa: RUF069
+    assert parse("1e-12") == 1e-12  # ruff:ignore[float-equality-comparison]
     logger.info("%r", parse("a >= 1"))
     logger.info("%r", parse("a <= 1"))
 
@@ -422,7 +422,9 @@ def test_geometric_algebra(dims):
 
     import numpy as np
 
-    from pymbolic.geometric_algebra import MultiVector as MV  # noqa: N817
+    from pymbolic.geometric_algebra import (
+        MultiVector as MV,  # ruff:ignore[camelcase-imported-as-acronym]
+    )
 
     rng = np.random.default_rng(seed=dims)
     vec1 = MV(rng.normal(size=dims))

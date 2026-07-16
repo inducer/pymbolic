@@ -157,7 +157,7 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase[Expression, []]):
     def map_Equality(self, expr: sp.Equality) -> Expression:
         return self._comparison_operator(expr, operator="==")
 
-    def map_Unequality(self, expr: sp.Unequality) -> Expression:  # spellchecker: disable-line  # noqa: E501
+    def map_Unequality(self, expr: sp.Unequality) -> Expression:  # spellchecker: disable-line  # ruff:ignore[line-too-long]
         return self._comparison_operator(expr, operator="!=")
 
     def map_GreaterThan(self, expr: sp.GreaterThan) -> Expression:

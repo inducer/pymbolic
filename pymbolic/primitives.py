@@ -338,7 +338,7 @@ def disable_subscript_by_getitem():
 
 
 # https://stackoverflow.com/a/13624858
-class _classproperty(property):  # noqa: N801
+class _classproperty(property):  # ruff:ignore[invalid-class-name]
     def __get__(self, owner_self: Any, owner_cls: type | None = None) -> Any:
         assert self.fget is not None
         return self.fget(owner_cls)
@@ -415,7 +415,7 @@ class ExpressionNode:
         raise NotImplementedError
 
     @_classproperty
-    def __match_args__(cls):  # noqa: N805
+    def __match_args__(cls):  # ruff:ignore[invalid-first-argument-name-for-method]
         return cls.init_arg_names
 
     @property
@@ -1048,7 +1048,7 @@ def _augment_expression_dataclass(
         """)
 
     exec_dict = {"cls": cls, "_MODULE_SOURCE_CODE": augment_code}
-    exec(compile(augment_code,  # noqa: S102
+    exec(compile(augment_code,  # ruff:ignore[exec-builtin]
                  f"<dataclass augmentation code for {cls}>", "exec"),
          exec_dict)
 
@@ -1202,7 +1202,7 @@ class CallWithKwargs(AlgebraicLeaf):
     def __post_init__(self):
         try:
             hash(self.kw_parameters)
-        except Exception:  # noqa: BLE001
+        except Exception:  # ruff:ignore[blind-except]
             warn("CallWithKwargs created with non-hashable kw_parameters. "
                  "This is deprecated and will stop working in 2025. "
                  "If you need an immutable mapping, "
@@ -1522,7 +1522,7 @@ class If(ExpressionNode):
 
 # {{{ misc stuff
 
-class cse_scope:  # noqa: N801
+class cse_scope:  # ruff:ignore[invalid-class-name]
     """Determines the lifetime for the saved value of a :class:`CommonSubexpression`.
 
     .. attribute:: EVALUATION

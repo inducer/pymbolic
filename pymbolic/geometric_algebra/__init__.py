@@ -1032,7 +1032,7 @@ class MultiVector(Generic[CoeffT]):
         return self.norm_squared()**0.5
 
     @property
-    def I(self):  # noqa: E743, N802
+    def I(self):  # ruff:ignore[ambiguous-function-name, invalid-function-name]
         """Return the pseudoscalar associated with this object's :class:`Space`.
         """
         return MultiVector({2**self.space.dimensions-1: 1}, self.space)
@@ -1114,7 +1114,7 @@ class MultiVector(Generic[CoeffT]):
     def xproject(self, r: Literal[0], dtype: DTypeLike = None) -> CoeffT | int: ...  # pyright: ignore[reportOverlappingOverload]
 
     @overload
-    def xproject(self, r: Literal[1], dtype: DTypeLike = None) -> onp.Array1D[np.generic]: ...  # noqa: E501
+    def xproject(self, r: Literal[1], dtype: DTypeLike = None) -> onp.Array1D[np.generic]: ...  # ruff:ignore[line-too-long]
 
     @overload
     def xproject(self, r: int, dtype: DTypeLike = None) -> MultiVector[CoeffT]: ...
