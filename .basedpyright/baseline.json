@@ -5000,16 +5000,16 @@
             {
                 "code": "reportAny",
                 "range": {
-                    "startColumn": 28,
-                    "endColumn": 48,
+                    "startColumn": 16,
+                    "endColumn": 36,
                     "lineCount": 1
                 }
             },
             {
                 "code": "reportArgumentType",
                 "range": {
-                    "startColumn": 37,
-                    "endColumn": 47,
+                    "startColumn": 25,
+                    "endColumn": 35,
                     "lineCount": 1
                 }
             },
