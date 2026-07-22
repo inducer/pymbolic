@@ -149,7 +149,9 @@ class SympyLikeToPymbolicMapper(SympyLikeMapperBase[Expression, []]):
         else:
             return SympyLikeMapperBase["Expression", []].not_supported(self, expr)
 
-    def _comparison_operator(self, expr: sp.Basic, *, operator: str) -> Expression:
+    def _comparison_operator(self,
+            expr: sp.Basic,
+            *, operator: prim.ComparisonOp) -> Expression:
         left = self.rec(expr.args[0])
         right = self.rec(expr.args[1])
         return prim.Comparison(left, operator, right)

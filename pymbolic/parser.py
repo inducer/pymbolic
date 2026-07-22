@@ -209,7 +209,7 @@ class Parser:
             (_colon, pytools.lex.RE(r"\:")),
             ]
 
-    _COMP_TABLE: ClassVar[dict[str, str]] = {
+    _COMP_TABLE: ClassVar[dict[str, prim.ComparisonOp]] = {
             _greater: ">",
             _greaterequal: ">=",
             _less: "<",
