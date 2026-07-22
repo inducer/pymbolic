@@ -193,7 +193,7 @@ class ASTToPymbolic(ASTMapper[Expression, []]):
         # (expr test, expr body, expr orelse)
         return p.If(self.rec(expr.test), self.rec(expr.body), self.rec(expr.orelse))
 
-    comparison_op_map: ClassVar[dict[type[ast.cmpop], str]] = {
+    comparison_op_map: ClassVar[dict[type[ast.cmpop], p.ComparisonOp]] = {
             ast.Eq: "==",
             ast.NotEq: "!=",
             ast.Lt: "<",

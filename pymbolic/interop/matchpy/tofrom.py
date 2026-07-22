@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import multiset
 import numpy as np
@@ -215,8 +215,8 @@ class FromMatchpyExpressionMapper(BaseMatchPyMapper):
 
     def map_comparison(self, expr: m.Comparison) -> p.Comparison:
         return p.Comparison(self.rec(expr.left),
-                            expr.operator.value,
-                            self.rec(expr.right))
+                cast("p.ComparisonOp", expr.operator.value),
+                self.rec(expr.right))
 
     def map_if(self, expr: m.If) -> p.If:
         return p.If(self.rec(expr.condition),

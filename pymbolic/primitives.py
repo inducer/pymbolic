@@ -34,6 +34,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Literal,
     NoReturn,
     ParamSpec,
     Protocol,
@@ -318,6 +319,8 @@ Helper classes
 .. autoclass:: EmptyOK
 .. autoclass:: _AttributeLookupCreator
 """
+
+ComparisonOp: TypeAlias = Literal[">", ">=", "==", "!=", "<", "<="]
 
 
 # The upper bound for the number of nodes printed when repr
@@ -1446,7 +1449,7 @@ class Comparison(ExpressionNode):
 
     left: _Expression
 
-    operator: str
+    operator: ComparisonOp
     """One of ``[">", ">=", "==", "!=", "<", "<="]``."""
 
     right: _Expression
