@@ -8544,6 +8544,16 @@
                 }
             }
         ],
+        "./pymbolic/mapper/unifier.py": [
+            {
+                "code": "reportIncompatibleMethodOverride",
+                "range": {
+                    "startColumn": 8,
+                    "endColumn": 19,
+                    "lineCount": 1
+                }
+            }
+        ],
         "./pymbolic/parser.py": [
             {
                 "code": "reportArgumentType",
