@@ -1051,7 +1051,7 @@ def _augment_expression_dataclass(
         """)
 
     exec_dict = {"cls": cls, "_MODULE_SOURCE_CODE": augment_code}
-    exec(compile(augment_code,  # ruff:ignore[exec-builtin]
+    exec(compile(augment_code,
                  f"<dataclass augmentation code for {cls}>", "exec"),
          exec_dict)
 
