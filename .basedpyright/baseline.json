@@ -7065,23 +7065,7 @@
                 "code": "reportReturnType",
                 "range": {
                     "startColumn": 15,
-                    "endColumn": 48,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportAny",
-                "range": {
-                    "startColumn": 31,
                     "endColumn": 33,
-                    "lineCount": 1
-                }
-            },
-            {
-                "code": "reportAny",
-                "range": {
-                    "startColumn": 44,
-                    "endColumn": 46,
                     "lineCount": 1
                 }
             },
