@@ -209,7 +209,7 @@ class EvaluationMapper(Mapper[ResultT, []], CSECachingMapperMixin[ResultT, []]):
 
     @override
     def map_multivector(self, expr: MultiVector[Any], /) -> ResultT:
-        return expr.map(lambda ch: self.rec(ch))
+        return expr.map(self.rec)
 
     @override
     def map_common_subexpression_uncached(
