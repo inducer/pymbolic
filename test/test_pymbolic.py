@@ -351,6 +351,9 @@ def test_parser():
         parse("1+if(0, 1, 2)")
 
     assert eval(str(parse("1729 if True or False else 42"))) == 1729
+    import math
+    assert math.isinf(parse("inf"))
+    assert math.isnan(parse("nan"))
 
 # }}}
 
