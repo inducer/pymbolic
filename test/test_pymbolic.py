@@ -415,8 +415,12 @@ def test_graphviz():
 
 # {{{ geometric algebra
 
-@pytest.mark.parametrize("dims", [2, 3, 4, 5])
 # START_GA_TEST
+@pytest.mark.parametrize("dims", [2, 3, 4, 5])
+# This test intentionally exercises the deprecated [DFM]-convention
+# operators and methods (see "Conventions and known issues" in
+# pymbolic.geometric_algebra).
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_geometric_algebra(dims):
     pytest.importorskip("numpy")
 
@@ -517,6 +521,159 @@ def test_geometric_algebra(dims):
         # (1.57) in [HS]
         assert a.x(b*c) .close_to(a.x(b)*c + b*a.x(c))
 # END_GA_TEST
+
+
+@pytest.mark.parametrize("dims", [2, 3, 4])
+def test_geometric_algebra_corrected_conventions(dims):
+    """
+    Test the (metric) inner product, the corrected left and right
+    contractions, and the Hodge dual, and their relationship to the
+    deprecated [DFM]-convention operators.
+
+    See the "Conventions and known issues" section of
+    :mod:`pymbolic.geometric_algebra` and Eric Lengyel's "Poor Foundations
+    in Geometric Algebra"
+    (https://terathon.com/blog/poor-foundations-ga.html).
+    """
+    pytest.importorskip("numpy")
+
+    import warnings
+
+    import numpy as np
+
+    from pymbolic.geometric_algebra import (
+        MultiVector as MV,  # ruff:ignore[camelcase-imported-as-acronym]
+        Space,
+    )
+
+    rng = np.random.default_rng(seed=1000 + dims)
+    diag = rng.choice([-1, 1], size=dims).astype(object)
+    sp = Space(dims, metric_matrix=np.diag(diag))
+    ps = MV({2**dims - 1: 1}, sp)
+
+    # {{{ reference implementations (via the geometric product only)
+
+    def ref_inner(av, x):
+        result = 0
+        for ai in av.gen_blades():
+            for xi in x.gen_blades():
+                result = result + (ai * xi.rev()).project(0).as_scalar()
+
+        return result
+
+    def ref_left_contraction(av, x):
+        # av << x = <x ai~>_{grx-grav}, blade-by-blade
+        result = MV({0: 0}, av.space)
+        for ai in av.gen_blades():
+            for xi in x.gen_blades():
+                if xi.get_pure_grade() >= ai.get_pure_grade():
+                    result = result \
+                            + (xi * ai.rev()).project(xi.get_pure_grade()
+                                                     - ai.get_pure_grade())
+
+        return result
+
+    def ref_right_contraction(av, x):
+        # av >> x = <x~ ai>_{grav-grx}, blade-by-blade
+        result = MV({0: 0}, av.space)
+        for ai in av.gen_blades():
+            for xi in x.gen_blades():
+                if ai.get_pure_grade() >= xi.get_pure_grade():
+                    result = result \
+                            + (xi.rev() * ai).project(ai.get_pure_grade()
+                                                     - xi.get_pure_grade())
+
+        return result
+
+    # }}}
+
+    def rand_mixed():
+        data = {}
+        for bits in range(1 << dims):
+            if rng.random() < 0.6:
+                c = float(rng.normal())
+                if abs(c) > 1e-9:
+                    data[bits] = c
+
+        return MV(data, sp)
+
+    def rand_pure(g):
+        data = {}
+        for bits in range(1 << dims):
+            if bits.bit_count() == g and rng.random() < 0.7:
+                c = float(rng.normal())
+                if abs(c) > 1e-9:
+                    data[bits] = c
+
+        return MV(data, sp)
+
+    a = MV(rng.normal(size=dims), sp)
+    b = MV(rng.normal(size=dims), sp)
+    b2 = a ^ b
+
+    # inner product
+    assert np.isclose(
+            a.inner(b),
+            float(np.sum(a.as_vector() * b.as_vector() * diag)))
+    assert np.isclose(a.inner(b), ref_inner(a, b))
+    assert b2.inner(a) == 0  # vanishes across grades
+    assert np.isclose(a.norm_squared(), a.inner(a))
+
+    if (diag == 1).all():  # euclidean: norms are positive
+        assert a.inner(a) > 0
+        assert b2.inner(b2) > 0
+
+    # relationship to the deprecated [DFM]-convention operators
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+
+        assert (a | b).close_to(a.inner(b))  # vectors: unchanged
+        assert (b2 | b2).close_to(-b2.inner(b2))  # k=2: (-1)**(k(k-1)/2)
+
+        assert (a << b).close_to(a.inner(b))
+        assert (a >> b).close_to(a.inner(b))
+        assert (b2 << b2).close_to(-b2.inner(b2))
+        assert (b2 >> b2).close_to(-b2.inner(b2))
+
+        # for a vector a and a bivector b2, the [DFM] contractions differ
+        # from the corrected ones by a sign
+        assert (a << b2).close_to(-a.left_contraction(b2))
+        assert (b2 >> a).close_to(-b2.right_contraction(a))
+
+    # contractions: reduced to the inner product for equal grades
+    assert b2.left_contraction(b2).close_to(b2.inner(b2))
+    assert b2.right_contraction(b2).close_to(b2.inner(b2))
+
+    # geometric product decomposition: ax = x >> a + a^x
+    x = rand_mixed()
+    assert (a * x).close_to(x.right_contraction(a) + (a ^ x))
+
+    # contractions against references, for mixed-grade operands
+    for _ in range(5):
+        av = rand_mixed()
+        x = rand_mixed()
+        assert av.left_contraction(x).close_to(ref_left_contraction(av, x))
+        assert av.right_contraction(x).close_to(ref_right_contraction(av, x))
+
+    # hodge dual
+    assert a.hodge_dual().close_to(a.rev() * ps)
+    assert ps.hodge_dual().close_to(float(np.prod(diag)))
+
+    # defining property: c ^ d* = (c . d) ps for equal-grade blades
+    for _ in range(5):
+        g = int(rng.integers(1, dims + 1))
+        c = rand_pure(g)
+        d = rand_pure(g)
+        assert (d ^ c.hodge_dual()).close_to(d.inner(c) * ps)
+
+    # the deprecated [DFM] dual has an orientation inconsistent with the
+    # hodge dual for vectors in odd-dimensional spaces (e.g. it flips the
+    # dual of e0 in 3D)
+    if dims == 3:
+        e0 = MV({0b001: 1}, sp)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            assert not e0.dual().close_to(e0.hodge_dual())
 
 # }}}
 
