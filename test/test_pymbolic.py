@@ -417,10 +417,6 @@ def test_graphviz():
 
 # START_GA_TEST
 @pytest.mark.parametrize("dims", [2, 3, 4, 5])
-# This test intentionally exercises the deprecated [DFM]-convention
-# operators and methods (see "Conventions and known issues" in
-# pymbolic.geometric_algebra).
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_geometric_algebra(dims):
     pytest.importorskip("numpy")
 
@@ -438,7 +434,7 @@ def test_geometric_algebra(dims):
     vec5 = MV(rng.normal(size=dims))
 
     # Fundamental identity
-    assert ((vec1 ^ vec2) + (vec1 | vec2)).close_to(vec1*vec2)
+    assert ((vec1 ^ vec2) + vec1.inner(vec2)).close_to(vec1*vec2)
 
     # Antisymmetry
     assert (vec1 ^ vec2 ^ vec3).close_to(- vec2 ^ vec1 ^ vec3)
@@ -468,28 +464,15 @@ def test_geometric_algebra(dims):
         assert ((a ^ b) ^ c).close_to(a ^ (b ^ c))
         # The inner product is not associative.
 
-        # scalar product
-        assert ((c*b).project(0)) .close_to(b.scalar_product(c))
-        assert ((c.rev()*b).project(0)) .close_to(b.rev().scalar_product(c))
+        # inner product
+        assert ((c.rev()*b).project(0)) .close_to(b.inner(c))
         assert ((b.rev()*b).project(0)) .close_to(b.norm_squared())
 
         assert b.norm_squared() >= 0
         assert c.norm_squared() >= 0
 
         # Cauchy's inequality
-        assert b.scalar_product(c) <= abs(b)*abs(c) + 1e-13
-
-        # contractions
-
-        # (3.18) in [DFM]
-        assert abs(b.scalar_product(a ^ c) - (b >> a).scalar_product(c)) < 1e-12
-
-        # duality, (3.20) in [DFM]
-        assert ((a ^ b) << c) .close_to(a << (b << c))
-
-        # two definitions of the dual agree: (1.2.26) in [HS]
-        # and (sec 3.5.3) in [DFW]
-        assert (c << c.I.rev()).close_to(c | c.I.rev())
+        assert b.inner(c) <= abs(b)*abs(c) + 1e-13
 
         # inverse
         for div in [*b.gen_blades(), vec1, vec1.I]:
@@ -504,10 +487,8 @@ def test_geometric_algebra(dims):
         assert c.rev().rev() == c
         assert (b ^ c).rev() .close_to(c.rev() ^ b.rev())
 
-        # dual properties
-        # (1.2.26) in [HS]
-        assert c.dual() .close_to(c | c.I.rev())
-        assert c.dual() .close_to(c*c.I.rev())
+        # Hodge-dual definition
+        assert c.hodge_dual().close_to(c.rev()*c.I)
 
         # involution properties (Sec 2.9.5 DFW)
         assert c.invol().invol() == c
@@ -526,9 +507,8 @@ def test_geometric_algebra(dims):
 @pytest.mark.parametrize("dims", [2, 3, 4])
 def test_geometric_algebra_corrected_conventions(dims):
     """
-    Test the (metric) inner product, the corrected left and right
-    contractions, and the Hodge dual, and their relationship to the
-    deprecated [DFM]-convention operators.
+    Test the metric inner product, corrected left and right contractions,
+    and Hodge dual.
 
     See the "Conventions and known issues" section of
     :mod:`pymbolic.geometric_algebra` and Eric Lengyel's "Poor Foundations
@@ -536,8 +516,6 @@ def test_geometric_algebra_corrected_conventions(dims):
     (https://terathon.com/blog/poor-foundations-ga.html).
     """
     pytest.importorskip("numpy")
-
-    import warnings
 
     import numpy as np
 
@@ -562,7 +540,7 @@ def test_geometric_algebra_corrected_conventions(dims):
         return result
 
     def ref_left_contraction(av, x):
-        # av << x = <x ai~>_{grx-grav}, blade-by-blade
+        # av left-contract x = <x ai~>_{grx-grav}, blade-by-blade
         result = MV({0: 0}, av.space)
         for ai in av.gen_blades():
             for xi in x.gen_blades():
@@ -574,7 +552,7 @@ def test_geometric_algebra_corrected_conventions(dims):
         return result
 
     def ref_right_contraction(av, x):
-        # av >> x = <x~ ai>_{grav-grx}, blade-by-blade
+        # av right-contract x = <x~ ai>_{grav-grx}, blade-by-blade
         result = MV({0: 0}, av.space)
         for ai in av.gen_blades():
             for xi in x.gen_blades():
@@ -623,28 +601,11 @@ def test_geometric_algebra_corrected_conventions(dims):
         assert a.inner(a) > 0
         assert b2.inner(b2) > 0
 
-    # relationship to the deprecated [DFM]-convention operators
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-
-        assert (a | b).close_to(a.inner(b))  # vectors: unchanged
-        assert (b2 | b2).close_to(-b2.inner(b2))  # k=2: (-1)**(k(k-1)/2)
-
-        assert (a << b).close_to(a.inner(b))
-        assert (a >> b).close_to(a.inner(b))
-        assert (b2 << b2).close_to(-b2.inner(b2))
-        assert (b2 >> b2).close_to(-b2.inner(b2))
-
-        # for a vector a and a bivector b2, the [DFM] contractions differ
-        # from the corrected ones by a sign
-        assert (a << b2).close_to(-a.left_contraction(b2))
-        assert (b2 >> a).close_to(-b2.right_contraction(a))
-
-    # contractions: reduced to the inner product for equal grades
+    # contractions reduce to the inner product for equal grades
     assert b2.left_contraction(b2).close_to(b2.inner(b2))
     assert b2.right_contraction(b2).close_to(b2.inner(b2))
 
-    # geometric product decomposition: ax = x >> a + a^x
+    # geometric product decomposition: ax = x right-contract a + a^x
     x = rand_mixed()
     assert (a * x).close_to(x.right_contraction(a) + (a ^ x))
 
@@ -666,14 +627,6 @@ def test_geometric_algebra_corrected_conventions(dims):
         d = rand_pure(g)
         assert (d ^ c.hodge_dual()).close_to(d.inner(c) * ps)
 
-    # the deprecated [DFM] dual has an orientation inconsistent with the
-    # hodge dual for vectors in odd-dimensional spaces (e.g. it flips the
-    # dual of e0 in 3D)
-    if dims == 3:
-        e0 = MV({0b001: 1}, sp)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            assert not e0.dual().close_to(e0.hodge_dual())
 
 # }}}
 
