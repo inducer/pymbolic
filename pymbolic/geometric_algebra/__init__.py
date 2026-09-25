@@ -40,7 +40,7 @@ from typing import (
 )
 
 import numpy as np
-from typing_extensions import Self, override
+from typing_extensions import Self, deprecated, override
 
 from pytools import memoize, memoize_method, obj_array
 from pytools.obj_array import ObjectArray, ObjectArray1D, ShapeT
@@ -53,13 +53,91 @@ if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
 
-__doc__ = """
+__doc__ = r"""
 See `Wikipedia <https://en.wikipedia.org/wiki/Geometric_algebra>`__ for an idea
 of what this is.
 
 .. versionadded:: 2013.2
 
 Also see :ref:`ga-examples`.
+
+.. _ga-conventions:
+
+Conventions and known issues
+----------------------------
+
+The operators in this module historically follow the conventions of [DFM]
+(Dorst, Fontijne and Mann, *Geometric Algebra for Computer Science*). Those
+conventions have been shown to rest on shaky foundations; see in particular
+Eric Lengyel's `Poor Foundations in Geometric Algebra
+<https://terathon.com/blog/poor-foundations-ga.html>`__ for a detailed
+critique. The affected operations, and their replacements in this module,
+are:
+
+- **Inner product.** Once a metric is given, there is exactly one extension
+  of the metric's inner product on the basis vectors to the full exterior
+  algebra, given for multivectors *A*, *B* by
+  :math:`A\cdot B = \langle A\widetilde B\rangle_0` (equivalently,
+  :math:`A^\top G B`, where :math:`G` is the metric extended to the full
+  exterior algebra). It is a *scalar*, it vanishes for blades of different
+  grade, and it induces the norm :math:`\lVert A\rVert^2 = A\cdot A`. Use
+  :meth:`MultiVector.inner` for this product.
+
+  The ``|`` operator implements [DFM]'s "inner product" instead, which can
+  produce non-scalar results (making it an interior product, not an inner
+  product) and which, for equal-grade *k*-blades, differs from the true
+  inner product by a factor of :math:`(-1)^{k(k-1)/2}`.
+
+- **Scalar product.** [DFM] defines a separate "scalar product" (see
+  :meth:`MultiVector.scalar_product`) with a reversed Gram determinant. It
+  is superfluous once the inner product is defined correctly, and is
+  deprecated in favor of :meth:`MultiVector.inner`.
+
+- **Contractions.** [DFM]'s left and right contractions (``<<`` and ``>>``)
+  are interior products that, for equal-grade blades, reduce to the scalar
+  product instead of the inner product. The corrected contractions, which
+  do reduce to the inner product for equal-grade blades, are available as
+  :meth:`MultiVector.left_contraction` and
+  :meth:`MultiVector.right_contraction`. For a *k*-blade *A* and an *l*-blade
+  *B* (with :math:`k \le l`), they are given by
+
+  .. math::
+
+     A\lrcorner B = \langle B\widetilde A\rangle_{l-k},
+     \qquad
+     B\llcorner A = \langle\widetilde A\, B\rangle_{l-k},
+
+  extended to general multivectors blade-by-blade and by linearity. For a
+  vector *a* and a blade *B*, the geometric product decomposes as
+  :math:`aB = B\llcorner a + a\wedge B`.
+
+  The Lengyel article also gives equivalent Hodge-dual definitions,
+  :math:`A\lrcorner B = A_{\star}\vee B` and :math:`B\llcorner A =
+  B\vee A^{\star}`, where the subscript/superscript star is the left (resp.
+  right) Hodge dual and :math:`\vee` is the "antiwedge" product. The
+  antiwedge is *not* wedge-like: it is Grassmann's regressive product,
+  which adds antigrades (so an antiwedge of a *p*-blade and a *q*-blade
+  has grade :math:`p+q-n`) and is defined via the complements,
+  :math:`X\vee Y = \overline{\overline X \wedge \overline Y}`. It is not
+  defined in the article itself; see, e.g., `Lengyel's RGA wiki
+  <https://rigidgeometricalgebra.org/wiki/index.php?title=Exterior_products>`__.
+  The two formulations are equivalent; the grade-extraction form above is
+  self-contained, and it is the one implemented here.
+
+- **Dual.** ``~`` and :meth:`MultiVector.dual` implement [DFM]'s
+  "dualization mapping" :math:`A\, I^{-1}`. Its orientation is inconsistent
+  with the exterior algebra complements (among other issues, it flips the
+  sense of rotation of mixed-grade operators such as quaternions). The Hodge
+  dual :math:`A^\star = \widetilde A\, I` (more generally, the right
+  complement of :math:`GA`) is available as
+  :meth:`MultiVector.hodge_dual`; for equal-grade blades *A*, *B* it
+  satisfies the defining property of the Hodge star,
+  :math:`A\wedge B^\star = (A\cdot B)\, I`.
+
+:meth:`MultiVector.norm_squared` (and hence ``abs``) computes
+:math:`A\cdot A`, i.e. the norm induced by the true inner product, and is
+not affected by the above. The deprecated operators and methods remain
+available and continue to follow [DFM] exactly.
 
 Spaces
 ------
@@ -103,6 +181,29 @@ This first example demonstrates how to compute a cross product using
         e0 * -1.8499999999999999
         + e1 * 2.9879999999999995
         + e2 * -5.201600000000001)
+
+The following example demonstrates the (metric) inner product
+:meth:`MultiVector.inner` and the Hodge dual :meth:`MultiVector.hodge_dual`,
+and how they differ from the deprecated [DFM]-convention operators (see
+:ref:`ga-conventions`):
+
+.. doctest::
+
+    >>> import numpy as np
+    >>> import pymbolic.geometric_algebra as ga
+    >>> MV = ga.MultiVector
+    >>>
+    >>> a = MV(np.array([1, 2, 3]))
+    >>> b = MV(np.array([4, 5, 6]))
+    >>> B = a ^ b
+    >>> print(a.inner(b))
+    32
+    >>> print(B.inner(B))
+    54
+    >>> print(B | B)
+    MV(-54)
+    >>> print(B.hodge_dual())
+    MV(e0 * -3 + e1 * 6 + e2 * -3)
 
 This simple example demonstrates how a complex number is simply a special
 case of a :class:`MultiVector`:
@@ -519,7 +620,9 @@ def _cast_to_mv(obj: int | CoeffT | MultiVector[CoeffT],
 
 @expr_dataclass(init=False, hash=False)
 class MultiVector(Generic[CoeffT]):
-    r"""An immutable multivector type. Its implementation follows [DFM].
+    r"""An immutable multivector type. Its implementation follows [DFM];
+    see :ref:`ga-conventions` for known issues with these conventions and
+    for the recommended replacements.
     It is pickleable, and not picky about what data is used as coefficients.
     It supports :class:`pymbolic.primitives.ExpressionNode` objects of course,
     but it can take just about any other scalar-ish coefficients.
@@ -549,14 +652,21 @@ class MultiVector(Generic[CoeffT]):
     ``A-B``             Difference of multivectors
     ``A*B``             Geometric product :math:`AB`
     ``A^B``             Outer product :math:`A\wedge B` of multivectors
-    ``A|B``             Inner product :math:`A\cdot B` of multivectors
-    ``A<<B``            Left contraction :math:`A\lrcorner B` (``_|``)
-                        of multivectors, also read as ':math:`A` removed from
-                        :math:`B`'.
-    ``A>>B``            Right contraction :math:`A\llcorner B`  (``|_``)of
-                        multivectors, also read as ':math:`A` without
-                        :math:`B`'.
+    ``A|B``             [DFM]-convention "inner product" of multivectors
+    ``A<<B``            [DFM]-convention left contraction
+                        :math:`A\lrcorner B` (``_|``) of multivectors, also
+                        read as ':math:`A` removed from :math:`B`'.
+    ``A>>B``            [DFM]-convention right contraction
+                        :math:`A\llcorner B` (``|_``) of multivectors, also
+                        read as ':math:`A` without :math:`B`'.
     =================== ========================================================
+
+    .. note::
+
+        The ``|``, ``<<`` and ``>>`` operators follow the conventions of
+        [DFM], which are deprecated (see :ref:`ga-conventions` for details).
+        Prefer :meth:`inner`, :meth:`left_contraction`,
+        :meth:`right_contraction` and :meth:`hodge_dual` instead.
 
     .. warning ::
 
@@ -571,6 +681,9 @@ class MultiVector(Generic[CoeffT]):
 
     .. rubric:: More products
 
+    .. automethod:: inner
+    .. automethod:: left_contraction
+    .. automethod:: right_contraction
     .. automethod:: scalar_product
     .. automethod:: x
     .. automethod:: __pow__
@@ -580,8 +693,8 @@ class MultiVector(Generic[CoeffT]):
     .. automethod:: inv
     .. automethod:: rev
     .. automethod:: invol
+    .. automethod:: hodge_dual
     .. automethod:: dual
-    .. automethod:: __inv__
     .. automethod:: norm_squared
     .. automethod:: __abs__
     .. autoattribute:: I
@@ -870,39 +983,281 @@ class MultiVector(Generic[CoeffT]):
         return MultiVector(other, self.space) \
                 ._generic_product(self, _OuterProduct)
 
+    @deprecated(
+        "'|' implements the [DFM]-convention inner product, which is "
+        "deprecated. Use MultiVector.inner() for the (metric) inner product, "
+        "or MultiVector.left_contraction()/MultiVector.right_contraction() "
+        "for contractions. See the pymbolic.geometric_algebra documentation.")
     def __or__(self, other):
+        """[DFM]-convention "inner product".
+
+        .. deprecated:: 2025.1
+
+            See :ref:`ga-conventions`. Use :meth:`inner`,
+            :meth:`left_contraction` or :meth:`right_contraction` instead.
+        """
         other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _InnerProduct)
 
+    @deprecated(
+        "'|' implements the [DFM]-convention inner product, which is "
+        "deprecated. Use MultiVector.inner() for the (metric) inner product, "
+        "or MultiVector.left_contraction()/MultiVector.right_contraction() "
+        "for contractions. See the pymbolic.geometric_algebra documentation.")
     def __ror__(self, other):
         return MultiVector(other, self.space)\
                 ._generic_product(self, _InnerProduct)
 
+    @deprecated(
+        "'<<' implements the [DFM]-convention left contraction, which is "
+        "deprecated. Use MultiVector.left_contraction() instead (the two "
+        "differ by a grade-dependent sign). See the "
+        "pymbolic.geometric_algebra documentation.")
     def __lshift__(self, other):
+        """[DFM]-convention left contraction.
+
+        .. deprecated:: 2025.1
+
+            See :ref:`ga-conventions`. Use :meth:`left_contraction` instead.
+        """
         other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _LeftContractionProduct)
 
+    @deprecated(
+        "'<<' implements the [DFM]-convention left contraction, which is "
+        "deprecated. Use MultiVector.left_contraction() instead (the two "
+        "differ by a grade-dependent sign). See the "
+        "pymbolic.geometric_algebra documentation.")
     def __rlshift__(self, other):
         return MultiVector(other, self.space)\
                 ._generic_product(self, _LeftContractionProduct)
 
+    @deprecated(
+        "'>>' implements the [DFM]-convention right contraction, which is "
+        "deprecated. Use MultiVector.right_contraction() instead (the two "
+        "differ by a grade-dependent sign). See the "
+        "pymbolic.geometric_algebra documentation.")
     def __rshift__(self, other):
+        """[DFM]-convention right contraction.
+
+        .. deprecated:: 2025.1
+
+            See :ref:`ga-conventions`. Use :meth:`right_contraction` instead.
+        """
         other = _cast_to_mv(other, self.space)
 
         return self._generic_product(other, _RightContractionProduct)
 
+    @deprecated(
+        "'>>' implements the [DFM]-convention right contraction, which is "
+        "deprecated. Use MultiVector.right_contraction() instead (the two "
+        "differ by a grade-dependent sign). See the "
+        "pymbolic.geometric_algebra documentation.")
     def __rrshift__(self, other):
         return MultiVector(other, self.space)\
                 ._generic_product(self, _RightContractionProduct)
 
+    def inner(self, other) -> CoeffT | int:
+        r"""Return the (metric) inner product :math:`A\cdot B`, as a scalar
+        (not a :class:`MultiVector`).
+
+        This is the unique extension of the inner product defined by
+        :attr:`Space.metric_matrix` on the basis vectors to the full
+        exterior algebra: for multivectors *A* and *B*,
+
+        .. math::
+
+            A\cdot B = \langle A\widetilde B\rangle_0
+                      = \langle B\widetilde A\rangle_0.
+
+        For blades in an orthogonal space it is the Gram determinant of the
+        blade coefficients, and it vanishes unless the two blades have the
+        same grade. In particular, :math:`A\cdot A` is the square of the
+        norm induced by the metric (see :meth:`norm_squared`).
+
+        .. note::
+
+            The (deprecated) ``|`` operator does *not* implement this
+            product; see :ref:`ga-conventions`. For a *k*-blade *A* in an
+            orthogonal space, ``A | A`` equals :math:`(-1)^{k(k-1)/2}`
+            times ``A.inner(A)``.
+
+        .. versionadded:: 2025.1
+        """
+
+        other = _cast_to_mv(other, self.space)
+
+        if self.space is not other.space:
+            raise ValueError("can only compute inner products of multivectors "
+                    "from identical spaces")
+
+        if not self.space.is_orthogonal:
+            raise NotImplementedError("inner product for spaces "
+                    "with non-diagonal metric (i.e. non-orthogonal basis)")
+
+        result: CoeffT | int = 0
+        for bits, coeff in self.data.items():
+            ocoeff = other.data.get(bits)
+            if ocoeff is None:
+                continue
+
+            result = result \
+                    + coeff * ocoeff * _shared_metric_coeff(bits, self.space)
+
+        return result
+
+    def left_contraction(self, other) -> MultiVector[CoeffT]:
+        r"""Return the left contraction :math:`A\lrcorner B` of *self* with
+        *other*.
+
+        For blades, this is defined by
+
+        .. math::
+
+            A \lrcorner B
+                = \langle B\widetilde A\rangle_{\mathrm{gr}\,B
+                  - \mathrm{gr}\,A}
+
+        (and zero if :math:`\mathrm{gr}\,A > \mathrm{gr}\,B`), and is
+        extended to general multivectors blade-by-blade and by linearity.
+        For blades of equal grade, the left contraction reduces to the
+        inner product: :math:`A\lrcorner B = A\cdot B` (see :meth:`inner`).
+
+        .. note::
+
+            The (deprecated) ``<<`` operator implements the left
+            contraction of [DFM], which differs from this one by a
+            grade-dependent sign; see :ref:`ga-conventions`.
+
+        .. versionadded:: 2025.1
+        """
+
+        other = _cast_to_mv(other, self.space)
+
+        if self.space is not other.space:
+            raise ValueError("can only compute products of multivectors "
+                    "from identical spaces")
+
+        if not self.space.is_orthogonal:
+            raise NotImplementedError("contraction product for spaces "
+                    "with non-diagonal metric (i.e. non-orthogonal basis)")
+
+        from pymbolic.primitives import is_zero
+        new_data: dict[int, CoeffT | int] = {}
+        for abits, ac in self.data.items():
+            a_grade = abits.bit_count()
+            # A << B = <B Ã>_{grB-grA}
+            rev_sign = -1 if (a_grade*(a_grade-1)//2) % 2 else 1
+
+            for bbits, bc in other.data.items():
+                # Nonzero only if supp(A) is contained in supp(B).
+                if (abits | bbits) != bbits:
+                    continue
+
+                coeff = (rev_sign
+                        * canonical_reordering_sign(bbits, abits)
+                        * _shared_metric_coeff(abits, self.space)
+                        * ac * bc)
+
+                if not is_zero(coeff):
+                    new_bits = bbits ^ abits
+                    new_coeff = new_data.setdefault(new_bits, 0) + coeff
+                    if is_zero(new_coeff):
+                        del new_data[new_bits]
+                    else:
+                        new_data[new_bits] = new_coeff
+
+        return type(self)(new_data, self.space)
+
+    def right_contraction(self, other) -> MultiVector[CoeffT]:
+        r"""Return the right contraction :math:`A\llcorner B` of *self* with
+        *other*.
+
+        For blades, this is defined by
+
+        .. math::
+
+            A \llcorner B
+                = \langle\widetilde B\, A\rangle_{\mathrm{gr}\,A
+                  - \mathrm{gr}\,B}
+
+        (and zero if :math:`\mathrm{gr}\,A < \mathrm{gr}\,B`), and is
+        extended to general multivectors blade-by-blade and by linearity.
+        For blades of equal grade, the right contraction reduces to the
+        inner product: :math:`A\llcorner B = A\cdot B` (see :meth:`inner`).
+        In particular, for a vector *a* and a blade *B*, the geometric
+        product decomposes as
+
+        .. math::
+
+            aB = B\llcorner a + a\wedge B.
+
+        .. note::
+
+            The (deprecated) ``>>`` operator implements the right
+            contraction of [DFM], which differs from this one by a
+            grade-dependent sign; see :ref:`ga-conventions`.
+
+        .. versionadded:: 2025.1
+        """
+
+        other = _cast_to_mv(other, self.space)
+
+        if self.space is not other.space:
+            raise ValueError("can only compute products of multivectors "
+                    "from identical spaces")
+
+        if not self.space.is_orthogonal:
+            raise NotImplementedError("contraction product for spaces "
+                    "with non-diagonal metric (i.e. non-orthogonal basis)")
+
+        from pymbolic.primitives import is_zero
+        new_data: dict[int, CoeffT | int] = {}
+        for abits, ac in self.data.items():
+            for bbits, bc in other.data.items():
+                # Nonzero only if supp(B) is contained in supp(A).
+                if (abits | bbits) != abits:
+                    continue
+
+                b_grade = bbits.bit_count()
+                # A >> B = <B̃ A>_{grA-grB}
+                rev_sign = -1 if (b_grade*(b_grade-1)//2) % 2 else 1
+
+                coeff = (rev_sign
+                        * canonical_reordering_sign(bbits, abits)
+                        * _shared_metric_coeff(bbits, self.space)
+                        * ac * bc)
+
+                if not is_zero(coeff):
+                    new_bits = abits ^ bbits
+                    new_coeff = new_data.setdefault(new_bits, 0) + coeff
+                    if is_zero(new_coeff):
+                        del new_data[new_bits]
+                    else:
+                        new_data[new_bits] = new_coeff
+
+        return type(self)(new_data, self.space)
+
+    @deprecated(
+        "MultiVector.scalar_product() is deprecated. Use "
+        "MultiVector.inner() instead (the [DFM] scalar product "
+        "differs from the inner product for blades of grade 2 or 3 "
+        "mod 4). See the pymbolic.geometric_algebra documentation.")
     def scalar_product(self, other) -> CoeffT | int:
         r"""Return the scalar product, as a scalar, not a :class:`MultiVector`.
 
         Often written :math:`A*B`.
-        """
 
+        .. deprecated:: 2025.1
+
+            The scalar product of [DFM] is a bilinear form that is separate
+            from the (metric) inner product :meth:`inner`, and differs from
+            it by a factor of :math:`(-1)^{k(k-1)/2}` for *k*-blades. It is
+            superfluous once the inner product is defined correctly; see
+            :ref:`ga-conventions`. Use :meth:`inner` instead.
+        """
         other_new = _cast_to_mv(other, self.space)
 
         return self._generic_product(other_new, _ScalarProduct).as_scalar()
@@ -1013,20 +1368,77 @@ class MultiVector(Generic[CoeffT]):
 
         return MultiVector(new_data, self.space)
 
+    def _ga4cs_dual(self) -> MultiVector[CoeffT]:
+        """The [DFM]-convention dual ``self | self.I.rev()``
+        (i.e. :math:`A I^{-1}`). See :meth:`dual`.
+        """
+        return self._generic_product(self.I.rev(), _InnerProduct)
+
+    @deprecated(
+        "MultiVector.dual() is deprecated. Use "
+        "MultiVector.hodge_dual() instead (the [DFM] dualization "
+        "mapping A*I**(-1) has an orientation that is inconsistent "
+        "with the exterior algebra complements). See the "
+        "pymbolic.geometric_algebra documentation.")
     def dual(self):
         r"""Return the dual of *self*, see (1.2.26) in [HS].
 
-        Written :math:`\widetilde A` by [HS] and :math:`A^\ast` by [DFW].
+        Written :math:`\widetilde A` by [HS] and :math:`A^\ast` by [DFM].
+
+        .. deprecated:: 2025.1
+
+            This implements the "dualization mapping" of [DFM],
+            :math:`A I^{-1}` (equivalently, ``self | self.I.rev()``). Its
+            orientation is inconsistent with the exterior algebra
+            complements, and it does not satisfy the defining property of
+            the Hodge star. Use :meth:`hodge_dual` instead; see
+            :ref:`ga-conventions`.
+        """
+        return self._ga4cs_dual()
+
+    def hodge_dual(self) -> MultiVector[CoeffT]:
+        r"""Return the Hodge dual :math:`A^\star` of *self*.
+
+        For a nondegenerate orthogonal metric, this is given by
+
+        .. math::
+
+            A^\star = \widetilde A\, I,
+
+        where :math:`I` is the pseudoscalar (see :attr:`I`); more
+        generally, it is the right complement of :math:`GA`, where
+        :math:`G` is the metric extended to the full exterior algebra. For
+        blades *A*, *B* of equal grade, it satisfies the defining property
+        of the Hodge star,
+
+        .. math::
+
+            A \wedge B^\star = (A\cdot B)\, I,
+
+        and the Hodge dual of the pseudoscalar is the scalar given by the
+        product of the diagonal entries of :attr:`Space.metric_matrix` (in
+        particular, ``+1`` in a Euclidean space).
+
+        .. note::
+
+            This differs from the (deprecated) :meth:`dual`, which
+            implements the dualization mapping of [DFM]; see
+            :ref:`ga-conventions`.
+
+        .. versionadded:: 2025.1
         """
 
-        return self | self.I.rev()
+        if not self.space.is_orthogonal:
+            raise NotImplementedError("hodge dual for spaces "
+                    "with non-diagonal metric (i.e. non-orthogonal basis)")
 
-    def __inv__(self):
-        """Return the dual of *self*, see :meth:`dual`."""
-        return self.dual()
+        return self.rev() * self.I
 
     def norm_squared(self) -> CoeffT | int:
-        return self.rev().scalar_product(self)
+        r"""Return the squared norm :math:`A\cdot A` of *self*, induced by
+        the space's metric (see :meth:`inner`).
+        """
+        return self.inner(self)
 
     def __abs__(self) -> CoeffT | int:
         return self.norm_squared()**0.5
